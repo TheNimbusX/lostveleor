@@ -217,9 +217,10 @@ namespace Game.Tests
                 RiftRun run = FormRun(seed);
                 for (int depth = 1; depth <= FormBaselineScenarios.ArenaCount; depth++)
                 {
-                    // Без Вихря и Шквала (формы Шквала — 02.10): у остальных навыков и у сабли форм пока нет.
+                    // Без Вихря, Шквала, Абордажа и Крушения (формы Крушения — 03.10): у остальных навыков
+                    // и у сабли форм пока нет. Слот 3 — Взрывная смесь (7) вместо Крушения (5).
                     run.Loadout.Put(0, 4);
-                    for (int slot = 1; slot < RunLoadout.Slots; slot++) run.Loadout.Put(slot, slot == 3 ? 5 : slot);
+                    for (int slot = 1; slot < RunLoadout.Slots; slot++) run.Loadout.Put(slot, slot == 3 ? 7 : slot);
                     Assert.IsTrue(FormBaselineScenarios.ClearToReward(run));
                     Assert.IsFalse(run.ChoosingForm, "сид " + seed + ", арена " + depth);
                     TakeOrdinary(run);

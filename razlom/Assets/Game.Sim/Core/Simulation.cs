@@ -319,20 +319,8 @@ namespace Game.Sim
         private int _whirlwindImpactTick = -1;
         private int _whirlwindImpactSlot = -1;
 
-        private int _leapLaunchTick = -1;
-        private FixVec2 _leapAim;
-        public FixVec2 LeapAim => _leapAim;
-
-        /// <summary>
-        /// Кого цепляет Абордаж. -1 — цели нет, и тогда это бросок в точку.
-        ///
-        /// Способность выбрана врагом, но остаётся рабочей и без него: кнопка,
-        /// молча не срабатывающая, когда игрок промахнулся курсором мимо тела,
-        /// читается как поломка ввода.
-        /// </summary>
-        private int _leapTarget = -1;
-        private int _leapPunchTick = -1;
-        private int _leapSlot = -1;
+        // Абордаж (прежний бросок якоря в точку с замахом 15 и тягой 17) — с 02.10
+        // Simulation.Abordage: цель — враг под курсором, как у Шквала.
         private int _abilityMovePenaltyUntilTick;
 
         // Состояние «Шага по цепи» между прыжками. Живёт в симуляции, а не в
@@ -1054,10 +1042,12 @@ namespace Game.Sim
                 _separationPush[i] = FixVec2.Zero;
                 _separationExempt[i] = Entities.Alive[i]
                     && (IsWendigoAirborne(i) || StonehoofOwnsPosition(i) || SplitterOwnsPosition(i)
-                        || ThicketShielded(i));
+                        || ThicketShielded(i) || AbordageLifted(i));
             }
+            // Тяга Абордажа, как рывок, тел не держит (Simulation.Abordage).
             bool heroPhased = VoidPhased || DashInvulnerable || _mobilitySlot >= 0
-                && _abilityBuilds[_mobilitySlot].DefinitionId == AbilityDefinition.SkewerId;
+                && _abilityBuilds[_mobilitySlot].DefinitionId == AbilityDefinition.SkewerId
+                || _abordage.Phase == AbordagePhase.Pull;
             // Герой в фазе не расталкивается ни с кем — как тело-исключение.
             // Рывок (Simulation.Dash) проходит сквозь тела всё своё окно.
             if (heroPhased && PlayerId < count) _separationExempt[PlayerId] = true;
@@ -1246,9 +1236,9 @@ namespace Game.Sim
             _blazeSlot = -1;
             StopAnchorSlam();
             _whirlwindImpactTick = _whirlwindImpactSlot = -1;
-            _leapLaunchTick = -1;
-            _leapAim = FixVec2.Zero;
-            _leapTarget = _leapPunchTick = _leapSlot = -1;
+            ResetAbordage();
+            ResetAnchorThrow();
+            ResetWreck();
             ResetSquall();
             _abilityMovePenaltyUntilTick = 0;
         }
@@ -1364,28 +1354,17 @@ namespace Game.Sim
             UpdateWhirlwindChannel(in input);
             UpdateFoamWaves();
             UpdateAnchorSlam();
-            UpdateWreck();
+            UpdateWreck(in input);
             UpdateCleave();
             UpdateFlask();
             UpdateBlazeTrail();
             UpdateUpgrades();
             UpdateArtifact();
             UpdateMobility();
-            if (_leapLaunchTick >= 0 && Tick >= _leapLaunchTick)
-            {
-                _leapLaunchTick = -1;
-                if (Entities.Alive[PlayerId])
-                {
-                    AbilityBuild leap = (uint)_leapSlot < (uint)AbilitySlots ? _abilityBuilds[_leapSlot] : null;
-                    Fix64 range = leap != null ? leap.Get(AbilityStatType.Radius) : AnchorKit.LeapRange;
-                    // Хозяин Чащи ушёл в нырок за время замаха — цепь летит в точку прицела.
-                    if (ThicketShielded(_leapTarget)) _leapTarget = -1;
-                    BoardingUpgradesAtLaunch(leap);
-                    int ticks = AnchorKit.CastBoarding(this, _leapAim, _leapTarget, range);
-                    _leapPunchTick = Tick + ticks;
-                }
-            }
-            ResolveBoardingPunch();
+            // Абордаж: якорь, зацеп, тяга, удар, фронт формы (Simulation.Abordage).
+            UpdateAbordage();
+            // Бросок якоря: полёт, натяг, тяга, ловля (Simulation.AnchorThrow).
+            UpdateAnchorThrow();
             ContinueChainStep();
             ResolveAttacks(in input);
             EndThicketHitBodies();
@@ -1409,6 +1388,8 @@ namespace Game.Sim
             // Волны встречи — после всех обновлений врагов и горения: счёт
             // живых видит смерти этого тика, и волна выходит в тот же тик.
             UpdateEncounterWaves();
+            // Клятвы и грани сердца (Simulation.Oaths): без них сразу выход.
+            UpdateOaths();
 
             Tick++;
         }
@@ -1451,12 +1432,12 @@ namespace Game.Sim
                 // не новый каст: кулдаун ещё идёт, и обычная проверка отменяла
                 // бы серию на втором ударе всегда.
                 if (build.DefinitionId == AbilityDefinition.WreckId
-                    && _wreckSlot == slot && WreckComboOpen)
+                    && _wreck.Slot == slot && WreckComboOpen)
                 {
                     AdvanceWreck(input.Aim);
                     CaptureAbilityClock(slot);
                     _events.Add(new SimEvent(SimEventType.ActionStageStarted, PlayerId, -1, slot,
-                        false, Entities.Position[PlayerId], actionVariant: _wreckStage));
+                        false, Entities.Position[PlayerId], actionVariant: _wreck.Stage));
                     continue;
                 }
 
@@ -1467,25 +1448,24 @@ namespace Game.Sim
                 // отменять Вихрь, который уже крутится.
                 if (!CanAffordAbility(build)) continue;
 
-                if (build.DefinitionId == AbilityDefinition.ChainStepId && !ValidAbilityTarget(input.AbilityTarget, build)) continue;
+                // Шквал и Абордаж — только по врагу под курсором: без него ни цены, ни кулдауна, ни срыва.
+                if (NeedsEnemyTarget(build.DefinitionId) && !ValidAbilityTarget(input.AbilityTarget, build)) continue;
                 CancelPlayerAction();
 
                 if (build.DefinitionId == AbilityDefinition.WhirlwindId)
                 {
-                    _whirlwindImpactTick = Tick + AbilityExecutionTicks(WhirlwindContactDelayTicks);
+                    _whirlwindImpactTick = Tick + AbilityExecutionTicks(WhirlwindContactDelayFor(slot));
                     _whirlwindImpactSlot = slot;
                     WhirlwindUpgradesAtCast(slot);
                     WhirlwindFormAtCast(slot);
                 }
                 else if (build.DefinitionId == AbilityDefinition.AnchorLeapId)
                 {
-                    _leapAim = input.Aim;
-                    _leapTarget = ValidAbilityTarget(input.AbilityTarget, build)
-                        ? input.AbilityTarget
-                        : -1;
-                    _leapSlot = slot;
-                    _leapPunchTick = -1;
-                    _leapLaunchTick = Tick + AbilityExecutionTicks(AnchorKit.LeapWindupTicks);
+                    BeginAbordage(slot, input.AbilityTarget);
+                }
+                else if (build.DefinitionId == AbilityDefinition.AnchorThrowId)
+                {
+                    BeginAnchorThrow(slot, input.Aim);
                 }
                 else if (build.DefinitionId == AbilityDefinition.AnchorSlamId)
                 {
@@ -1540,7 +1520,7 @@ namespace Game.Sim
                 if (!input.Ability(slot)) continue;
                 if (_abilityBuilds[slot] == null) continue;
                 if (_abilityBuilds[slot].DefinitionId == AbilityDefinition.BlazeId) continue;
-                if (_abilityBuilds[slot].DefinitionId == AbilityDefinition.ChainStepId && !ValidAbilityTarget(input.AbilityTarget, _abilityBuilds[slot])) continue;
+                if (NeedsEnemyTarget(_abilityBuilds[slot].DefinitionId) && !ValidAbilityTarget(input.AbilityTarget, _abilityBuilds[slot])) continue;
                 if (Tick < _abilityReadyTick[slot]) continue;
                 if (!CanAffordAbility(_abilityBuilds[slot])) continue;
 
@@ -1634,13 +1614,17 @@ namespace Game.Sim
 
             // «Горючее»: враг в луже Взрывной смеси получает от Пелага +20%.
             if (source == PlayerId && InFuelledPool(target)) amount = amount * 120 / 100;
+            // Метка Абордажа (заготовка таланта, Simulation.Abordage.Strike): ×1,30 от Пелага.
+            amount = AbordageMarkAmplify(source, target, amount);
             if (source == PlayerId && !overTime) amount = ApplySunder(target, amount);
             amount = ArtifactOutgoing(source, target, amount, ability: !overTime);
             int power = amount;
             amount = CombatStats.Mitigate(amount, type,
                 Entities.Armor[target], Entities.FireResist[target]);
             amount = ApplyResinReduction(target, amount);
-            amount = ApplyUpgradeReduction(target, amount);
+            amount = ApplyUpgradeReduction(source, target, amount);
+            // «Стойкость» (клятвы, Simulation.Oaths): урон по герою от элит и боссов. Без клятв ×1.
+            if (target == PlayerId) amount = OathScaled(amount, OathIncomingDamageScale(source));
             amount = MirrorIncoming(source, target, amount);
             if (HoldDamage(source, target, amount)) return;
 
@@ -1659,7 +1643,8 @@ namespace Game.Sim
                 if (!overTime && source == PlayerId) ApplyBlazeAbilityBonus(source, target, power, slot);
                 return;
             }
-            if (VowSaves(target)) return;
+            // Обет Хранителя первым, «Последний вдох» (клятвы) — только если Обет не спас.
+            if (VowSaves(target) || OathSaves(target)) return;
             Kill(target, source, slot);
         }
 
@@ -1758,6 +1743,30 @@ namespace Game.Sim
                 return;
             }
 
+            // Абордаж держит героя так же: замах, полёт якоря, натяг, удар и
+            // начало выхода; со второго тика выхода шаг срывает выход (Simulation.Abordage).
+            if (AbordageHoldsHero)
+            {
+                Entities.Velocity[PlayerId] = FixVec2.Zero;
+                return;
+            }
+
+            // Бросок якоря держит героя от каста до ловли, удержания и начала выхода;
+            // со второго тика выхода шаг срывает выход (Simulation.AnchorThrow).
+            if (AnchorThrowHoldsHero)
+            {
+                Entities.Velocity[PlayerId] = FixVec2.Zero;
+                return;
+            }
+
+            // Крушение держит героя: замахи, 2 тика проводки, заряд, удержание и начало
+            // выхода; в окне между нажатиями и в хвосте выхода он ходит (Simulation.Wreck).
+            if (WreckHoldsHero)
+            {
+                Entities.Velocity[PlayerId] = FixVec2.Zero;
+                return;
+            }
+
             // Новый приказ перебивает старый. При удержании кнопки он приходит
             // каждый тик и точка едет за курсором — это то же самое поведение,
             // что и раньше, просто теперь оно частный случай.
@@ -1770,14 +1779,6 @@ namespace Game.Sim
                 _explicitMoveOrder = true;
                 _navigationWaypoint = input.Has(InputFlags.NavigationWaypoint);
                 _navigationTransit = input.Has(InputFlags.NavigationTransit);
-            }
-
-            // Only the anchor leap needs a stationary launch. The mass hook
-            // preserves locomotion while its upper body performs the throw.
-            if (_leapLaunchTick >= 0)
-            {
-                Entities.Velocity[PlayerId] = FixVec2.Zero;
-                return;
             }
 
             // Выпад добивающего серии сабли: тело ведёт выпад, своим шагом
@@ -2251,7 +2252,11 @@ namespace Game.Sim
                 // Делим остаток пути на остаток тиков. Целочисленное деление
                 // Fix64 округляет вниз, поэтому на последнем тике шаг берётся
                 // целиком — иначе тело вечно не доезжало бы последние миллиметры.
-                FixVec2 step = left <= 1 ? delta : delta / Fix64.FromInt(left);
+                // Водоворот ведёт своих с разгоном, последний тик тоже (Simulation.WhirlwindForms.MaelstromPullStep).
+                // Бросок якоря — так же, своими массивами (Simulation.AnchorThrow.Pull, AnchorThrowPullStep).
+                FixVec2 step = MaelstromPullStep(i, left, delta, out FixVec2 eased) ? eased
+                    : AnchorThrowPullStep(i, left, delta, out FixVec2 reeled) ? reeled
+                    : left <= 1 ? delta : delta / Fix64.FromInt(left);
 
                 // Большой шаг рывка не должен перескочить узкую стену между концами.
                 int substeps = System.Math.Max(1, (step.Length / (LayoutMap.CellSize / Fix64.FromInt(8))).ToInt() + 1);
@@ -2423,9 +2428,12 @@ namespace Game.Sim
             if (crit)
                 damage = CombatStats.RoundToInt(Fix64.FromInt(damage) * Entities.CritMultiplier[source]);
             if (source == PlayerId && InFuelledPool(target)) damage = damage * 120 / 100;
+            damage = AbordageMarkAmplify(source, target, damage);
             if (source == PlayerId) damage = ApplySunder(target, damage);
             damage = ArtifactOutgoing(source, target, damage, ability: false);
             damage = PreparedGiftAttackDamage(source, damage);
+            // «Тяжёлая рука» (клятвы): все удары ЛКМ героя идут сюда, способности — нет. Без клятв ×1.
+            if (source == PlayerId) damage = OathScaled(damage, OathSabreDamageScale);
 
             // Броня гасит удар ПОСЛЕ крита: крит увеличивает сам удар, а кривая
             // брони зависит от его размера — значит и считать её надо от того,
@@ -2433,7 +2441,8 @@ namespace Game.Sim
             int power = damage;
             damage = CombatStats.MitigateByArmor(damage, Entities.Armor[target]);
             damage = ApplyResinReduction(target, damage);
-            damage = ApplyUpgradeReduction(target, damage);
+            damage = ApplyUpgradeReduction(source, target, damage);
+            if (target == PlayerId) damage = OathScaled(damage, OathIncomingDamageScale(source));
             damage = MirrorIncoming(source, target, damage);
             if (HoldDamage(source, target, damage)) return 0;
 
@@ -2452,10 +2461,18 @@ namespace Game.Sim
             // Смерть от автоатаки идёт тем же путём, что и от способности:
             // стадия ПриУбийстве обязана срабатывать независимо от того, чем
             // добили. «Перекидывается» иначе не сработал бы на добитом мечом.
-            if (Entities.Health[target] <= 0 && !VowSaves(target))
+            if (Entities.Health[target] <= 0 && !VowSaves(target) && !OathSaves(target))
                 Kill(target, source, BurnSlotOf(target), basicAttackKill: true);
             return damage;
         }
+
+        /// <summary>
+        /// Множитель клятвы к целому урону. Ровно ×1 — число не трогается и в Fix64 не ходит:
+        /// без клятв бой бит в бит прежний, прибитые хеши стоят.
+        /// </summary>
+        private static int OathScaled(int amount, Fix64 scale)
+            => scale == Fix64.One || amount <= 0 ? amount
+                : System.Math.Max(1, CombatStats.RoundToInt(Fix64.FromInt(amount) * scale));
 
         /// <summary>
         /// Слот способности, которой цель была подожжена, или -1.
@@ -2492,6 +2509,8 @@ namespace Game.Sim
             HashUpgrades(ref hash);
             HashWhirlwindForms(ref hash);
             HashSquall(ref hash);
+            HashAbordage(ref hash);
+            HashAnchorThrow(ref hash);
             HashForestBud(ref hash);
             HashWendigo(ref hash);
             HashStonehooves(ref hash);
@@ -2506,6 +2525,8 @@ namespace Game.Sim
             HashEncounterWaves(ref hash);
             HashEnemyBrain(ref hash);
             HashForestPuddles(ref hash);
+            // Клятвы: без них пусто — хеш прежний.
+            HashOaths(ref hash);
 
             // Приказ — часть состояния персонажа, а не ввода: он переживает
             // отпущенную кнопку, значит обязан быть в хеше.
@@ -2531,9 +2552,12 @@ namespace Game.Sim
             }
             Hashing.Mix(ref hash, _whirlwindImpactTick);
             Hashing.Mix(ref hash, _whirlwindImpactSlot);
-            Hashing.Mix(ref hash, _leapLaunchTick);
-            Hashing.Mix(ref hash, _leapAim.X.Raw);
-            Hashing.Mix(ref hash, _leapAim.Y.Raw);
+            // Прежние тик запуска тяги и точка броска Абордажа (до 02.10): постоянные
+            // −1 и 0 на прежнем месте — закреплённые хеши сцен без Абордажа те же
+            // бит в бит. Абордаж хеширует себя сам (HashAbordage).
+            Hashing.Mix(ref hash, -1);
+            Hashing.Mix(ref hash, 0L);
+            Hashing.Mix(ref hash, 0L);
 
             // Цепочка прыжков переживает несколько тиков и решает, кого бить
             // следующим. Не попади она в хеш — реплей, начатый посреди цепочки,

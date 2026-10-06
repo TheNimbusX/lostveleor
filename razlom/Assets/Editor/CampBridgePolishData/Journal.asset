@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 853cd9a9ff71cf84faa792bcd789479f, type: 3}
+  m_Name: Journal
+  m_EditorClassIdentifier: Assembly-CSharp-Editor::Game.EditorTools.CampBridgePolishJournal
+  ScenePath: Assets/Scenes/SampleScene.unity
+  RiverPath: "Authored World/CampRoot/\u0420\u0435\u043A\u0430 \u2014 \u043D\u0438\u0436\u043D\u044F\u044F
+    \u0433\u0440\u0430\u043D\u0438\u0446\u0430 \u043B\u0430\u0433\u0435\u0440\u044F"
+  OriginalWaterControl: {fileID: 2100000, guid: 3eb8cd1caac80184092898851b9be6a1, type: 2}
+  Meshes:
+  - Path: "Authored World/CampRoot/\u0420\u0435\u043A\u0430 \u2014 \u043D\u0438\u0436\u043D\u044F\u044F
+      \u0433\u0440\u0430\u043D\u0438\u0446\u0430 \u043B\u0430\u0433\u0435\u0440\u044F/\u0420\u0443\u0441\u043B\u043E
+      \u2014 \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D\u043D\u044B\u0435 \u043C\u0435\u0448\u0438/\u0411\u043B\u0438\u0436\u043D\u0438\u0439
+      \u0431\u0435\u0440\u0435\u0433"
+    Original: {fileID: 4300000, guid: 7ef4e2bd529d0d443a3e11a967cc0742, type: 2}
+    Polished: {fileID: 4300000, guid: 94673d65ca69ac6458a2b0bade4b54f2, type: 2}
+    OriginalHash: "Assets/Resources/Environment/Camp/River/\u0411\u043B\u0438\u0436\u043D\u0438\u0439
+      \u0431\u0435\u0440\u0435\u0433.asset:a453408dd139a329d4c0b6863e36ff4f"
+  - Path: "Authored World/CampRoot/\u0420\u0435\u043A\u0430 \u2014 \u043D\u0438\u0436\u043D\u044F\u044F
+      \u0433\u0440\u0430\u043D\u0438\u0446\u0430 \u043B\u0430\u0433\u0435\u0440\u044F/\u0420\u0443\u0441\u043B\u043E
+      \u2014 \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D\u043D\u044B\u0435 \u043C\u0435\u0448\u0438/\u0414\u043D\u043E
+      \u0440\u0435\u043A\u0438"
+    Original: {fileID: 4300000, guid: 4fe1eeb92c8acb347a4ca7eb5117b0ff, type: 2}
+    Polished: {fileID: 4300000, guid: 50292d621546d234197403d56e2bd674, type: 2}
+    OriginalHash: "Assets/Resources/Environment/Camp/River/\u0414\u043D\u043E \u0440\u0435\u043A\u0438.asset:3a8f492bef6a32f6ab144a229d9b5939"
+  - Path: "Authored World/CampRoot/\u0420\u0435\u043A\u0430 \u2014 \u043D\u0438\u0436\u043D\u044F\u044F
+      \u0433\u0440\u0430\u043D\u0438\u0446\u0430 \u043B\u0430\u0433\u0435\u0440\u044F/\u0420\u0443\u0441\u043B\u043E
+      \u2014 \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D\u043D\u044B\u0435 \u043C\u0435\u0448\u0438/\u0414\u0430\u043B\u044C\u043D\u0438\u0439
+      \u0431\u0435\u0440\u0435\u0433"
+    Original: {fileID: 4300000, guid: 0ca1f5df497b9d94dbeb900d89bfbcb4, type: 2}
+    Polished: {fileID: 4300000, guid: ec25ab057d98174499787b2fc7cd0bed, type: 2}
+    OriginalHash: "Assets/Resources/Environment/Camp/River/\u0414\u0430\u043B\u044C\u043D\u0438\u0439
+      \u0431\u0435\u0440\u0435\u0433.asset:7cb95358f235c6b18e2800dd5b689480"
+  Materials:
+  - Path: "Authored World/CampRoot/\u0420\u0435\u043A\u0430 \u2014 \u043D\u0438\u0436\u043D\u044F\u044F
+      \u0433\u0440\u0430\u043D\u0438\u0446\u0430 \u043B\u0430\u0433\u0435\u0440\u044F/\u0420\u0443\u0441\u043B\u043E
+      \u2014 \u0441\u043E\u0445\u0440\u0430\u043D\u0451\u043D\u043D\u044B\u0435 \u043C\u0435\u0448\u0438/\u041B\u0435\u0441\u043D\u0430\u044F
+      \u0432\u043E\u0434\u0430"
+    Original:
+    - {fileID: 2100000, guid: d054aa9d982256043937f50910a26092, type: 2}
+    Polished:
+    - {fileID: 2100000, guid: 59a6cda1b919cee4a9fda5e50f4aecee, type: 2}
+  - Path: Authored World/CampRoot/Campfire/wooden+bench+3d+model (2)
+    Original:
+    - {fileID: 2100000, guid: becf72149b0d08440ab6b958f574ff79, type: 2}
+    Polished:
+    - {fileID: 2100000, guid: cbeda3c9e9fa1cc46bc7f1c8cbb69885, type: 2}
+  - Path: Authored World/CampRoot/Tent - Player/wooden+crate+3d+model (14)
+    Original:
+    - {fileID: 2100000, guid: 9bfa12f4ad3957f41900b1cae39a1808, type: 2}
+    Polished:
+    - {fileID: 2100000, guid: 7f76ada9891d68c419f7ae942e7bc7d0, type: 2}
+  - Path: Authored World/CampRoot/Tent-Ciner/wooden+fence+3d+model (27)
+    Original:
+    - {fileID: 2100000, guid: b101fa72ca7db0542bcdeef5c6df94fe, type: 2}
+    Polished:
+    - {fileID: 2100000, guid: d71791294c694324a9264cee95c76c3d, type: 2}
+  - Path: Authored World/CampRoot/Tent-Ciner/wooden+fence+3d+model (28)
+    Original:
+    - {fileID: 2100000, guid: b101fa72ca7db0542bcdeef5c6df94fe, type: 2}
+    Polished:
+    - {fileID: 2100000, guid: d71791294c694324a9264cee95c76c3d, type: 2}
+  - Path: Authored World/CampRoot/Tent-Ciner/wooden+fence+3d+model (13)
+    Original:
+    - {fileID: 2100000, guid: b101fa72ca7db0542bcdeef5c6df94fe, type: 2}
+    Polished:
+    - {fileID: 2100000, guid: d71791294c694324a9264cee95c76c3d, type: 2}
+  - Path: Authored World/CampRoot/Alchemist Shelter/CreatingBridge/tripo_convert_85437eb2-e656-47fa-9e54-6129ed6e991c(Clone)
+    Original:
+    - {fileID: 2100000, guid: 2b1a14bef7075844ea770c05b432754a, type: 2}
+    Polished:
+    - {fileID: 2100000, guid: d4bc2395886e76f4bb21a056ac0c6a25, type: 2}
+  Centre: {x: 2.82, y: 0.27130443, z: -21.53}
+  Applied: 1
+  FirstInvariant: DEC5DFFCE91C494BF6A6959D42FE51C10DA4993C611D9BA763330BF3BBC5738A

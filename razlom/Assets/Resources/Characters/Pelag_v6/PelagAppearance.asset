@@ -17,9 +17,9 @@ MonoBehaviour:
   AnchorHeadMaterial: {fileID: 2100000, guid: 47c941a598ae69447927327850317808, type: 2}
   AnchorShape: {fileID: 11400000, guid: 6ed29d80f57b48541a246886243e59db, type: 2}
   BackSocket: mixamorig:Spine2
-  HeadPosition: {x: 0.008, y: -0.031, z: -0.075}
+  HeadPosition: {x: -0.0467, y: -0.1764, z: -0.083}
   HeadRotation: {x: 0, y: 0, z: -25}
   HeadSize: 0.94
-  GripPosition: {x: 0.103, y: 0.144, z: -0.105}
+  GripPosition: {x: 0.0486, y: -0.0016, z: -0.1132}
   GripRotation: {x: -90, y: 0, z: 90}
   GripScale: {x: 0.55, y: 0.55, z: 0.55}

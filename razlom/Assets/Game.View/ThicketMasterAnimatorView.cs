@@ -14,14 +14,27 @@ namespace Game.View
     /// и съёмка держат позу сами; под Песочными Часами (босс стоит) аниматор стоит.
     ///
     /// • Сон — Sleep (цикл) до пробуждения; Wake → Roar — вступление.
-    /// • Ход — Walk фазой по пройденному пути: скорость Sim / шаг клипа (_walkStride,
-    ///   сборщик пишет замер из отчёта клипов; до отчёта — ThicketMasterClipRules.DefaultWalkStride).
-    /// • Разворот на месте (4,5°/тик Sim) — TurnL/TurnR, доля клипа = поворот / 90°;
-    ///   без клипов — переступание фазой Walk.
+    /// • Ход — Walk фазой по пройденному пути показанного тела / шаг клипа (_walkStride, сборщик пишет замер шага
+    ///   стоящих лап клипа; до замера — ThicketMasterClipRules.DefaultWalkStride). Владелец 08.10 «ноги немного
+    ///   проскальзывают»: прямо лапы и так стояли (шаг = клип, 2,148 м/цикл), скользили на ходу с поворотом — Sim
+    ///   крутит тело вокруг центра, передние лапы в 2,5 м впереди. Теперь (ThicketWalkRules, LateUpdate) шаг каждой
+    ///   лапы идёт туда, куда под ней едет земля, фаза — по самой «быстрой» лапе, стоящая лапа держит точку касания
+    ///   двухкостной ИК поверх клипа; F8 «Визуал · Хозяин Чащи» — A/B (<see cref="FootLock"/>).
+    /// • Разворот (Sim — 2,5°/тик, ревью 02.10 вечер: «прокручивается на месте») — правило
+    ///   ThicketMasterClipRules.Locomotion: стоит или ползёт медленнее 0,45 м/с, а корпус крутится, —
+    ///   шаги TurnL/TurnR, доля клипа = поворот / 90° (при 2,5°/тик клип идёт ×0,83); идёт и
+    ///   доворачивает — Walk, но лапы переступают не реже поворота (WalkCyclesTurning). Поворот
+    ///   обрывает хвост прошлого клипа смесью: тело не вращается на стоящих лапах. Без клипов
+    ///   разворота — переступание фазой Walk.
+    /// • Серия лапы крутит корпус быстрее хода (3,5°/тик, первый удар до ~60°, контракт § 11), а клип удара стоит на
+    ///   месте — поверх него добавочные слои шагов «Paw Turn Legs R/L» (ThicketMasterBuilder): задние лапы
+    ///   и опорная передняя переступают TurnL/TurnR по накопленному повороту (<see cref="ThicketPawTurnLegs"/>,
+    ///   проверка находок 03.10). Контроллер без слоёв (собран раньше) — как было. Те же шаги — в замахе веера
+    ///   шипов-семян (клип ливня, корпус доворачивает к середине веера 3,5°/тик; ThicketMasterClipRules.TurnStepsUnder).
     /// • Нырок: DiveIn за уход, потом тело спрятано (<see cref="IsBurrowed"/>), бугор
     ///   рисует вид боя по <see cref="MoundPosition"/>; выход — Emerge с кадра 0 на тике удара.
     /// • Смерть — Death по профилю EnemyPresentationProfile (касание боком на FallSeconds),
-    ///   последний кадр держится; под конец показа лежащее тело уходит в землю (URP Lit
+    ///   последний кадр держится; после касания лежащее тело уходит под холм смерти (URP Lit
     ///   без растворения шейдером — как у Корнехвата). Убит под землёй — тело поднимается
     ///   из глубины, уже заваливаясь, а не встаёт над бугром целиком.
     /// • Песочные Часы: пока босс стоит, аниматор стоит; прошедший удар в стойке догоняет
@@ -54,8 +67,11 @@ namespace Game.View
         /// <summary>Поперечник контактной тени, м. Сборщик пишет <see cref="DefaultContactShadowMetres"/>.</summary>
         [SerializeField] private float _contactShadowMetres = DefaultContactShadowMetres;
 
-        /// <summary>Лежащее тело уходит в землю под конец смерти, м (лёжа на боку босс ниже 2,3 м, крона выше).</summary>
-        public const float DeathSinkMetres = 2.75f;
+        /// <summary>
+        /// Лежащее тело уходит под холм смерти, м (лёжа на боку босс ниже 2,3 м, крона выше; было 2,75 —
+        /// с запасом на крону вне холма).
+        /// </summary>
+        public const float DeathSinkMetres = 3.3f;
 
         /// <summary>
         /// Убит под землёй (нырок): тело не выскакивает над бугром целиком, а поднимается из
@@ -63,8 +79,8 @@ namespace Game.View
         /// </summary>
         private const float BurrowDeathDepth = 4.14f, BurrowDeathRiseSeconds = .6f;
 
-        private const float WalkThreshold = .06f;
-        private const float TurnRateThreshold = 30f, TurnHoldSeconds = .2f;
+        /// <summary>Сколько держать разворот после последнего поворота: кадры без сдвига (30 Гц Sim) не мигают Idle.</summary>
+        private const float TurnHoldSeconds = .2f;
         private const float TurnShuffleDegreesPerCycle = 160f;
         private const float TicksToSeconds = 1f / Simulation.TicksPerSecond;
         private const float LocomotionBlend = ThicketMasterClipRules.LocomotionBlendTicks * TicksToSeconds;
@@ -80,8 +96,16 @@ namespace Game.View
         private static readonly int[] StateHashes = new int[ThicketMasterClipRules.All.Length * Copies];
         private static readonly int[] PhaseHashes = new int[ThicketMasterClipRules.All.Length * Copies];
 
+        /// <summary>Слои шагов под ударом лапы: [сторона × 2 + клип] — сторона 0 — бьёт правая, клип 0 — TurnL, 1 — TurnR.</summary>
+        private static readonly int[] LegsStateHashes = new int[4];
+        private static readonly int[] LegsPhaseHashes = new int[4];
+
         private Animator _animator;
         private Transform _body;
+        /// <summary>Контактная тень ArenaView (дочка корня, в землю с телом не уходит); null — ещё не найдена.</summary>
+        private Transform _contactShadow;
+        /// <summary>Доля поперечника тени, что сейчас стоит (1 — вся; смерть сжимает её под холм).</summary>
+        private float _shadowLeft = 1f;
         private Vector3 _bodyPosition;
         private TickDriver _driver;
         private Simulation _sim;
@@ -95,6 +119,8 @@ namespace Game.View
         private float _walkPhase, _turnTravel, _turnSign, _turnUntil = -1f, _sink;
         private Vector3 _lastBody;
         private bool _isHidden, _shadowScaled, _deathSeen, _deathFromBurrow;
+        /// <summary>В прошлом кадре тело играло разворот: гистерезис «почти на месте» (ClipRules.Locomotion).</summary>
+        private bool _turnShown;
         /// <summary>Списки SetHidden переиспользуются: нырок раз в 5–10 с не мусорит в бою.</summary>
         private readonly System.Collections.Generic.List<Renderer> _hidden = new System.Collections.Generic.List<Renderer>(32),
             _scan = new System.Collections.Generic.List<Renderer>(32);
@@ -106,6 +132,36 @@ namespace Game.View
         private ThicketMasterState _last;
         private bool _tail;
         private int _tailFreeze;
+
+        /// <summary>Шаги разворота под ударом лапы: слои контроллера (−1 — их нет), правило, показанный клип слоя (−1 — пусто).</summary>
+        private readonly int[] _legsLayer = { -1, -1 };
+        private ThicketPawTurnLegs _legs;
+        private int _legsState = -1;
+        private float _legsShown;
+
+        /// <summary>Показан веер семян (действие или его хвост): клип ливня с шагами разворота (ThicketMasterClipRules.TurnStepsUnder).</summary>
+        private bool _seeds;
+
+        /// <summary>
+        /// F8 «Визуал · Хозяин Чащи»: лапы держат землю на ходу (шаг под поворот, замок стоп, ИК — ThicketWalkRules).
+        /// Выключено — ход как до 08.10: Walk по пути с полом поворота, без ИК. До выхода из игры.
+        /// </summary>
+        public static bool FootLock = true;
+
+        /// <summary>Лапы на ходу (ThicketWalkRules): фаза Walk кадра, замки стоп, цели ИК.</summary>
+        private readonly ThicketWalkFeet _feet = new ThicketWalkFeet();
+
+        /// <summary>Кости ног по лапам ThicketWalkRules: плечо/бедро, локоть/колено, конец (запястье/скакательный сустав), касание.</summary>
+        private readonly Transform[] _legUpper = new Transform[ThicketWalkRules.PawCount], _legLower = new Transform[ThicketWalkRules.PawCount],
+            _legEnd = new Transform[ThicketWalkRules.PawCount], _legContact = new Transform[ThicketWalkRules.PawCount];
+
+        /// <summary>Локальные повороты, что ИК оставила костям ноги в прошлом кадре: аниматор их не переписал — второй раз не ставить.</summary>
+        private readonly Quaternion[] _legSet = new Quaternion[ThicketWalkRules.PawCount * 3];
+        private bool _legsFound, _legsSet;
+
+        /// <summary>Фазу Walk ведёт шаг под поворот (а не заплатка разворота); лапы держат землю; корень и тело Sim уже видены.</summary>
+        private bool _feetDriven, _feetActive, _rootSeen, _renderSeen;
+        private Vector3 _lastRender, _lastRootPosition, _lastRootForward;
 
         /// <summary>Сущность, к которой привязано тело; −1 — не привязано.</summary>
         public int Entity => _entity;
@@ -153,6 +209,34 @@ namespace Game.View
                     case "chest": Chest = t; break;
                 }
             }
+            FindLegs();
+        }
+
+        /// <summary>Кости ног для ИК на ходу: передние — плечо, локоть, запястье, костяшка; задние — бедро, колено, скакательный сустав.</summary>
+        private void FindLegs()
+        {
+            var bones = GetComponentsInChildren<Transform>(true);
+            _legsFound = true;
+            for (int paw = 0; paw < ThicketWalkRules.PawCount; paw++)
+            {
+                bool front = ThicketWalkRules.IsFront(paw);
+                string side = paw == ThicketWalkRules.FrontLeft || paw == ThicketWalkRules.HindLeft ? "L" : "R";
+                string prefix = (front ? "leg_front_" : "leg_hind_") + side + "_";
+                _legUpper[paw] = FindBone(bones, prefix + "upper");
+                _legLower[paw] = FindBone(bones, prefix + "lower");
+                _legEnd[paw] = FindBone(bones, prefix + (front ? "paw" : "foot"));
+                _legContact[paw] = front ? FindBone(bones, prefix + "toe") : _legEnd[paw];
+                _legsFound &= _legUpper[paw] != null && _legLower[paw] != null && _legEnd[paw] != null && _legContact[paw] != null;
+            }
+            if (!_legsFound && _animator != null)
+                Debug.LogWarning("[thicketmaster] Нет костей ног leg_front_*/leg_hind_* — лапы на ходу без замка (ИК выключена).");
+        }
+
+        private static Transform FindBone(Transform[] bones, string bone)
+        {
+            foreach (var t in bones)
+                if (t.name == bone) return t;
+            return null;
         }
 
         private static void EnsureHashes()
@@ -167,6 +251,14 @@ namespace Game.View
                 StateHashes[Slot((int)clip, 1)] = Animator.StringToHash("Base Layer." + ThicketMasterClipRules.AlternateName(clip));
                 PhaseHashes[Slot((int)clip, 1)] = Animator.StringToHash(ThicketMasterClipRules.AlternatePhaseParameter(clip));
             }
+            for (int side = 0; side < 2; side++)
+                for (int turn = 0; turn < 2; turn++)
+                {
+                    ThicketClip clip = turn == 0 ? ThicketClip.TurnL : ThicketClip.TurnR;
+                    LegsStateHashes[side * 2 + turn] = Animator.StringToHash(
+                        ThicketMasterClipRules.PawTurnLayer(side == 0) + "." + ThicketMasterClipRules.Name(clip));
+                    LegsPhaseHashes[side * 2 + turn] = Animator.StringToHash(ThicketMasterClipRules.PawTurnParameter(side == 0, clip));
+                }
         }
 
         private static int Slot(int clip, int copy) => clip * Copies + copy;
@@ -189,8 +281,16 @@ namespace Game.View
             System.Array.Clear(_copy, 0, _copy.Length);
             _walkPhase = _turnTravel = _turnSign = 0f;
             _turnUntil = -1f;
+            _turnShown = false;
             _lastBody = Vector3.zero;
+            _legs = default;
+            _legsState = -1;
+            _legsShown = 0f;
+            _seeds = false;
+            ForgetFeet();
+            _renderSeen = false;
             ScaleContactShadow();
+            SetShadowLeft(1f);
             SetHidden(false);
             SetSink(0f);
             _state = -1;
@@ -199,6 +299,14 @@ namespace Game.View
             for (int i = 0; i < _has.Length; i++) _has[i] = StateHashes[i] != 0 && _animator.HasState(0, StateHashes[i]);
             if (_animator.runtimeAnimatorController == null || !_has[Slot((int)ThicketClip.Idle, 0)])
                 Debug.LogWarning("[thicketmaster] У тела нет контроллера с состоянием Idle — собери «Разлом → Босс → Хозяин Чащи → Собрать представление».");
+            // Слои шагов под ударом лапы — оба, с обоими клипами разворота; иначе (контроллер старше 03.10) без них.
+            for (int side = 0; side < 2; side++)
+            {
+                int layer = _animator.GetLayerIndex(ThicketMasterClipRules.PawTurnLayer(side == 0));
+                _legsLayer[side] = layer > 0 && _animator.HasState(layer, LegsStateHashes[side * 2])
+                    && _animator.HasState(layer, LegsStateHashes[side * 2 + 1]) ? layer : -1;
+            }
+            if (_legsLayer[0] < 0 || _legsLayer[1] < 0) _legsLayer[0] = _legsLayer[1] = -1;
             // Первый кадр — сразу в позе Sim (сон, действие), а не в Idle пула.
             Evaluate(0f, force: true);
             _animator.Update(0f);
@@ -254,6 +362,7 @@ namespace Game.View
                 Sample(new ThicketClipPose(ThicketClip.Death, frame), _deathFromBurrow ? 0f : DeathBlend);
                 UpdateDeathSink(seconds, profile, beat);
                 SetHidden(false);
+                UpdatePawTurnLegs(0f, dt);
                 return;
             }
 
@@ -277,15 +386,27 @@ namespace Game.View
             float yaw = body.sqrMagnitude > .5f && _lastBody.sqrMagnitude > .5f
                 ? Vector3.SignedAngle(_lastBody, body, Vector3.up) : 0f;
             if (body.sqrMagnitude > .5f) _lastBody = body;
+            // Путь показанного тела за кадр (оси тела, масштаб корня): по нему идёт фаза Walk, а не по скорости Sim × dt.
+            TrackRender(body);
 
+            EvaluateAlive(tick, yaw, dt, force);
+            // Серия лапы крутит корпус — шаги разворота поверх клипа удара (по позе, выбранной этим кадром).
+            UpdatePawTurnLegs(yaw, dt);
+        }
+
+        /// <summary>Живое тело вне Часов: действие, сон, ход, разворот, хвост клипа или покой.</summary>
+        private void EvaluateAlive(float tick, float yaw, float dt, bool force)
+        {
+            _seeds = false;
             if (_sim.TryGetThicketMasterAction(_entity, out ThicketMasterState a))
             {
                 ForgetTurn();
+                _seeds = a.Action == ThicketMasterAction.Seeds;
                 // Часы в стойке: прошедший удар Sim не сдвигает — трекер догоняет его, кадр не прыгает.
                 ThicketMasterState shown = _hourglass.Apply(a);
                 ThicketClipPose pose = ThicketMasterClipRules.Action(shown, tick);
                 // Новое действие — клип заново (тот же клип — во вторую копию); шаг того же — по правилу смеси:
-                // П→Л без смеси, Л→П — 4 тика.
+                // П→Л без смеси, Л→П — 4 тика; серия из подъёма топота (связка «топот → лапа») — 7.
                 bool same = a.Serial == _shownSerial;
                 float blend = ThicketMasterClipRules.ActionBlend(_pose.Clip, pose.Clip, same) * TicksToSeconds;
                 // Выход из-под земли — кадр 0 сразу, без смеси со спрятанной позой нырка.
@@ -309,38 +430,66 @@ namespace Game.View
                 return;
             }
 
-            float speed = entities.Velocity[_entity].Length.ToFloat() * Simulation.TicksPerSecond;
-            if (speed > WalkThreshold)
+            float speed = _sim.Entities.Velocity[_entity].Length.ToFloat() * Simulation.TicksPerSecond;
+            bool turning = TrackTurn(yaw, dt);
+            ThicketMotion motion = ThicketMasterClipRules.Locomotion(speed, turning, _turnShown);
+            // Хвост клипа (отход лапы, подъём после топота) переживает мелкий доворот к герою — корпус
+            // доходит до взгляда за 2–3 тика; разворот обрывает его, когда поворот уже настоящий.
+            bool tailing = _tail && tick >= _last.EndTick - 1 && tick < ThicketMasterClipRules.TailEndTick(_last);
+            if (motion == ThicketMotion.Turn && tailing && !ThicketMasterClipRules.TurnBreaksTail(_turnTravel))
+                motion = ThicketMotion.Idle;
+            _turnShown = motion == ThicketMotion.Turn;
+            if (motion == ThicketMotion.Walk)
             {
-                // Пошёл — хвост прошлого клипа обрывается смесью в ход.
-                ForgetTurn();
+                // Пошёл — хвост прошлого клипа обрывается смесью в ход. Доворачивает на ходу (Sim пускает
+                // шаг долей с 53° от героя) — лапы переступают не реже поворота, а не стоят под крутящимся телом.
                 _tail = false;
-                _walkPhase += ThicketMasterClipRules.WalkCycles(speed * dt, _walkStride, transform.lossyScale.x);
+                _turnTravel = 0f;
+                if (FootLock && _legsFound)
+                {
+                    // Лапы на ходу (владелец 08.10, «ноги проскальзывают»): фаза — по ходу земли под самой «быстрой» лапой
+                    // (прямо — ровно путь показанного тела / шаг, на повороте лапы переступают чаще), стопы под поворот и
+                    // замок стоящих — в LateUpdate (ThicketWalkRules).
+                    if (!_feetDriven) { _feet.Reset(); _feetDriven = true; }
+                    _walkPhase += _feet.Advance(dt, _renderForward, _renderSide, yaw, _walkStride, BodyScale);
+                }
+                else
+                    _walkPhase += ThicketMasterClipRules.WalkCyclesTurning(speed * dt, yaw, _walkStride, transform.lossyScale.x);
                 Sample(ThicketClipPose.WithPhase(ThicketClip.Walk, Mathf.Repeat(_walkPhase, 1f)), LocomotionBlend);
+                return;
+            }
+            if (motion == ThicketMotion.Turn)
+            {
+                // Крутится на месте или почти на месте (герой кружит) — шаги разворота по углу; хвост
+                // прошлого клипа (отход лапы, подъём после топота) поворот обрывает смесью.
+                _tail = false;
+                SampleTurn(yaw);
                 return;
             }
             // Хвост: действие снято, клип доигрывает (отход лапы, подъём после топота, оседание каста,
             // толчки ливня), пока босс стоит. Тот же номер действия — та же копия состояния.
             // Снятое раньше конца (смерть героя) хвоста не играет: замах не доигрывается.
-            if (_tail && tick >= _last.EndTick - 1 && tick < ThicketMasterClipRules.TailEndTick(_last))
+            if (tailing)
             {
-                ForgetTurn();
+                _seeds = _last.Action == ThicketMasterAction.Seeds;
                 Sample(ThicketMasterClipRules.Action(_last, tick), LocomotionBlend);
                 return;
             }
             _tail = false;
-            if (UpdateTurn(yaw, dt)) return;
             Sample(new ThicketClipPose(ThicketClip.Idle,
                 ThicketMasterClipRules.LoopPhase(tick, ThicketMasterClipRules.IdleFrames) * ThicketMasterClipRules.IdleFrames),
                 force ? 0f : LocomotionBlend);
         }
 
-        /// <summary>Корпус крутится на месте (Sim — 4,5°/тик): разворот клипом по углу. False — не крутится.</summary>
-        private bool UpdateTurn(float yaw, float dt)
+        /// <summary>
+        /// Корпус крутится (показанное тело, Sim — 2,5°/тик = 75°/с): копит угол поворота в одну сторону,
+        /// смена стороны — счёт заново; разворот держится TurnHoldSeconds после последнего поворота.
+        /// False — не крутится (счёт сброшен).
+        /// </summary>
+        private bool TrackTurn(float yaw, float dt)
         {
             float now = Time.time;
-            bool rotating = dt > 1e-5f && Mathf.Abs(yaw) / dt > TurnRateThreshold;
-            if (rotating)
+            if (dt > 1e-5f && Mathf.Abs(yaw) / dt > ThicketMasterClipRules.TurnRateThreshold)
             {
                 float sign = Mathf.Sign(yaw);
                 if (sign != _turnSign) { _turnSign = sign; _turnTravel = 0f; }
@@ -348,22 +497,191 @@ namespace Game.View
                 _turnUntil = now + TurnHoldSeconds;
             }
             if (_turnSign == 0f || now > _turnUntil) { ForgetTurn(); return false; }
+            return true;
+        }
+
+        /// <summary>Разворот клипом по накопленному углу: ~90° на клип, лапы переступают дважды за клип.</summary>
+        private void SampleTurn(float yaw)
+        {
             ThicketClip clip = _turnSign < 0f ? ThicketClip.TurnL : ThicketClip.TurnR;
             if (_has[Slot((int)clip, 0)])
             {
                 float phase = ThicketMasterClipRules.TurnPhase(_turnTravel);
                 Sample(new ThicketClipPose(clip, phase * ThicketMasterClipRules.TurnFrames), TurnBlendSeconds);
+                return;
             }
-            else
+            // Заплатка без клипов разворота: лапы переступают фазой Walk в темпе поворота (замка стоп у неё нет).
+            ForgetFeet();
+            _walkPhase += Mathf.Abs(yaw) / TurnShuffleDegreesPerCycle;
+            Sample(ThicketClipPose.WithPhase(ThicketClip.Walk, Mathf.Repeat(_walkPhase, 1f)), LocomotionBlend);
+        }
+
+        private void ForgetTurn() { _turnSign = 0f; _turnTravel = 0f; _turnUntil = -1f; _turnShown = false; }
+
+        // ------------------------------------------------------------ лапы на ходу (08.10)
+
+        /// <summary>Тело переставили, а не провели (пул, стенд): дальше этого за кадр — не шаг.</summary>
+        private const float MaxRenderStepMetres = 1.5f;
+
+        private float _renderForward, _renderSide;
+
+        /// <summary>Масштаб тела под корнем (сборщик: 4,14 м / рост модели) — стоп-центры ThicketWalkRules даны в масштабе модели 1.</summary>
+        private float BodyScale => _body != null ? Mathf.Abs(_body.localScale.x) : ThicketWalkRules.MeasuredBodyScale;
+
+        /// <summary>Путь показанного тела за кадр (TickDriver, как его поставит ArenaView) в осях тела и единицах корня.</summary>
+        private void TrackRender(Vector3 body)
+        {
+            Vector3 render = _driver.GetRenderPosition(_entity);
+            Vector3 delta = _renderSeen ? render - _lastRender : Vector3.zero;
+            _lastRender = render;
+            _renderSeen = true;
+            delta.y = 0f;
+            if (delta.sqrMagnitude > MaxRenderStepMetres * MaxRenderStepMetres) delta = Vector3.zero;
+            float unit = Mathf.Max(1e-4f, Mathf.Abs(transform.lossyScale.x));
+            Vector3 forward = body.sqrMagnitude > .5f ? new Vector3(body.x, 0f, body.z).normalized : transform.forward;
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+            _renderForward = Vector3.Dot(delta, forward) / unit;
+            _renderSide = Vector3.Dot(delta, right) / unit;
+        }
+
+        /// <summary>Ход кончился (вес Walk погас, тело из пула, заплатка разворота): замков и поправок нет.</summary>
+        private void ForgetFeet()
+        {
+            _feet.Reset();
+            _feetDriven = _feetActive = _legsSet = _rootSeen = false;
+        }
+
+        /// <summary>
+        /// Лапы держат землю на ходу (ThicketWalkRules, владелец 08.10): после аниматора (и после ArenaView — корень уже
+        /// стоит на месте кадра) каждая лапа идёт шагом под поворот, стоящая держит точку касания и разворот стопы, пока
+        /// корпус идёт и крутится, — двухкостной ИК поверх клипа. Вес — вес состояния Walk в аниматоре: смесь в ход и из
+        /// хода поправку проявляет и гасит. Пауза, Часы, смерть, нырок — ничего не трогает.
+        /// </summary>
+        private void LateUpdate()
+        {
+            if (_animator == null || !_legsFound || _sim == null || _driver == null) return;
+            // Пауза и Часы: фаза и корень стоят — те же цели ставятся заново на ту же позу (или позу не переписали).
+            float weight = FootLock && _feetDriven && _deathTick == None && !_isHidden ? WalkWeight() : 0f;
+            Vector3 position = transform.position, forward = transform.forward;
+            forward.y = 0f;
+            if (weight <= 1e-3f || forward.sqrMagnitude < 1e-6f)
             {
-                // Заплатка до клипов разворота: лапы переступают фазой Walk в темпе поворота.
-                _walkPhase += Mathf.Abs(yaw) / TurnShuffleDegreesPerCycle;
-                Sample(ThicketClipPose.WithPhase(ThicketClip.Walk, Mathf.Repeat(_walkPhase, 1f)), LocomotionBlend);
+                // Ход погас — следующий начнётся с чистого листа.
+                if (_feetActive) ForgetFeet();
+                return;
             }
+            forward.Normalize();
+            float unit = Mathf.Max(1e-4f, Mathf.Abs(transform.lossyScale.x));
+            if (_rootSeen)
+            {
+                // Корень сдвинулся и повернулся с прошлого кадра — стоящие лапы остаются на земле (в его прежних осях).
+                Vector3 moved = position - _lastRootPosition;
+                moved.y = 0f;
+                if (moved.sqrMagnitude > MaxRenderStepMetres * MaxRenderStepMetres) _feet.Reset();
+                else
+                {
+                    Vector3 right = Vector3.Cross(Vector3.up, _lastRootForward);
+                    _feet.Follow(Vector3.Dot(moved, _lastRootForward) / unit, Vector3.Dot(moved, right) / unit,
+                        Vector3.SignedAngle(_lastRootForward, forward, Vector3.up));
+                }
+            }
+            _lastRootPosition = position;
+            _lastRootForward = forward;
+            _rootSeen = true;
+            _feetActive = true;
+            // Аниматор позу не переписал (кости те же, что оставила ИК) — цели прошлого кадра уже стоят.
+            if (_legsSet && LegsUnchanged()) return;
+            float phase = Mathf.Repeat(_walkPhase, 1f);
+            for (int paw = 0; paw < ThicketWalkRules.PawCount; paw++) PlaceLeg(paw, phase, weight);
+            _legsSet = true;
+        }
+
+        /// <summary>Вес состояния Walk базового слоя этого кадра: 1 — играет, смесь — доля перехода.</summary>
+        private float WalkWeight()
+        {
+            int walk = StateHashes[Slot((int)ThicketClip.Walk, 0)];
+            float weight = _animator.GetCurrentAnimatorStateInfo(0).fullPathHash == walk ? 1f : 0f;
+            if (_animator.IsInTransition(0))
+            {
+                float t = Mathf.Clamp01(_animator.GetAnimatorTransitionInfo(0).normalizedTime);
+                weight = weight * (1f - t) + (_animator.GetNextAnimatorStateInfo(0).fullPathHash == walk ? t : 0f);
+            }
+            return weight;
+        }
+
+        private bool LegsUnchanged()
+        {
+            for (int paw = 0; paw < ThicketWalkRules.PawCount; paw++)
+                if (!Same(_legUpper[paw].localRotation, _legSet[paw * 3]) || !Same(_legLower[paw].localRotation, _legSet[paw * 3 + 1])
+                    || !Same(_legEnd[paw].localRotation, _legSet[paw * 3 + 2]))
+                    return false;
             return true;
         }
 
-        private void ForgetTurn() { _turnSign = 0f; _turnTravel = 0f; _turnUntil = -1f; }
+        private static bool Same(Quaternion a, Quaternion b) => a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+
+        /// <summary>
+        /// Лапа paw: точка касания клипа (костяшка передней, скакательный сустав задней) → цель ThicketWalkFeet в осях
+        /// корня, поправка — по весу Walk; конец ноги сдвигается на столько же (и поворачивается вокруг касания на разворот
+        /// стопы), колено и плечо — ИК, стопа сохраняет поворот клипа (плюс разворот на земле).
+        /// </summary>
+        private void PlaceLeg(int paw, float phase, float weight)
+        {
+            Transform upper = _legUpper[paw], lower = _legLower[paw], end = _legEnd[paw];
+            Vector3 contact = _legContact[paw].position;
+            Vector3 local = transform.InverseTransformPoint(contact);
+            _feet.Place(paw, phase, local.x, local.z, out float tx, out float tz, out float yaw);
+            Vector3 goal = transform.TransformPoint(new Vector3(Mathf.LerpUnclamped(local.x, tx, weight), local.y,
+                Mathf.LerpUnclamped(local.z, tz, weight)));
+            Quaternion turn = Quaternion.AngleAxis(yaw * weight, Vector3.up);
+            Vector3 tip = end.position;
+            Vector3 target = goal + turn * (tip - contact);
+            Quaternion endRotation = turn * end.rotation;
+            if ((target - tip).sqrMagnitude > 1e-8f
+                && ThicketLegIk.Solve(N(upper.position), N(lower.position), N(tip), N(target), out var bend, out var aim))
+            {
+                lower.rotation = Q(bend) * lower.rotation;
+                upper.rotation = Q(aim) * upper.rotation;
+            }
+            end.rotation = endRotation;
+            _legSet[paw * 3] = upper.localRotation;
+            _legSet[paw * 3 + 1] = lower.localRotation;
+            _legSet[paw * 3 + 2] = end.localRotation;
+        }
+
+        private static System.Numerics.Vector3 N(Vector3 v) => new System.Numerics.Vector3(v.x, v.y, v.z);
+
+        private static Quaternion Q(System.Numerics.Quaternion q) => new Quaternion(q.X, q.Y, q.Z, q.W);
+
+        /// <summary>
+        /// Шаги разворота под ударом лапы (проверка находок 03.10): Sim крутит корпус в серии 3,5°/тик, клип удара
+        /// стоит на месте — добавочные слои «Paw Turn Legs R/L» (задние лапы и опорная передняя) играют TurnL/TurnR
+        /// долей по накопленному повороту, вес — по правилу <see cref="ThicketPawTurnLegs"/>; вне клипа удара гаснут.
+        /// Слоёв нет (контроллер собран до 03.10) — правило идёт вхолостую.
+        /// </summary>
+        private void UpdatePawTurnLegs(float yaw, float dt)
+        {
+            // Замах веера семян (клип ливня) Sim тоже доворачивает корпус 3,5°/тик — те же шаги (ClipRules.TurnStepsUnder).
+            bool paw = ThicketMasterClipRules.TurnStepsUnder(_pose.Clip, _seeds && _deathTick == None, out bool rightStrikes);
+            _legs.Step(paw ? yaw : 0f, dt, paw, rightStrikes);
+            if (_legsLayer[0] < 0) return;
+            int turn = _legs.Sign < 0f ? 0 : 1;
+            bool switched = _legs.Sign != 0f && turn != _legsState;
+            for (int side = 0; side < 2; side++)
+            {
+                int layer = _legsLayer[side];
+                _animator.SetLayerWeight(layer, side == 0 ? _legs.WeightRight : _legs.WeightLeft);
+                if (_legs.Sign == 0f) continue;
+                int slot = side * 2 + turn;
+                _animator.SetFloat(LegsPhaseHashes[slot], _legs.Phase);
+                if (!switched) continue;
+                // Слой гас — клип сразу; смена стороны поворота посреди шагов — смесью, как у разворота на месте.
+                if (_legsShown <= 0f || _legsState < 0) _animator.Play(LegsStateHashes[slot], layer, 0f);
+                else _animator.CrossFadeInFixedTime(LegsStateHashes[slot], TurnBlendSeconds, layer, 0f);
+            }
+            if (switched) _legsState = turn;
+            _legsShown = _legs.Weight;
+        }
 
         /// <summary>
         /// Поза в контроллер: доля Motion Time в параметр состояния, смена состояния — смесью blend
@@ -417,8 +735,23 @@ namespace Game.View
                 if (t.name == ContactShadowName)
                 {
                     t.localScale = Vector3.one * _contactShadowMetres;
+                    _contactShadow = t;
+                    _shadowLeft = 1f;
                     _shadowScaled = true;
                 }
+        }
+
+        /// <summary>
+        /// Поперечник тени — доля left от полного (_contactShadowMetres). Смерть сжимает её вместе с уходом
+        /// тела под холм: тень стоит у корня, а холм — у середины лежащего тела (до 1,8 м вбок), иначе край
+        /// тени тёмным пятном торчал бы из-под холма до ухода тела в пул (5,5 с). Не ноль — вырожденная матрица.
+        /// </summary>
+        private void SetShadowLeft(float left)
+        {
+            left = Mathf.Clamp01(left);
+            if (_contactShadow == null || Mathf.Approximately(left, _shadowLeft)) return;
+            _shadowLeft = left;
+            _contactShadow.localScale = Vector3.one * (_contactShadowMetres * Mathf.Max(.002f, left));
         }
 
         private static bool IsTurn(int clip) => clip == (int)ThicketClip.TurnL || clip == (int)ThicketClip.TurnR;
@@ -429,11 +762,16 @@ namespace Game.View
         /// </summary>
         private void UpdateDeathSink(float seconds, EnemyDeathPresentation profile, EnemyKillBeat beat)
         {
-            float still = Mathf.Max(beat.HitStopSeconds + .05f, profile.FallSeconds) + profile.RestSeconds;
-            float to = Mathf.Max(.1f, beat.BodyGoneAt - .03f);
-            float from = Mathf.Clamp(to - 1.2f, Mathf.Min(still, to - .1f), to - .1f);
-            float k = Mathf.Clamp01((seconds - from) / Mathf.Max(.05f, to - from));
-            float sink = k * k * DeathSinkMetres;
+            // «Цветущий холм» (владелец 02.10, вечер: «смерть надо доработать»): тело уходит под встающий
+            // холм сразу после касания боком (ThicketMasterDeathRules.BodySink, land + 0,3 … + 1,8 с) и к
+            // уходу из пула (BodyGoneAt, 5,5 с) давно под землёй — не пропадает кадром. Не позже BodyGoneAt.
+            float land = beat.LandsAt > 0f ? beat.LandsAt : beat.HitStopSeconds + profile.FallSeconds;
+            float k = ThicketMasterDeathRules.BodySink(seconds, land);
+            float gone = Mathf.Max(.1f, beat.BodyGoneAt - .03f);
+            if (seconds >= gone) k = 1f;
+            float sink = k * DeathSinkMetres;
+            // Тень корня уходит вместе с телом: под холмом её не видно, а сбоку не торчит.
+            SetShadowLeft(ThicketMasterDeathRules.ShadowLeft(k));
             if (_deathFromBurrow)
             {
                 float rise = 1f - Mathf.Clamp01(seconds / BurrowDeathRiseSeconds);
@@ -505,7 +843,10 @@ namespace Game.View
             // Возврат в пул: следующий владелец не должен получить тело спрятанным или в земле.
             SetHidden(false);
             SetSink(0f);
+            SetShadowLeft(1f);
             if (_animator != null) _animator.speed = 1f;
+            ForgetFeet();
+            _renderSeen = false;
             if (gameObject.activeInHierarchy) return;
             _tail = false;
             _shownSerial = 0;

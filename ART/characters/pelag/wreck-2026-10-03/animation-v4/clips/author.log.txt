@@ -1,0 +1,124 @@
+FBX version: 7400
+FBX version: 7400
+перенос стойки: выравнивание 8.3°, hipScale 1.483
+стойка: таз опущен на 0.041 м, стопы на земле
+FIST {'Left': {'off': [-0.003, 0.122, 0.009], 'bax': [-0.994, 0.1, 0.041]}, 'Right': {'off': [0.003, 0.117, 0.01], 'bax': [0.986, 0.165, 0.002]}}
+FBX version: 7400
+FBX version: 7400
+FBX version: 7400
+FBX version: 7400
+GROUND dz -0.095
+CHK Pelag_AN_Wreck4_Draw speed (53.1, '4→5 RightArm (удар)') bad=0 | lean (10.7, 12.1) tw 39 fore 60 relP 0.0 hip 0.347 low 0.0022 gap (9.0, 0.0) slide (0.0, None) sub {'low': (0.0022, 'Left x0.00'), 'slide': (0.0, None)} cont 0
+ROW Swing1  0 s 0.00 pull 0.62 miss L 0.001 R 0.001 ax {'Left': 4.0, 'Right': 3.7} gap 0.150 fore {'Left': 51.6, 'Right': -60.3} tw 21 lean 12
+ROW Swing1  1 s 1.25 pull 0.69 miss L 0.003 R 0.000 ax {'Left': 2.3, 'Right': 12.0} gap 0.180 fore {'Left': 48.6, 'Right': -60.2} tw 10 lean 15
+ROW Swing1  2 s 2.00 pull 0.66 miss L 0.001 R 0.000 ax {'Left': 2.4, 'Right': 4.8} gap 0.150 fore {'Left': 36.3, 'Right': -45.2} tw -16 lean 24
+ROW Swing1  3 s 2.65 pull 0.58 miss L 0.000 R 0.001 ax {'Left': 3.6, 'Right': 5.5} gap 0.151 fore {'Left': 48.5, 'Right': -36.8} tw -4 lean 2
+ROW Swing1  4 s 3.30 pull 0.45 miss L 0.000 R 0.010 ax {'Left': 17.5, 'Right': 5.1} gap 0.177 fore {'Left': 63.6, 'Right': -57.9} tw 8 lean 2
+ROW Swing1  5 s 4.00 pull 0.27 miss L 0.001 R 0.005 ax {'Left': 18.8, 'Right': 4.5} gap 0.150 fore {'Left': 63.7, 'Right': -60.6} tw 17 lean 1
+ROW Swing1  6 s 4.70 pull 0.16 miss L 0.001 R 0.004 ax {'Left': 4.9, 'Right': 2.3} gap 0.151 fore {'Left': 57.6, 'Right': -60.5} tw 29 lean 1
+ROW Swing1  7 s 5.60 pull 0.16 miss L 0.002 R 0.003 ax {'Left': 2.5, 'Right': 5.9} gap 0.151 fore {'Left': 39.6, 'Right': -60.3} tw 40 lean 1
+ROW Swing1  8 s 6.80 pull 0.40 miss L 0.002 R 0.004 ax {'Left': 4.0, 'Right': 6.9} gap 0.152 fore {'Left': 39.6, 'Right': -63.2} tw 41 lean 1
+ROW Swing1  9 s 8.00 pull 0.39 miss L 0.001 R 0.000 ax {'Left': 3.5, 'Right': 7.7} gap 0.150 fore {'Left': 42.6, 'Right': -66.3} tw 40 lean 5
+ROW Swing1 10 s 9.08 pull 0.37 miss L 0.002 R 0.000 ax {'Left': 6.3, 'Right': 14.6} gap 0.150 fore {'Left': 42.6, 'Right': -66.2} tw 39 lean 6
+ROW Swing1 11 s10.10 pull 0.36 miss L 0.002 R 0.000 ax {'Left': 10.2, 'Right': 18.4} gap 0.150 fore {'Left': 42.6, 'Right': -66.2} tw 39 lean 6
+ROW Swing1 12 s11.09 pull 0.36 miss L 0.001 R 0.001 ax {'Left': 11.7, 'Right': 21.0} gap 0.150 fore {'Left': 42.6, 'Right': -66.2} tw 38 lean 6
+ROW Swing1 13 s12.05 pull 0.35 miss L 0.001 R 0.001 ax {'Left': 13.3, 'Right': 22.9} gap 0.150 fore {'Left': 42.6, 'Right': -66.2} tw 38 lean 7
+ROW Swing1 14 s13.02 pull 0.35 miss L 0.001 R 0.001 ax {'Left': 15.1, 'Right': 24.8} gap 0.150 fore {'Left': 42.6, 'Right': -66.2} tw 38 lean 7
+ROW Swing1 15 s14.00 pull 0.34 miss L 0.001 R 0.001 ax {'Left': 16.5, 'Right': 24.1} gap 0.150 fore {'Left': 42.6, 'Right': -66.2} tw 37 lean 8
+CHK Pelag_AN_Wreck4_Swing1 speed (69.1, '2→3 Hips (удар)') bad=0 | lean (0.6, 23.5) tw 41 fore 66 relP 2.9 hip 0.462 low 0.0018 gap (0.15, 0.18) slide (0.0067, 'Right f2→3') sub {'low': (-0.012, 'Right x5.50'), 'slide': (0.0259, 'Right x6.00')} cont 0
+ROW Swing2  0 s 0.00 pull 0.34 miss L 0.001 R 0.000 ax {'Left': 16.5, 'Right': 24.1} gap 0.150 fore {'Left': 42.6, 'Right': -66.3} tw 40 lean 5
+ROW Swing2  1 s 1.30 pull 0.25 miss L 0.001 R 0.001 ax {'Left': 32.2, 'Right': 47.4} gap 0.142 fore {'Left': 42.6, 'Right': -66.2} tw 37 lean 7
+ROW Swing2  2 s 2.20 pull 0.24 miss L 0.001 R 0.001 ax {'Left': 37.7, 'Right': 74.3} gap 0.145 fore {'Left': 42.6, 'Right': -66.1} tw 33 lean 8
+ROW Swing2  3 s 2.90 pull 0.22 miss L 0.000 R 0.004 ax {'Left': 33.5, 'Right': 36.0} gap 0.152 fore {'Left': 42.6, 'Right': -48.3} tw 32 lean 7
+ROW Swing2  4 s 3.50 pull 0.24 miss L 0.000 R 0.007 ax {'Left': 25.7, 'Right': 28.0} gap 0.149 fore {'Left': 42.5, 'Right': -66.5} tw 26 lean 8
+ROW Swing2  5 s 4.00 pull 0.35 miss L 0.001 R 0.005 ax {'Left': 4.2, 'Right': 44.1} gap 0.150 fore {'Left': 51.7, 'Right': -66.3} tw 21 lean 10
+ROW Swing2  6 s 4.70 pull 0.42 miss L 0.000 R 0.012 ax {'Left': 2.4, 'Right': 69.6} gap 0.159 fore {'Left': 30.6, 'Right': -67.1} tw 8 lean 18
+ROW Swing2  7 s 5.60 pull 0.44 miss L 0.001 R 0.009 ax {'Left': 3.7, 'Right': 57.7} gap 0.210 fore {'Left': 51.8, 'Right': -66.8} tw -7 lean 24
+ROW Swing2  8 s 6.80 pull 0.36 miss L 0.004 R 0.007 ax {'Left': 17.4, 'Right': 74.7} gap 0.181 fore {'Left': 27.9, 'Right': -66.5} tw -27 lean 23
+ROW Swing2  9 s 8.00 pull 0.40 miss L 0.006 R 0.006 ax {'Left': 19.8, 'Right': 83.1} gap 0.181 fore {'Left': 25.0, 'Right': -66.4} tw -40 lean 19
+ROW Swing2 10 s 9.08 pull 0.39 miss L 0.005 R 0.006 ax {'Left': 18.7, 'Right': 78.6} gap 0.181 fore {'Left': 19.0, 'Right': -66.4} tw -41 lean 18
+ROW Swing2 11 s10.10 pull 0.39 miss L 0.001 R 0.008 ax {'Left': 15.1, 'Right': 72.6} gap 0.150 fore {'Left': 10.0, 'Right': -66.5} tw -42 lean 17
+ROW Swing2 12 s11.09 pull 0.39 miss L 0.022 R 0.007 ax {'Left': 8.9, 'Right': 67.1} gap 0.152 fore {'Left': 1.0, 'Right': -66.6} tw -42 lean 17
+ROW Swing2 13 s12.05 pull 0.39 miss L 0.011 R 0.007 ax {'Left': 9.9, 'Right': 65.3} gap 0.151 fore {'Left': 1.0, 'Right': -66.6} tw -42 lean 17
+ROW Swing2 14 s13.02 pull 0.40 miss L 0.011 R 0.007 ax {'Left': 8.7, 'Right': 63.5} gap 0.151 fore {'Left': 1.0, 'Right': -66.6} tw -42 lean 16
+ROW Swing2 15 s14.00 pull 0.41 miss L 0.012 R 0.007 ax {'Left': 8.8, 'Right': 61.7} gap 0.151 fore {'Left': 1.0, 'Right': -66.6} tw -42 lean 16
+CHK Pelag_AN_Wreck4_Swing2 speed (60.7, '2→3 RightArm (удар)') bad=0 | lean (4.9, 24.2) tw 42 fore 67 relP 3.0 hip 0.462 low 0.0018 gap (0.142, 0.21) slide (0.0043, 'Right f4→5') sub {'low': (-0.0001, 'Right x8.50'), 'slide': (0.0151, 'Left x12.50')} cont 14
+ROW Lunge  0 s 0.00 pull 0.39 miss L 0.002 R 0.006 ax {'Left': 17.0, 'Right': 76.4} gap 0.181 fore {'Left': 25.0, 'Right': -66.4} tw -40 lean 19
+ROW Lunge  1 s 1.00 pull 0.53 miss L 0.000 R 0.007 ax {'Left': 2.6, 'Right': 53.3} gap 0.158 fore {'Left': 18.5, 'Right': -66.5} tw -43 lean 13
+ROW Lunge  2 s 1.90 pull 0.48 miss L 0.000 R 0.004 ax {'Left': 4.2, 'Right': 40.1} gap 0.145 fore {'Left': 19.2, 'Right': -66.5} tw -38 lean 4
+ROW Lunge  3 s 2.60 pull 0.51 miss L 0.000 R 0.002 ax {'Left': 6.0, 'Right': 35.4} gap 0.150 fore {'Left': 27.7, 'Right': -66.4} tw -28 lean 1
+ROW Lunge  4 s 3.25 pull 0.60 miss L 0.001 R 0.000 ax {'Left': 5.1, 'Right': 56.1} gap 0.242 fore {'Left': 43.7, 'Right': -66.5} tw -22 lean 0
+ROW Lunge  5 s 4.00 pull 0.73 miss L 0.024 R 0.003 ax {'Left': 77.1, 'Right': 11.4} gap 0.260 fore {'Left': 51.7, 'Right': -66.5} tw -8 lean 14
+ROW Lunge  6 s 5.00 pull 0.60 miss L 0.001 R 0.003 ax {'Left': 30.1, 'Right': 21.8} gap 0.172 fore {'Left': 59.7, 'Right': -66.5} tw -1 lean 19
+ROW Lunge  7 s 6.00 pull 0.42 miss L 0.001 R 0.006 ax {'Left': 26.2, 'Right': 9.8} gap 0.155 fore {'Left': 63.6, 'Right': -66.6} tw 4 lean 22
+ROW Lunge  8 s 7.00 pull 0.41 miss L 0.001 R 0.002 ax {'Left': 38.3, 'Right': 4.2} gap 0.211 fore {'Left': 63.7, 'Right': -27.4} tw 10 lean 24
+ROW Lunge  9 s 7.93 pull 0.48 miss L 0.000 R 0.001 ax {'Left': 55.6, 'Right': 2.6} gap 0.150 fore {'Left': 63.7, 'Right': -15.4} tw 15 lean 26
+ROW Lunge 10 s 8.81 pull 0.53 miss L 0.000 R 0.002 ax {'Left': 60.9, 'Right': 3.4} gap 0.151 fore {'Left': 63.7, 'Right': -12.3} tw 17 lean 27
+ROW Lunge 11 s 9.67 pull 0.55 miss L 0.000 R 0.001 ax {'Left': 59.4, 'Right': 1.8} gap 0.151 fore {'Left': 63.7, 'Right': -12.3} tw 20 lean 25
+ROW Lunge 12 s10.52 pull 0.56 miss L 0.000 R 0.001 ax {'Left': 59.2, 'Right': 2.9} gap 0.150 fore {'Left': 63.7, 'Right': -12.3} tw 23 lean 23
+ROW Lunge 13 s11.36 pull 0.57 miss L 0.002 R 0.002 ax {'Left': 62.0, 'Right': 4.0} gap 0.151 fore {'Left': 63.7, 'Right': -12.3} tw 23 lean 21
+ROW Lunge 14 s12.21 pull 0.56 miss L 0.000 R 0.000 ax {'Left': 67.6, 'Right': 4.8} gap 0.150 fore {'Left': 63.7, 'Right': -9.3} tw 20 lean 20
+ROW Lunge 15 s13.09 pull 0.55 miss L 0.002 R 0.001 ax {'Left': 51.1, 'Right': 4.3} gap 0.150 fore {'Left': 15.8, 'Right': -9.1} tw 17 lean 19
+ROW Lunge 16 s14.00 pull 0.54 miss L 0.000 R 0.008 ax {'Left': 29.9, 'Right': 12.9} gap 0.158 fore {'Left': -5.2, 'Right': -6.0} tw 13 lean 18
+ROW Lunge 17 s14.95 pull 0.57 miss L 0.002 R 0.007 ax {'Left': 12.6, 'Right': 24.4} gap 0.156 fore {'Left': -5.2, 'Right': -6.1} tw 15 lean 17
+ROW Lunge 18 s15.93 pull 0.61 miss L 0.000 R 0.006 ax {'Left': 1.0, 'Right': 34.5} gap 0.156 fore {'Left': 0.8, 'Right': -6.1} tw 18 lean 16
+ROW Lunge 19 s16.92 pull 0.66 miss L 0.001 R 0.006 ax {'Left': 3.7, 'Right': 41.7} gap 0.155 fore {'Left': 6.7, 'Right': -6.1} tw 19 lean 16
+ROW Lunge 20 s17.93 pull 0.69 miss L 0.001 R 0.005 ax {'Left': 3.2, 'Right': 45.5} gap 0.154 fore {'Left': 15.7, 'Right': -6.1} tw 20 lean 15
+ROW Lunge 21 s18.95 pull 0.67 miss L 0.001 R 0.004 ax {'Left': 4.3, 'Right': 48.2} gap 0.153 fore {'Left': 24.6, 'Right': -6.1} tw 20 lean 15
+ROW Lunge 22 s19.98 pull 0.62 miss L 0.002 R 0.002 ax {'Left': 3.2, 'Right': 43.9} gap 0.152 fore {'Left': 36.6, 'Right': -18.2} tw 20 lean 15
+ROW Lunge 23 s20.99 pull 0.61 miss L 0.005 R 0.002 ax {'Left': 4.1, 'Right': 7.3} gap 0.151 fore {'Left': 39.6, 'Right': -54.2} tw 19 lean 15
+ROW Lunge 24 s22.00 pull 0.62 miss L 0.002 R 0.000 ax {'Left': 2.9, 'Right': 4.5} gap 0.150 fore {'Left': 42.6, 'Right': -57.3} tw 20 lean 14
+CHK Pelag_AN_Wreck4_Lunge speed (65.5, '1→2 LeftArm (удар)') bad=1 | lean (0.4, 26.8) tw 43 fore 67 relP 2.9 hip 0.481 low 0.0018 gap (0.145, 0.26) slide (0.0089, 'Right f19→20') sub {'low': (-0.0005, 'Left x13.50'), 'slide': (0.0154, 'Left x15.50')} cont 7
+CHK Pelag_AN_Wreck4_Stow speed (53.9, '1→2 LeftHandIndex2 (удар)') bad=0 | lean (14.2, 18.4) tw 22 fore 41 relP 0.2 hip 0.371 low 0.0019 gap (9.0, 0.0) slide (0.0089, 'Right f3→4') sub {'low': (0.0013, 'Left x3.00'), 'slide': (0.0032, 'Left x3.00')} cont 0
+VIOLATIONS 27
+  V Swing1 под землёй между кадрами (-0.012, 'Right x5.50')
+  V Swing1 скольжение между кадрами (0.0259, 'Right x6.00')
+  V Swing2 пересечение f6 ('LeftHand+LeftForeArm', 'torso', 6, 4, 0.0495)
+  V Swing2 пересечение f6 ('LeftHand+LeftForeArm', 'head', 0, 2, 0.0573)
+  V Swing2 пересечение f7 ('LeftHand+LeftForeArm', 'torso', 17, 63, 0.0596)
+  V Swing2 пересечение f10 ('LeftHand+LeftForeArm', 'head', 0, 5, 0.0571)
+  V Swing2 пересечение f11 ('LeftHand+LeftForeArm', 'torso', 1, 6, 0.0539)
+  V Swing2 пересечение f11 ('LeftHand+LeftForeArm', 'head', 1, 6, 0.0578)
+  V Swing2 пересечение f12 ('LeftHand+LeftForeArm', 'torso', 2, 9, 0.0583)
+  V Swing2 пересечение f12 ('LeftHand+LeftForeArm', 'head', 11, 9, 0.0494)
+  V Swing2 пересечение f13 ('LeftHand+LeftForeArm', 'torso', 3, 8, 0.0501)
+  V Swing2 пересечение f13 ('LeftHand+LeftForeArm', 'head', 17, 16, 0.0495)
+  V Swing2 пересечение f14 ('LeftHand+LeftForeArm', 'torso', 1, 10, 0.0576)
+  V Swing2 пересечение f14 ('LeftHand+LeftForeArm', 'head', 19, 9, 0.0386)
+  V Swing2 пересечение f15 ('LeftHand+LeftForeArm', 'torso', 1, 11, 0.0588)
+  V Swing2 пересечение f15 ('LeftHand+LeftForeArm', 'head', 35, 10, 0.0231)
+  V Swing2 скольжение между кадрами (0.0151, 'Left x12.50')
+  V Lunge скорость ('22→23', 'RightForeArm', 36.9, 35.0)
+  V Lunge пересечение f1 ('LeftHand+LeftForeArm', 'torso', 0, 1, 0.0584)
+  V Lunge пересечение f1 ('LeftHand+LeftForeArm', 'head', 35, 22, 0.0583)
+  V Lunge пересечение f2 ('LeftHand+LeftForeArm', 'head', 42, 29, 0.0577)
+  V Lunge пересечение f3 ('LeftHand+LeftForeArm', 'head', 0, 3, 0.0577)
+  V Lunge пересечение f4 ('LeftHand+LeftForeArm', 'head', 81, 44, 0.0589)
+  V Lunge кисти на рукояти f5 0.26
+  V Lunge пересечение f5 ('RightHand+RightForeArm', 'head', 62, 34, 0.0581)
+  V Lunge пересечение f5 ('LeftHand+LeftForeArm', 'head', 155, 129, 0.0598)
+  V Lunge скольжение между кадрами (0.0154, 'Left x15.50')
+SEAM Draw@8 -> Swing1@0: 0.0° 
+SEAM Swing1@9 -> Swing2@0: 0.0° 
+SEAM Swing2@9 -> Lunge@0: 0.0° 
+SEAM Lunge@16 -> Stow@0: 0.0° 
+
+FBX export starting... 'C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips\\Pelag_AN_Wreck4_Draw.fbx'
+export finished in 0.3364 sec.
+
+FBX export starting... 'C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips\\Pelag_AN_Wreck4_Swing1.fbx'
+export finished in 0.3276 sec.
+
+FBX export starting... 'C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips\\Pelag_AN_Wreck4_Swing2.fbx'
+export finished in 0.2237 sec.
+
+FBX export starting... 'C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips\\Pelag_AN_Wreck4_Lunge.fbx'
+export finished in 0.2841 sec.
+
+FBX export starting... 'C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips\\Pelag_AN_Wreck4_Stow.fbx'
+export finished in 0.1736 sec.
+Info: Saved as "Pelag_Wreck4_Work.blend"
+AUTHORED ['Draw', 'Swing1', 'Swing2', 'Lunge', 'Stow'] violations 27
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

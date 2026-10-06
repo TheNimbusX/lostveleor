@@ -396,7 +396,7 @@ public sealed class UiKeywordsTests
         // Копии строк PlayerHud.AbilityDescription, RunArtifactTexts.Effect и CampServiceText: сами таблицы
         // тянут Unity и в эту сборку не входят.
         Assert.That(Found("Удар якорем перед собой с коротким оглушением."), Is.EqualTo(new[] { Id.Stun }));
-        Assert.That(Found("Три удара якорем: нажимай повторно. Последний оглушает."), Is.EqualTo(new[] { Id.Stun }));
+        Assert.That(Found("Три удара якорем на цепи: мах, обратный мах и удар оземь — вал бежит по полосе."), Is.Empty);
         Assert.That(Found("Взрыв в выбранной точке оставляет горящую область."), Is.EqualTo(new[] { Id.Burn }));
         Assert.That(Found("Поджигает саблю и повышает уклонение. Можно применять на бегу."), Is.EqualTo(new[] { Id.Evasion }));
         Assert.That(Found("4 секунды полной неуязвимости. Атаковать можно."), Is.EqualTo(new[] { Id.Invulnerability }));

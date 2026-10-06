@@ -17,7 +17,7 @@ namespace Game.Sim
     /// боссу (из него можно бить), круг 1 — в 3–5 м от героя, круг 2 — где
     /// угодно на полу в 5–9 м от героя. Все — на полу, круги 1 и 2 — по прямой
     /// от героя без стен. Круги второй волны — новые, встают в тик удара
-    /// первой (круг 0 — с другой стороны босса). Урон волны — доля 70/41 удара.
+    /// первой (круг 0 — с другой стороны босса). Урон волны — доля 60/41 удара.
     /// Круги — метки Circle с SharedView | SafeZone (бот и вид их читают),
     /// места кругов 0–2 — первая волна, 3–5 — вторая (TryGetThicketShape).
     /// Пока буря идёт, она занимает весь бюджет крупных меток (не меньше 4):
@@ -30,9 +30,10 @@ namespace Game.Sim
     /// Flag — героя задело.
     ///
     /// СВЯЗКИ (фазы 2–3, темп 02.10). Нырок→лапа или Нырок→топот: после
-    /// стойки 24 после выхода — сразу серия лапы (герой в её досягаемости)
+    /// стойки 36 после выхода — сразу серия лапы (герой в её досягаемости)
     /// или топот (герой не дальше ThicketChainReach), мимо отдыха, правила
-    /// «60 из 90» и перезарядки топота. Серия лапы фазы 3 (3 удара) — сама
+    /// «прижался» и его перезарядки (но не ближе 90 к прошлому топоту — иначе
+    /// рвётся). Серия лапы фазы 3 (3 удара) — сама
     /// связка; прежней «Лапа→Лапа→Топот» нет. Окно после связки — окно её
     /// действия (30). Не встала за ThicketChainWaitTicks (бюджет, такт, Часы,
     /// герой ушёл от лапы) — рвётся. Рёв связку рвёт.
@@ -41,7 +42,13 @@ namespace Game.Sim
     {
         // ---- буря цветения ----
 
-        public const int ThicketStormFirstWaveTicks = 60, ThicketStormSecondWaveTicks = 45;
+        /// <summary>
+        /// Первая волна — через 90 тиков после начала, вторая — через 75 после первой
+        /// (ревью 02.10, вечер: «сделать бурю дольше по продолжительности», было 60 и
+        /// 45). Всё это время босс стоит в позе бури (канал): вид держит её от
+        /// Started(Storm, 0) до EndTick.
+        /// </summary>
+        public const int ThicketStormFirstWaveTicks = 90, ThicketStormSecondWaveTicks = 75;
 
         /// <summary>Стойка после второй волны, до отдыха.</summary>
         public const int ThicketStormRecoveryTicks = 12;
@@ -64,6 +71,27 @@ namespace Game.Sim
 
         /// <summary>Круг 2 — центр в 5–9 м от героя.</summary>
         public static readonly Fix64 ThicketStormFarMin = Fix64.FromInt(5), ThicketStormFarMax = Fix64.FromInt(9);
+
+        /// <summary>
+        /// Камера боя (ревью 02.10, ночь: «круги иногда под нижней полосой HUD»). В Sim камеры
+        /// нет — число снято со сцены: SampleScene, камера с CameraFollow — рыскание 25,65°
+        /// (CameraFollow держит его из сцены и ставит наклон CombatPitch 48°, ortho 6,2).
+        /// Низ экрана на земле в осях Sim (X, Y = мир X, Z) — −(sin 25,65°, cos 25,65°).
+        /// Поменяют рыскание камеры — поменять и здесь.
+        /// </summary>
+        public static readonly FixVec2 ThicketCameraScreenDown = new FixVec2(Fix64.Ratio(-4329, 10000), Fix64.Ratio(-9015, 10000));
+
+        /// <summary>
+        /// Круг 1 (рядом с героем, ≤ 5 м) — не ниже героя на экране больше чем на 1,5 м по
+        /// земле (ThicketCameraScreenDown): лучше выше или сбоку. Герой стоит в кадре на
+        /// 0,35 ниже середины: низ кадра — ≈ 7,9 м по земле под ним, полоса HUD — нижние
+        /// ≈ 2,6 м; круг r2 с центром не ниже 1,5 м кончается на 3,5 м — над ней. Круг 2
+        /// (5–9 м) — по возможности не ниже 3 м, иначе где получится.
+        /// </summary>
+        public static readonly Fix64 ThicketStormScreenDownMax = Fix64.Ratio(3, 2), ThicketStormFarScreenDownMax = Fix64.FromInt(3);
+
+        /// <summary>Сколько метров по земле точка ниже героя на экране боя (меньше нуля — выше).</summary>
+        public static Fix64 ThicketScreenDown(FixVec2 hero, FixVec2 point) => FixVec2.Dot(point - hero, ThicketCameraScreenDown);
 
         /// <summary>Круг 0 второй волны — на 100–140° в сторону от круга 0 первой.</summary>
         private static readonly Fix64 ThicketStormTurnMin = Fix64.Pi * 5 / 9, ThicketStormTurnMax = Fix64.Pi * 7 / 9;
@@ -117,12 +145,18 @@ namespace Game.Sim
             ref var m = ref ThicketMemory[id];
             if (m.ChainNext != ThicketMasterAction.None)
             {
-                // Связка-лапа — только пока герой в досягаемости лапы: иначе рвётся.
+                // Связка-лапа — только пока герой в досягаемости лапы: иначе рвётся. Связка-топот —
+                // не ближе 90 к прошлому топоту (ThicketStompSpacingTicks): иначе рвётся.
                 bool reach = m.ChainNext != ThicketMasterAction.Paw || ThicketPawInReach(id);
-                if (reach && Tick - m.ChainStep <= ThicketChainWaitTicks) { choice = m.ChainNext; return; }
+                bool spaced = m.ChainNext != ThicketMasterAction.Stomp
+                    || Tick >= ThicketReady[id * ThicketActionSlots + ThicketRearStompSlot];
+                if (reach && spaced && Tick - m.ChainStep <= ThicketChainWaitTicks) { choice = m.ChainNext; return; }
                 m.ChainNext = ThicketMasterAction.None;
                 m.ChainStep = 0;
             }
+            // Ливень фазы 3 — раньше бури (ревью 02.10, ночь): после рёва 33 сначала ягоды, буря
+            // ждёт конца их кругов (≈ 3 с) — так в фазе 3 два ливня и больше.
+            if (ThicketRainDue(id)) { choice = ThicketMasterAction.Rain; return; }
             if (ThicketStormDue(id)) choice = ThicketMasterAction.Storm;
         }
 
@@ -131,13 +165,21 @@ namespace Game.Sim
             if (ThicketStormDue(id)) holds = true;
         }
 
-        /// <summary>Рёв рвёт связку; рёв на 33% ставит бурю сразу.</summary>
+        /// <summary>
+        /// Рёв рвёт связку; рёв на 33% ставит бурю сразу; рёв вступления (03.10) ставит срок
+        /// первого нырка «под героя» — через ThicketDiveFirstTicks (10 с) — и первого топота в
+        /// жребии — через ThicketStompPickCooldownTicks (4,5 с): бой открывают серии лапы.
+        /// </summary>
         partial void ThicketRoarDone(int id, int thresholds)
         {
             ref var m = ref ThicketMemory[id];
             m.ChainNext = ThicketMasterAction.None;
             m.ChainStep = 0;
             if ((thresholds & ThicketRoar33Bit) != 0) m.StormNextTick = Tick;
+            if ((thresholds & ThicketRoarIntroBit) == 0) return;
+            if (m.DiveNextTick == 0) m.DiveNextTick = Tick + ThicketDiveFirstTicks;
+            int pick = id * ThicketActionSlots + ThicketStompPickSlot;
+            ThicketReady[pick] = Math.Max(ThicketReady[pick], Tick + ThicketStompPickCooldownTicks);
         }
 
         /// <summary>
@@ -158,7 +200,7 @@ namespace Game.Sim
 
         /// <summary>
         /// Конец действия. Нырок в фазах 2–3 (после стойки 36) — сразу связка:
-        /// серия лапы или топот, мимо отдыха, правила «60 из 90» и перезарядки
+        /// серия лапы или топот, мимо отдыха, правила «прижался» и его перезарядки
         /// топота. Окно после связки — окно её действия (30 тиков).
         /// </summary>
         partial void ThicketFinishedExtra(int id, ThicketMasterAction finished)
@@ -168,6 +210,19 @@ namespace Game.Sim
             {
                 m.ChainNext = ThicketMasterAction.None;
                 m.ChainStep = 0;
+                return;
+            }
+            // «Топот → лапа» (баланс 02.10, ночь, фазы 2–3; изменение дизайна — показать владельцу):
+            // кто после кольца стоит под лапой — серия сразу, мимо отдыха (удар — не раньше окна
+            // ответа после кольца, 30). Рывок, которым уходили от круга, к удару уже готов (нажат за
+            // ≤ 6 тиков до круга, перезарядка 45 < 15 + 30); рывок от кольца — ещё нет: от лапы — ногами.
+            if (finished == ThicketMasterAction.Stomp)
+            {
+                if (m.Phase < 2 || m.ChainNext != ThicketMasterAction.None || !Entities.Alive[PlayerId]
+                    || !ThicketPawInReach(id)) return;
+                m.ChainNext = ThicketMasterAction.Paw;
+                m.ChainStep = Tick;
+                m.NextActionTick = Tick;
                 return;
             }
             if (finished != ThicketMasterAction.Dive) return;
@@ -242,9 +297,11 @@ namespace Game.Sim
         /// ThicketStormBossOffset от босса: в первой волне — к герою, во второй —
         /// на 100–140° в сторону от прошлого (previous — от босса к прошлому
         /// кругу 0); первая свободная от стен точка через 30°. Круг 1 — в 3–5 м
-        /// от героя, круг 2 — в 5–9 м, оба на полу и по прямой без стен, по
-        /// возможности не внахлёст с другими (центры не ближе 4 м, потом 2 м).
-        /// Ничего не нашлось (тупик у стены) — круг 1 на самом герое.
+        /// от героя и не ниже его на экране больше 1,5 м (ThicketStormScreenDownMax:
+        /// снизу HUD), круг 2 — в 5–9 м (по возможности не ниже 3 м; нет такого места — сначала
+        /// ближе, с 3 м, и лишь потом где угодно), оба на полу и
+        /// по прямой без стен, по возможности не внахлёст с другими (центры не
+        /// ближе 4 м, потом 2 м). Ничего не нашлось (тупик у стены) — круг 1 на самом герое.
         /// </summary>
         private void ThicketStormCircles(int id, int wave, FixVec2 previous, FixVec2[] centers)
         {
@@ -272,29 +329,37 @@ namespace Game.Sim
                 if (ThicketStormFloor(c)) { centers[0] = c; break; }
             }
 
-            // Круг 1 — рядом с героем.
+            // Круг 1 — рядом с героем и не под HUD внизу экрана.
             Fix64 nearAngle = rng.NextFix() * Fix64.TwoPi;
             Fix64 near = rng.NextFix(ThicketStormNearMin, ThicketStormNearMax);
-            if (!ThicketStormPick(hero, nearAngle, near, ThicketStormNearMin, centers, 1, r * 2, out centers[1])
-                && !ThicketStormPick(hero, nearAngle, near, ThicketStormNearMin, centers, 1, Fix64.Zero, out centers[1]))
+            Fix64 low = ThicketStormScreenDownMax, any = Fix64.MaxValue;
+            if (!ThicketStormPick(hero, nearAngle, near, ThicketStormNearMin, centers, 1, r * 2, low, out centers[1])
+                && !ThicketStormPick(hero, nearAngle, near, ThicketStormNearMin, centers, 1, Fix64.Zero, low, out centers[1]))
                 centers[1] = _layout != null ? _layout.ClampToWalkable(hero, Entities.BodyRadius[PlayerId]) : hero;
 
-            // Круг 2 — где угодно на полу дальше.
+            // Круг 2 — где угодно на полу дальше (по возможности не глубоко внизу экрана). Проверка
+            // находок 03.10: у героя под верхней кромкой поляны (дальник над боссом) все места в 5–9 м
+            // над ним и сбоку — мимо пола, и круг уходил под нижнюю полосу HUD; прежде чем сдаться,
+            // круг ищется ближе (с 3 м) — сбоку или выше.
             Fix64 farAngle = rng.NextFix() * Fix64.TwoPi;
             Fix64 far = rng.NextFix(ThicketStormFarMin, ThicketStormFarMax);
-            if (!ThicketStormPick(hero, farAngle, far, ThicketStormFarMin, centers, 2, r * 2, out centers[2])
-                && !ThicketStormPick(hero, farAngle, far, ThicketStormFarMin, centers, 2, r, out centers[2])
-                && !ThicketStormPick(hero, farAngle, far, ThicketStormNearMin, centers, 2, Fix64.Zero, out centers[2]))
+            Fix64 lowFar = ThicketStormFarScreenDownMax;
+            if (!ThicketStormPick(hero, farAngle, far, ThicketStormFarMin, centers, 2, r * 2, lowFar, out centers[2])
+                && !ThicketStormPick(hero, farAngle, far, ThicketStormFarMin, centers, 2, r, lowFar, out centers[2])
+                && !ThicketStormPick(hero, farAngle, far, ThicketStormNearMin, centers, 2, r, lowFar, out centers[2])
+                && !ThicketStormPick(hero, farAngle, far, ThicketStormFarMin, centers, 2, r, any, out centers[2])
+                && !ThicketStormPick(hero, farAngle, far, ThicketStormNearMin, centers, 2, Fix64.Zero, any, out centers[2]))
                 centers[2] = centers[1];
         }
 
         /// <summary>
         /// Первая годная точка вокруг hero: 12 направлений через 30° от angle,
         /// на расстоянии distance, потом fallback; на полу, по прямой от героя,
-        /// центр не ближе separation к уже выбранным кругам 0..count-1.
+        /// центр не ближе separation к уже выбранным кругам 0..count-1 и не ниже
+        /// героя на экране больше screenDown (ThicketScreenDown).
         /// </summary>
         private bool ThicketStormPick(FixVec2 hero, Fix64 angle, Fix64 distance, Fix64 fallback, FixVec2[] centers,
-            int count, Fix64 separation, out FixVec2 found)
+            int count, Fix64 separation, Fix64 screenDown, out FixVec2 found)
         {
             for (int pass = 0; pass < 2; pass++)
             {
@@ -302,6 +367,7 @@ namespace Game.Sim
                 for (int k = 0; k < 12; k++)
                 {
                     FixVec2 c = hero + FixVec2.FromAngle(angle + ThicketStormProbeStep * k) * d;
+                    if (ThicketScreenDown(hero, c) > screenDown) continue;
                     if (!ThicketStormFloor(c) || !ThicketStormReach(hero, c)) continue;
                     bool apart = true;
                     for (int j = 0; j < count && apart; j++)

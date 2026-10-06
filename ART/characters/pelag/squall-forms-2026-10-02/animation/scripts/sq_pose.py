@@ -8,7 +8,7 @@
   blade  (f, l, u) — направление клинка; wB — вес разворота клинка
   look   рысканье лица (°, корень) — голова следует за грудью, вбок не дальше HEAD_YAW_MAX
 """
-import bpy, math
+import bpy, math, os
 from mathutils import Vector, Quaternion, Matrix
 from b_common import wpos, blade as blade_of
 from s_lib import rotate_world, translate_world, sagittal_lean, foot_pitch, two_bone, slerp_dir, bone_world_rot
@@ -19,6 +19,8 @@ UP = Vector((0, 0, 1)); X = Vector((1, 0, 0))
 WRIST_MAX = 42.0
 FOREARM_MAX = 60.0
 HEAD_YAW_MAX = 30.0
+CLAV_K, CLAV_MAX = 0.25, 20.0      # доля хода руки на ключицу и её предел (°)
+DZ_MIN = -0.125
 SPINE_W = (("Spine", .35), ("Spine1", .35), ("Spine2", .30))
 LAST = {"sw": None}   # решение клинка прошлого кадра: сабля не перескакивает между решениями
 
@@ -32,7 +34,8 @@ def apply(rig, p):
     rig.reset()
     hips = d.pose.bones[M("Hips")]
     # 1. таз: присед, рысканье, лёгкий наклон таза (треть наклона корпуса)
-    translate_world(d, hips, Vector((0, 0, p["dz"] * W)))
+    # присед не глубже DZ_MIN: перенос в Unity меряет смещение таза от привязки (стойка уже 0,45, предел вида рывка 0,5)
+    translate_world(d, hips, Vector((0, 0, max(DZ_MIN, p["dz"] * W))))
     for _ in range(2):
         e = (lerp(B["pyaw"], p["pyaw"], W) - rig.pelvis_yaw())
         rotate_world(d, hips, Quaternion(UP, math.radians(e)), rig.P("Hips"))
@@ -67,21 +70,44 @@ def apply(rig, p):
             low = rig.toe_z(s)
             if low >= rig.toe_floor - 1e-4: break
             target = target + Vector((0, 0, rig.toe_floor - low))
-    # 5–6. руки и клинок одним решением (sq_arm.py): локоть шарниром, пронация, изгиб кисти
-    A = rig.ARM; wB = p.get("wB", 1.0) * W
+    # 5–6. руки и клинок одним решением (sq_arm.py): локоть шарниром, пронация, кисть (отклонение/сгибание).
+    # Свободная левая кисть задаётся от левого плеча в осях груди (f — куда смотрит грудь): поворот корпуса
+    # несёт руку с собой, рука не «отстаёт» от груди.
+    A = rig.ARM
     res = {}
+    Rd = bone_world_rot(d, d.pose.bones[M("Spine2")]).to_quaternion() @ B["chest_rot"].inverted()   # грудь от стойки
     for s in ("Right", "Left"):
-        H = B["hand"][s].lerp(fl(*p["hands"][s]), W)
-        # локоть «вниз и наружу» от груди (подсказка ключа больше не нужна: она вырождалась у руки вдоль неё)
-        out = rig.P(s + "Arm") - rig.P("Spine2"); out.z = 0
-        nat = (Vector((0, 0, -1)) + out.normalized() * 0.7).normalized()
-        pole = slerp_dir(A[s]["pole0"], nat, W)
-        D = None
+        if s == "Left":     # от левого плеча в осях груди стойки, дальше — поворот груди от стойки (рысканье, наклон)
+            cy = math.radians(B["cyaw"])
+            v = Vector(B["hand_relL"]).lerp(Vector(p["hands"]["Left"]), W)
+            H = rig.P("LeftArm") + Rd @ fl(v.x * math.cos(cy) - v.y * math.sin(cy), v.x * math.sin(cy) + v.y * math.cos(cy), v.z)
+        else:
+            H = B["hand"][s].lerp(fl(*p["hands"][s]), W)
+            # ключица берёт часть хода руки (до CLAV_MAX): плечо подаётся за кистью, как у живого плеча
+            qd = A[s]["ax0"].rotation_difference((Rd.inverted() @ (H - rig.P(s + "Arm"))).normalized())
+            if qd.angle > 1e-4:
+                qc = Quaternion(qd.axis, min(qd.angle * CLAV_K, math.radians(CLAV_MAX)))
+                rotate_world(d, d.pose.bones[M(s + "Shoulder")], Rd @ qc @ Rd.inverted(), rig.P(s + "Shoulder"))
+        # локоть: направление локтя стойки, повёрнутое кратчайшим поворотом оси плечо–кисть стойки к новой
+        ax = H - rig.P(s + "Arm")
+        if s == "Left":     # локоть свободной руки — в осях груди: поворот корпуса не крутит плечо
+            pole = Rd @ (A[s]["ax0"].rotation_difference((Rd.inverted() @ ax).normalized()) @ A[s]["pole0"])
+        else:
+            pole = A[s]["ax0"].rotation_difference(ax.normalized()) @ A[s]["pole0"]
         if s == "Right":
-            D = slerp_dir(B["blade"], fl(*p["blade"]), wB)
-        fixed = (p["sv"], p["tv"]) if (s == "Right" and p.get("fixed")) else None
-        res[s] = sq_arm.solve(rig, s, H, pole, D, fixed)
-    wrist, sw, res_ang = res["Right"]["wrist"], (res["Right"]["swivel"], res["Right"]["pron"]), res["Right"]["miss"]
+            D = fl(*p["blade"]).normalized()
+            if p.get("fixed"):
+                res[s] = sq_arm.solve(rig, s, H, pole, D, p["tv"], p.get("wd", 0.0), p.get("wf", 0.0), p.get("sv", 0.0))
+            elif "arm" in p:                      # ключ с заданной рукой: (локоть sw, пронация tv, кисть wd, wf)
+                sw_, tv_, wd_, wf_ = p["arm"]
+                res[s] = sq_arm.solve(rig, s, H, pole, D, tv_, wd_, wf_, sw_)
+            else:                                 # ключ контакта: решение под клинок рядом с подсказкой
+                hint = tuple(p.get("hint", (0.0, 0.0, 0.0, 0.0)))
+                res[s] = sq_arm.solve(rig, s, H, pole, D, hint[1], hint[2], hint[3], hint[0], opt=True,
+                                      win=int(p.get("win", 20)), hint=hint, win_sw=int(p.get("win_sw", 30)))
+        else:
+            res[s] = sq_arm.solve(rig, s, H, pole)
+    wrist, sw, res_ang = (res["Right"]["wd"], res["Right"]["wf"]), (res["Right"]["swivel"], res["Right"]["pron"]), res["Right"]["miss"]
     # 7. голова следует за грудью: наклон к груди как в стойке, только поворот вбок вокруг оси груди
     look = p.get("look", 0.0)
     yaw0 = rig.head_m()["faceYaw"]; fix = 0.0
@@ -94,4 +120,5 @@ def apply(rig, p):
         for n in ("Neck", "Head"):
             rotate_world(d, d.pose.bones[M(n)], Quaternion(cu, math.radians(e * .5)), rig.P(n))
         fix += e
-    return dict(wrist=round(wrist, 1), swivel_twist=sw, head_yaw_fix=round(fix, 1), blade_miss=round(max(0.0, res_ang), 1))
+    return dict(wrist=wrist, wd=res["Right"]["wd"], wf=res["Right"]["wf"], swivel_twist=sw, head_yaw_fix=round(fix, 1),
+                blade_miss=round(max(0.0, res_ang), 1))

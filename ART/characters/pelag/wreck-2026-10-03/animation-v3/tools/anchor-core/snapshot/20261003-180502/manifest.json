@@ -1,0 +1,122 @@
+[
+ {
+  "file": "razlom/Assets/Game.View/AnchorBake.cs",
+  "before": null,
+  "after": "56cb9afd0db3ecd4effc364236156dd804d7d69b4bcad87c84c59547dc9fa851"
+ },
+ {
+  "file": "razlom/Assets/Game.View/AnchorBakeLibrary.cs",
+  "before": null,
+  "after": "b5acc33694e8ac78f38a56686ec9608a565483bef0ff46bef6f067b3119a4951"
+ },
+ {
+  "file": "razlom/Assets/Game.View/AnchorChainLine.cs",
+  "before": null,
+  "after": "6b338ab87bda3602791f522f9cbb9e5beae02d20588265a5259a5ae08cdb805d"
+ },
+ {
+  "file": "razlom/Assets/Game.View/AnchorRigBlend.cs",
+  "before": null,
+  "after": "b53898b0f2230abba4723f52c7e3c4fbac391f6d5d9d133a20075335eb138f5e"
+ },
+ {
+  "file": "razlom/Assets/Game.View/AnchorRigBody.cs",
+  "before": null,
+  "after": "5c3211436c0616a4b8bcf57b950be24bc9c775580b28bd1cd1404637ec98c885"
+ },
+ {
+  "file": "razlom/Assets/Game.View/AnchorRigCore.cs",
+  "before": null,
+  "after": "84381ef5c0a2c5608ea840c88c249fdaec5bc1744942f6b28def3a814559afd6"
+ },
+ {
+  "file": "razlom/Assets/Game.View/AnchorRigThrowPlan.cs",
+  "before": null,
+  "after": "d9f7d7114af0886cc848a7516f18f5c44e984473c3cba21807c68353c3e10b26"
+ },
+ {
+  "file": "razlom/Assets/Game.View/AnchorRigWreckPlan.cs",
+  "before": null,
+  "after": "76cd2da9a81b1f74496cb059b1f50c349a93633a54956eb8baefb6a142d792c7"
+ },
+ {
+  "file": "razlom/Assets/Game.View/AnchorSlackChain.cs",
+  "before": null,
+  "after": "30e97db0ce80231324b706c315025aa52588519d3b960d4daa63a056a1a0b2ff"
+ },
+ {
+  "file": "razlom/Assets/Game.View/PelagAnchorRig.Chain.cs",
+  "before": null,
+  "after": "0713b2f714f9bd8acf61e38530b168150728dde00c1a9ceb0bd74e1627f7d1f7"
+ },
+ {
+  "file": "razlom/Assets/Game.View/PelagAnchorRig.Modes.cs",
+  "before": null,
+  "after": "6a53d98580c657cebdc8f392d0286b7ccd284a772921a0e881455739d47d0006"
+ },
+ {
+  "file": "razlom/Assets/Game.View/PelagAnchorRig.Throw.cs",
+  "before": null,
+  "after": "da4f9bd99412b738521e1c6d263b8f682f532c7f1bf6cbb91ae3cb5d1031171d"
+ },
+ {
+  "file": "razlom/Assets/Game.View/PelagAnchorRig.Wreck.cs",
+  "before": null,
+  "after": "ec6f28ecf885fcfafd3dfe2bf6d65524a87e21e6e1db82153545f5cee225bf6b"
+ },
+ {
+  "file": "razlom/Assets/Game.View/PelagAnchorRig.WreckSnapshot.cs",
+  "before": null,
+  "after": "38f5ddcfed31e6bbf3ab6c7c97585ac884f7bf9fd8e008921e20acfd735c1890"
+ },
+ {
+  "file": "razlom/Assets/Game.View/PelagAnchorRig.cs",
+  "before": null,
+  "after": "8fae88fcb0ad6ece8f7633a888cec63c87fa6c12d28915a24b95c273115ddf5a"
+ },
+ {
+  "file": "tools/Combat.Presentation.Tests/AnchorBakeTests.cs",
+  "before": null,
+  "after": "45bda5b595ee50daa2b0b18df01e5bcf93c13e12086dc92660c58353aebc45fe"
+ },
+ {
+  "file": "tools/Combat.Presentation.Tests/AnchorChainLineTests.cs",
+  "before": null,
+  "after": "b5de3c4240f2293b62af59e34adaac4b9109bd753d357d7702f905a499f4b93f"
+ },
+ {
+  "file": "tools/Combat.Presentation.Tests/AnchorRigBodyTests.cs",
+  "before": null,
+  "after": "00e029413ad616dfbdb64f9e7aec015dde37bb0631e43026b952a3886edf9eb8"
+ },
+ {
+  "file": "tools/Combat.Presentation.Tests/AnchorRigCoreTests.cs",
+  "before": null,
+  "after": "f068f2815e22b7e8ae144cf6cba638570de25ee4fc9f0497a86c3a2faa65f3b7"
+ },
+ {
+  "file": "tools/Combat.Presentation.Tests/AnchorRigWreckPlanTests.cs",
+  "before": null,
+  "after": "d2f43cc46861a0cb481992e9bed763b110b0334b066d0b0a78c3b5a414f3deeb"
+ },
+ {
+  "file": "razlom/Assets/Game.View/PelagEquipmentView.cs",
+  "before": "0f9a948fac82df294e0045965cb22862ed415cad8946106be0ef394976c1b6a6",
+  "after": "1e72459aa4e169fc4c1047a0745081070262c8d8f4d9dca950faed4e0d09fd17"
+ },
+ {
+  "file": "razlom/Assets/Game.View/ArenaView.cs",
+  "before": "923b4b9a7ddcc945f409998c39289eb3be2cd528fc805a2a4fb8d6f9e29827c2",
+  "after": "8a814bb89709250c05aac393c84ea713795ac3015750624bfdb0d7cbc70cf00f"
+ },
+ {
+  "file": "razlom/Assets/Game.View/CharacterAnimatorView.Tempo.cs",
+  "before": "f6681062642bec25cfc2a198a1d78b191d00459e9fe82847b565284626e65c85",
+  "after": "8962bd5c5bdd40c1e3a9c1c6ed401ecb290fbd37a2470139383356e8786fcdef"
+ },
+ {
+  "file": "tools/Combat.Presentation.Tests/Combat.Presentation.Tests.csproj",
+  "before": "424ca8db415764a210fcd6663e3a820e3dd8ddcc9cf361444776f1afc807e827",
+  "after": "1d7bc3f6491269ca4ce93dfa0c4e1043776c2fa3d5fddc3dc1d987340e7d6c77"
+ }
+]

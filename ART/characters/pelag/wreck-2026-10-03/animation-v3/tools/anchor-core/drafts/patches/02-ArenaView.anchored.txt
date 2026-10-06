@@ -1,0 +1,11 @@
+ArenaView.ConfigurePelagEquipment: компонент рига якоря на тело Пелага рядом с PelagAnchorSlamView (DESIGN §7.2).
+Пока риг ничего не взял (нет снимка/запечек, флаги выключены) — он ничего не делает.
+
+### PATCH add-rig
+### FILE razlom/Assets/Game.View/ArenaView.cs
+### OP insert-after
+### ANCHOR
+            if (body.GetComponent<PelagAnchorSlamView>() == null) body.AddComponent<PelagAnchorSlamView>();
+### TEXT
+            if (body.GetComponent<PelagAnchorRig>() == null) body.AddComponent<PelagAnchorRig>();
+### END

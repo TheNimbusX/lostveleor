@@ -77,6 +77,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SkinMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -98,6 +102,8 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
+    - _ArtContrast: 1
+    - _ArtSaturation: 1
     - _BlazeGlow: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
@@ -126,7 +132,7 @@ Material:
     - _LightFeather: 0.001
     - _LightThreshold: 0
     - _Metallic: 0
-    - _MidThreshold: 0.29
+    - _MidThreshold: 0.018
     - _Mode: 0
     - _OcclusionStrength: 1
     - _OutlineDepthBias: 0
@@ -134,7 +140,9 @@ Material:
     - _Parallax: 0.02
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RimPower: 1
+    - _RimPower: 10
+    - _SkinSaturation: 1
+    - _SkinToneStrength: 0
     - _Smoothness: 0.353
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -147,15 +155,16 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.8018868, g: 0.8018868, b: 0.8018868, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 0.9063317, g: 0.9063317, b: 0.9063317, a: 1}
     - _DissolveEdgeColor: {r: 1, g: 0.41999996, b: 0.11999995, a: 1}
     - _DissolveHeightRange: {r: 0, g: 1, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
-    - _MidColor: {r: 0.94, g: 0.9, b: 0.91, a: 1}
+    - _MidColor: {r: 0.9622642, g: 0.7251396, b: 0, a: 1}
     - _OutlineColor: {r: 0.089999996, g: 0.025, b: 0.07499998, a: 1}
-    - _RimColor: {r: 1, g: 0.6180972, b: 0, a: 1}
-    - _ShadowColor: {r: 1, g: 1, b: 1, a: 1}
+    - _RimColor: {r: 1, g: 0.61960787, b: 0, a: 1}
+    - _ShadowColor: {r: 1, g: 0.9425508, b: 0.7311321, a: 1}
+    - _SkinToneScale: {r: 1, g: 1, b: 1, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

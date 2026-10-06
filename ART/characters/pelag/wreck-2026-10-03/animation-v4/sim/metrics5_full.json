@@ -1,0 +1,47 @@
+{
+ "Draw": {
+  "peak_rad_s": 17.1,
+  "peak_t": 0.2,
+  "frames_over_20": 0,
+  "total_deg": 110,
+  "roll_deg": 41,
+  "misalign_deg": 175,
+  "mis_t": 0.183
+ },
+ "Swing1": {
+  "peak_rad_s": 15.2,
+  "peak_t": 0.55,
+  "frames_over_20": 0,
+  "total_deg": 158,
+  "roll_deg": 17,
+  "misalign_deg": 1,
+  "mis_t": 0.517
+ },
+ "Swing2": {
+  "peak_rad_s": 21.1,
+  "peak_t": 0.717,
+  "frames_over_20": 0,
+  "total_deg": 270,
+  "roll_deg": 31,
+  "misalign_deg": 1,
+  "mis_t": 0.833
+ },
+ "Lunge": {
+  "peak_rad_s": 16.4,
+  "peak_t": 1.033,
+  "frames_over_20": 0,
+  "total_deg": 232,
+  "roll_deg": 31,
+  "misalign_deg": 37,
+  "mis_t": 1.067
+ },
+ "Stow": {
+  "peak_rad_s": 16.4,
+  "peak_t": 1.5,
+  "frames_over_20": 0,
+  "total_deg": 127,
+  "roll_deg": 48,
+  "misalign_deg": 174,
+  "mis_t": 1.517
+ }
+}

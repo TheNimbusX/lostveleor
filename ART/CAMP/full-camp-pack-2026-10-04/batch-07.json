@@ -1,0 +1,153 @@
+{
+  "mode": "built-in image_gen",
+  "transparent_background": true,
+  "records": [
+    {
+      "id": "plant-ferns",
+      "group": "10-plants",
+      "file": "02-fern-clump.png",
+      "title": "Папоротники",
+      "dims": "около 0,9 × 0,6 м, высота 0,4 м",
+      "subject": "ONE compact woodland fern clump with FOUR large arcing fronds spreading from one low centre, max height 40 cm and width 90 cm. Each frond has only SIX to EIGHT broad stylized leaf lobes, deliberately thick sturdy leaf shapes, readable silhouette. Muted olive and cool sage greens, broad hand-painted facets without fine vein detail. No dozens of tiny leaves, no soil island, floor, stones, pots, flowers or other plants.",
+      "prompt": "Transform this isolated plant into ONE compact fern clump with FOUR arching fronds. Each frond has only six broad thick leaf lobes. Muted olive/sage greens, large hand-painted facets, no fine leaf noise. Preserve the reference's clean transparent background, overhead three-quarter angle and chunky painterly game style. Centre the complete fern with 10% empty margin. Remove all background colours and haze: every pixel beyond the physical leaf/stem silhouette must be transparent. No ground, soil, pot, glow, shadow or text.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-64cf7100-bf3e-446d-be7b-3422ffd73b6e.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-3ebf2144-7ded-41ff-a29c-11be29ab48ba.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-6d393c46-5b40-4119-80ab-2845d3572a08.png",
+      "selected": true
+    },
+    {
+      "id": "plant-shrub",
+      "group": "10-plants",
+      "file": "03-low-leaf-shrub.png",
+      "title": "Низкий лиственный куст",
+      "dims": "около 1,0 × 0,65 м, высота 0,6 м",
+      "subject": "ONE low asymmetric broadleaf woodland shrub, 1 m wide and 0.6 m tall, formed by THREE chunky leafy lobes with a few visibly larger broad olive-green leaves at edges, short warm brown stems barely visible at centre. Painterly broad sage top and dark cool green underside, simplified faceted masses, no thousands of tiny leaves. Low enough for the camp hero to remain readable. No berries, flowers, ground mound, rocks, soil base or extra plants.",
+      "prompt": "Transform this tree into ONE LOW, WIDE woodland shrub with THREE irregular olive/sage leafy lobes and a few broad leaves at the edges. Short stems hidden within the shrub. Width 1 m, height 0.6 m; no tall trunk or roots. Preserve this reference's clean transparent background, hand-painted large facets and overhead three-quarter angle. Centre complete shrub with 10% empty margin. All space outside physical leaves is fully transparent. No background wash, haze, shadow, ground, flowers or text.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-caae9983-a815-47f7-b393-b2b9a471fd6a.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-cfd54787-c569-4d8b-a809-8e2991d806dd.png",
+      "selected": false,
+      "rejection": "Внешний цветной ореол, заменяется."
+    },
+    {
+      "id": "plant-flowers",
+      "group": "10-plants",
+      "file": "04-small-flower-patch.png",
+      "title": "Небольшое цветочное пятно",
+      "dims": "около 0,65 × 0,45 м, высота 0,25 м",
+      "subject": "ONE small sparse camp wildflower clump, 65 cm wide and only 25 cm tall. Seven clearly separated small warm-white five-petal flowers with muted ochre centres above a few broad olive-green leaves, two subtly cream flowers, simple chunky stems. Calm accents matching the flowers at the reference lantern base, not a bright garden bouquet. Broad painterly shapes and facets, no microscopic petals. No soil island, planter, pot, rocks, background or tall dense foliage.",
+      "prompt": "Keep the cleanly isolated broad olive leaves and add SEVEN sparse, clearly separated warm-white five-petal wildflowers with muted ochre centres on short thick stems. One LOW coherent woodland flower clump, 0.65 m wide and 0.25 m tall. Same chunky hand-painted game style and overhead three-quarter view. Complete silhouette centred with 10% transparent margin. Preserve true transparent background including between stems. No background paint, haze, glow, floor, soil island, planter, rocks or text.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-64cf7100-bf3e-446d-be7b-3422ffd73b6e.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-ba85b886-aa38-403c-9bef-1f863c6a9408.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-c2198ab8-75f9-4554-b322-fd7989bc7345.png",
+      "selected": false,
+      "rejection": "Внешний цветной ореол, заменяется."
+    },
+    {
+      "id": "rock-shore",
+      "group": "08-stones",
+      "file": "03-rounded-shore-stones.png",
+      "title": "Береговые камни",
+      "dims": "пятно около 1,3 × 0,8 м, высота 0,35 м",
+      "subject": "ONE natural low group of SIX large rounded riverbank stones of unequal size, smoother and softer than the woodland boulder but still visibly faceted and hand-painted. Muted cool grey/brown/slate, broad flat colour planes, lower areas a little darker suggesting wear, NOT shiny wet reflective PBR. Arranged as one compact irregular cluster 1.3 m wide and 0.35 m tall. No water, beach, dirt base, sand, tiny gravel or vegetation.",
+      "prompt": "Transform these flat stones into ONE LOW compact group of SIX smooth rounded riverbank stones of unequal sizes. Broad hand-painted grey/taupe/slate colour planes and softly bevelled polygonal shapes, no cracks, no moss, no shiny wet reflections. Width 1.3 m, height 0.35 m. Keep the same overhead three-quarter angle and CLEAN TRANSPARENT alpha outside the stone silhouettes. Complete group centred with 10% empty transparent margin. No backdrop, haze, glow, cast shadow, sand, ground or text.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-021d72cd-4e34-46ff-9cf0-7684ece1a8fe.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-73e5a940-10bf-4e09-96da-b29accdfa3a1.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-84ebd721-fa53-409f-a592-f363cdb5b7ab.png",
+      "selected": true
+    },
+    {
+      "id": "wood-fallen-log",
+      "group": "09-woodland",
+      "file": "04-fallen-split-log.png",
+      "title": "Поваленное бревно",
+      "dims": "длина 1,8 м, диаметр 0,45 м",
+      "subject": "ONE fallen split tree log, 1.8 m long and 45 cm diameter, resting sideways with a large snapped branch nub and a clearly visible split end exposing warm honey wood. Thick dark brown bark with large carved facets, a small restrained moss strip on upper side. One long simple split opens the cylinder slightly without exploding into thin splinters. Entire log and branch fully visible. No soil, grass, rock base, tiny twigs or background.",
+      "prompt": "Transform this vertical stump into ONE HORIZONTAL fallen split tree log, 1.8 m long and 0.45 m diameter. One snapped branch nub, split end exposing broad honey wood rings, dark warm brown carved bark in large hand-painted facets, small moss strip attached to the upper bark. Same isolated painterly fantasy prop style, overhead three-quarter angle. Entire long log fits centred with 10% transparent margin. Preserve clean transparent alpha outside the physical log silhouette. No background wash, glow, haze, shadow, floor, grass or text.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-49f78456-c5f7-46de-9842-b1cc5e1ed8a1.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-589568ce-a4a2-446e-a7e4-03350e6f265d.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-38b823c4-1614-4a4d-95bc-74b367757e36.png",
+      "selected": false,
+      "rejection": "Внешний цветной ореол, заменяется."
+    },
+    {
+      "id": "ground-dry",
+      "group": "11-ground-decals",
+      "file": "01-dry-workground.png",
+      "title": "Сухая земля рабочего места",
+      "dims": "масштабируемое плоское пятно",
+      "subject": "One irregular FLAT patch of dry compacted camp earth, broad warm muted ochre/taupe brush-painted colour planes, two faint worn foot scuffs, a FEW small simplified pebble marks, completely flat. Soft uneven perimeter blends gradually into full alpha transparency; opaque centre. No paving, actual 3D stones, height, vegetation, footprint symbols or physical soil slab.",
+      "decal": true,
+      "prompt": "Generate ONE FLAT HAND-PAINTED GROUND DECAL TEXTURE. Use the reference only for the muted earthy palette and broad brush treatment, never for its shape. Camera strictly straight overhead, 90 degrees, orthographic. Flat surface paint only: absolutely no perspective, raised edge, sidewalls, 3D volume or physical terrain island. One irregular organic patch centred with 12% empty transparent margin. Opaque textured centre, irregular softly feathered alpha perimeter fading into COMPLETELY TRANSPARENT exterior. No vignette, background colour field, lighting, shadows, glow, text, symbols or objects. Painterly stylized fantasy camp, broad restrained marks, no photographic noise.\nOne irregular FLAT patch of dry compacted camp earth, broad warm muted ochre/taupe brush-painted colour planes, two faint worn foot scuffs, a FEW small simplified pebble marks, completely flat. Soft uneven perimeter blends gradually into full alpha transparency; opaque centre. No paving, actual 3D stones, height, vegetation, footprint symbols or physical soil slab.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-1fb1d8b5-5764-4537-9505-1e4d5469c65c.png",
+      "status": "generated",
+      "selected": true
+    },
+    {
+      "id": "ground-ash",
+      "group": "11-ground-decals",
+      "file": "02-ash-and-scorch.png",
+      "title": "Пепел и обожжённая земля",
+      "dims": "масштабируемое плоское пятно",
+      "subject": "One irregular FLAT scorched earth and ash patch for underneath a hearth/smithy. Muted charcoal-brown core with broad grey ash strokes, warm taupe transition, few large abstract charcoal flecks. Soft uneven perimeter fades to alpha transparency. Flat painted decal material, no fire, glow, objects, rocks, logs, raised soil slab or cast shadows.",
+      "decal": true,
+      "prompt": "Generate ONE FLAT HAND-PAINTED GROUND DECAL TEXTURE. Use the reference only for the muted earthy palette and broad brush treatment, never for its shape. Camera strictly straight overhead, 90 degrees, orthographic. Flat surface paint only: absolutely no perspective, raised edge, sidewalls, 3D volume or physical terrain island. One irregular organic patch centred with 12% empty transparent margin. Opaque textured centre, irregular softly feathered alpha perimeter fading into COMPLETELY TRANSPARENT exterior. No vignette, background colour field, lighting, shadows, glow, text, symbols or objects. Painterly stylized fantasy camp, broad restrained marks, no photographic noise.\nOne irregular FLAT scorched earth and ash patch for underneath a hearth/smithy. Muted charcoal-brown core with broad grey ash strokes, warm taupe transition, few large abstract charcoal flecks. Soft uneven perimeter fades to alpha transparency. Flat painted decal material, no fire, glow, objects, rocks, logs, raised soil slab or cast shadows.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-9c6e9825-a17b-4a64-9e00-69222d7c496b.png",
+      "status": "generated",
+      "selected": true
+    },
+    {
+      "id": "ground-wet",
+      "group": "11-ground-decals",
+      "file": "03-damp-bank.png",
+      "title": "Влажная прибрежная земля",
+      "dims": "масштабируемое плоское пятно",
+      "subject": "One irregular FLAT damp riverbank earth patch, broad muted cool grey-brown/slate earthy paint strokes with olive transition and a few understated dull wet-looking colour patches, NO gloss or reflective water. Soft feathered uneven edge fading to alpha transparency, opaque centre. No 3D slab, pebbles, plants, reeds, puddles, floor shadow or landscape.",
+      "decal": true,
+      "prompt": "Generate ONE FLAT HAND-PAINTED GROUND DECAL TEXTURE. Use the reference only for the muted earthy palette and broad brush treatment, never for its shape. Camera strictly straight overhead, 90 degrees, orthographic. Flat surface paint only: absolutely no perspective, raised edge, sidewalls, 3D volume or physical terrain island. One irregular organic patch centred with 12% empty transparent margin. Opaque textured centre, irregular softly feathered alpha perimeter fading into COMPLETELY TRANSPARENT exterior. No vignette, background colour field, lighting, shadows, glow, text, symbols or objects. Painterly stylized fantasy camp, broad restrained marks, no photographic noise.\nOne irregular FLAT damp riverbank earth patch, broad muted cool grey-brown/slate earthy paint strokes with olive transition and a few understated dull wet-looking colour patches, NO gloss or reflective water. Soft feathered uneven edge fading to alpha transparency, opaque centre. No 3D slab, pebbles, plants, reeds, puddles, floor shadow or landscape.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-1da7e70e-7b67-4485-aa8c-c88c1548c7ad.png",
+      "status": "generated",
+      "selected": true
+    },
+    {
+      "id": "ground-litter",
+      "group": "11-ground-decals",
+      "file": "04-forest-litter.png",
+      "title": "Лесная подстилка",
+      "dims": "масштабируемое плоское пятно",
+      "subject": "One irregular FLAT woodland litter decal patch in broad hand-painted shapes: muted dark brown earth, a few LARGE ochre/olive fallen leaf silhouettes, two short broad twig strokes, irregular restrained sage moss patches. Large calm readable surface marks, not tiny noisy debris. Soft organic perimeter fading to alpha transparency, opaque centre. No raised ground slab, actual 3D plants, rocks, tree or cast shadows.",
+      "decal": true,
+      "prompt": "Generate ONE FLAT HAND-PAINTED GROUND DECAL TEXTURE. Use the reference only for the muted earthy palette and broad brush treatment, never for its shape. Camera strictly straight overhead, 90 degrees, orthographic. Flat surface paint only: absolutely no perspective, raised edge, sidewalls, 3D volume or physical terrain island. One irregular organic patch centred with 12% empty transparent margin. Opaque textured centre, irregular softly feathered alpha perimeter fading into COMPLETELY TRANSPARENT exterior. No vignette, background colour field, lighting, shadows, glow, text, symbols or objects. Painterly stylized fantasy camp, broad restrained marks, no photographic noise.\nOne irregular FLAT woodland litter decal patch in broad hand-painted shapes: muted dark brown earth, a few LARGE ochre/olive fallen leaf silhouettes, two short broad twig strokes, irregular restrained sage moss patches. Large calm readable surface marks, not tiny noisy debris. Soft organic perimeter fading to alpha transparency, opaque centre. No raised ground slab, actual 3D plants, rocks, tree or cast shadows.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-f8f5b251-fba7-41ea-aab2-185badbede9f.png",
+      "status": "generated",
+      "selected": true
+    }
+  ]
+}

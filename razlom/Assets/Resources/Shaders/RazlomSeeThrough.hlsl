@@ -26,6 +26,41 @@ float  _RazlomSeeThroughRadius;  // радиус круга в плоскост�
 float  _RazlomSeeThroughDepth;   // на сколько метров по земле ближе оси героя выбивание доходит до полного
 float  _RazlomSeeThroughAmount;  // 0…1: доля выбитых пикселей в середине круга (уже с плавным появлением)
 
+// ЛУННАЯ КРОМКА (ревью владельца 02.10 вечер, находка 9: «половина арены в глубокой синей тени, босс
+// там пропадает»). Холодный свет только по краю силуэта (френель по нормали вершины), сверху сильнее
+// (луна над ареной), и только там, где тело само тёмное: на освещённом теле кромки нет. Тело не
+// высветляется — середина силуэта и всё, что смотрит на камеру, не меняются.
+// Пишет ThicketMasterPhaseDressing блоком свойств на слоты тела (не свойство материала): без блока —
+// ноль, кромки нет, шейдер рисует как URP Lit.
+float4 _RazlomBossRim;           // rgb — цвет × сила (линейный); w не читается
+
+// Положение пикселя в мире из SV_POSITION (как у декалей URP): одинаково для всех проходов.
+float3 RazlomPixelWorldPosition(float4 positionCS)
+{
+    float2 positionSS = positionCS.xy * (GetScaledScreenParams().zw - 1.0);
+    float deviceDepth = positionCS.z;
+#if !UNITY_REVERSED_Z
+    deviceDepth = lerp(UNITY_NEAR_CLIP_VALUE, 1.0, deviceDepth);
+#endif
+    return ComputeWorldSpacePosition(positionSS, deviceDepth, UNITY_MATRIX_I_VP);
+}
+
+// Кромка этого пикселя (добавить к цвету прохода ForwardLit). lit — уже освещённый цвет пикселя:
+// по нему кромка гаснет на светлом (затвор 0,03 → 0,22 линейной яркости).
+half3 RazlomBossRim(float4 positionCS, float3 normalWS, half3 lit)
+{
+    UNITY_BRANCH
+    if (max(_RazlomBossRim.r, max(_RazlomBossRim.g, _RazlomBossRim.b)) <= 0.0)
+        return half3(0.0, 0.0, 0.0);
+    float3 rimNormal = normalize(normalWS);
+    float3 rimView = GetWorldSpaceNormalizeViewDir(RazlomPixelWorldPosition(positionCS));
+    float rimEdge = 1.0 - saturate(dot(rimNormal, rimView));
+    rimEdge = rimEdge * rimEdge * rimEdge;                 // узко: только край силуэта
+    float rimMoon = saturate(rimNormal.y * 0.6 + 0.4);     // верх силуэта ярче низа
+    half rimDark = 1.0 - smoothstep(0.03, 0.22, dot(lit, half3(0.2126, 0.7152, 0.0722)));
+    return (half3)_RazlomBossRim.rgb * (half)(rimEdge * rimMoon) * rimDark;
+}
+
 // Порог Байера 4×4 для пикселя: (k + 0,5) / 16, k = 0…15. Только float-операции.
 float RazlomBayer2(float2 a)
 {
@@ -41,12 +76,7 @@ float RazlomBayer4(float2 pixel)
 // Доля выбивания в этом пикселе (0 — пиксель целый).
 float RazlomSeeThroughCoverage(float4 positionCS)
 {
-    float2 positionSS = positionCS.xy * (GetScaledScreenParams().zw - 1.0);
-    float deviceDepth = positionCS.z;
-#if !UNITY_REVERSED_Z
-    deviceDepth = lerp(UNITY_NEAR_CLIP_VALUE, 1.0, deviceDepth);
-#endif
-    float3 positionWS = ComputeWorldSpacePosition(positionSS, deviceDepth, UNITY_MATRIX_I_VP);
+    float3 positionWS = RazlomPixelWorldPosition(positionCS);
     float3 pixelVS = TransformWorldToView(positionWS);
     float3 heroVS = TransformWorldToView(_RazlomSeeThroughCenter.xyz);
 

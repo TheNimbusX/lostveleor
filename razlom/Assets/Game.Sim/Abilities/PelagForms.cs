@@ -9,8 +9,9 @@ namespace Game.Sim
     /// в карточке награды (RewardOffer.TalentIndex) и в хеше сборки. Номер
     /// убранной формы не переиспользуется — как бит «Печати» и RewardKind.AbilityNode.
     ///
-    /// Вихрь (1–3, 4 убрана) и Шквал (5–7, утверждены 02.10). Формы Абордажа и
-    /// прочих ещё не утверждены — их номера следующие свободные, когда дойдём.
+    /// Вихрь (1–3, 4 убрана), Шквал (5–7) и Абордаж (8–10) — утверждены 02.10;
+    /// Крушение (11–13) и Бросок якоря (14–16) — 03.10.
+    /// Формы прочих ещё не утверждены — их номера следующие свободные, когда дойдём.
     /// </summary>
     public enum PelagForm : byte
     {
@@ -42,6 +43,45 @@ namespace Game.Sim
 
         /// <summary>Шквал · Неуловимый: неуязвим в прыжках, последний прыжок — дугой к точке каста.</summary>
         SquallElusive = 7,
+
+        /// <summary>Абордаж · Обвал: кулак в землю, волна до 3 м сбивает с ног (Simulation.Abordage.Forms).</summary>
+        AbordageQuake = 8,
+
+        /// <summary>Абордаж · Гейзер: апперкот, столб воды подбрасывает цель, через 0,8 с вода падает.</summary>
+        AbordageGeyser = 9,
+
+        /// <summary>Абордаж · Пробоина: за спиной цели бьёт конус воды 4 м.</summary>
+        AbordageBreach = 10,
+
+        /// <summary>Крушение · Волнорез: удар оземь поднимает стену воды до 8 м, она несёт лёгких (Simulation.Wreck.Forms).</summary>
+        WreckBreakwater = 11,
+
+        /// <summary>
+        /// Крушение · Девятый вал (06.10 вечером): каждый мах, задевший врага, — заряд выпада; полоса выпада
+        /// шире и длиннее, урон растёт (×1,5; ×2 и +2 м). Удержания нет.
+        /// </summary>
+        WreckNinthWave = 12,
+
+        /// <summary>
+        /// Крушение · Призрачный якорь (06.10 вечером, вместо «Якорной брони» — та не выходила): вала у выпада нет,
+        /// через 0,25 с в точку удара падает огромный призрачный якорь — круг 3 м, ×1,5 урона выпада, оглушение 0,6 с.
+        /// </summary>
+        WreckGhostAnchor = 13,
+
+        /// <summary>
+        /// Прежнее имя номера 13 («Якорная броня»). Только для файлов VFX Крушения, которые сейчас правит
+        /// соседний агент; новый код — WreckGhostAnchor. Убрать, когда вид перейдёт на новое имя.
+        /// </summary>
+        WreckShell = WreckGhostAnchor,
+
+        /// <summary>Бросок якоря · Невод: в натяг сеть пены на всю длину полёта, полоса 3 м (Simulation.AnchorThrow.Forms).</summary>
+        AnchorThrowNet = 14,
+
+        /// <summary>Бросок якоря · Веер: три полосы — якорь и два водяных призрака под ±30°.</summary>
+        AnchorThrowFan = 15,
+
+        /// <summary>Бросок якоря · Гарпун: вонзается в первого задетого, ×2, тянет с оглушением.</summary>
+        AnchorThrowHarpoon = 16,
     }
 
     /// <summary>
@@ -56,6 +96,13 @@ namespace Game.Sim
         None = 0,
 
         // Биты придут с механикой форм — первым Вихрь.
+
+        /// <summary>
+        /// Метка Абордажа — заготовка таланта линии Абордажа (критик 02.10): удар
+        /// метит цель на 3 с, урон Пелага по ней ×1,30. Узла, который её даёт, пока
+        /// нет — числа, цвет и событие придут с проходом талантов (Simulation.Abordage.Strike).
+        /// </summary>
+        AbordageMark = 1UL << 0,
     }
 
     /// <summary>
@@ -88,24 +135,40 @@ namespace Game.Sim
         /// <summary>Шквал в пуле Пелага (PelagKit.PoolDefinition(3)).</summary>
         private const int SquallLine = 3;
 
+        /// <summary>Абордаж в пуле Пелага (PelagKit.PoolDefinition(6)).</summary>
+        private const int AbordageLine = 6;
+
+        /// <summary>Крушение в пуле Пелага (PelagKit.PoolDefinition(5)).</summary>
+        private const int WreckLine = 5;
+
+        /// <summary>Бросок якоря в пуле Пелага (PelagKit.PoolDefinition(10)).</summary>
+        private const int AnchorThrowLine = 10;
+
         // Таблицы по номеру PelagForm. Дописываются вместе с enum.
         // 4 — «Вихрь на ходу», убрана 02.10 («на ходу убираем»).
         private static readonly int[] Lines =
-            { -1, WhirlwindLine, WhirlwindLine, WhirlwindLine, RetiredLine, SquallLine, SquallLine, SquallLine };
+            { -1, WhirlwindLine, WhirlwindLine, WhirlwindLine, RetiredLine, SquallLine, SquallLine, SquallLine,
+              AbordageLine, AbordageLine, AbordageLine, WreckLine, WreckLine, WreckLine,
+              AnchorThrowLine, AnchorThrowLine, AnchorThrowLine };
 
         /// <summary>
         /// Готова — механика написана: Вихрь (Simulation.WhirlwindForms, 02.10) — Буря,
         /// Водоворот, Пенные волны; Шквал (Simulation.Squall, 02.10) — Охота, Пенный
-        /// след, Неуловимый. Обычный забег предлагает форму только с включателем
+        /// след, Неуловимый; Абордаж (Simulation.Abordage.Forms, 02.10) — Обвал, Гейзер,
+        /// Пробоина; Крушение (Simulation.Wreck.Forms, 03.10; 06.10 вечером) — Волнорез, Девятый вал,
+        /// Призрачный якорь. Обычный забег предлагает форму только с включателем
         /// FormRewardRules.UseSkillForms (пока выключен).
         /// </summary>
-        private static readonly bool[] Ready = { false, true, true, true, false, true, true, true };
+        private static readonly bool[] Ready = { false, true, true, true, false, true, true, true, true, true, true, true, true, true, true, true, true };
 
         // Ключ «form.whirlwind.on_the_move» принадлежал убранной форме — не занимать.
         private static readonly string[] Keys =
         {
             null, "form.whirlwind.storm", "form.whirlwind.maelstrom", "form.whirlwind.foam_waves", null,
             "form.squall.hunt", "form.squall.foam_trail", "form.squall.elusive",
+            "form.abordage.quake", "form.abordage.geyser", "form.abordage.breach",
+            "form.wreck.breakwater", "form.wreck.ninth_wave", "form.wreck.shell",
+            "form.anchor_throw.net", "form.anchor_throw.fan", "form.anchor_throw.harpoon",
         };
 
         /// <summary>

@@ -39,6 +39,17 @@ namespace Game.View
             delete = Input.GetKeyDown(KeyCode.Delete);
 #endif
             CampShopScreen s = smith ? _view.Smith : _view.Trader;
+            // Кузница вкладками (v4): E (Interact, как «Ударить [E]» на кнопке) и Enter — основная кнопка вкладки, Del не нужен:
+            // разбор — своя вкладка с той же кнопкой. Esc обработан выше (CancelShopConfirm → «Взять»).
+            if (smith && TemperTabs)
+            {
+                bool strike = enter || GameKeyBindings.Pressed(GameAction.Interact);
+                var focused = EventSystem.current?.currentSelectedGameObject;
+                var side = focused != null ? focused.GetComponent<Button>() : null;
+                if (enter && side != null && (side == s.Back || side.name == "Развитие лагеря")) { Press(side); return true; }
+                TemperKeys(strike);
+                return false;
+            }
             var selected=EventSystem.current?.currentSelectedGameObject;
             var auxiliary=selected!=null?selected.GetComponent<Button>():null;
             if(enter && auxiliary!=null && (auxiliary==s.Back || auxiliary==s.Extra || auxiliary.name=="Развитие лагеря" || auxiliary.name=="Резерв и заказ"))
@@ -66,6 +77,8 @@ namespace Game.View
         /// <summary>Снять ждущее подтверждение (разбор, продажа, обновление товаров); true — было что снимать.</summary>
         internal bool CancelShopConfirm()
         {
+            // Кузница вкладками: вопрос (рискованный удар, разбор) или идущая закалка — первый Esc «Взять», второй закрывает.
+            if (CancelTemperConfirm()) return true;
             bool any = false;
             if (_confirmDismantle)
             {

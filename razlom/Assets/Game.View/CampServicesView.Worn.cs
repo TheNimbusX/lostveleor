@@ -46,7 +46,7 @@ namespace Game.View
 
         /// <summary>
         /// Проверка без прогресса (CampServicesProbe): надетая вещь выбирается в ряду «Надето»,
-        /// перековывается кнопкой окна и остаётся надетой; «Разобрать» у надетой спит и ничего не
+        /// открывает окно закалки Эни и остаётся надетой; «Разобрать» у надетой спит и ничего не
         /// делает; торговец показывает надетое без цены и не продаёт его.
         /// </summary>
         internal bool ProbeWornTransactions()
@@ -69,9 +69,10 @@ namespace Game.View
                 if (smith.Extra.interactable) return false;
                 smith.Extra.onClick.Invoke();
                 if (_confirmDismantle || camp.Worn.Worn(EquipSlot.Weapon).IsEmpty) return false;
+                // Кнопка кузницы открывает окно Эни на надетой вещи; без удара золото не списано (06.10).
                 smith.Action.onClick.Invoke();
-                var worn = camp.Worn.Worn(EquipSlot.Weapon);
-                if (worn.ReforgeCount != 1 || !camp.Bag.IsEmpty(0) || camp.Money(CurrencyType.Gold) != 170) return false;
+                bool forgeOpened = CampForgeView.Instance?.IsOpen == true; CampForgeView.Instance?.Close();
+                if (!forgeOpened || camp.Worn.Worn(EquipSlot.Weapon).IsEmpty || !camp.Bag.IsEmpty(0) || camp.Money(CurrencyType.Gold) != 200) return false;
 
                 var trader = _view.Trader;
                 if (trader.Worn.Length == 0) return false;
@@ -80,7 +81,7 @@ namespace Game.View
                 trader.Worn[0].Button.onClick.Invoke();
                 bool shown = _tradePick == TradePick.Worn && !trader.Action.interactable && !trader.Price.activeSelf;
                 trader.Action.onClick.Invoke();
-                return shown && !camp.Worn.Worn(EquipSlot.Weapon).IsEmpty && camp.Money(CurrencyType.Gold) == 170;
+                return shown && !camp.Worn.Worn(EquipSlot.Weapon).IsEmpty && camp.Money(CurrencyType.Gold) == 200;
             }
             finally
             {

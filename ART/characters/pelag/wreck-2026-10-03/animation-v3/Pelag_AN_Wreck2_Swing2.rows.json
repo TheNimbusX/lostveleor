@@ -1,0 +1,1899 @@
+{
+ "rows": [
+  {
+   "lean": 15.6,
+   "pelvis_yaw": 23.5,
+   "chest_yaw": 43.4,
+   "twist": 19.9,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 42.92,
+   "hips_z": 0.725,
+   "forearm_twist": {
+    "Left": 64.4,
+    "Right": -33.3
+   },
+   "fistL": [
+    0.3749,
+    0.4468,
+    1.0295
+   ],
+   "fistR": [
+    0.5208,
+    0.4059,
+    1.0263
+   ],
+   "ring": [
+    0.4711,
+    0.4198,
+    1.0274
+   ],
+   "grip_axis": [
+    0.9627,
+    -0.2697,
+    -0.0214
+   ],
+   "hand_gap": 0.152,
+   "axis_err": {
+    "Left": 16.9,
+    "Right": 15.7
+   },
+   "Left": {
+    "ankle": [
+     0.5497,
+     0.2042,
+     0.1659
+    ],
+    "toe_z": 0.0339
+   },
+   "Right": {
+    "ankle": [
+     -0.3238,
+     -0.2433,
+     0.2232
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 0,
+   "socket": [
+    -0.4197,
+    0.9887,
+    0.3517
+   ],
+   "on_grip": true,
+   "seam_copy": true,
+   "socket_miss": 0.0201,
+   "sol": {
+    "Left": [
+     -6.0,
+     83.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     -4.0,
+     -44.9,
+     14.0,
+     10.0
+    ]
+   },
+   "hip_ratio": 0.471,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0276,
+    "Right": 0.0033
+   },
+   "contacts": []
+  },
+  {
+   "lean": 17.7,
+   "pelvis_yaw": 37.2,
+   "chest_yaw": 59.1,
+   "twist": 21.9,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 58.69,
+   "hips_z": 0.74,
+   "forearm_twist": {
+    "Left": 64.5,
+    "Right": -29.3
+   },
+   "fistL": [
+    0.337,
+    0.4564,
+    0.9572
+   ],
+   "fistR": [
+    0.4786,
+    0.4743,
+    1.0044
+   ],
+   "ring": [
+    0.4312,
+    0.4683,
+    0.9886
+   ],
+   "grip_axis": [
+    0.942,
+    0.1195,
+    0.3137
+   ],
+   "hand_gap": 0.15,
+   "axis_err": {
+    "Left": 25.8,
+    "Right": 21.5
+   },
+   "Left": {
+    "ankle": [
+     0.5543,
+     0.1741,
+     0.1971
+    ],
+    "toe_z": 0.0361
+   },
+   "Right": {
+    "ankle": [
+     -0.2958,
+     -0.2197,
+     0.2996
+    ],
+    "toe_z": 0.0615
+   },
+   "frame": 1,
+   "socket": [
+    -0.414,
+    0.9301,
+    0.326
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0003,
+   "sol": {
+    "Left": [
+     -60.0,
+     83.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     -4.0,
+     -40.9,
+     -7.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.0,
+    "Right": 0.001
+   },
+   "axis_deg": {
+    "Left": 51.2,
+    "Right": 3.9
+   },
+   "hip_ratio": 0.443,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0346,
+    "Right": 0.0609
+   },
+   "contacts": []
+  },
+  {
+   "lean": 16.4,
+   "pelvis_yaw": 51.3,
+   "chest_yaw": 76.9,
+   "twist": 25.6,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 75.34,
+   "hips_z": 0.755,
+   "forearm_twist": {
+    "Left": 64.7,
+    "Right": -39.1
+   },
+   "fistL": [
+    0.145,
+    0.5529,
+    0.8683
+   ],
+   "fistR": [
+    0.282,
+    0.6127,
+    0.8868
+   ],
+   "ring": [
+    0.2359,
+    0.5926,
+    0.8806
+   ],
+   "grip_axis": [
+    0.9095,
+    0.3973,
+    0.1225
+   ],
+   "hand_gap": 0.151,
+   "axis_err": {
+    "Left": 19.9,
+    "Right": 17.4
+   },
+   "Left": {
+    "ankle": [
+     0.5582,
+     0.1483,
+     0.2311
+    ],
+    "toe_z": 0.0437
+   },
+   "Right": {
+    "ankle": [
+     -0.1993,
+     -0.1384,
+     0.3297
+    ],
+    "toe_z": 0.077
+   },
+   "frame": 2,
+   "socket": [
+    -0.5075,
+    0.8457,
+    0.1409
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0018,
+   "sol": {
+    "Left": [
+     -60.0,
+     83.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     -4.0,
+     -50.9,
+     -6.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.002,
+    "Right": 0.001
+   },
+   "axis_deg": {
+    "Left": 39.7,
+    "Right": 3.0
+   },
+   "hip_ratio": 0.414,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0428,
+    "Right": 0.0763
+   },
+   "contacts": []
+  },
+  {
+   "lean": 15.5,
+   "pelvis_yaw": 65.3,
+   "chest_yaw": 94.4,
+   "twist": 29.1,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 92.03,
+   "hips_z": 0.765,
+   "forearm_twist": {
+    "Left": 58.6,
+    "Right": -45.0
+   },
+   "fistL": [
+    -0.121,
+    0.4946,
+    0.8411
+   ],
+   "fistR": [
+    -0.0196,
+    0.6048,
+    0.8538
+   ],
+   "ring": [
+    -0.0536,
+    0.5679,
+    0.8495
+   ],
+   "grip_axis": [
+    0.675,
+    0.733,
+    0.0845
+   ],
+   "hand_gap": 0.15,
+   "axis_err": {
+    "Left": 16.9,
+    "Right": 15.4
+   },
+   "Left": {
+    "ankle": [
+     0.5663,
+     0.1288,
+     0.2609
+    ],
+    "toe_z": 0.0502
+   },
+   "Right": {
+    "ankle": [
+     -0.1533,
+     -0.0996,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 3,
+   "socket": [
+    -0.4515,
+    0.824,
+    -0.1043
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0005,
+   "sol": {
+    "Left": [
+     -60.0,
+     77.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     -4.0,
+     -56.9,
+     2.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.001
+   },
+   "axis_deg": {
+    "Left": 34.0,
+    "Right": 3.2
+   },
+   "hip_ratio": 0.396,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0493,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 15.0,
+   "pelvis_yaw": 95.0,
+   "chest_yaw": 123.6,
+   "twist": 28.6,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 121.05,
+   "hips_z": 0.77,
+   "forearm_twist": {
+    "Left": 27.5,
+    "Right": -48.1
+   },
+   "fistL": [
+    -0.3596,
+    0.2544,
+    0.821
+   ],
+   "fistR": [
+    -0.3368,
+    0.4008,
+    0.8467
+   ],
+   "ring": [
+    -0.3444,
+    0.3517,
+    0.8381
+   ],
+   "grip_axis": [
+    0.1517,
+    0.9735,
+    0.1712
+   ],
+   "hand_gap": 0.15,
+   "axis_err": {
+    "Left": 6.1,
+    "Right": 8.9
+   },
+   "Left": {
+    "ankle": [
+     0.3506,
+     0.4772,
+     0.3401
+    ],
+    "toe_z": 0.142
+   },
+   "Right": {
+    "ankle": [
+     -0.1398,
+     -0.1612,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 4,
+   "socket": [
+    -0.2338,
+    0.8182,
+    -0.3188
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0013,
+   "sol": {
+    "Left": [
+     -60.0,
+     46.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     -4.0,
+     -59.9,
+     18.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.001
+   },
+   "axis_deg": {
+    "Left": 12.3,
+    "Right": 3.9
+   },
+   "hip_ratio": 0.387,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.1411,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 14.6,
+   "pelvis_yaw": 127.0,
+   "chest_yaw": 154.7,
+   "twist": 27.7,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 152.36,
+   "hips_z": 0.774,
+   "forearm_twist": {
+    "Left": 28.6,
+    "Right": -48.1
+   },
+   "fistL": [
+    -0.4501,
+    0.0439,
+    0.8361
+   ],
+   "fistR": [
+    -0.4961,
+    0.1843,
+    0.863
+   ],
+   "ring": [
+    -0.4807,
+    0.1374,
+    0.854
+   ],
+   "grip_axis": [
+    -0.3063,
+    0.9349,
+    0.1791
+   ],
+   "hand_gap": 0.15,
+   "axis_err": {
+    "Left": 5.7,
+    "Right": 8.6
+   },
+   "Left": {
+    "ankle": [
+     -0.0621,
+     0.5382,
+     0.3646
+    ],
+    "toe_z": 0.1802
+   },
+   "Right": {
+    "ankle": [
+     -0.0869,
+     -0.1973,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 5,
+   "socket": [
+    -0.0458,
+    0.8311,
+    -0.404
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.001,
+   "sol": {
+    "Left": [
+     -60.0,
+     47.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     -3.0,
+     -59.9,
+     18.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.001
+   },
+   "axis_deg": {
+    "Left": 11.2,
+    "Right": 3.9
+   },
+   "hip_ratio": 0.38,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.1792,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 14.6,
+   "pelvis_yaw": 156.3,
+   "chest_yaw": -177.2,
+   "twist": 26.5,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": -179.01,
+   "hips_z": 0.775,
+   "forearm_twist": {
+    "Left": -7.4,
+    "Right": -48.1
+   },
+   "fistL": [
+    -0.431,
+    -0.1274,
+    0.8233
+   ],
+   "fistR": [
+    -0.5193,
+    -0.0061,
+    0.8412
+   ],
+   "ring": [
+    -0.4894,
+    -0.0471,
+    0.8352
+   ],
+   "grip_axis": [
+    -0.5842,
+    0.8028,
+    0.119
+   ],
+   "hand_gap": 0.151,
+   "axis_err": {
+    "Left": 12.3,
+    "Right": 12.5
+   },
+   "Left": {
+    "ankle": [
+     -0.4338,
+     0.219,
+     0.2898
+    ],
+    "toe_z": 0.1153
+   },
+   "Right": {
+    "ankle": [
+     -0.0302,
+     -0.1905,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 6,
+   "socket": [
+    0.1198,
+    0.8312,
+    -0.3891
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0002,
+   "sol": {
+    "Left": [
+     -60.0,
+     11.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     1.0,
+     -59.9,
+     18.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.0,
+    "Right": 0.002
+   },
+   "axis_deg": {
+    "Left": 24.5,
+    "Right": 2.7
+   },
+   "hip_ratio": 0.378,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.1141,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 14.8,
+   "pelvis_yaw": -174.6,
+   "chest_yaw": -149.5,
+   "twist": 25.1,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": -150.6,
+   "hips_z": 0.774,
+   "forearm_twist": {
+    "Left": 4.6,
+    "Right": -42.2
+   },
+   "fistL": [
+    -0.3551,
+    -0.2314,
+    0.8219
+   ],
+   "fistR": [
+    -0.486,
+    -0.1623,
+    0.8506
+   ],
+   "ring": [
+    -0.4419,
+    -0.1855,
+    0.8409
+   ],
+   "grip_axis": [
+    -0.8681,
+    0.4584,
+    0.1905
+   ],
+   "hand_gap": 0.151,
+   "axis_err": {
+    "Left": 19.5,
+    "Right": 18.8
+   },
+   "Left": {
+    "ankle": [
+     -0.4478,
+     -0.1771,
+     0.2394
+    ],
+    "toe_z": 0.0703
+   },
+   "Right": {
+    "ankle": [
+     0.0069,
+     -0.1552,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 7,
+   "socket": [
+    0.2109,
+    0.8263,
+    -0.3164
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0008,
+   "sol": {
+    "Left": [
+     -60.0,
+     23.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     1.0,
+     -53.9,
+     6.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.002
+   },
+   "axis_deg": {
+    "Left": 38.6,
+    "Right": 3.3
+   },
+   "hip_ratio": 0.38,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0691,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 15.2,
+   "pelvis_yaw": -145.5,
+   "chest_yaw": -121.8,
+   "twist": 23.7,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": -122.12,
+   "hips_z": 0.771,
+   "forearm_twist": {
+    "Left": 4.6,
+    "Right": -36.3
+   },
+   "fistL": [
+    -0.2624,
+    -0.3437,
+    0.8247
+   ],
+   "fistR": [
+    -0.4087,
+    -0.3474,
+    0.8617
+   ],
+   "ring": [
+    -0.3593,
+    -0.3462,
+    0.8492
+   ],
+   "grip_axis": [
+    -0.9692,
+    -0.0249,
+    0.2449
+   ],
+   "hand_gap": 0.151,
+   "axis_err": {
+    "Left": 24.5,
+    "Right": 20.1
+   },
+   "Left": {
+    "ankle": [
+     -0.3006,
+     -0.4107,
+     0.2366
+    ],
+    "toe_z": 0.072
+   },
+   "Right": {
+    "ankle": [
+     0.0178,
+     -0.1113,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 8,
+   "socket": [
+    0.3103,
+    0.8296,
+    -0.2342
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0012,
+   "sol": {
+    "Left": [
+     -60.0,
+     23.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     1.0,
+     -47.9,
+     -2.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.002
+   },
+   "axis_deg": {
+    "Left": 48.1,
+    "Right": 3.6
+   },
+   "hip_ratio": 0.386,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0706,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 15.8,
+   "pelvis_yaw": -119.2,
+   "chest_yaw": -96.6,
+   "twist": 22.6,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": -96.49,
+   "hips_z": 0.766,
+   "forearm_twist": {
+    "Left": 4.6,
+    "Right": -33.2
+   },
+   "fistL": [
+    -0.1268,
+    -0.4284,
+    0.8319
+   ],
+   "fistR": [
+    -0.2548,
+    -0.496,
+    0.8732
+   ],
+   "ring": [
+    -0.2118,
+    -0.4733,
+    0.8594
+   ],
+   "grip_axis": [
+    -0.8504,
+    -0.4489,
+    0.2746
+   ],
+   "hand_gap": 0.15,
+   "axis_err": {
+    "Left": 28.2,
+    "Right": 23.9
+   },
+   "Left": {
+    "ankle": [
+     -0.0781,
+     -0.5341,
+     0.2351
+    ],
+    "toe_z": 0.0741
+   },
+   "Right": {
+    "ankle": [
+     0.0073,
+     -0.0721,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 9,
+   "socket": [
+    0.3869,
+    0.8363,
+    -0.1122
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0009,
+   "sol": {
+    "Left": [
+     -60.0,
+     23.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     1.0,
+     -44.9,
+     -11.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.001
+   },
+   "axis_deg": {
+    "Left": 56.0,
+    "Right": 3.8
+   },
+   "hip_ratio": 0.395,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0727,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 16.4,
+   "pelvis_yaw": -90.4,
+   "chest_yaw": -69.5,
+   "twist": 20.9,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": -69.03,
+   "hips_z": 0.76,
+   "forearm_twist": {
+    "Left": 4.6,
+    "Right": -32.3
+   },
+   "fistL": [
+    0.0513,
+    -0.46,
+    0.833
+   ],
+   "fistR": [
+    -0.0318,
+    -0.5776,
+    0.8772
+   ],
+   "ring": [
+    -0.0038,
+    -0.5381,
+    0.8623
+   ],
+   "grip_axis": [
+    -0.5513,
+    -0.781,
+    0.2935
+   ],
+   "hand_gap": 0.151,
+   "axis_err": {
+    "Left": 30.7,
+    "Right": 26.4
+   },
+   "Left": {
+    "ankle": [
+     0.2024,
+     -0.5333,
+     0.2338
+    ],
+    "toe_z": 0.076
+   },
+   "Right": {
+    "ankle": [
+     -0.0227,
+     -0.0402,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 10,
+   "socket": [
+    0.4159,
+    0.8374,
+    0.0489
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0007,
+   "sol": {
+    "Left": [
+     -60.0,
+     23.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     1.0,
+     -43.9,
+     -18.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.001
+   },
+   "axis_deg": {
+    "Left": 60.6,
+    "Right": 3.8
+   },
+   "hip_ratio": 0.406,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0744,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 17.1,
+   "pelvis_yaw": -59.7,
+   "chest_yaw": -40.3,
+   "twist": 19.4,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": -39.57,
+   "hips_z": 0.753,
+   "forearm_twist": {
+    "Left": 4.6,
+    "Right": -32.3
+   },
+   "fistL": [
+    0.2595,
+    -0.4054,
+    0.8279
+   ],
+   "fistR": [
+    0.2398,
+    -0.5466,
+    0.8757
+   ],
+   "ring": [
+    0.2464,
+    -0.4993,
+    0.8597
+   ],
+   "grip_axis": [
+    -0.131,
+    -0.9391,
+    0.3178
+   ],
+   "hand_gap": 0.15,
+   "axis_err": {
+    "Left": 30.5,
+    "Right": 27.0
+   },
+   "Left": {
+    "ankle": [
+     0.4791,
+     -0.3656,
+     0.2328
+    ],
+    "toe_z": 0.078
+   },
+   "Right": {
+    "ankle": [
+     -0.0673,
+     -0.0272,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 11,
+   "socket": [
+    0.3667,
+    0.8325,
+    0.2379
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0006,
+   "sol": {
+    "Left": [
+     -60.0,
+     23.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     1.0,
+     -43.9,
+     -18.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.001
+   },
+   "axis_deg": {
+    "Left": 60.3,
+    "Right": 3.4
+   },
+   "hip_ratio": 0.419,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0763,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 17.9,
+   "pelvis_yaw": -33.7,
+   "chest_yaw": -15.6,
+   "twist": 18.1,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": -14.9,
+   "hips_z": 0.745,
+   "forearm_twist": {
+    "Left": 4.6,
+    "Right": -33.3
+   },
+   "fistL": [
+    0.4283,
+    -0.2834,
+    0.8332
+   ],
+   "fistR": [
+    0.4703,
+    -0.417,
+    0.8871
+   ],
+   "ring": [
+    0.4563,
+    -0.3724,
+    0.8691
+   ],
+   "grip_axis": [
+    0.28,
+    -0.8903,
+    0.3591
+   ],
+   "hand_gap": 0.15,
+   "axis_err": {
+    "Left": 30.3,
+    "Right": 26.6
+   },
+   "Left": {
+    "ankle": [
+     0.6135,
+     -0.0914,
+     0.2223
+    ],
+    "toe_z": 0.0706
+   },
+   "Right": {
+    "ankle": [
+     -0.1057,
+     -0.0358,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 12,
+   "socket": [
+    0.257,
+    0.8365,
+    0.3918
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0006,
+   "sol": {
+    "Left": [
+     -60.0,
+     23.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     1.0,
+     -44.9,
+     -18.0,
+     9.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.001
+   },
+   "axis_deg": {
+    "Left": 60.0,
+    "Right": 3.7
+   },
+   "hip_ratio": 0.433,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0688,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 19.3,
+   "pelvis_yaw": -7.7,
+   "chest_yaw": 8.1,
+   "twist": 15.8,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 9.66,
+   "hips_z": 0.734,
+   "forearm_twist": {
+    "Left": 4.6,
+    "Right": -15.2
+   },
+   "fistL": [
+    0.578,
+    -0.1716,
+    0.997
+   ],
+   "fistR": [
+    0.6703,
+    -0.2578,
+    1.0792
+   ],
+   "ring": [
+    0.6393,
+    -0.2288,
+    1.0516
+   ],
+   "grip_axis": [
+    0.6129,
+    -0.5718,
+    0.5453
+   ],
+   "hand_gap": 0.151,
+   "axis_err": {
+    "Left": 41.8,
+    "Right": 40.6
+   },
+   "Left": {
+    "ankle": [
+     0.58,
+     0.21,
+     0.183
+    ],
+    "toe_z": 0.0349
+   },
+   "Right": {
+    "ankle": [
+     -0.1364,
+     -0.0606,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 13,
+   "socket": [
+    0.1595,
+    0.987,
+    0.5315
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0004,
+   "sol": {
+    "Left": [
+     -60.0,
+     23.9,
+     -34.0,
+     0.0
+    ],
+    "Right": [
+     1.0,
+     -26.9,
+     -30.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.0,
+    "Right": 0.001
+   },
+   "axis_deg": {
+    "Left": 83.0,
+    "Right": 2.6
+   },
+   "hip_ratio": 0.454,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0329,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 21.0,
+   "pelvis_yaw": 17.6,
+   "chest_yaw": 31.6,
+   "twist": 14.1,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 33.51,
+   "hips_z": 0.72,
+   "forearm_twist": {
+    "Left": 4.9,
+    "Right": -12.0
+   },
+   "fistL": [
+    0.6836,
+    0.0178,
+    1.1957
+   ],
+   "fistR": [
+    0.8099,
+    -0.0294,
+    1.1156
+   ],
+   "ring": [
+    0.7641,
+    -0.0123,
+    1.1446
+   ],
+   "grip_axis": [
+    0.8053,
+    -0.3008,
+    -0.5109
+   ],
+   "hand_gap": 0.157,
+   "axis_err": {
+    "Left": 26.1,
+    "Right": 20.6
+   },
+   "Left": {
+    "ankle": [
+     0.5599,
+     0.2063,
+     0.1565
+    ],
+    "toe_z": 0.0245
+   },
+   "Right": {
+    "ankle": [
+     -0.1524,
+     -0.0949,
+     0.2597
+    ],
+    "toe_z": 0.0039
+   },
+   "frame": 14,
+   "socket": [
+    -0.0053,
+    1.1606,
+    0.6431
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0001,
+   "sol": {
+    "Left": [
+     -50.0,
+     23.9,
+     18.0,
+     0.0
+    ],
+    "Right": [
+     1.0,
+     -23.9,
+     -34.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.0,
+    "Right": 0.007
+   },
+   "axis_deg": {
+    "Left": 50.3,
+    "Right": 10.6
+   },
+   "hip_ratio": 0.48,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0199,
+    "Right": 0.0032
+   },
+   "contacts": []
+  },
+  {
+   "lean": 19.0,
+   "pelvis_yaw": 23.6,
+   "chest_yaw": 41.0,
+   "twist": 17.3,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 42.47,
+   "hips_z": 0.725,
+   "forearm_twist": {
+    "Left": 22.3,
+    "Right": -19.0
+   },
+   "fistL": [
+    0.6638,
+    0.2019,
+    1.0973
+   ],
+   "fistR": [
+    0.7738,
+    0.2368,
+    1.0884
+   ],
+   "ring": [
+    0.7588,
+    0.232,
+    1.0896
+   ],
+   "grip_axis": [
+    0.9504,
+    0.3013,
+    -0.0767
+   ],
+   "hand_gap": 0.116,
+   "axis_err": {
+    "Left": 60.1,
+    "Right": 29.3
+   },
+   "Left": {
+    "ankle": [
+     0.5522,
+     0.2046,
+     0.1634
+    ],
+    "toe_z": 0.0314
+   },
+   "Right": {
+    "ankle": [
+     -0.116,
+     -0.1183,
+     0.2993
+    ],
+    "toe_z": 0.0848
+   },
+   "frame": 15,
+   "on_grip": false,
+   "seam_copy": false,
+   "sol": {
+    "Left": [
+     -60.0,
+     -36.1,
+     -3.0,
+     0.0
+    ],
+    "Right": [
+     1.0,
+     4.1,
+     -4.0,
+     -2.0
+    ]
+   },
+   "socket": [
+    -0.1845,
+    1.0592,
+    0.6278
+   ],
+   "socket_miss": 1.3483,
+   "hip_ratio": 0.471,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0271,
+    "Right": 0.0839
+   },
+   "contacts": []
+  },
+  {
+   "lean": 16.9,
+   "pelvis_yaw": 26.7,
+   "chest_yaw": 44.5,
+   "twist": 17.8,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 45.43,
+   "hips_z": 0.73,
+   "forearm_twist": {
+    "Left": 42.0,
+    "Right": -26.2
+   },
+   "fistL": [
+    0.5956,
+    0.3133,
+    1.0575
+   ],
+   "fistR": [
+    0.6711,
+    0.4063,
+    1.0776
+   ],
+   "ring": [
+    0.6578,
+    0.3899,
+    1.0741
+   ],
+   "grip_axis": [
+    0.6214,
+    0.7658,
+    0.1657
+   ],
+   "hand_gap": 0.121,
+   "axis_err": {
+    "Left": 53.6,
+    "Right": 58.3
+   },
+   "Left": {
+    "ankle": [
+     0.5474,
+     0.2036,
+     0.1679
+    ],
+    "toe_z": 0.0358
+   },
+   "Right": {
+    "ankle": [
+     0.0417,
+     -0.2197,
+     0.228
+    ],
+    "toe_z": 0.0773
+   },
+   "frame": 16,
+   "on_grip": false,
+   "seam_copy": false,
+   "sol": {
+    "Left": [
+     -58.0,
+     -33.1,
+     2.0,
+     0.0
+    ],
+    "Right": [
+     1.0,
+     0.1,
+     20.0,
+     -1.0
+    ]
+   },
+   "socket": [
+    -0.3016,
+    1.0164,
+    0.561
+   ],
+   "socket_miss": 1.2226,
+   "hip_ratio": 0.461,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0318,
+    "Right": 0.0753
+   },
+   "contacts": []
+  },
+  {
+   "lean": 14.9,
+   "pelvis_yaw": 27.7,
+   "chest_yaw": 46.3,
+   "twist": 18.5,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 46.4,
+   "hips_z": 0.735,
+   "forearm_twist": {
+    "Left": 63.7,
+    "Right": -33.0
+   },
+   "fistL": [
+    0.5198,
+    0.3679,
+    1.0453
+   ],
+   "fistR": [
+    0.5428,
+    0.5124,
+    1.0797
+   ],
+   "ring": [
+    0.5351,
+    0.464,
+    1.0682
+   ],
+   "grip_axis": [
+    0.1531,
+    0.9614,
+    0.2288
+   ],
+   "hand_gap": 0.15,
+   "axis_err": {
+    "Left": 26.5,
+    "Right": 81.2
+   },
+   "Left": {
+    "ankle": [
+     0.5444,
+     0.2029,
+     0.1709
+    ],
+    "toe_z": 0.0389
+   },
+   "Right": {
+    "ankle": [
+     0.12,
+     -0.27,
+     0.136
+    ],
+    "toe_z": 0.004
+   },
+   "frame": 17,
+   "socket": [
+    -0.3665,
+    1.0069,
+    0.4826
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0009,
+   "sol": {
+    "Left": [
+     0.0,
+     82.9,
+     0.0,
+     0.0
+    ],
+    "Right": [
+     -5.0,
+     -44.9,
+     0.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.003
+   },
+   "axis_deg": {
+    "Left": 50.9,
+    "Right": 57.0
+   },
+   "hip_ratio": 0.452,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0351,
+    "Right": -0.0006
+   },
+   "contacts": []
+  },
+  {
+   "lean": 14.0,
+   "pelvis_yaw": 27.8,
+   "chest_yaw": 47.1,
+   "twist": 19.4,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 46.38,
+   "hips_z": 0.745,
+   "forearm_twist": {
+    "Left": 63.7,
+    "Right": -33.0
+   },
+   "fistL": [
+    0.5118,
+    0.3456,
+    0.9418
+   ],
+   "fistR": [
+    0.5042,
+    0.4911,
+    0.9756
+   ],
+   "ring": [
+    0.5067,
+    0.4429,
+    0.9644
+   ],
+   "grip_axis": [
+    -0.0506,
+    0.9728,
+    0.2261
+   ],
+   "hand_gap": 0.15,
+   "axis_err": {
+    "Left": 12.2,
+    "Right": 88.3
+   },
+   "Left": {
+    "ankle": [
+     0.5398,
+     0.202,
+     0.1757
+    ],
+    "toe_z": 0.0437
+   },
+   "Right": {
+    "ankle": [
+     0.12,
+     -0.27,
+     0.136
+    ],
+    "toe_z": 0.004
+   },
+   "frame": 18,
+   "socket": [
+    -0.342,
+    0.9124,
+    0.4693
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0007,
+   "sol": {
+    "Left": [
+     0.0,
+     82.9,
+     0.0,
+     0.0
+    ],
+    "Right": [
+     -5.0,
+     -44.9,
+     0.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.004
+   },
+   "axis_deg": {
+    "Left": 22.8,
+    "Right": 82.6
+   },
+   "hip_ratio": 0.433,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0401,
+    "Right": -0.0004
+   },
+   "contacts": []
+  },
+  {
+   "lean": 13.0,
+   "pelvis_yaw": 26.8,
+   "chest_yaw": 46.0,
+   "twist": 19.2,
+   "relP": 9.75,
+   "head_relY": -3.18,
+   "face_yaw": 45.36,
+   "hips_z": 0.745,
+   "forearm_twist": {
+    "Left": 63.7,
+    "Right": -33.1
+   },
+   "fistL": [
+    0.5272,
+    0.3117,
+    0.9567
+   ],
+   "fistR": [
+    0.4889,
+    0.4532,
+    0.9858
+   ],
+   "ring": [
+    0.5016,
+    0.4064,
+    0.9762
+   ],
+   "grip_axis": [
+    -0.2561,
+    0.9468,
+    0.1949
+   ],
+   "hand_gap": 0.149,
+   "axis_err": {
+    "Left": 3.5,
+    "Right": 80.8
+   },
+   "Left": {
+    "ankle": [
+     0.5407,
+     0.2023,
+     0.175
+    ],
+    "toe_z": 0.043
+   },
+   "Right": {
+    "ankle": [
+     0.12,
+     -0.27,
+     0.136
+    ],
+    "toe_z": 0.004
+   },
+   "frame": 19,
+   "socket": [
+    -0.3105,
+    0.9259,
+    0.4853
+   ],
+   "on_grip": true,
+   "seam_copy": false,
+   "socket_miss": 0.0007,
+   "sol": {
+    "Left": [
+     0.0,
+     82.9,
+     0.0,
+     0.0
+    ],
+    "Right": [
+     -5.0,
+     -44.9,
+     0.0,
+     10.0
+    ]
+   },
+   "fist_miss": {
+    "Left": 0.001,
+    "Right": 0.003
+   },
+   "axis_deg": {
+    "Left": 9.5,
+    "Right": 75.4
+   },
+   "hip_ratio": 0.433,
+   "relP_over_stance": 0.0,
+   "feet_low": {
+    "Left": 0.0394,
+    "Right": -0.0002
+   },
+   "contacts": []
+  }
+ ],
+ "seams": {
+  "f0_vs_f1": [
+   27.12,
+   "LeftArm"
+  ]
+ },
+ "summary": {
+  "Pelag_AN_Wreck2_Swing2": {
+   "worst": "{'body': (32.0, '4\u21925', 'Hips', True), 'arm': (52.0, '13\u219214', 'LeftHand', True)}",
+   "n_bad": 0,
+   "slide": "(0.0157, 'Right f4\u21925')",
+   "sub": "{'low': (-0.0006, 'Right x17.00'), 'slide': (0.0053, 'Right x4.25')}",
+   "lean": "(13.0, 21.0)",
+   "twist": 29.1,
+   "fore": 64.7,
+   "relP": 0.0,
+   "hip": 0.48,
+   "low": -0.0006,
+   "gap": "(0.149, 0.157)",
+   "contacts": 0
+  }
+ },
+ "violations": [
+  [
+   "Pelag_AN_Wreck2_Swing2",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 f3\u21924",
+   "('Right', 0.015, 31)"
+  ],
+  [
+   "Pelag_AN_Wreck2_Swing2",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 f4\u21925",
+   "('Right', 0.016, 31)"
+  ],
+  [
+   "Pelag_AN_Wreck2_Swing2",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 f5\u21926",
+   "('Right', 0.014, 31)"
+  ],
+  [
+   "Pelag_AN_Wreck2_Swing2",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 f6\u21927",
+   "('Right', 0.013, 31)"
+  ],
+  [
+   "Pelag_AN_Wreck2_Swing2",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 f7\u21928",
+   "('Right', 0.011, 31)"
+  ],
+  [
+   "Pelag_AN_Wreck2_Swing2",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 f9\u219210",
+   "('Right', 0.011, 31)"
+  ],
+  [
+   "Pelag_AN_Wreck2_Swing2",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 f10\u219211",
+   "('Right', 0.011, 31)"
+  ]
+ ]
+}

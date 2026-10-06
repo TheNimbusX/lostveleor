@@ -1,0 +1,17 @@
+Attach images 1–5 in order, then paste. Better in a NEW chat (not the frames chat).
+
+=== MESSAGE 1 — three base icons of the anchor skills ===
+Make game ability icons for our game THE WAR REMAINS. Style: exactly like our existing icons in images 3 and 4 (painted, bold, a thick dark outline, saturated colour, one strong central shape on a dark background, readable at 64 px). The colour family of the anchor skills comes from image 1 (approved skill look): dark iron + cold sky-blue light glowing from cracks and chain links (#4FA8FF to #9CD8FF) with white glints. NOT turquoise foam, NOT water waves — that is the look of our other skills (images 3–4), these must be clearly different. Our anchor and chain are in image 5 (a ring on top, a long shank, two barbed arms, a faceted crown spike, a leather grip with a red tassel).
+Make ONE sheet with three square icons side by side, each with a clearly different silhouette (compositions as in image 2):
+1. «Крушение» (Wreck): the anchor at the end of a big swinging arc, smashing down into cracked ground with chain links glowing in the crack — a round composition.
+2. «Бросок якоря» (Anchor Throw): the anchor flying far forward along a straight taut chain, strong perspective, a horizontal arrow-like composition; the anchor and the chain must be THICK and fill the tile.
+3. «Абордаж» (Abordage): a taut chain yanking a figure toward a hooked anchor bite — the figure must read as our hero Pelag (white shirt, red sash), be big and light enough to read at 64 px; a rising diagonal composition.
+The three icons must not be confusable with each other or with images 3–4, even in greyscale at 64 px.
+
+=== MESSAGE 2 — the 4 forms of «Крушение» (after you choose the Wreck icon) ===
+Now a 2×2 sheet for «Крушение» and its forms. All four tiles use the SAME silhouette and composition as the Wreck icon you chose; only the glow colour and the effect material change:
+1. base — cold sky-blue (#4FA8FF), chain links glowing in the crack;
+2. «Волнорез» — sea green (#1FB37E), the ground heaving up into a wall of slabs;
+3. «Девятый вал» — indigo-violet (#4B3FD0), a bigger and deeper crater;
+4. «Панцирь» — pearl white (#E4EEF6), iron plates and links bursting outward around the anchor.
+The anchor must be identical in all four tiles.

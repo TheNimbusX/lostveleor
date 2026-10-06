@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Game.Sim;
 using NUnit.Framework;
 
@@ -96,17 +95,19 @@ namespace Game.Tests
         {
             var camp = PrototypeContent.NewCamp();
             Assert.AreEqual(1, camp.Level);
-            Assert.AreEqual(100, camp.ExperienceToNextLevel);
+            // Кривая 06.10: 200 + 100 за каждый уровень выше первого.
+            Assert.AreEqual(200, camp.ExperienceToNextLevel);
 
-            Assert.AreEqual(0, camp.GainExperience(99));
+            Assert.AreEqual(0, camp.GainExperience(199));
             Assert.AreEqual(1, camp.Level);
 
             Assert.AreEqual(1, camp.GainExperience(1));
             Assert.AreEqual(2, camp.Level);
             Assert.AreEqual(0, camp.Experience);
+            Assert.AreEqual(300, camp.ExperienceToNextLevel);
 
-            // 150 до третьего и ещё 10 сверху — остаток переносится.
-            Assert.AreEqual(1, camp.GainExperience(160));
+            // 300 до третьего и ещё 10 сверху — остаток переносится.
+            Assert.AreEqual(1, camp.GainExperience(310));
             Assert.AreEqual(3, camp.Level);
             Assert.AreEqual(10, camp.Experience);
         }
@@ -172,8 +173,8 @@ namespace Game.Tests
 
         /// <summary>
         /// Главное правило 29 сентября: статы героя не зависят от уровня лагеря.
-        /// Герой 1-го и 20-го уровня в Разломе леса одинаков — 270 здоровья и 54
-        /// урона, как прежний 5-й уровень, — и в лагере тоже.
+        /// Герой 1-го и 20-го уровня в Разломе леса одинаков — база профиля (06.10:
+        /// эталон 270/54 или новый 200/40), лавидий 240 в обоих случаях, — и в лагере тоже.
         /// </summary>
         // Уровень 1 против 20 — в CampLevelIsNotInTheSimulationHash; здесь достаточно 20.
         [TestCase(20)]
@@ -191,11 +192,10 @@ namespace Game.Tests
             session.EnterRift();
             var sim = session.Run.Sim;
             Assert.IsTrue(sim.HasHeroBaseline, "Разлом без базы героя");
-            Assert.AreEqual(Progression.ReferenceHeroHealth, sim.Entities.MaxHealth[Player]);
-            Assert.AreEqual(270, sim.Entities.MaxHealth[Player]);
-            Assert.AreEqual(270, sim.Entities.Health[Player], "в Разлом входят с полным здоровьем");
-            Assert.AreEqual(Progression.ReferenceHeroDamage, sim.Entities.Damage[Player]);
-            Assert.AreEqual(54, sim.Entities.Damage[Player]);
+            var baseline = camp.HeroBaselineFor(false);
+            Assert.AreEqual(150 + baseline.Health, sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(150 + baseline.Health, sim.Entities.Health[Player], "в Разлом входят с полным здоровьем");
+            Assert.AreEqual(34 + baseline.Damage, sim.Entities.Damage[Player]);
             Assert.AreEqual(240, sim.Entities.MaxLavidium[Player]);
         }
 
@@ -247,10 +247,12 @@ namespace Game.Tests
             camp.DeveloperSetLevel(20);
             session.SyncPlayerLevel();
 
+            // База героя зависит от профиля (06.10: эталон 270/54 или новый 200/40), но не от уровня.
+            var baseline = camp.HeroBaselineFor(session.IsDeveloperRun);
             Assert.AreEqual(20, camp.Level);
             Assert.AreEqual(100, sim.Entities.Health[Player], "повышение больше не лечит");
-            Assert.AreEqual(270, sim.Entities.MaxHealth[Player]);
-            Assert.AreEqual(54, sim.Entities.Damage[Player]);
+            Assert.AreEqual(150 + baseline.Health, sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(34 + baseline.Damage, sim.Entities.Damage[Player]);
             Assert.AreEqual(240, session.CampSim.Entities.MaxLavidium[Player]);
             Assert.AreEqual(hash, sim.StateHash(), "уровень изменил состояние боя");
         }
@@ -259,10 +261,10 @@ namespace Game.Tests
 
         /// <summary>
         /// Сохранение героя высокого уровня (риск плана 29 сентября): уровень и опыт
-        /// переезжают как есть, а статы герой берёт от базы — тот же 270 / 54.
+        /// переезжают как есть, а статы герой берёт от базы профиля, не от уровня.
         /// </summary>
         [Test]
-        public void SavedHighLevelCampLoadsWithTheReferenceHero()
+        public void SavedHighLevelCampLoadsWithTheProfileHero()
         {
             var camp = PrototypeContent.NewCamp();
             camp.DeveloperSetLevel(12);
@@ -275,56 +277,9 @@ namespace Game.Tests
             var location = ArenaEncounterTests.ForestLocation();
             var session = new GameSession(7, restored, location.Modules, PrototypeContent.ItemBaseIds(), location: location);
             session.EnterRift();
-            Assert.AreEqual(270, session.Run.Sim.Entities.MaxHealth[Player]);
-            Assert.AreEqual(54, session.Run.Sim.Entities.Damage[Player]);
-        }
-
-        /// <summary>
-        /// Сохранение версии 2 несло ранги постоянных талантов. Они больше не
-        /// существуют: уровень и опыт переезжают, ранги отбрасываются.
-        /// </summary>
-        [Test]
-        public void VersionTwoSaveKeepsLevelAndDropsTalents()
-        {
-            var camp = PrototypeContent.NewCamp();
-            camp.GainExperience(275);
-            camp.Earn(CurrencyType.Gold, 12);
-
-            var restored = CampSaveCodec.Decode(EncodeLegacy(camp, 2, new[] { 2, 0, 1, 0 }), PrototypeContent.Items());
-
-            Assert.AreEqual(camp.Level, restored.Level);
-            Assert.AreEqual(camp.Experience, restored.Experience);
-            Assert.AreEqual(12, restored.Money(CurrencyType.Gold));
-        }
-
-        /// <summary>Прежние форматы байт в байт: версия 1 без прокачки, версия 2 с рангами талантов.</summary>
-        private static byte[] EncodeLegacy(Camp camp, int version, int[] ranks)
-        {
-            using (var stream = new MemoryStream())
-            using (var w = new BinaryWriter(stream))
-            {
-                w.Write(0x43575254); w.Write(version); w.Write(camp.Act); w.Write(camp.Bag.Capacity);
-                for (int i = 0; i < (int)CurrencyType.Count; i++) w.Write(camp.Money((CurrencyType)i));
-                for (int i = 0; i < camp.Bag.Capacity; i++) { WriteItem(w, camp.Bag.At(i)); w.Write(camp.Bag.IsKept(i)); }
-                for (int i = 0; i < (int)EquipSlot.Count; i++) WriteItem(w, camp.Worn.Worn((EquipSlot)i));
-                if (version >= 2)
-                {
-                    w.Write(camp.Level); w.Write(camp.Experience);
-                    foreach (int rank in ranks) w.Write(rank);
-                }
-                w.Flush();
-                byte[] payload = stream.ToArray();
-                uint h = 2166136261;
-                for (int i = 0; i < payload.Length; i++) { h ^= payload[i]; h = unchecked(h * 16777619); }
-                w.Write(h);
-                w.Flush();
-                return stream.ToArray();
-            }
-        }
-
-        private static void WriteItem(BinaryWriter w, ItemInstance item)
-        {
-            w.Write(item.BaseId); w.Write(item.ItemLevel); w.Write((byte)item.Rarity); w.Write(item.Seed);
+            var baseline = restored.HeroBaselineFor(false);
+            Assert.AreEqual(150 + baseline.Health, session.Run.Sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(34 + baseline.Damage, session.Run.Sim.Entities.Damage[Player]);
         }
     }
 }

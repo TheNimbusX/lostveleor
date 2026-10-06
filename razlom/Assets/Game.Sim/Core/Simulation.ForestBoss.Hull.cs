@@ -58,7 +58,7 @@ namespace Game.Sim
 
         /// <summary>
         /// Потолок выдавливания за тик сверх своего хода тела — 0,4 м: край лапы
-        /// (3,3 м от центра) на повороте 4,5° за тик идёт 0,26 м, шаг босса 0,09.
+        /// (3,3 м от центра) на повороте 2,5° за тик идёт 0,14 м, шаг босса 0,07.
         /// </summary>
         public static readonly Fix64 ThicketHullPushPerTick = Fix64.Ratio(2, 5);
 
@@ -116,6 +116,8 @@ namespace Game.Sim
         private int[] _thicketHitIds;
         private Fix64[] _thicketHitSaved, _thicketHitValue;
         private int _thicketHitCount;
+        // Передние лапы этого босса в замахе (ThicketPawsLifted) — на время его выдавливания.
+        private bool _thicketHullPawsLifted;
         // Герой сам летел (тяга якоря, Шквал), и корпус его остановил в этом тике (BeginThicketHitBodies).
         private bool _thicketHeroForced;
         private int _thicketHeroRamTick = -1, _thicketHeroRamBoss = -1;
@@ -180,6 +182,28 @@ namespace Game.Sim
             => Entities.Alive[PlayerId] && ThicketHullActive(id)
                && ThicketHullGap(id, Entities.Position[PlayerId]) - Entities.BodyRadius[PlayerId] <= slack;
 
+        /// <summary>
+        /// Передние лапы в замахе подняты (баланс 02.10, ночь): от знака удара серии до его контакта
+        /// круги обеих передних лап корпуса (1 и 2) никого не держат и не выдавливают — грудь, талия,
+        /// бёдра и хвост держат, как всегда. Иначе корпус, доворачивающий к удару (до 59,5° у первого,
+        /// 3,5°/тик), лапой возил стоящего у бока героя вперёд себя — из нарисованного сектора
+        /// («подмышка» между лапой и бедром: 75% времени у эксперта, удар туда не попадал никогда). Обе,
+        /// а не только бьющая: к герою слева доворачивает и несёт его левая, даже когда бьёт правая.
+        /// Вид — тот же замах; герой под поднятой лапой стоит, пока она не ударит, потом корпус
+        /// выдавливает его, как обычно (не быстрее 0,4 м за тик). Попадания героя, зазор, полосы и
+        /// отладочные круги — по всему корпусу.
+        /// </summary>
+        public bool ThicketPawsLifted(int id)
+        {
+            var masters = _thicketMasters;
+            if (masters == null || (uint)id >= (uint)masters.Length) return false;
+            ref var a = ref masters[id];
+            return a.Serial != 0 && a.Action == ThicketMasterAction.Paw && !a.HitResolved;
+        }
+
+        /// <summary>Круг корпуса k не держит в этом выдавливании (передние лапы в замахе).</summary>
+        private bool ThicketHullSkips(int k) => _thicketHullPawsLifted && (k == 1 || k == 2);
+
         private FixVec2 ThicketHullFacing(int id)
         {
             FixVec2 facing = Entities.Facing[id].Normalized();
@@ -233,6 +257,8 @@ namespace Game.Sim
                 FixVec2 boss = Entities.Position[id], facing = ThicketHullFacing(id);
                 _thicketHullWorld ??= new FixVec2[ThicketHullCircleCount];
                 for (int k = 0; k < ThicketHullCircleCount; k++) _thicketHullWorld[k] = ThicketHullCenter(boss, facing, k);
+                // Передние лапы в замахе подняты: доворот к удару героя у бока не возит (ThicketPawsLifted).
+                _thicketHullPawsLifted = ThicketPawsLifted(id);
                 for (int i = 0; i < Entities.Count; i++)
                 {
                     if (i == id || !Entities.Alive[i] || Entities.Kind[i] == EnemyKind.ForestThicketMaster) continue;
@@ -250,6 +276,7 @@ namespace Game.Sim
                         _thicketHeroRamBoss = id;
                     }
                 }
+                _thicketHullPawsLifted = false;
             }
         }
 
@@ -320,6 +347,7 @@ namespace Game.Sim
         {
             for (int k = 0; k < ThicketHullCircleCount; k++)
             {
+                if (ThicketHullSkips(k)) continue;
                 Fix64 r = ThicketHullRadius[k] + body;
                 if (FixVec2.DistanceSq(p, _thicketHullWorld[k]) < r * r) return true;
             }
@@ -350,6 +378,7 @@ namespace Game.Sim
             int n = 0;
             for (int k = 0; k < ThicketHullCircleCount; k++)
             {
+                if (ThicketHullSkips(k)) continue;
                 Fix64 r = ThicketHullRadius[k] + body + ThicketHullEpsilon;
                 FixVec2 offset = p - world[k];
                 FixVec2 direction = offset.Normalized();
@@ -359,9 +388,11 @@ namespace Game.Sim
             }
             for (int a = 0; a < ThicketHullCircleCount; a++)
             {
+                if (ThicketHullSkips(a)) continue;
                 Fix64 ra = ThicketHullRadius[a] + body + ThicketHullEpsilon;
                 for (int b = a + 1; b < ThicketHullCircleCount; b++)
                 {
+                    if (ThicketHullSkips(b)) continue;
                     Fix64 rb = ThicketHullRadius[b] + body + ThicketHullEpsilon;
                     FixVec2 d = world[b] - world[a];
                     Fix64 distance = d.Length;
@@ -404,6 +435,7 @@ namespace Game.Sim
                 bool moved = false;
                 for (int k = 0; k < ThicketHullCircleCount; k++)
                 {
+                    if (ThicketHullSkips(k)) continue;
                     Fix64 r = ThicketHullRadius[k] + body + ThicketHullEpsilon;
                     FixVec2 rel = p - _thicketHullWorld[k];
                     Fix64 b = FixVec2.Dot(d, rel);
@@ -436,6 +468,7 @@ namespace Game.Sim
             bool hit = false;
             for (int k = 0; k < ThicketHullCircleCount; k++)
             {
+                if (ThicketHullSkips(k)) continue;
                 Fix64 r = ThicketHullRadius[k] + body + ThicketHullEpsilon;
                 FixVec2 rel = from - _thicketHullWorld[k];
                 Fix64 b = FixVec2.Dot(d, rel);
@@ -455,6 +488,7 @@ namespace Game.Sim
                 bool moved = false;
                 for (int k = 0; k < ThicketHullCircleCount; k++)
                 {
+                    if (ThicketHullSkips(k)) continue;
                     Fix64 r = ThicketHullRadius[k] + body + ThicketHullEpsilon;
                     FixVec2 rel = from - _thicketHullWorld[k];
                     Fix64 b = FixVec2.Dot(d, rel);

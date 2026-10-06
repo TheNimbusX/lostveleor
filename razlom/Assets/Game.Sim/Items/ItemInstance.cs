@@ -58,7 +58,9 @@
         public readonly ushort ForgeRecipe;
         public readonly CraftingRecipe Crafting;
         public int LegacyReforgeCount => ForgeRecipe==0?0:(ForgeRecipe>>8)!=0?3:(ForgeRecipe>>4)!=0?2:1;
-        public int ReforgeCount => LegacyReforgeCount + (Crafting?.RefineCount ?? 0);
+        // Только старая перековка (ForgeRecipe) сдвигала уровень вещи. Закалка 06.10 уровень
+        // не меняет, её попытки считает Camp.AttemptsUsed по рецепту.
+        public int ReforgeCount => LegacyReforgeCount;
         public short OriginalLevel => (short)(ItemLevel-ReforgeCount*(1+(int)Rarity));
 
         public ItemInstance(int baseId, short itemLevel, ItemRarity rarity, ulong seed, ushort forgeRecipe=0, CraftingRecipe crafting=null)

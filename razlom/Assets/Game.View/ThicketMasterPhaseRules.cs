@@ -18,8 +18,14 @@ namespace Game.View
     ///   на 4 тика с тика удара, к цели за 12 тиков, дыхание ±16 % с периодом 1,6 с от тика
     ///   Sim (пауза и съёмка держат кадр), после смерти — к нулю за 1,5 с.
     /// • Листва (ревью 02.10): Ф2 — осенняя карта цвета, Ф3 — цветущая (ThicketMasterPhaseDressing
-    ///   ставит _BaseMap по уровню; яркость листвы та же, меняется оттенок).
-    /// Тело не высветляется: светятся только руны, трещины спины и глаза по маске, k — только их яркость.
+    ///   ставит _BaseMap по уровню). Ревью вечера 02.10 (находка 7, «Ф2–Ф3 почти чёрные, лавовый, а не
+    ///   лесной»): Ф2 — пятна рыжего, янтаря и золота поверх зелени, Ф3 — свежая зелень; ни под белым
+    ///   светом, ни в синей тени арены листва не темнее Ф1 больше чем на 15 % (make_phase_colors.py).
+    ///   Светящихся трещин спины и смоляных прожилок больше нет — только руны и глаза.
+    /// • Лунная кромка силуэта (находка 9, «босс пропадает в синей тени»): <see cref="Rim"/> — сила
+    ///   холодного френеля в шейдерах тела, одна во всех фазах, гаснет со смертью как руны.
+    /// Тело не высветляется: светятся только руны и глаза по маске, k — только их яркость; кромка —
+    /// только край силуэта и только там, где тело само тёмное (RazlomSeeThrough.hlsl).
     /// </summary>
     public static class ThicketMasterPhaseRules
     {
@@ -29,7 +35,7 @@ namespace Game.View
         /// <summary>
         /// Яркость рун по уровням (сон и Ф1 — 0: руны тёмные). Ревью 02.10 «фаза 2 не отличается»:
         /// руны на передних пластинах, камера 48° видит их мельком — свет сильнее, ореол блума шире
-        /// (порог 1,05; руна Ф2 в карте — янтарь 1 / .43 / .08, трещины спины — .85 / .34 / .06).
+        /// (порог 1,05; руна Ф2 в карте — янтарь 1 / .43 / .08, Ф3 — бледное золото 1 / .72 / .30).
         /// </summary>
         public const float Phase2Glow = 2.6f, EnragedGlow = 3.0f, Phase3Glow = 3.4f;
 
@@ -38,7 +44,7 @@ namespace Game.View
         public const int FlashTicks = 4, SettleTicks = 12;
 
         /// <summary>
-        /// Дыхание рун и трещин спины в Ф2–Ф3: ±BreathDepth с периодом BreathPeriodTicks тиков Sim —
+        /// Дыхание рун в Ф2–Ф3: ±BreathDepth с периодом BreathPeriodTicks тиков Sim —
         /// заметная пульсация «жара под корой», а не мерцание.
         /// </summary>
         public const float BreathDepth = .16f;
@@ -147,6 +153,27 @@ namespace Game.View
         /// <summary>Глаза: 0…1 за EyeAppearTicks с удара рёва 66 (None — уже светятся).</summary>
         public static float EyeAppear(float tick, int changeTick)
             => changeTick == None ? 1f : Clamp01((tick - changeTick) / EyeAppearTicks);
+
+        /// <summary>
+        /// Сила лунной кромки (множитель цвета _RazlomBossRim): у живого — RimStrength во всех фазах
+        /// и во сне (босс в углу поляны виден до вступления), после смерти — к нулю за DeathFadeTicks
+        /// вместе с рунами (тело уходит в холм тёмным). Кромка — край силуэта в тени, не подсветка тела:
+        /// пик на самом краю ≈ 0,13 линейной яркости (sRGB ≈ 0,4), к середине силуэта — ноль.
+        /// </summary>
+        public const float RimStrength = .30f;
+
+        /// <summary>Цвет кромки, линейный (× сила): голубой лунный, а не белый — свет луны на коре в синей тени.</summary>
+        public const float RimRed = .32f, RimGreen = .46f, RimBlue = .78f;
+
+        /// <summary>Линейная яркость кромки на самом краю силуэта в полной тени (френель 1, нормаль вбок-вверх).</summary>
+        public static float RimPeakLuminance(float strength)
+            => strength * (.2126f * RimRed + .7152f * RimGreen + .0722f * RimBlue);
+
+        public static float Rim(float tick, int deathTick)
+        {
+            if (deathTick == None) return RimStrength;
+            return RimStrength * (1f - Clamp01((tick - deathTick) / DeathFadeTicks));
+        }
 
         private static float Clamp01(float x) => x < 0f ? 0f : x > 1f ? 1f : x;
     }

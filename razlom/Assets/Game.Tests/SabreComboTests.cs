@@ -66,6 +66,15 @@ namespace Game.Tests
             return input;
         }
 
+        /// <summary>Кадр, в который ЛКМ нажали и держат: начало удержания.</summary>
+        static InputFrame PressHold(FixVec2 aim)
+        {
+            var input = InputFrame.Empty;
+            input.Aim = aim;
+            input.Flags = (byte)(InputFlags.Attack | InputFlags.AttackPressed);
+            return input;
+        }
+
         static InputFrame Cast(int slot, FixVec2 aim)
         {
             var input = InputFrame.Empty;
@@ -91,6 +100,22 @@ namespace Game.Tests
         }
 
         static int Lost(Simulation sim, int id) => Health - sim.Entities.Health[id];
+
+        /// <summary>Шаги одним вводом, пока Tick не дойдёт до tick.</summary>
+        static void StepTo(Simulation sim, int tick, InputFrame input)
+        {
+            while (sim.Tick < tick) sim.Step(in input);
+        }
+
+        /// <summary>Ставит мишень относительно героя: выпад добивающего двигает героя.</summary>
+        static void Place(Simulation sim, int id, double dx, double dy)
+            => sim.Entities.Position[id] = sim.Entities.Position[Simulation.PlayerId] + At(dx, dy);
+
+        static void AssertDirection(double x, double y, FixVec2 actual, string message)
+        {
+            Assert.AreEqual(x, actual.X.ToDouble(), 1e-3, message);
+            Assert.AreEqual(y, actual.Y.ToDouble(), 1e-3, message);
+        }
 
         // ---- сроки ----
 
@@ -244,6 +269,146 @@ namespace Game.Tests
                 Assert.AreEqual(2, starts.Count);
                 Assert.AreEqual(gap == 10 ? 1 : 0, starts[1].Hit, "пауза " + gap);
             }
+        }
+
+        // ---- зажатая ЛКМ цепляется к ближайшему (владелец 02.10) ----
+
+        [Test]
+        public void Click_AimsAtTheCursor_EvenWithAnEnemyElsewhere()
+        {
+            var sim = Arena();
+            Dummy(sim, At(0, 2));
+            sim.Step(Tap(At(3, 0)));
+            AssertDirection(1, 0, sim.SabreSwing.Direction, "клик — в курсор, не к врагу сбоку");
+            Assert.AreEqual(-1, sim.SabreStickTarget);
+
+            sim = Arena();
+            Dummy(sim, At(0, 2));
+            sim.Step(PressHold(At(3, 0)));
+            AssertDirection(1, 0, sim.SabreSwing.Direction, "первый удар удержания — тоже в курсор");
+            Assert.AreEqual(-1, sim.SabreStickTarget);
+        }
+
+        [Test]
+        public void HeldRepeat_TurnsToTheNearestEnemy_OffCursor()
+        {
+            var sim = Arena();
+            Dummy(sim, At(-3.5, 0));
+            int near = Dummy(sim, At(0, 2));
+            sim.Step(PressHold(At(3, 0)));                           // t0 — в курсор
+            StepTo(sim, 8, Hold(At(3, 0)));
+            sim.Step(Hold(At(3, 0)));                                // t8 — удар удержания
+            Assert.AreEqual(8, sim.SabreSwing.StartTick);
+            Assert.AreEqual(near, sim.SabreStickTarget, "ближайший из двух");
+            AssertDirection(0, 1, sim.SabreSwing.Direction, "к врагу, а не в курсор (3; 0)");
+            AssertDirection(0, 1, sim.Entities.Facing[0], "корпус — по удару");
+            StepTo(sim, 13, Hold(At(3, 0)));
+            Assert.AreEqual(45, Lost(sim, near), "второй удар лёг на врага сбоку");
+        }
+
+        [Test]
+        public void Lock_HoldsAgainstASlightlyCloserEnemy_SwitchesWhenOneIsMuchCloser()
+        {
+            var sim = Arena();
+            int a = Dummy(sim, At(0, 2));
+            int b = Dummy(sim, At(0, -2.5));
+            sim.Step(PressHold(At(3, 0)));
+            StepTo(sim, 9, Hold(At(3, 0)));                          // t8 — захват
+            Assert.AreEqual(a, sim.SabreStickTarget);
+
+            StepTo(sim, 16, Hold(At(3, 0)));
+            Place(sim, a, 0, 2);
+            Place(sim, b, 0, -1.5);                                  // ближе на 0,5
+            sim.Step(Hold(At(3, 0)));                                // t16 — добивающий
+            Assert.AreEqual(16, sim.SabreSwing.StartTick);
+            Assert.AreEqual(a, sim.SabreStickTarget, "на 0,5 м ближе — захват держится");
+            AssertDirection(0, 1, sim.SabreSwing.Direction, "добивающий — по захвату");
+
+            StepTo(sim, 30, Hold(At(3, 0)));
+            Place(sim, a, 0, 2);
+            Place(sim, b, 0, -1.2);                                  // ближе на 0,8
+            sim.Step(Hold(At(3, 0)));                                // t30
+            Assert.AreEqual(30, sim.SabreSwing.StartTick);
+            Assert.AreEqual(b, sim.SabreStickTarget, "на 0,8 м ближе — перехват");
+            AssertDirection(0, -1, sim.SabreSwing.Direction, "удар — к новому захвату");
+        }
+
+        [Test]
+        public void Lock_MovesOnWhenTheLockedEnemyDies()
+        {
+            var sim = Arena();
+            int a = Dummy(sim, At(0, 2));
+            int b = Dummy(sim, At(0, -3));
+            sim.Entities.Health[a] = 10;
+            sim.Step(PressHold(At(3, 0)));
+            StepTo(sim, 9, Hold(At(3, 0)));
+            Assert.AreEqual(a, sim.SabreStickTarget);
+            StepTo(sim, 16, Hold(At(3, 0)));                         // контакт t12 добил его
+            Assert.IsFalse(sim.Entities.Alive[a]);
+            sim.Step(Hold(At(3, 0)));                                // t16
+            Assert.AreEqual(16, sim.SabreSwing.StartTick);
+            Assert.AreEqual(b, sim.SabreStickTarget, "захват перешёл на живого");
+            AssertDirection(0, -1, sim.SabreSwing.Direction, "добивающий — к новому захвату");
+        }
+
+        [Test]
+        public void NoEnemyInRange_AimsAtTheCursor_AndTheLockLetsGoPastTheSlack()
+        {
+            // Дальше 5 м — новый захват не берётся: курсор, как без врагов.
+            var sim = Arena();
+            Dummy(sim, At(0, 5.3));
+            sim.Step(PressHold(At(3, 0)));
+            StepTo(sim, 9, Hold(At(3, 0)));
+            Assert.AreEqual(8, sim.SabreSwing.StartTick);
+            Assert.AreEqual(-1, sim.SabreStickTarget, "5,3 м — дальше радиуса захвата");
+            AssertDirection(1, 0, sim.SabreSwing.Direction, "никого рядом — курсор");
+
+            // Взятый захват держится до 6 м и отпускается дальше.
+            sim = Arena();
+            int a = Dummy(sim, At(0, 2));
+            sim.Step(PressHold(At(3, 0)));
+            StepTo(sim, 9, Hold(At(3, 0)));
+            Assert.AreEqual(a, sim.SabreStickTarget);
+            StepTo(sim, 16, Hold(At(3, 0)));
+            Place(sim, a, 0, 5.8);
+            sim.Step(Hold(At(3, 0)));                                // t16
+            Assert.AreEqual(a, sim.SabreStickTarget, "5,8 м — в запасе 1 м");
+            AssertDirection(0, 1, sim.SabreSwing.Direction, "по захвату");
+            StepTo(sim, 30, Hold(At(3, 0)));
+            Place(sim, a, 0, 6.2);
+            // Выпад добивающего сдвинул героя: курсор — снова в 3 м справа от него.
+            sim.Step(Hold(sim.Entities.Position[Simulation.PlayerId] + At(3, 0)));   // t30
+            Assert.AreEqual(30, sim.SabreSwing.StartTick);
+            Assert.AreEqual(-1, sim.SabreStickTarget, "6,2 м — захват отпущен");
+            AssertDirection(1, 0, sim.SabreSwing.Direction, "снова курсор");
+        }
+
+        [Test]
+        public void Release_And_Stun_LetTheLockGo()
+        {
+            var sim = Arena();
+            int a = Dummy(sim, At(0, 2));
+            sim.Step(PressHold(At(3, 0)));
+            StepTo(sim, 9, Hold(At(3, 0)));
+            Assert.AreEqual(a, sim.SabreStickTarget);
+            sim.Step(InputFrame.Empty);                              // t9 — отпустил
+            Assert.AreEqual(-1, sim.SabreStickTarget, "отпущенная ЛКМ отпускает захват");
+
+            // Новое удержание: первый удар — снова в курсор, следующий — к врагу.
+            StepTo(sim, 16, InputFrame.Empty);
+            sim.Step(PressHold(At(3, 0)));                           // t16
+            Assert.AreEqual(16, sim.SabreSwing.StartTick);
+            AssertDirection(1, 0, sim.SabreSwing.Direction, "новое нажатие — в курсор");
+            Assert.AreEqual(-1, sim.SabreStickTarget);
+            StepTo(sim, 30, Hold(At(3, 0)));
+            Place(sim, a, 0, 2);
+            sim.Step(Hold(At(3, 0)));                                // t30
+            Assert.AreEqual(a, sim.SabreStickTarget, "удержание снова цепляется");
+            AssertDirection(0, 1, sim.SabreSwing.Direction, "к врагу");
+
+            Assert.IsTrue(sim.ApplyHeroStun(5));
+            sim.Step(Hold(At(3, 0)));
+            Assert.AreEqual(-1, sim.SabreStickTarget, "оглушение отпускает захват");
         }
 
         // ---- отмены ----
@@ -435,6 +600,42 @@ namespace Game.Tests
                     : t % 11 == 3 ? Tap(At(Math.Cos(t), Math.Sin(t)))
                     : t % 50 < 30 ? Hold(At(3, t % 7 - 3)) : InputFrame.Empty;
                 sim.Step(in input);
+                hashes[t] = sim.StateHash();
+            }
+            return hashes;
+        }
+
+        /// <summary>Удержание с захватом, гибелью цели, кувырком и отпусканием — дважды тем же вводом.</summary>
+        [Test]
+        public void HeldStick_SameInputs_SameHashes_TwiceOver()
+        {
+            ulong[] a = StickScript(out int lockedA), b = StickScript(out int lockedB);
+            CollectionAssert.AreEqual(a, b);
+            Assert.AreEqual(lockedA, lockedB);
+            Assert.Greater(lockedA, 0, "сценарий держит захват");
+        }
+
+        static ulong[] StickScript(out int lockedTicks)
+        {
+            var sim = Arena(seed: 517);
+            sim.SetAbility(4, AbilityDefinition.Dash(), Array.Empty<AbilityNode>(), 0);
+            sim.Entities.Stats[0].SetBase(StatType.CritChance, Fix64.Ratio(3, 10));
+            sim.RefreshPlayerStats(false);
+            Dummy(sim, At(0, 2), .6, pushable: true, kind: EnemyKind.ForestGuardian);
+            Dummy(sim, At(-1.8, -1), .45, pushable: true, kind: EnemyKind.ForestRootSwarm);
+            Dummy(sim, At(2.5, 3), .5);
+            int fragile = Dummy(sim, At(.5, -2.2));
+            sim.Entities.Health[fragile] = 100;
+            var hashes = new ulong[160];
+            lockedTicks = 0;
+            for (int t = 0; t < hashes.Length; t++)
+            {
+                FixVec2 cursor = At(3 * Math.Cos(t * .1), 3 * Math.Sin(t * .1));
+                InputFrame input = t % 53 == 40 ? Cast(4, At(-2, 1))
+                    : t % 60 == 0 ? PressHold(cursor)
+                    : t % 60 < 45 ? Hold(cursor) : InputFrame.Empty;
+                sim.Step(in input);
+                if (sim.SabreStickTarget >= 0) lockedTicks++;
                 hashes[t] = sim.StateHash();
             }
             return hashes;

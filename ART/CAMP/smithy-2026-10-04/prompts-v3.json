@@ -1,0 +1,29 @@
+{
+  "mode": "built-in image_gen",
+  "intent": "style-transfer edit",
+  "prompt": "Use case: style-transfer / precise-object-edit.\nCreate a corrected PNG of the smithy in IMAGE 4, preserving its simplified layout, but replace its WRONG bright yellow-orange cartoon materials and rendering with the subdued material appearance of the actual approved merchant stall in IMAGE 1.\n\nReference priority is crucial:\nIMAGE 1: PRIMARY visual material and colour reference. This is the muted merchant stall: weathered brown timber, restrained grain, dull dark iron, gently worn surfaces. EXACTLY this material family.\nIMAGE 2: the actual merchant model's base-colour texture atlas from the game. COLOUR REFERENCE ONLY: use its brown timber and subdued iron colours, do not draw its UV islands, black background, green cloth or contents.\nIMAGE 3: actual gameplay camp screenshot. The NEW merchant stall is at the LOWER RIGHT, around x=700–920, y=370–620. Match that stall's restrained brown material family; don't copy the screenshot's environmental shadows, warm lights, ground, characters or UI.\nIMAGE 4: only GEOMETRY/LAYOUT edit target. Its current colour, shiny bright edges and toy-like smooth surfaces are rejected. Do not preserve them.\nIMAGE 5: Eni's outfit, only for muted terracotta/cream/ochre cloth accents, no people.\n\nMaterial corrections:\n- WOOD: weathered subdued medium DARK BROWN timber. Actual merchant texture sampled brown range is #533720, #694428, #875935. Main planks around cocoa/walnut brown #694428; naturally lighter worn wood around #98754E, dark brown recesses. Match the SAME wood tone and surface finish as image 1. Absolutely NO golden yellow, NO saturated orange wood, NO lacquer, NO glossy yellow edge highlights, NO bright bevel outlines. Simple natural restrained painted grain like image 1; broad matte planes, subtle wear. Do not merely tint the previous golden render darker: change the material's appearance to this brown wood.\n- METAL: matte dark brown-charcoal iron around #373431, low contrast, soft restrained grey-brown edge wear. No silver-white outlines or bright gold rivets. Anvil, hammer head and blade blank also subdued forged iron.\n- STONE: muted medium DARK grey-brown/taupe forge stone around #59554E, highlights around #787267. Large calm blocks, understated edges. NO pale sandy beige stone, cream highlights or strongly outlined masonry.\n- CANVAS: preserve Eni's identity through dusty muted brick/terracotta red around #8B4939, dirty oatmeal/cream edge around #BBAE95, very small muted ochre binding around #96733F. Match the QUIET saturation/material finish of the merchant canopy in image 1, while keeping RED rather than its olive colour. No vivid orange canvas or bright yellow patch. Few simple large folds, no tiny stitches.\n- LANTERN: one compact dark iron hanging lantern on the upper left arch as in image 4. Warm amber glass as a modest accent only, NO white-hot glass, no external glow, no bloom. Neutral diffuse shading throughout.\n\nKeep the approved simplified geometry from image 4: wooden workbench on left, SHORT SHALLOW REAR cloth awning on two curved wooden supports, compact stone forge with chimney on right, one basic leather bellows attached to right side. One simple squat anvil ON the rear-left part of the workbench. Nothing freestanding in the foreground. Only ONE chunky hammer on the worktop, ONE broad plain blade blank on the rear shelf, TWO ingots below. No added tools, crates, buckets, tongs, rope clutter or decorative metal parts. Broad readable shapes, restrained realism/stylization EXACTLY like image 1, not a shiny brightly outlined cartoon inventory icon.\nThe worktop remains exposed and clearly visible from high camera. Keep orthographic three-quarter front view, about 48 degrees above horizontal.\nONE complete smithy on a TRUE TRANSPARENT alpha background, square 1:1 PNG, centred with 8% empty margin and complete feet/chimney/lantern. No environment, ground/plinth, cast shadow, background colour, vignette, checkerboard, people, flags, heraldry, symbols, text, watermark, fire, smoke or sparks.",
+  "referenced_image_paths": [
+    "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-stall-2026-10-04/02-arched-canopy.png",
+    "C:/Users/d.grab/Desktop/the-game/razlom/Assets/Resources/Environment/Camp/wooden+market+stall+3d+model.fbm/wooden+market+stall+3d+model_basecolor.jpg",
+    "C:/Users/DE06B~1.GRA/AppData/Local/Temp/codex-clipboard-117b168a-d8d3-44c9-b49d-86a75a968109.png",
+    "C:/Users/d.grab/Desktop/the-game/ART/CAMP/smithy-2026-10-04/02-eni-smithy-simplified.png",
+    "C:/Users/d.grab/Desktop/the-game/razlom/Assets/UI/CampShops/portrait-smith.png"
+  ],
+  "transparent_background": true,
+  "actual_market_texture": "C:/Users/d.grab/Desktop/the-game/razlom/Assets/Resources/Environment/Camp/wooden+market+stall+3d+model.fbm/wooden+market+stall+3d+model_basecolor.jpg",
+  "wood_colour_samples": [
+    "#533720",
+    "#694428",
+    "#875935"
+  ],
+  "output_file": "03-eni-smithy-ven-palette.png",
+  "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-0e775c80-223b-4331-8836-0d31b2cf21e3.png",
+  "archived_game_screenshot": "reference-game-camp.png",
+  "reference_verification": {
+    "actual_market_fbx": "razlom/Assets/Resources/Environment/Camp/wooden+market+stall+3d+model.fbx",
+    "guid": "7584f9cd457c01a49a85cee51b9e0f6f",
+    "referenced_by": "razlom/Assets/Scenes/SampleScene.unity",
+    "main_visual_reference": "ART/CAMP/merchant-stall-2026-10-04/02-arched-canopy.png"
+  },
+  "notes": "Правка гаммы и вида материалов по приглушённому исходнику лавки, её фактической текстуре в проекте и игровому кадру. Упрощённая геометрия v2 сохранена. Exact совпадение пикселей/готового 3D импорта не заявляется."
+}

@@ -1,0 +1,9 @@
+Attach images 1–3 in order, then paste. A NEW chat is better.
+
+Image 1 is the ability bar of our game THE WAR REMAINS: round ability slots with painted icons, a thin ring frame, the key letter under each slot, and a small arc of dots ABOVE a slot (that arc already shows upgrades — do not reuse it). Image 2 is the icon of the skill «Крушение» (Wreck): a series of three anchor hits; after each hit the player has 0.8 s to press again for the next one. Image 3 is the game view with our hero Pelag.
+
+Design a UI concept sheet, in exactly the style of image 1 (same slot size, painted, dark backing, thin outlines), showing how the series is read:
+1. ON THE SLOT: three small iron chain links in a short arc UNDER the Wreck slot (between the slot and the key letter), dark when empty; each hit lights one link with a cold sky-blue glow (#4FA8FF–#9CD8FF). While the 0.8 s window is open, the slot's ring frame glows blue and drains around the circle like a timer. Show 4 states in a row: idle (0 hits), after hit 1, after hit 2 (window draining, about half), after hit 3 (all three links flash, then the slot goes to cooldown).
+2. The same slot in the 3 form colours — sea green (#1FB37E), indigo-violet (#4B3FD0), pearl white (#E4EEF6) — after hit 2.
+3. ABOVE THE HERO (image 3): on each hit a small glowing chain link pops above Pelag's head and fades in 0.5 s; on hit 3 the three links snap together into a short chain and burst. Show it as 3 small crops of Pelag (after hit 1, 2, 3), small and clean — it must not cover the fight.
+No text other than small labels under the states. No red/orange/gold glow.

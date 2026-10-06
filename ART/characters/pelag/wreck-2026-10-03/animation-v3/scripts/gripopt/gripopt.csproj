@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Wreck2 Swing1 v3: grip-path optimiser. Physics and checks are the SAME sources the anchor bake tool compiles
+       (artifacts/anchor-core/bake/anchorbake: AnchorRigCore.StepLive, AnchorRigBody, BakeSim, Validation), only the
+       driver is ours. Build with an artifacts path outside the repo (scratchpad). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>GripOpt</RootNamespace>
+    <TieredCompilation>false</TieredCompilation>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Repo>../../../../../../..</Repo>
+    <Bake>$(Repo)/artifacts/anchor-core/bake/anchorbake</Bake>
+    <Drafts>$(Repo)/artifacts/anchor-core/drafts/razlom/Assets/Game.View</Drafts>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(Repo)/razlom/Assets/Game.View/AnchorHeadDynamics.cs" Link="View/AnchorHeadDynamics.cs" />
+    <Compile Include="$(Repo)/razlom/Assets/Game.View/AnchorChainSolver.cs" Link="View/AnchorChainSolver.cs" />
+    <Compile Include="$(Drafts)/AnchorRigBlend.cs" Link="Rig/AnchorRigBlend.cs" />
+    <Compile Include="$(Drafts)/AnchorRigCore.cs" Link="Rig/AnchorRigCore.cs" />
+    <Compile Include="$(Drafts)/AnchorRigBody.cs" Link="Rig/AnchorRigBody.cs" />
+    <Compile Include="$(Drafts)/AnchorBake.cs" Link="Rig/AnchorBake.cs" />
+    <Compile Include="$(Drafts)/AnchorChainLine.cs" Link="Rig/AnchorChainLine.cs" />
+    <Compile Include="$(Drafts)/AnchorSlackChain.cs" Link="Rig/AnchorSlackChain.cs" />
+    <Compile Include="$(Bake)/GripTrack.cs" Link="Bake/GripTrack.cs" />
+    <Compile Include="$(Bake)/HeadModel.cs" Link="Bake/HeadModel.cs" />
+    <Compile Include="$(Bake)/BakeSim.cs" Link="Bake/BakeSim.cs" />
+    <Compile Include="$(Bake)/Validate.cs" Link="Bake/Validate.cs" />
+  </ItemGroup>
+</Project>

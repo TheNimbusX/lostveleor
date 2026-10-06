@@ -379,6 +379,11 @@ namespace Game.View
         // «проснулся». Тело не красим: высветление персонажей владелец отверг.
         private static readonly Color DormantOutlineColor = new Color(0.34f, 0.25f, 0.17f, 1f);
         private const float DormantOutlineWidth = 0.8f;
+        // ПОДМОГА НА ПОЛЯНЕ БОССА (66% / 33%): поляна в синей тени, тёмные тела на тёмной траве
+        // пропадали (ревью 02.10, находка 9). Контур шире в 1,4 раза и светлее обычного (почти как
+        // наведённый) — тело не красим. У самого Хозяина Чащи контур прежний.
+        private const float BossAddOutlineScale = 1.4f;
+        private static readonly Color BossAddOutlineColor = new Color(0.84f, 0.58f, 0.37f, 1f);
 
         // ---- выход из-под земли и уход в неё (Simulation.EncounterWaves) ----
         [Tooltip("За сколько тиков симуляции (30 в секунду) тело уходит в землю по концу выживания")]
@@ -544,6 +549,8 @@ namespace Game.View
             EnemyDeathFxView.EnsureOn(gameObject);
             EssenceMotesView.EnsureOn(gameObject);
             HeroControlView.EnsureOn(gameObject);
+            // Крушение (06.10): звенья над героем на ударах серии (PelagWreckSeriesView, от событий WreckStage).
+            PelagWreckSeriesView.EnsureOn(gameObject);
             EliteBarView.EnsureOn(gameObject);
             CombatMusicView.EnsureOn(gameObject);
 
@@ -1637,6 +1644,33 @@ namespace Game.View
             shadow.color = color;
         }
 
+        /// <summary>Полшага замера склона под тенью героя, м (тень видна в ~0,35 м от ног).</summary>
+        private const float ContactShadowProbe = 0.3f;
+
+        /// <summary>
+        /// Тень героя ложится по склону под ним (холм смерти Хозяина Чащи — склоны до ~34°, скаты уступов): плоскость
+        /// по нормали пола из разностей LayoutView.ShownFloorLevel на ±ContactShadowProbe м. Плашмя она верхней
+        /// половиной уходила в мох, нижней висла над ним до ~0,2 м. Тень круглая — поворот тела ей не нужен; на ровном
+        /// полу и в лагере она лежит ровно как была.
+        /// </summary>
+        private void LayContactShadow(int entityId)
+        {
+            SpriteRenderer shadow = _contactShadows[entityId];
+            if (shadow == null) return;
+            Vector3 normal = Vector3.up;
+            CampPlayerView camp = CampPlayerView.Instance;
+            if (camp == null || !camp.Active)
+            {
+                Vector3 at = shadow.transform.position;
+                float left = LayoutView.ShownFloorLevel(at.x - ContactShadowProbe, at.z);
+                float right = LayoutView.ShownFloorLevel(at.x + ContactShadowProbe, at.z);
+                float back = LayoutView.ShownFloorLevel(at.x, at.z - ContactShadowProbe);
+                float front = LayoutView.ShownFloorLevel(at.x, at.z + ContactShadowProbe);
+                normal = new Vector3(left - right, 2f * ContactShadowProbe, back - front).normalized;
+            }
+            shadow.transform.rotation = Quaternion.FromToRotation(Vector3.up, normal) * Quaternion.Euler(90f, 0f, 0f);
+        }
+
         private static void ApplyRendererPropertyBlock(Renderer[] renderers, int[] materialSlotCounts,
             MaterialPropertyBlock block)
         {
@@ -1704,9 +1738,11 @@ namespace Game.View
                 // Начало волока — один раз на попадание в тягу, а не каждый
                 // кадр: триггер, дёрнутый десять раз подряд, перезапускает
                 // клип с нуля и тело дёргается на месте вместо одной реакции.
+                // Тяга Броска якоря (Reeled, 03.10) — та же реакция волока: иначе тело едет 4–8 тиков в позе покоя.
                 bool dragged = alive
                                && entities.ForcedTicksLeft[i] > 0
-                               && entities.ForcedKind[i] == (byte)ForcedMotionKind.Dragged;
+                               && (entities.ForcedKind[i] == (byte)ForcedMotionKind.Dragged
+                                   || entities.ForcedKind[i] == (byte)ForcedMotionKind.Reeled);
                 if (dragged && !_wasDragged[i]) _animationViews[i]?.PlayDragged();
                 _wasDragged[i] = dragged;
                 float deathElapsed = !alive && _deathStarted[i]
@@ -1762,8 +1798,10 @@ namespace Game.View
                 if (i == Simulation.PlayerId)
                 {
                     Vector3 playerPosition = _driver.GetRenderPosition(i);
+                    // Шаг — только по земле: подъём (растущий холм смерти, склон, уступ) не крутит бег на месте.
                     if (_hasPreviousPlayerPosition && Time.deltaTime > 0.000001f)
-                        worldSpeed = Vector3.Distance(playerPosition, _previousPlayerPosition) / Time.deltaTime;
+                        worldSpeed = new Vector2(playerPosition.x - _previousPlayerPosition.x,
+                            playerPosition.z - _previousPlayerPosition.z).magnitude / Time.deltaTime;
                     else worldSpeed = 0f;
                     _previousPlayerPosition = playerPosition;
                     _hasPreviousPlayerPosition = true;
@@ -1845,11 +1883,16 @@ namespace Game.View
                     // Встающий из земли и уходящий в неё — не угроза: земляная кромка вместо тёплой.
                     bool dormant = hostile && !hoveredHostile
                                    && (_burrowing[i] || (alive && _driver.Sim.IsEmerging(i)));
+                    // Подмога на поляне босса (ревью 02.10, находка 9: «тёмные пятна на тёмной траве» — поляна
+                    // в синей тени): контур шире и светлее. Сам босс и встающие из земли — как были.
+                    bool bossAdd = hostile && !dormant && _driver.Sim.BossAddWavesSpawned > 0
+                                   && entities.Kind[i] != EnemyKind.ForestThicketMaster;
                     block.SetFloat(OutlineWidthId,
                         (hostile ? (hoveredHostile ? HoveredOutlineWidth : dormant ? DormantOutlineWidth : HostileOutlineWidth)
-                            : HeroOutlineWidth) * outlineFade);
+                            : HeroOutlineWidth) * (bossAdd ? BossAddOutlineScale : 1f) * outlineFade);
                     block.SetColor(OutlineColorId, hostile
-                        ? (hoveredHostile ? HoveredOutlineColor : dormant ? DormantOutlineColor : HostileOutlineColor)
+                        ? (hoveredHostile ? HoveredOutlineColor : dormant ? DormantOutlineColor
+                            : bossAdd ? BossAddOutlineColor : HostileOutlineColor)
                         : HeroOutlineColor);
 
                     ApplyRendererPropertyBlock(bodyRenderers, materialSlotCounts, block);
@@ -2019,6 +2062,47 @@ namespace Game.View
                             visualFacing = new Vector3(facing.X.ToFloat(), 0f, facing.Y.ToFloat()).normalized;
                             _visualFacingWorld[i] = _lastFacingWorld[i] = visualFacing;
                         }
+                        // Шквал v2 (CharacterAnimatorView.Squall): корень ведёт вид — поворот S-кривой
+                        // в опоре вокруг левой лодыжки и сдвиг тела, гаснущий к следующему удару.
+                        // view.rotation здесь ещё прошлого кадра: с него начинается поворот замаха.
+                        if (i == Simulation.PlayerId && _animationViews[i] != null)
+                        {
+                            Vector3 lastShown = view.rotation * Quaternion.Euler(0f, -ModelYaw, 0f) * Vector3.forward;
+                            if (_animationViews[i].TryGetSquallBody(lastShown, visualFacing,
+                                    out Vector3 squallFacing, out Vector3 squallShift))
+                            {
+                                visualFacing = squallFacing;
+                                _visualFacingWorld[i] = visualFacing;
+                                view.position += squallShift;
+                            }
+                            // Абордаж v2 (CharacterAnimatorView.Abordage): поворот к цели вокруг левой
+                            // лодыжки в броске, сдвиг гаснет в тяге, к удару тело ровно в точке Sim.
+                            if (_animationViews[i].TryGetAbordageBody(lastShown, visualFacing,
+                                    out Vector3 abordageFacing, out Vector3 abordageShift))
+                            {
+                                visualFacing = abordageFacing;
+                                _visualFacingWorld[i] = visualFacing;
+                                view.position += abordageShift;
+                            }
+                            // Бросок якоря (CharacterAnimatorView.AnchorThrow): поворот к Dir вокруг левой лодыжки
+                            // в замахе, лодыжка стоит весь бросок, в конце корень возвращается к точке Sim шагом выхода.
+                            if (_animationViews[i].TryGetAnchorThrowBody(lastShown, visualFacing,
+                                    out Vector3 anchorThrowFacing, out Vector3 anchorThrowShift))
+                            {
+                                visualFacing = anchorThrowFacing;
+                                _visualFacingWorld[i] = visualFacing;
+                                view.position += anchorThrowShift;
+                            }
+                            // Крушение v2 (CharacterAnimatorView.Wreck2): поворот S-кривой за замах вокруг левой
+                            // лодыжки, сдвиг гаснет, пока левая в шаге; в окне идущему — взгляд ArenaView.
+                            if (_animationViews[i].TryGetWreck2Body(lastShown, visualFacing,
+                                    out Vector3 wreckFacing, out Vector3 wreckShift))
+                            {
+                                visualFacing = wreckFacing;
+                                _visualFacingWorld[i] = visualFacing;
+                                view.position += wreckShift;
+                            }
+                        }
                         view.rotation = Quaternion.LookRotation(visualFacing, Vector3.up)
                                         * Quaternion.Euler(0f, ModelYaw, 0f);
                         if (i == Simulation.PlayerId && moving && velocityMagnitude > .0001f)
@@ -2050,6 +2134,7 @@ namespace Game.View
                 }
 
                 if (!view.gameObject.activeSelf) view.gameObject.SetActive(true);
+                if (i == Simulation.PlayerId) LayContactShadow(i);
                 _animationViews[i]?.SetLocomotion(
                     moving, turnDirection, normalizedMoveSpeed, localMoveX, localMoveY, worldSpeed, turnDelta);
             }
@@ -2740,6 +2825,7 @@ namespace Game.View
             if (body.GetComponent<PelagOrdnanceView>() == null) body.AddComponent<PelagOrdnanceView>();
             if (body.GetComponent<PelagMobilityPoseView>() == null) body.AddComponent<PelagMobilityPoseView>();
             if (body.GetComponent<PelagAnchorSlamView>() == null) body.AddComponent<PelagAnchorSlamView>();
+            if (body.GetComponent<PelagAnchorRig>() == null) body.AddComponent<PelagAnchorRig>();
             equipment.Configure(saber,
                 new PelagEquipmentView.MountPoint(saberStoredSocket,
                     WoleWeaponStoredLocalPosition, WoleWeaponStoredLocalRotation,

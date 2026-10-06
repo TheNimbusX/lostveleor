@@ -1,0 +1,34 @@
+{
+  "created": "2026-10-04",
+  "mode": "built-in image_gen",
+  "use_case": "style-transfer",
+  "transparent_background": true,
+  "file": "01-camp-lantern-post.png",
+  "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-4c104ed4-08be-44c1-9d1e-a2ad7b03e415.png",
+  "path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\standing-lantern-2026-10-04\\01-camp-lantern-post.png",
+  "style_references": [
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\concepts\\a4108eeb-f0bd-4329-b1e9-5e72d85e7626.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\concepts\\ed226779-a1a6-4319-9e53-8edd684a841a.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\concepts\\bed8590f-38a1-4484-979f-44e8b51c0c98.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\floor-light-2026-10-04\\01-portable-floor-lantern.png"
+  ],
+  "suggested_model_scale": {
+    "post_height_m": 2.5,
+    "ground_shoe_width_m": 0.4,
+    "lantern_body_height_m": 0.48
+  },
+  "recommended_game_mesh_budget": {
+    "target_triangles": 2500,
+    "working_range_triangles": [
+      1500,
+      3000
+    ],
+    "scope": "Whole model: upright, base, side arm, hook, hanging lantern and window inserts.",
+    "quad_equivalent_if_all_faces_are_quads": 1250,
+    "priority": "Keep silhouette, thick bevels, hook separation and broad window openings. Wood grain and material detail belong in the painted texture.",
+    "status": "Authoring target; generated 3D mesh not provided or verified."
+  },
+  "budget_context": "Existing project geometry audit ART/CAMP/polish-2026-09-30/routes-final/geometry-audit.txt lists prior camp lantern meshes at 18000 source triangles per instance. New budget is a design recommendation for this simpler repeated prop, not a performance measurement.",
+  "intended_3d_pivot": "Centre of flat bottom plane of post foot.",
+  "prompt": "Use case: style-transfer.\nPrimary request: Transfer the exact hand-painted fantasy game-prop style of the supplied concepts into ONE complete CAMP LANTERN POST: an expressive upright support with exactly ONE suspended warm-glass lantern. Transparent PNG reference for the owner's separate Tripo 3D generation.\nInput roles: Image 1 (smithy) is the main painterly STYLE reference, especially its timber joinery and simple suspended lantern. Image 2 (original crate) defines chunky carved wood, broad brush-painted colour planes and oversized bevels. Image 3 (anvil) defines broad faceted dark iron and simple large rivets. Image 4 (portable floor lantern) is a STYLE and lantern-material reference for continuity of warm amber windows; adapt its lantern language into a smaller hanging lantern. Do not copy its freestanding floor base onto the hanging lamp. Do not include the smithy, forge, chimney, crate, anvil, flags or other reference subjects.\nArt style is critical: stylized 3D FANTASY GAME CONCEPT ART with visibly hand-painted broad colour strokes, chunky bevelled polygonal forms, large deliberate carved facets, clear coherent material planes, a few large painted wood-grain strokes, no dense realistic texture. Plain dark grey-brown iron and dark warm chestnut timber; keep broad lighter painted facets and edge accents so the darker post reads clearly. NO photorealism, NO PBR product render, NO fine wood pores, NO noisy scratches, NO photographic glass reflection, NO microtexture, NO thin ornamental filigree, NO thick black comic outline. Match the supplied original concept language precisely.\nStructure: one slightly crooked but stout DARK WOODEN upright post approximately 2.5 metres high, about 20 centimetres thick, carved broad bevels. One short thick side crossarm extends about 65 centimetres to the right of the post, supported by one simple chunky diagonal brace. Simple dark wrought-iron bands reinforce the crossarm joint, with only a few large rivets. A short thick iron hook at the crossarm tip carries ONE lantern via its solid top handle. Use one clearly legible hook/loop connection, no long chain, no thin dangling elements. Lantern hangs plumb and vertically, with a clear open gap between lamp and post. Exactly one post, one side arm and one lamp. A tiny shallow plain iron cap on the post, no peaked ornament.\nBase: the post ends in one compact flat plain dark-iron ground shoe about 40 centimetres wide, with a stable flat underside centred beneath the upright. This is only the post's necessary foot; no pedestal, decorative rock cluster, terrain, stone paving, broad platform or surrounding ground. Show the complete bottom edge for placement. Keep the footprint small enough for camp paths.\nHanging lantern: approximately 45 to 50 centimetres tall and 32 centimetres wide, simple robust cuboid/tapered silhouette, four chunky dark-iron bevelled corner ribs, large warm amber glass windows on four sides, plain shallow metal top with minimal overhang, a solid thick top handle and a modest flat lower rim. No large wooden stand base on this suspended lamp. Inner candle is a simple readable cream cylinder with one small warm flame. Windows are painted translucent amber colour planes rather than photorealistic glass. The source looks warm and alive; keep the golden illumination INSIDE the lamp, no external bloom, rays, halo, light pool, smoke or sparks.\nGameplay silhouette: the lamp is deliberately offset sideways so it does not overlap the wooden post or arm in the high camera projection. Large windows and shallow roof make the amber luminous centre readable from above. Simple recognizable asymmetrical silhouette without extra decorations.\nCamera/framing: one orthographic-like elevated front three-quarter view around 45 to 48 degrees above horizontal, matching the high gameplay view. Show the entire post, crossarm, hook, handle, hanging lantern and ground shoe, centred with generous transparent margins, no cut-off tip or base. ONE assembled object in one image, no collage, sheet, alternate views, labels or diagrams. High-resolution square canvas.\nPresentation: neutral even outer material visibility with simplified painted form shading as in the references. No directional sunset, orange lighting wash on the pole, theatrical shadows, realistic specular glare, or cast shadow underneath. Only the interior of the hanging lamp is luminous.\nBackground: genuine transparent alpha around the object and through open gaps and handle openings. No opaque black/white/coloured backdrop, no checkerboard pattern, gradient, environment, horizon, floor, plants or props.\nHard exclusions: second lantern, extra light sources, flags, banners, pennants, heraldry, coats of arms, shields, emblems, symbols, runes, text, signs, labels, logos, watermark, people, animals, weapons, cables and elaborate chains."
+}

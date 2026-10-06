@@ -34,13 +34,14 @@ namespace Game.Sim
         {
             Items = items;
             Bag = new Inventory(bagSlots);
-            Bag.Placed = Discover;
             Worn = new Equipment(items);
             _usesCampProgression = progressive;
 
             Act = 0;
             AdvanceToAct(act);
             InitializeTrader();
+            // Новый лагерь ничего не объявляет: открытое с начала (Эни, Sandbox целиком) не прибытие.
+            RefreshUnlocks(raise: false);
         }
 
         // ---- услуги ----
@@ -139,7 +140,8 @@ namespace Game.Sim
         /// </summary>
         public int SalvageJunk()
         {
-            int shards = Bag.SalvageUnkept();
+            // Вещь открытой сессии Эни пропускается; «Знаток рун» — от суммы, вниз (Camp.Smith).
+            int shards = (int)((long)Bag.SalvageUnkept(SessionBagSlot()) * SalvagePercent / 100);
             Earn(CurrencyType.Shards, shards);
             return shards;
         }
@@ -156,6 +158,8 @@ namespace Game.Sim
 
             ItemInstance item = Bag.At(bagSlot);
             if (item.IsEmpty) return 0;
+            // Оплаченная у Эни переплавка ждёт свою вещь: продажа её не уносит.
+            if (SessionHolds(ForgeTarget.Bag(bagSlot))) return 0;
 
             int gold = PriceOf(in item);
             Bag.Remove(bagSlot);
@@ -172,8 +176,11 @@ namespace Game.Sim
         /// </summary>
         public const int TraderMarkup = 3;
 
-        /// <summary>Сколько золота просит торговец за товар.</summary>
-        public int BuyPriceOf(in ItemInstance item) => PriceOf(in item) * TraderMarkup;
+        /// <summary>
+        /// Сколько золота просит торговец за товар. От прежней цены вещи, а не от скупки:
+        /// скупку 06.10 урезали вдвое, а цены лавки владелец не трогал (акт I — 18 и 36).
+        /// </summary>
+        public int BuyPriceOf(in ItemInstance item) => StockPriceOf(in item) * TraderMarkup;
 
         /// <summary>
         /// Покупает товар с прилавка. Возвращает потраченное золото или ноль,
@@ -206,8 +213,19 @@ namespace Game.Sim
             return price;
         }
 
-        /// <summary>Цена скупки. Заглушка: важно только, что редкость и уровень влияют.</summary>
-        public static int PriceOf(in ItemInstance item)
+        /// <summary>
+        /// Цена скупки (06.10): половина прежней цены вещи, не меньше 1. Прежняя скупка
+        /// давала за удачный лес ≈350 золота и затмевала золото забега; теперь корзина
+        /// леса (3 редкие + 1 эпическая) стоит ≈40–60. Покупка всегда дороже: наценка ×3
+        /// от полной цены против половины.
+        /// </summary>
+        public static int PriceOf(in ItemInstance item) => System.Math.Max(1, StockPriceOf(in item) / 2);
+
+        /// <summary>
+        /// Прежняя цена вещи: база редкости + уровень. Из неё считаются и товар лавки,
+        /// и скупка. Заглушка баланса: важно только, что редкость и уровень влияют.
+        /// </summary>
+        public static int StockPriceOf(in ItemInstance item)
         {
             int byRarity;
             switch (item.Rarity)
@@ -252,6 +270,8 @@ namespace Game.Sim
                 Level++;
                 gained++;
             }
+            // Только на новом уровне: опыт капает с каждого убийства, пересчёт открытий — нет.
+            if (gained > 0) RefreshUnlocks();
             return gained;
         }
 
@@ -266,9 +286,10 @@ namespace Game.Sim
         {
             Level = level < 1 ? 1 : level;
             Experience = 0;
+            RefreshUnlocks();
         }
 
-        /// <summary>Восстановление из сохранения. Корректность чисел проверяет CampSaveCodec.</summary>
+        /// <summary>Восстановление из сохранения. Числа уже подогнаны CampSaveCodec, открытия выводит FinishRestore.</summary>
         internal void RestoreProgression(int level, int experience)
         {
             Level = level;
@@ -292,6 +313,8 @@ namespace Game.Sim
             HashCampProgression(ref hash);
             HashTraderChoices(ref hash);
             HashPreparation(ref hash);
+            // Переключение клятвы не трогает кошелёк: без доски в хеше CampSaveStore его не сохранил бы.
+            HashOaths(ref hash);
         }
     }
 }

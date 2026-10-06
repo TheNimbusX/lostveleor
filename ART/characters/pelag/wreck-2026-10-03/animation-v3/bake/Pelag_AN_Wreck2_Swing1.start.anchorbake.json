@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "clip": "Pelag_AN_Wreck2_Swing1_start",
+  "note": "pose 1: head at the apex of its swing behind-right, chain taut, v = 0",
+  "samples": [
+    {
+      "t": 0,
+      "p": [
+        0.42575,
+        1.07608,
+        -1.42658
+      ],
+      "q": [
+        0.75368,
+        -0,
+        0.0564,
+        0.65482
+      ],
+      "v": [
+        16.69993,
+        -3.22039,
+        1.2496
+      ],
+      "w": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

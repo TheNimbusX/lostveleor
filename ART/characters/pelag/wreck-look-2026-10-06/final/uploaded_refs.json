@@ -1,0 +1,152 @@
+{
+ "try1/guide-base-v1.jpg": {
+  "media_id": "587a21b5-9cd9-4fe4-adf9-3b961b68fe50",
+  "local": "try1/guides/guide-base-v1.jpg",
+  "http": "200"
+ },
+ "try1/guide-base-v2.jpg": {
+  "media_id": "ebc875e2-2ad4-4e36-8926-d912cf5e87d0",
+  "local": "try1/guides/guide-base-v2.jpg",
+  "http": "200"
+ },
+ "try1/guide-breakwater-v1.jpg": {
+  "media_id": "51b37308-4aa9-43c9-9ef1-b1562e4db421",
+  "local": "try1/guides/guide-breakwater-v1.jpg",
+  "http": "200"
+ },
+ "try1/guide-breakwater-v2.jpg": {
+  "media_id": "b0aab16d-95d1-4ea6-ac5c-3d69a2a30af2",
+  "local": "try1/guides/guide-breakwater-v2.jpg",
+  "http": "200"
+ },
+ "try1/guide-ninthwave-v1.jpg": {
+  "media_id": "1f6a1838-6da1-4f78-908e-3ad9f688c791",
+  "local": "try1/guides/guide-ninthwave-v1.jpg",
+  "http": "200"
+ },
+ "try1/guide-ninthwave-v2.jpg": {
+  "media_id": "509e92d7-4459-4f34-880d-4706699cc003",
+  "local": "try1/guides/guide-ninthwave-v2.jpg",
+  "http": "200"
+ },
+ "try1/guide-watershell-v1.jpg": {
+  "media_id": "a83c9bf1-21e1-49fb-bbd8-735f78022f91",
+  "local": "try1/guides/guide-watershell-v1.jpg",
+  "http": "200"
+ },
+ "try1/guide-watershell-v2.jpg": {
+  "media_id": "1ff971ac-1203-4f73-84a2-f6b8644fe949",
+  "local": "try1/guides/guide-watershell-v2.jpg",
+  "http": "200"
+ },
+ "chosen_C-iron-v2.jpg": {
+  "media_id": "c93bd16d-1372-4f2d-8c21-843902dde521",
+  "local": "refs/chosen_C-iron-v2.jpg",
+  "http": "200"
+ },
+ "chosen_A-earth-v2.jpg": {
+  "media_id": "738834be-18ea-44c9-b258-479b12b9d223",
+  "local": "refs/chosen_A-earth-v2.jpg",
+  "http": "200"
+ },
+ "r2_model.jpg": {
+  "media_id": "626f9e27-4440-4a72-9336-e870fc39018b",
+  "local": "refs/r2_model.jpg",
+  "http": "200"
+ },
+ "r3_anchor.jpg": {
+  "media_id": "06aeb8d3-4d6d-4ddc-b0f8-cf4573462c6c",
+  "local": "refs/r3_anchor.jpg",
+  "http": "200"
+ },
+ "icons_silhouettes-v2.jpg": {
+  "media_id": "4616487d-0b18-43d7-a2ff-0376259eb319",
+  "local": "refs/icons_silhouettes-v2.jpg",
+  "http": "200"
+ },
+ "icon_Whirlwind.jpg": {
+  "media_id": "dbe2cf22-d505-4918-b431-3abf33025f21",
+  "local": "refs/icon_Whirlwind.jpg",
+  "http": "200"
+ },
+ "icon_Squall.jpg": {
+  "media_id": "cf1ca5f2-2dc8-4667-8a00-519d87a6998c",
+  "local": "refs/icon_Squall.jpg",
+  "http": "200"
+ },
+ "guide-base-v1.jpg": {
+  "media_id": "3b39df34-f114-4c25-b78c-16d603228f6a",
+  "local": "guides/guide-base-v1.jpg",
+  "http": "200"
+ },
+ "guide-base-v2.jpg": {
+  "media_id": "f0fbf611-b190-4b47-8d3b-891e781ac57b",
+  "local": "guides/guide-base-v2.jpg",
+  "http": "200"
+ },
+ "guide-breakwater-v1.jpg": {
+  "media_id": "59cacec1-2b9e-4187-8cf3-f9a435a7d3f3",
+  "local": "guides/guide-breakwater-v1.jpg",
+  "http": "200"
+ },
+ "guide-breakwater-v2.jpg": {
+  "media_id": "3973cfd4-cf71-4dde-9ce9-1f7a5a2d1a1b",
+  "local": "guides/guide-breakwater-v2.jpg",
+  "http": "200"
+ },
+ "guide-ninthwave-v1.jpg": {
+  "media_id": "4c9c6335-249b-4106-a50e-46e64e97eb20",
+  "local": "guides/guide-ninthwave-v1.jpg",
+  "http": "200"
+ },
+ "guide-ninthwave-v2.jpg": {
+  "media_id": "362f834f-a538-45f9-9aaf-994251ce4e40",
+  "local": "guides/guide-ninthwave-v2.jpg",
+  "http": "200"
+ },
+ "guide-watershell-v1.jpg": {
+  "media_id": "ff1fabae-458d-47ff-b55b-9e289eb07780",
+  "local": "guides/guide-watershell-v1.jpg",
+  "http": "200"
+ },
+ "guide-watershell-v2.jpg": {
+  "media_id": "c8de7ecd-094b-416f-8a72-e7775b79ae12",
+  "local": "guides/guide-watershell-v2.jpg",
+  "http": "200"
+ },
+ "swatch_C-iron-lane.jpg": {
+  "media_id": "df5aa1e3-e7e3-4d90-a5e5-2007f544ec62",
+  "local": "refs/swatch_C-iron-lane.jpg",
+  "http": "200"
+ },
+ "swatch_A-earth-crater.jpg": {
+  "media_id": "f2c881ad-acd4-460b-9698-849510e2c9e5",
+  "local": "refs/swatch_A-earth-crater.jpg",
+  "http": "200"
+ },
+ "new_Wreck_icon_v1.jpg": {
+  "media_id": "7e7a06ed-acec-48ef-b831-01f306e8142c",
+  "local": "refs/new_Wreck_icon_v1.jpg",
+  "http": "200"
+ },
+ "new_Wreck_icon_v2.jpg": {
+  "media_id": "eccd240c-37f3-4982-b27e-017b63c504da",
+  "local": "refs/new_Wreck_icon_v2.jpg",
+  "http": "200"
+ },
+ "whirlwind_forms_2x2.jpg": {
+  "media_id": "c20c9a1e-3376-4c27-8b84-5d6e60f00e62",
+  "local": "refs/whirlwind_forms_2x2.jpg",
+  "http": "200"
+ },
+ "new_base_icons_v1.jpg": {
+  "media_id": "bd147347-dabb-4cd0-9708-7bc24cc86d62",
+  "local": "refs/new_base_icons_v1.jpg",
+  "http": "200"
+ },
+ "new_base_icons_v2.jpg": {
+  "media_id": "4656d3e6-1867-4184-b5df-0ccc96e81b46",
+  "local": "refs/new_base_icons_v2.jpg",
+  "http": "200"
+ }
+}

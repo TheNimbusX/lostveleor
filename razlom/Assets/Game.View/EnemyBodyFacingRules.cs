@@ -156,7 +156,7 @@ namespace Game.View
                     return EnemyBodyPolicy.Travel;
                 case EnemyKind.ForestBud:
                     return EnemyBodyPolicy.TravelKeepBackpedal;
-                // Хозяин Чащи идёт только вдоль взгляда (Sim, 4,5°/тик), а в действии смотрит,
+                // Хозяин Чащи идёт только вдоль взгляда (Sim, 2,5°/тик), а в действии смотрит,
                 // куда бьёт: тело — всегда взгляд Sim, лунной походки у него нет.
                 case EnemyKind.ForestThicketMaster:
                     return EnemyBodyPolicy.SimFacing;

@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Abordage_Ground
+  m_Shader: {fileID: 4800000, guid: e650da1306214e819516156d7c8caa1a, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _ErodeTex:
+        m_Texture: {fileID: 2800000, guid: 0d30b359af34f9049bdf5863b06dd25f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FoamTex:
+        m_Texture: {fileID: 2800000, guid: b0c552b9a0531564dbf486ea02aab0e8, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BreakRimPx: 1.5
+    - _BreakScale: 1.3
+    - _ClumpScale: 0.48
+    - _CoarseScale: 0.45
+    - _DropLife: 0.08
+    - _EdgeEarly: 0.03
+    - _EndRag: 0.28
+    - _FadeFrom: 0.4
+    - _FadeTo: 0.46
+    - _Glow: 0.2
+    - _OutlinePx: 2
+    m_Colors:
+    - _Across: {r: 0.85, g: 1, b: 1, a: 0}
+    - _Bands: {r: 0.15, g: 0.75, b: 0.3, a: 0.3}
+    - _Break: {r: 0.3, g: 0.04, b: 0, a: 0.06}
+    - _Crest: {r: 0.17, g: 0.13, b: 0.035, a: 0.7}
+    - _DarkLines: {r: 3, g: 2.2, b: 0.3, a: 0.3}
+    - _Deep: {r: 0.03, g: 0.24, b: 0.32, a: 1}
+    - _Foam: {r: 1.12, g: 1.22, b: 1.22, a: 1}
+    - _FoamShade: {r: 0.62, g: 0.86, b: 0.91, a: 1}
+    - _Lines: {r: 5, g: 1.6, b: 0.32, a: 0.85}
+    - _Outline: {r: 0.02, g: 0.08, b: 0.11, a: 0.92}
+    - _Over: {r: 1, g: 0.25, b: 0.45, a: 0.3}
+    - _Shallow: {r: 0.42, g: 0.9, b: 0.92, a: 1}
+    - _Water: {r: 0.06, g: 0.6, b: 0.68, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

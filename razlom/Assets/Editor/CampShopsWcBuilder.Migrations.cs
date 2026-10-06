@@ -36,8 +36,11 @@ namespace Game.EditorTools
         /// круга в дыме. Только форма клавиш: узлы, раскладка и ссылки окон не меняются.
         /// v3 (30.09, владелец: шрифт кнопок и вкладок «как в главном меню»): подписи вкладок («Зелья», «Рецепты» и
         /// спрятанные вкладки кузнеца и торговца) — Philosopher, как у кнопок. Только шрифт: размер и раскладка те же.
+        /// v4 (06.10, temper-a.png): кузница Эни вкладками внутри окна кузнеца — «Закалить · Переплавить · Добавить свойство ·
+        /// Сердце · Разобрать», наковальня с дугой риска, карточки свойств, «Ударить [E]» / «Взять [Esc]», цена со сталью и
+        /// сердцем; одна страница 29.09 спрятана, надетое и сумка (прокрутка 5 колонок) — справа (CampShopsWcBuilder.Temper).
         /// </summary>
-        public const int LayoutVersion = 3;
+        public const int LayoutVersion = 4;
 
         const string FrameName = "Раскладка";
         const string SmokeFrameName = "Раскладка дыма";
@@ -148,7 +151,10 @@ namespace Game.EditorTools
             {
                 PrefabUtility.UnloadPrefabContents(contents);
             }
-            AssetDatabase.SaveAssets();
+            // Не общий SaveAssets: он сбрасывал на диск чужие грязные ассеты (02.10 откатил 3 материала босса). Префаб уже
+            // записан SaveAsPrefabAsset, тема сохраняет себя сама; дописываются только материалы «Дыма и света», если миграция
+            // их тронула.
+            CampInkParts.SaveInkMaterials();
             return true;
         }
 
@@ -157,6 +163,7 @@ namespace Game.EditorTools
             if (view.LayoutVersion < 1) MigrateTo1(view);
             if (view.LayoutVersion < 2) Debug.Log("[ui-kit] Окна лагеря: кейкапов листа 5 — " + UiInkKit.RestyleKeycaps(view.transform) + ".");
             if (view.LayoutVersion < 3) MigrateTo3(view);
+            if (view.LayoutVersion < 4) MigrateTo4(view);
             view.LayoutVersion = LayoutVersion;
             EditorUtility.SetDirty(view);
         }
@@ -391,7 +398,8 @@ namespace Game.EditorTools
                 s.ReforgeCount = Text(frame, "Счёт перековок", "0 / 3", DetailX + DetailW - 200f, 352f, 108f, 36f, FontRole.Heading, 22f, Role.Text,
                     TextAlignmentOptions.MidlineRight);
                 RectTransform pips = TopLeft(Node("Отметки перековок", frame), DetailX + DetailW - 82f, 352f, 82f, 36f);
-                s.ReforgePips = new Image[CampShopDeals.ReforgeLimit];
+                // Три отметки, как в нынешнем префабе: окно закалки по temper-a.png перерисует UI-проход.
+                s.ReforgePips = new Image[3];
                 for (int i = 0; i < s.ReforgePips.Length; i++)
                 {
                     Image pip = Mark(pips, "Отметка " + (i + 1), T.CircleFill, Role.TextMuted, .35f, new Vector2(0f, .5f), new Vector2(14f + i * 26f, 0f), 14f);

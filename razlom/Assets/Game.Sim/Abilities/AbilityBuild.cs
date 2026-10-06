@@ -11,6 +11,9 @@ namespace Game.Sim
     public sealed class AbilityBuild
     {
         private const int StatCount = (int)AbilityStatType.Count;
+
+        /// <summary>Статы до LaneLength хешируются всегда (прежний хеш бит в бит), с него — только ненулевые.</summary>
+        private const int HashedStatCount = (int)AbilityStatType.LaneLength;
         private const int StageCount = (int)AbilityStage.Count;
 
         /// <summary>Больше восьми эффектов на одну стадию узлы одной способности не дадут.</summary>
@@ -141,7 +144,10 @@ namespace Game.Sim
         public void HashInto(ref ulong hash)
         {
             Hashing.Mix(ref hash, DefinitionId);
-            for (int i = 0; i < StatCount; i++) Hashing.Mix(ref hash, _stats[i]);
+            for (int i = 0; i < HashedStatCount; i++) Hashing.Mix(ref hash, _stats[i]);
+            // Статы с LaneLength (24, 03.10) — только ненулевые, с номером: сборка без них хешируется как раньше.
+            for (int i = HashedStatCount; i < StatCount; i++)
+                if (_stats[i].Raw != 0) { Hashing.Mix(ref hash, i); Hashing.Mix(ref hash, _stats[i]); }
             Hashing.Mix(ref hash, (int)(uint)(ulong)Flags);
             // Старшая половина флагов — усиления 6–8; пустая не меняет прежний хеш.
             uint high = (uint)((ulong)Flags >> 32);

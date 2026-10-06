@@ -57,7 +57,10 @@ namespace Game.Tests
                 session.Step(new InputFrame { Command = (byte)RunCommand.SalvageAbility });
         }
 
-        /// <summary>Проходит забег до конца: зачищает Разлом, берёт награду, уходит с добычей.</summary>
+        /// <summary>
+        /// Проходит забег до конца: зачищает Разлом, берёт награду, уходит с добычей со
+        /// следующего экрана награды (06.10: «Уйти» в бою не действует).
+        /// </summary>
         private static void PlayOneRift(GameSession session)
         {
             ClearRift(session);
@@ -65,9 +68,18 @@ namespace Game.Tests
 
             var take = new InputFrame { Command = (byte)RunCommand.ChooseReward1 };
             session.Step(in take);
+            SalvageIfReplacing(session);
 
+            LeaveAtNextReward(session);
+        }
+
+        /// <summary>«Уйти» — только с экрана награды: зачистить текущий Разлом, дойти до выхода и уйти.</summary>
+        private static void LeaveAtNextReward(GameSession session)
+        {
+            ClearRift(session);
             var leave = new InputFrame { Command = (byte)RunCommand.Leave };
             session.Step(in leave);
+            Assert.That(session.Mode, Is.EqualTo(GameMode.Summary));
         }
 
         // ---- приёмка ----
@@ -78,9 +90,15 @@ namespace Game.Tests
             var session = Session();
             var sim = session.ActiveSim;
             sim.SetAbility(0, AbilityDefinition.AnchorLeap(), new AbilityNode[0], 0);
+            // Абордаж с 02.10 бьёт только врага под курсором (Simulation.Abordage): манекен в 6 м.
+            int dummy = sim.Entities.Spawn(new FixVec2(Fix64.FromInt(6), sim.Entities.Position[0].Y), 10000, Faction.Orvill);
+            sim.Entities.Stats[dummy].SetBase(StatType.MoveSpeed, Fix64.Zero);
+            sim.Entities.RefreshStats(dummy);
+            sim.Entities.NextAttackTick[dummy] = int.MaxValue;
             var input = InputFrame.Empty;
             input.AbilityMask = 1;
-            input.Aim = new FixVec2(Fix64.FromInt(5), Fix64.Zero);
+            input.AbilityTarget = dummy;
+            input.Aim = sim.Entities.Position[dummy];
             session.Step(input);
             for (int i = 0; i < 60; i++) session.Step(InputFrame.Empty);
             Assert.Greater(sim.Entities.Position[0].X.ToFloat(), 4f);
@@ -102,15 +120,24 @@ namespace Game.Tests
             Assert.AreSame(session.Run.Sim, session.ActiveSim, "рисуется забег");
         }
 
+        /// <summary>
+        /// F8 «Вернуться в лагерь» (из паузы игрока пункт убран 06.10): забег брошен сразу,
+        /// найденное золото не доезжает.
+        /// </summary>
         [Test]
-        public void PauseMenu_ReturnToCamp_AbandonsTheActiveRiftImmediately()
+        public void DeveloperReturnToCamp_AbandonsTheActiveRiftImmediately()
         {
             GameSession session = Session();
+            int gold = session.Camp.Money(CurrencyType.Gold);
             session.EnterRift();
+            ClearRift(session);
+            session.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
+            SalvageIfReplacing(session);
             int generationBefore = session.Generation;
 
             session.ReturnToCamp();
 
+            Assert.AreEqual(gold, session.Camp.Money(CurrencyType.Gold), "брошенный забег золото не отдаёт");
             Assert.AreEqual(GameMode.Camp, session.Mode);
             Assert.IsNull(session.Run, "покинутый забег больше не должен тикать за меню");
             Assert.AreSame(session.CampSim, session.ActiveSim);
@@ -128,7 +155,8 @@ namespace Game.Tests
 
             Assert.AreEqual(GameMode.Summary, session.Mode);
             Assert.AreEqual(RunOutcome.Left, session.LastRun.Outcome);
-            Assert.AreEqual(1, session.LastRun.RiftsCleared);
+            // Уход — со второго экрана награды: «Уйти» в бою не действует (06.10).
+            Assert.AreEqual(2, session.LastRun.RiftsCleared);
         }
 
         [Test]
@@ -200,8 +228,7 @@ namespace Game.Tests
 
             Assert.Greater(items, 0, "за двенадцать Разломов предмет обязан предложиться хоть раз");
 
-            var leave = new InputFrame { Command = (byte)RunCommand.Leave };
-            session.Step(in leave);
+            LeaveAtNextReward(session);
 
             Assert.AreEqual(items, session.LastRun.ItemsKept);
             Assert.AreEqual(items, session.Camp.Bag.Used, "добытое доехало до сумки");
@@ -243,8 +270,7 @@ namespace Game.Tests
 
             Assert.IsTrue(tookItem, "за двенадцать Разломов предмет обязан предложиться хоть раз");
 
-            var leave = new InputFrame { Command = (byte)RunCommand.Leave };
-            session.Step(in leave);
+            LeaveAtNextReward(session);
 
             Assert.AreEqual(0, session.LastRun.ItemsKept, "сумка была занята целиком");
             Assert.AreEqual(1, session.LastRun.ItemsLost,

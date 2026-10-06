@@ -52,9 +52,13 @@ namespace Game.Sim
                 _traderStock[slot] = rarity == ItemRarity.Normal ? item : Items.MatchTier(item);
             }
         }
+        /// <summary>
+        /// Ранг 1 добавляет Вену два товара. Повторный вызов ничего не делает, поэтому его
+        /// можно звать из каждого пересчёта открытий.
+        /// </summary>
         void ExpandTraderStock()
         {
-            if (!_usesCampProgression || Rank(CampResident.Trader) < 1 || _traderStock.Length >= 6) return;
+            if (_traderStock == null || !_usesCampProgression || Rank(CampResident.Trader) < 1 || _traderStock.Length >= 6) return;
             var old = _traderStock; _traderStock = new ItemInstance[6]; RollTrader(TraderBossStock);
             Array.Copy(old, _traderStock, old.Length);
         }
@@ -82,29 +86,40 @@ namespace Game.Sim
             TraderGeneration++; RollTrader(true);
         }
         static bool Stocked(ItemBaseDefinition definition) => definition.Category != ItemCategory.Artifact && !definition.Rare;
+        /// <summary>
+        /// Прилавок из сохранения v10. Товар, который лавка сегодня продать не может
+        /// (неизвестная основа, редкость выше редкой, артефакт, кованая история), становится
+        /// проданной позицией: подгонка к правилам вместо отказа загружать профиль.
+        /// Старый размер переносится целиком, включая купленные пустые позиции.
+        /// </summary>
         internal void RestoreTrader(int generation, bool boss, ItemInstance[] stock)
         {
-            if (generation < 0) throw new InvalidDataException("Некорректный ассортимент");
-            foreach (var item in stock)
+            for (int i = 0; i < stock.Length; i++)
             {
-                int index = Items.IndexOfBase(item.BaseId);
+                var item = stock[i]; int index = Items.IndexOfBase(item.BaseId);
                 if (!item.IsEmpty && (index < 0 || item.Rarity > ItemRarity.Magic || Items.GetBase(index).Category == ItemCategory.Artifact
-                    || item.ForgeRecipe != 0 || (item.Crafting?.Count ?? 0) > 0)) throw new InvalidDataException("Некорректный товар");
+                    || item.ForgeRecipe != 0 || (item.Crafting?.Count ?? 0) > 0)) stock[i] = default;
             }
-            // Старый прилавок переносится целиком, включая купленные пустые позиции.
             TraderGeneration = generation; TraderBossStock = boss; _traderStock = stock;
+            if (TraderReservedSlot >= stock.Length) TraderReservedSlot = -1;
+            ExpandTraderStock();
         }
         void HashTraderChoices(ref ulong hash)
         { Hashing.Mix(ref hash, TraderReservedSlot); Hashing.Mix(ref hash, TraderCategoryChoice); }
         internal void WriteTraderChoices(BinaryWriter writer)
         { writer.Write(TraderReservedSlot); writer.Write(TraderCategoryChoice); }
+        /// <summary>
+        /// Резерв и категория из сохранения. Недоступные при нынешнем ранге или указывающие
+        /// на пустую позицию сбрасываются в −1: ранг выводится заново и мог стать ниже.
+        /// </summary>
         internal void ReadTraderChoices(BinaryReader reader)
         {
-            TraderReservedSlot = reader.ReadInt32(); TraderCategoryChoice = reader.ReadInt32();
-            if (TraderReservedSlot < -1 || TraderReservedSlot >= _traderStock.Length || TraderReservedSlot >= 0 && _traderStock[TraderReservedSlot].IsEmpty
-                || TraderCategoryChoice < -1 || TraderCategoryChoice >= (int)ItemCategory.Artifact
-                || TraderReservedSlot >= 0 && Rank(CampResident.Trader) < 2 || TraderCategoryChoice >= 0 && Rank(CampResident.Trader) < 3)
-                throw new InvalidDataException("Некорректный выбор торговца");
+            if (!CampSaveCodec.Has(reader, 8)) return;
+            int reserved = reader.ReadInt32(), category = reader.ReadInt32();
+            TraderReservedSlot = reserved >= 0 && reserved < _traderStock.Length && !_traderStock[reserved].IsEmpty
+                && Rank(CampResident.Trader) >= 2 ? reserved : -1;
+            TraderCategoryChoice = category >= 0 && category < (int)ItemCategory.Artifact
+                && Rank(CampResident.Trader) >= 3 ? category : -1;
         }
     }
 }

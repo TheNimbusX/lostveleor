@@ -1,0 +1,8 @@
+{
+  "what": "Wreck (Крушение) icon sheet 2x2, Higgsfield gpt_image_2_5 medium 1k, 1:1",
+  "date": "2026-10-03",
+  "refs_in_order": ["artifacts/hf/r9_icons_abordage.jpg (Image 1, approved icon style)", "artifacts/hf/r3_anchor.jpg (Image 2, anchor design)"],
+  "sheet.png": {"job_id": "bcb5d2ec-4a7f-4186-a4d3-45d95090c333"},
+  "tiles": {"top_left": "base, turquoise #2EC4C9 lane wave", "top_right": "Breakwater, sea green #1FB37E rolling wall", "bottom_left": "Ninth Wave, indigo #4B3FD0 cresting wave", "bottom_right": "Water Shell, pearl #E4EEF6 sphere shell"},
+  "note": "one try, the anchor is the same in all four tiles; the shell came out pale blue rather than pure pearl"
+}

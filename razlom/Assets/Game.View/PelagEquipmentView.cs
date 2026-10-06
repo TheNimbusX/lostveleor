@@ -46,6 +46,19 @@ namespace Game.View
         private float _anchorStartedAt;
         private bool _anchorLeap;
         private bool _slamOwned;
+        // Риг якоря (PelagAnchorRig, DESIGN §4): рукоять видна в левой, сабля и рукоять меняют сокет скольжением.
+        private bool _rigOwned, _saberPending;
+        private struct PropSlide
+        {
+            public bool Active;
+            public Transform Prop;
+            public MountPoint To;
+            public Vector3 FromPosition;
+            public Quaternion FromRotation;
+            public int Frames, Started;
+            public float Seconds, StartTime;
+        }
+        private PropSlide _saberSlide, _gripSlide;
         private Vector3 _headRestPosition = new Vector3(.09f, -.083f, .002f);
         private Quaternion _headRestRotation = Quaternion.Euler(-53.138f, -49.8f, -12.792f);
         private GameObject _headSource;
@@ -58,6 +71,18 @@ namespace Game.View
         public Transform SlamHead => _storedAnchorHead;
         public Vector3 ChainGripPosition => _leftHand.TransformPoint(new Vector3(0f, .045f, .012f));
         public Vector3 ChainSupportPosition => _hand.TransformPoint(new Vector3(0f, .045f, .012f));
+        /// <summary>
+        /// Абордаж v2 (лист B): якорь в правом кулаке — голова чуть за кулаком по линии
+        /// предплечья. Отсюда же вид эффектов выпускает летящий якорь (кадр 2 Throw).
+        /// Смещение — ЗАГЛУШКА под пробу позы в редакторе.
+        /// </summary>
+        public Vector3 AnchorThrowPosition => _hand != null
+            ? _hand.position + ThrowHandForward * (AbordageHeadReach * transform.lossyScale.y / 1.82f)
+            : transform.position;
+        private Vector3 ThrowHandForward => _hand != null && _forearm != null
+                                            && (_hand.position - _forearm.position).sqrMagnitude > 1e-6f
+            ? (_hand.position - _forearm.position).normalized : transform.forward;
+        private const float AbordageHeadReach = .12f;
         public Vector3 SlamBeltPosition => _anchorStored.Socket.TransformPoint(_headRestPosition);
         public Quaternion SlamBeltRotation => _anchorStored.Socket.rotation * _headRestRotation;
         private Material _anchorMetal;
@@ -66,6 +91,10 @@ namespace Game.View
 
         public void ReleaseSlamHands()
         {
+            // Абордаж v2 (лист B): пояс принимает голову якоря посреди Recover — каст ещё идёт,
+            // сабля остаётся за кушаком. Прежде здесь фаза 1 выхватывала её в ладонь на один
+            // кадр (вспышка на Recover@0.50 в каждом касте), до LateUpdate этого вида.
+            if (_presentation != null && (_presentation.AbordageActive || _presentation.AnchorThrowBodyActive)) { _anchorInHand = false; return; }
             // Голова ещё возвращается к поясу, руки уже могут исполнять следующий навык.
             _anchorInHand = false; _drawPhase = 1f; ApplySaber();
         }
@@ -74,6 +103,8 @@ namespace Game.View
             _slamOwned = active;
             if (active)
             {
+                // Прежний путь (Удар якорем, ReturnFlyingAnchor) забирает голову у рига целиком.
+                _rigOwned = false; _saberPending = false; _saberSlide.Active = _gripSlide.Active = false;
                 BeginAnchorUse();
                 Mount(_saber, _saberStored);
                 _anchorHead.gameObject.SetActive(false);
@@ -101,6 +132,138 @@ namespace Game.View
 
         public bool CombatReady => _combatReady;
         public bool AnchorInHand => _anchorInHand;
+        public bool RigOwned => _rigOwned;
+        public Transform AnchorGrip => _anchor;
+        public MountPoint AnchorEquippedMount => _anchorEquipped;
+        public bool GripInHand => _anchor != null && _anchorEquipped.Socket != null
+                                  && _anchor.parent == _anchorEquipped.Socket && !_gripSlide.Active;
+        public bool GripSliding => _gripSlide.Active;
+        /// <summary>Сабля ещё в ладони и ждёт кадра ножен (риг уберёт её SheatheSaber).</summary>
+        public bool SaberPending => _saberPending;
+        public bool SaberNearSheath(float limit) => _hand != null && Vector3.Distance(_hand.position, MountWorld(_saberStored)) <= limit;
+
+        /// <summary>Сабля за кушак: 1 — сразу (кисть у ножен), иначе скольжением за <paramref name="frames"/> кадров.</summary>
+        public void SheatheSaber(int frames)
+        {
+            if (!_saberPending) return;
+            _saberPending = false;
+            BeginSlide(ref _saberSlide, _saber, _saberStored, frames);
+        }
+
+        /// <summary>Где была бы точка <paramref name="gripLocal"/> рукояти (в её осях), если рукоять на креплении спины.</summary>
+        public Vector3 GripBackPosition(Vector3 gripLocal)
+        {
+            if (_anchorStored.Socket == null) return transform.position;
+            Matrix4x4 mount = _anchorStored.Socket.localToWorldMatrix * Matrix4x4.TRS(_anchorStored.LocalPosition,
+                Quaternion.Euler(_anchorStored.LocalEuler), _anchorStored.LocalScale);
+            return mount.MultiplyPoint3x4(gripLocal);
+        }
+
+        /// <summary>Поза рукояти на креплении спины (мир) — Крушение v4 снимает её со спины смешиванием (PelagAnchorRig.Whip).</summary>
+        public void GripBackPose(out Vector3 position, out Quaternion rotation)
+        {
+            if (_anchorStored.Socket == null || _anchor == null)
+            {
+                position = _anchor != null ? _anchor.position : transform.position;
+                rotation = _anchor != null ? _anchor.rotation : transform.rotation;
+                return;
+            }
+            Matrix4x4 mount = _anchorStored.Socket.localToWorldMatrix * Matrix4x4.TRS(_anchorStored.LocalPosition,
+                Quaternion.Euler(_anchorStored.LocalEuler), _anchorStored.LocalScale);
+            position = mount.MultiplyPoint3x4(Vector3.zero);
+            rotation = _anchorStored.Socket.rotation * Quaternion.Euler(_anchorStored.LocalEuler);
+        }
+
+        /// <summary>
+        /// Риг якоря берёт (true) или отдаёт (false) голову. Взяв: голова — одна (SlamHead, её ставит риг), рукоять видна,
+        /// сабля уходит за кушак скольжением. Отдав: голова в позе спины (риг уже сшил её туда), конец использования якоря
+        /// (<paramref name="endUse"/> = false — использование продолжает чужой код, Абордаж).
+        /// </summary>
+        public void SetRigOwnership(bool active, bool endUse = true)
+        {
+            if (active)
+            {
+                bool held = SaberInHand;
+                _rigOwned = true; _slamOwned = true;
+                if (!_anchorInHand)
+                {
+                    _anchorInHand = true; _anchorStartedAt = Time.time; _anchorLeap = false; _drawPhase = 0f;
+                    // Сабля в ладони остаётся в ней до кадра ножен (PelagAnchorRig.UpdateSaber → SheatheSaber).
+                    _saberPending = held && _hand != null && _saber != null;
+                }
+                if (_anchorHead != null) _anchorHead.gameObject.SetActive(false);
+                if (_anchor != null)
+                {
+                    _anchor.gameObject.SetActive(true);
+                    foreach (var r in _anchor.GetComponentsInChildren<Renderer>(true)) r.enabled = true;
+                }
+                if (_slamHeadRenderers != null) foreach (var r in _slamHeadRenderers) r.enabled = true;
+                return;
+            }
+            if (!_rigOwned) return;
+            _rigOwned = false; _slamOwned = false;
+            if (_saberPending) { _saberPending = false; BeginSlide(ref _saberSlide, _saber, _saberStored, AnchorRigSwitches.PropSlideFrames); }
+            FinishSlide(ref _saberSlide); FinishSlide(ref _gripSlide);
+            if (_storedAnchorHead != null)
+            {
+                _storedAnchorHead.localPosition = _headRestPosition;
+                _storedAnchorHead.localRotation = _headRestRotation;
+            }
+            // Отдаём Абордажу посреди каста (endUse = false): якорь остаётся «в руках» — рукоять в левой, держанная голова его.
+            if (endUse) EndAnchorUse();
+            else ApplyAnchor();
+            PlaceAnchorHead();
+        }
+
+        /// <summary>Рукоять в левую (<paramref name="toHand"/>) или на спину за <paramref name="frames"/> кадров (1 — сразу).</summary>
+        public void SlideGrip(bool toHand, int frames)
+            => BeginSlide(ref _gripSlide, _anchor, toHand ? _anchorEquipped : _anchorStored, frames);
+
+        /// <summary>Рукоять скольжением за <paramref name="seconds"/> (уборка без клипа Stow: видно, как рука несёт её на спину).</summary>
+        public void SlideGripSeconds(bool toHand, float seconds)
+            => BeginSlide(ref _gripSlide, _anchor, toHand ? _anchorEquipped : _anchorStored, 2, seconds);
+
+        private void BeginSlide(ref PropSlide slide, Transform prop, MountPoint to, int frames, float seconds = 0f)
+        {
+            if (prop == null || to.Socket == null) return;
+            if (frames <= 1 && seconds <= 0f) { Mount(prop, to); slide.Active = false; return; }
+            slide = new PropSlide
+            {
+                Active = true, Prop = prop, To = to, FromPosition = prop.position, FromRotation = prop.rotation,
+                Frames = frames, Started = Time.frameCount, Seconds = seconds, StartTime = Time.time,
+            };
+        }
+
+        /// <summary>Шаг скольжений; true — сабля ещё едет (её не ставить в ножны за кадр).</summary>
+        private bool UpdateRigSlides()
+        {
+            StepSlide(ref _gripSlide);
+            return StepSlide(ref _saberSlide);
+        }
+
+        private static bool StepSlide(ref PropSlide slide)
+        {
+            if (!slide.Active) return false;
+            int age = Time.frameCount - slide.Started;
+            if (age <= 0) return true;
+            float t = slide.Seconds > 0f ? Mathf.Clamp01((Time.time - slide.StartTime) / slide.Seconds) : Mathf.Clamp01(age / (float)slide.Frames);
+            if (t >= 1f) { Mount(slide.Prop, slide.To); slide.Active = false; return false; }
+            float u = Smooth(t);
+            Quaternion target = slide.To.Socket.rotation * Quaternion.Euler(slide.To.LocalEuler);
+            slide.Prop.SetPositionAndRotation(Vector3.Lerp(slide.FromPosition, MountWorld(slide.To), u),
+                Quaternion.Slerp(slide.FromRotation, target, u));
+            return true;
+        }
+
+        private static void FinishSlide(ref PropSlide slide)
+        {
+            if (!slide.Active) return;
+            Mount(slide.Prop, slide.To);
+            slide.Active = false;
+        }
+
+        private static Vector3 MountWorld(MountPoint point) => point.Socket != null
+            ? point.Socket.TransformPoint(point.LocalPosition) : Vector3.zero;
         public bool AnchorHeadVisible => ((_slamOwned || _storedAnchorVisible) && _storedAnchorHead != null
             && _storedAnchorHead.gameObject.activeInHierarchy)
             || (_anchorHead != null && _anchorHead.gameObject.activeInHierarchy);
@@ -185,6 +348,8 @@ namespace Game.View
         public void ResetForSpawn()
         {
             GetComponent<PelagAnchorSlamView>()?.Release(true);
+            GetComponent<PelagAnchorRig>()?.ResetForSpawn();
+            _rigOwned = false; _saberPending = false; _saberSlide.Active = _gripSlide.Active = false;
             if (_slamOwned) SetSlamOwnership(false);
             _presentation = GetComponent<CharacterAnimatorView>();
             _drawPhase = 0f;
@@ -229,8 +394,20 @@ namespace Game.View
             if (_anchorInHand)
             {
                 _drawPhase = 0f;
-                Mount(_saber, _saberStored);
+                // Риг якоря: сабля и рукоять доезжают до сокета скольжением, а не прыжком за кадр; сабля, ждущая кадра
+                // ножен (SaberPending), остаётся в ладони.
+                if (!UpdateRigSlides() && !_saberPending) Mount(_saber, _saberStored);
                 PlaceAnchorHead();
+                return;
+            }
+            // Абордаж v2 (лист B): сабля за кушаком до конца каста, и после того как пояс принял
+            // голову якоря. Иначе ветка ниже выхватывала её в Recover (фаза 1), а в конце каста
+            // убирала жестом — шаги стойки (слой Saber Footwork, вес 1 сразу) рвали выход в покой.
+            // Бросок якоря — так же (CharacterAnimatorView.AnchorThrowBodyActive, со второго кадра каста).
+            if (_presentation != null && (_presentation.AbordageActive || _presentation.AnchorThrowBodyActive))
+            {
+                _drawPhase = 0f;
+                Mount(_saber, _saberStored);
                 return;
             }
             // Принятый Sim удар важнее бытового жеста. Клинок уже в ладони
@@ -511,7 +688,10 @@ namespace Game.View
             float age = Time.time - _anchorStartedAt;
             if (_anchorLeap && _presentation != null && _presentation.AuthoredLeapTime >= 0f)
                 age = _presentation.AuthoredLeapTime;
-            bool heldWindup = _anchorInHand && _anchorLeap && age < PelagAbilityTiming.AnchorDraw;
+            // Абордаж v2 (CharacterAnimatorView.Abordage, лист B): якорь держит ПРАВАЯ — от каста до выпуска.
+            bool abordage = _anchorLeap && _presentation != null && _presentation.AbordageHandsDriven;
+            bool heldWindup = abordage ? _anchorInHand && _presentation.AbordageAnchorInRightHand
+                : _anchorInHand && _anchorLeap && age < PelagAbilityTiming.AnchorDraw;
             _anchorHead.gameObject.SetActive(heldWindup);
             // Recovery can release the hands before the returning projectile
             // finishes. Restore the belt assembly only after that visible head
@@ -520,6 +700,12 @@ namespace Game.View
             foreach (Renderer renderer in _storedAnchorRenderers)
                 renderer.enabled = _storedAnchorVisible;
             if (!_anchorInHand) return;
+            if (abordage && _hand != null)
+            {
+                _anchorHead.position = AnchorThrowPosition;
+                _anchorHead.rotation = Quaternion.LookRotation(ThrowHandForward, Vector3.up);
+                return;
+            }
             _anchorHead.position = _leftHand.position + transform.forward * .12f - Vector3.up * .12f;
             _anchorHead.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
         }

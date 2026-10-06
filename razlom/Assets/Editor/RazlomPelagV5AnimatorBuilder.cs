@@ -10,7 +10,7 @@ using UnityEngine;
 /// Builds Pelag's gameplay controller exclusively from the approved v5 clips.
 /// The generated controller is disposable; the FBXs and this recipe are truth.
 /// </summary>
-public static class RazlomPelagV5AnimatorBuilder
+public static partial class RazlomPelagV5AnimatorBuilder
 {
     private const string Folder = "Assets/Resources/Characters/Pelag_v5/Mixamo";
     private const string Output =
@@ -26,7 +26,7 @@ public static class RazlomPelagV5AnimatorBuilder
     private const string AbilityPlaybackSpeed = "AbilityPlaybackSpeed";
     private const string MoveX = "MoveX";
     private const string MoveY = "MoveY";
-    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v35.Dash";
+    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v40.Wreck4";
     /// <summary>Время клипа рывка (Dash_v5): ведёт CharacterAnimatorView от тиков Sim.</summary>
     internal const string DashPhase = "DashPhase";
     private static AnimationClip _blazeClip;
@@ -98,6 +98,14 @@ public static class RazlomPelagV5AnimatorBuilder
             "Pelag_AN_SabreBind.fbx",
             "Pelag_AN_Dash.fbx",
             "Pelag_AN_DashBind.fbx");
+        // Шквал v2 (02.10): семь клипов и привязка (RazlomPelagV5AnimatorBuilder.Squall2).
+        ForceImport(Squall2Files());
+        // Абордаж v2 (02.10): четыре клипа и привязка (RazlomPelagV5AnimatorBuilder.Abordage2).
+        ForceImport(Abordage2Files());
+        // Бросок якоря (03.10): пять клипов и привязка (RazlomPelagV5AnimatorBuilder.AnchorThrow).
+        ForceImport(AnchorThrowFiles());
+        // Крушение v4 (06.10): пять клипов и привязка (RazlomPelagV5AnimatorBuilder.Wreck4).
+        ForceImport(Wreck4Files());
 
         AnimationClip idle = Load("Pelag_MX_Idle.fbx", "Pelag_MX_Idle");
         AnimationClip run = Load("Pelag_MX_Run.fbx", "Pelag_MX_Run");
@@ -172,6 +180,10 @@ public static class RazlomPelagV5AnimatorBuilder
         AddParameter(controller, "BlazePhase", AnimatorControllerParameterType.Float);
         AddParameter(controller, "AnchorSlamPhase", AnimatorControllerParameterType.Float);
         AddParameter(controller, DashPhase, AnimatorControllerParameterType.Float);
+        AddSquall2Parameters(controller);
+        AddAbordage2Parameters(controller);
+        AddAnchorThrowParameters(controller);
+        AddWreck4Parameters(controller);
         // Своё время у каждого удара серии: общий параметр при переходе удар→удар
         // двигал бы и уходящий клип (AGENTS, «раздельный параметр времени»).
         for (int hitIndex = 1; hitIndex <= 3; hitIndex++)
@@ -332,6 +344,14 @@ public static class RazlomPelagV5AnimatorBuilder
         dash.writeDefaultValues = false;
         dash.timeParameterActive = true;
         dash.timeParameter = DashPhase;
+        // Шквал v2 (02.10): Squall2_*_v5, время — Squall2Phase* от тиков Sim (CharacterAnimatorView.Squall).
+        AddSquall2States(machine);
+        // Абордаж v2 (02.10): Abordage2_*_v5, время — Abordage2Phase* от тиков Sim (CharacterAnimatorView.Abordage).
+        AddAbordage2States(machine);
+        // Бросок якоря (03.10): AnchorThrow_*_v5, время — AnchorThrowPhase* от тиков Sim (CharacterAnimatorView.AnchorThrow).
+        AddAnchorThrowStates(machine);
+        // Крушение v4 (06.10): Wreck4_*, время — Wreck4Phase* от тиков Sim (CharacterAnimatorView.Wreck2); имена — для рига.
+        AddWreck4States(machine);
         RazlomPelagAuthoredClips.Build("Pelag_AN_Cleave", false, "Pelag_AN_CleaveBind");
         Combat(machine, relaxedIdleState, combatIdleState, runState, "CycloneEnd",
             RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneEnd", false, "Pelag_AN_CycloneBind"), "AnchorSweep", 1f, 0.04f, 0.78f, 0.10f);
@@ -397,7 +417,8 @@ public static class RazlomPelagV5AnimatorBuilder
         controller.layers = recoveryLayers;
 
         EditorUtility.SetDirty(controller);
-        AssetDatabase.SaveAssets();
+        // Только своё (RazlomPelagV5AnimatorBuilder.Save): общий SaveAssets писал чужие ассеты общего редактора.
+        SaveBuiltAssets(controller);
         Debug.Log("[Разлом] Pelag v5 controller: locomotion/turn + серия сабли из трёх ударов + рывок: " + Output);
     }
 

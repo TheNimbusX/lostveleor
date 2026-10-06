@@ -1,0 +1,45 @@
+{
+  "pack": "Pelag Abordage motion reference (ChatGPT image pack)",
+  "date": "2026-10-02",
+  "status": "B generated 22:10; B2 next; S/S2 optional (only for a future video ref)",
+  "skill": "Abordage",
+  "concept": "Short harpoon-style throw with the right hand, the anchor flies at an ENEMY and hooks it, the chain snaps taut, Pelag is yanked low and fast along it, arrival punch with the free right fist.",
+  "hands": {
+    "sabre": "tucked in the sash at the left hip during anchor skills (PelagEquipmentView.BeginAnchorUse mounts it to saberStored)",
+    "chain_grip": "left hand (PelagEquipmentView.ChainGripPosition)",
+    "throw_and_punch": "right hand"
+  },
+  "attachments": [
+    {"file": "1-pelag-model-4views.jpg", "size": "2164x1080", "source": "ART/characters/pelag/squall-forms-2026-10-02/motion-ref-pack/1-pelag-model-4views.jpg (= dash-2026-10-02/motion-ref/dash-ref-1-identity.jpg)", "what": "model identity, 4 views, sabre in sash, anchor on back", "used_in": ["B", "B2", "S", "S2"]},
+    {"file": "2-pelag-ingame.jpg", "size": "1440x960", "source": "ART/characters/pelag/squall-forms-2026-10-02/motion-ref-pack/2-pelag-ingame.jpg (crop of artifacts/capture/pelag-dash-closeup/shot_00_t3.00s.png)", "what": "in-game colours and brightness", "used_in": ["B", "B2", "S", "S2"]},
+    {"file": "3-anchor-on-back-ingame.jpg", "size": "1440x2200", "source": "artifacts/capture/pelag-dash-closeup/zoom_anchor_stance.jpg (top) + zoom_anchor_head.jpg (bottom), stacked at width 1440", "what": "our anchor, ring and chain on the back in game", "used_in": ["B", "B2", "S", "S2"]},
+    {"file": "4-anchor-chain-design.jpg", "size": "1024x1536", "source": "ART/characters/pelag/demo-polish-2026-09-30/references/anchor_identity.jpg", "what": "anchor head, chain and leather-wrapped grip with red tassel; ignore its glow and impact effects", "used_in": ["B", "B2", "S", "S2"]},
+    {"file": "5B-squall-keyposes-format.png", "size": "1672x941", "source": "ART/characters/pelag/squall-forms-2026-10-02/motion-ref-pack/B-key-poses-chatgpt.png", "what": "approved Squall key-pose sheet: layout and render style only", "used_in": ["B"]},
+    {"file": "5S-scene-game-camera.jpg", "size": "1620x1080", "source": "ART/characters/pelag/abordage-2026-10-02/chatgpt-refs/1-scene-game-camera.jpg", "what": "game camera, light, scale, forest arena", "used_in": ["S"]},
+    {"file": "6S-abordage-target-A.png", "size": "1672x941", "source": "C:/Users/d.grab/Downloads/526a1c52-0e99-4d55-abef-ee6f09baa66a.png (ChatGPT result of prompt A-base, 2026-10-02 21:48)", "what": "approved base target frame A: same arena spot and target enemy", "used_in": ["S"]}
+  ],
+  "prompts": [
+    {"id": "B", "tool": "ChatGPT image, new chat", "attach_order": ["1-pelag-model-4views.jpg", "2-pelag-ingame.jpg", "3-anchor-on-back-ingame.jpg", "4-anchor-chain-design.jpg", "5B-squall-keyposes-format.png"], "aspect": "16:9", "save_as": "B-key-poses-chatgpt.png", "poses": [1, 2, 3, 4, 5, 6]},
+    {"id": "B2", "tool": "ChatGPT image, new chat", "attach_order": ["1-pelag-model-4views.jpg", "2-pelag-ingame.jpg", "3-anchor-on-back-ingame.jpg", "4-anchor-chain-design.jpg", "B-key-poses-chatgpt.png (result of B)"], "aspect": "16:9", "save_as": "B2-form-poses-chatgpt.png", "poses": [7, 8, 9, 10]},
+    {"id": "S", "tool": "ChatGPT image, new chat", "attach_order": ["1-pelag-model-4views.jpg", "2-pelag-ingame.jpg", "3-anchor-on-back-ingame.jpg", "4-anchor-chain-design.jpg", "5S-scene-game-camera.jpg", "6S-abordage-target-A.png", "B-key-poses-chatgpt.png (result of B)"], "aspect": "16:9", "save_as": "S-start-frame-chatgpt.png", "camera": "game camera angle, framed ~1.5x closer", "pose": 1},
+    {"id": "S2", "optional": true, "tool": "ChatGPT image, new chat", "attach_order": ["1-pelag-model-4views.jpg", "2-pelag-ingame.jpg", "3-anchor-on-back-ingame.jpg", "4-anchor-chain-design.jpg", "B-key-poses-chatgpt.png (result of B)"], "aspect": "16:9", "save_as": "S2-start-frame-studio-chatgpt.png", "camera": "studio, chest height, three-quarter side", "pose": 1, "why": "fallback if a video from the game camera is unreadable (dash Kling lesson)"}
+  ],
+  "pose_numbers": {
+    "1": "anticipation: anchor cocked behind right shoulder, chain grip forward in left fist",
+    "2": "release: right arm whipped forward, anchor just leaving the hand, chain straight",
+    "3": "yanked: taut chain, body one long diagonal, left arm forward along chain, right fist at ribs",
+    "4": "mid-pull: legs gathering, left elbow reeling in, right fist cocked far back",
+    "5": "arrival: left foot planted in lunge, straight right punch",
+    "6": "recovery: wide stance, guard, anchor hanging on short chain by left leg",
+    "7": "Geyser (Гейзер): rising uppercut out of a low crouch",
+    "8": "Breach (Пробоина): deep lunge, straight punch through",
+    "9": "Quake (Обвал): short hop, right fist raised",
+    "10": "Quake (Обвал): ground slam, right fist into the ground",
+    "Mark (Метка)": "moved to talents 02.10, no form"
+  },
+  "form_colours_for_reference": {"base": "#2EC4C9", "quake": "#2D5BE3", "geyser": "#1FB37E", "breach": "#D23C9C", "dropped_forms": "ram, rehook (owner 02.10 ~22:35); mark moved to talents", "forbidden": "red, orange, gold (enemy telegraphs)"},
+  "next_step": "no video ref (Higgsfield empty, 02.10 ~22:45): clips authored in Blender from sheets B and B2 like Squall v2 (owner to confirm, SPEC question 5); S/S2 only if a video ref becomes possible",
+  "generations": [
+    {"id": "B", "file": "B-key-poses-chatgpt.png", "time": "2026-10-02 22:10", "size": "1672x941", "notes": "sabre in sash, straight chain in poses 2-4, our anchor; 3/4 row poses 2 and 5 look hand-swapped (throw and punch with the left, grip in the right); pose 4 feet ~20% of body height off the ground with tucked knees (reads as a hop) - lower to 3-9% in the clip; pose 3 chain runs into figure 4; pose 1 anchor above the head, higher than the brief"}
+  ]
+}

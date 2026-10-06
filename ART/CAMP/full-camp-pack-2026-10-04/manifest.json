@@ -1,0 +1,1715 @@
+{
+  "version": 1,
+  "title": "Полный художественный пак лагеря",
+  "created": "2026-10-04",
+  "asset_count": 50,
+  "newly_generated": 38,
+  "assembled_existing": 12,
+  "scope": "Растровые концепты предметов для последующей конвертации пользователем в 3D, отдельные плоские текстуры карты и грунта.",
+  "style": "Крупные рисованные гранёные формы, тёплое дерево, матовый металл, приглушённые оливковые ткани и растительность.",
+  "camera": "Для объёмных предметов: вид сверху в три четверти, ориентир камеры лагеря 48°. Карта и грунт — строго сверху.",
+  "notes": [
+    "Новые NPC и сама 3D-конвертация не входят в этот пак.",
+    "Карта мира отдельная. Пергамент на походном столе пустой.",
+    "В товарных листах по четыре предмета; остальные новые физические предметы показаны как один предмет или цельный модуль.",
+    "Рисунки грунта и карта используются как плоские текстуры/декали, без конвертации в Tripo.",
+    "RGB под alpha=0 может содержать цветные значения, невидимые при корректном alpha-наложении. У краёв встречается слабый шум alpha=1/255. PNG сохранены без ручного изменения пикселей."
+  ],
+  "assets": [
+    {
+      "id": "existing-01-rear-lean-to",
+      "title": "Короткий задний козырёк",
+      "group": "00-existing/merchant-variants",
+      "file": "00-existing/merchant-variants/01-rear-lean-to.png",
+      "kind": "Вариант лавки для Tripo",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-stall-2026-10-04-v2/01-rear-lean-to.png",
+      "source_prompts": "00-existing/prompt-sources/merchant-stall-2026-10-04-v2-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          32,
+          71,
+          1221,
+          1191
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1689099,
+        "sha256": "fa7c2733d46785cfa063b31df5823860bed8de4419be61fee4e9868d9f99fb1e",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "existing-02-short-arched-canopy",
+      "title": "Короткий арочный навес",
+      "group": "00-existing/merchant-variants",
+      "file": "00-existing/merchant-variants/02-short-arched-canopy.png",
+      "kind": "Вариант лавки для Tripo",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-stall-2026-10-04-v2/02-short-arched-canopy.png",
+      "source_prompts": "00-existing/prompt-sources/merchant-stall-2026-10-04-v2-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          31,
+          42,
+          1228,
+          1200
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1754172,
+        "sha256": "7e6eddeccd71b475c21b994fcfb4cf0afecf12a72f06cb71e414edf9f51e2807",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "existing-03-side-wing",
+      "title": "Боковой тканевый навес",
+      "group": "00-existing/merchant-variants",
+      "file": "00-existing/merchant-variants/03-side-wing.png",
+      "kind": "Вариант лавки для Tripo",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-stall-2026-10-04-v2/03-side-wing.png",
+      "source_prompts": "00-existing/prompt-sources/merchant-stall-2026-10-04-v2-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          39,
+          11,
+          1245,
+          1241
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1706938,
+        "sha256": "1ffc585800da32d1b736c8b1da3edf2a1c300ffad889d44c0a5f9f0699e4e1df",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "existing-04-rear-gabled-canopy",
+      "title": "Узкий двускатный навес",
+      "group": "00-existing/merchant-variants",
+      "file": "00-existing/merchant-variants/04-rear-gabled-canopy.png",
+      "kind": "Вариант лавки для Tripo",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-stall-2026-10-04-v2/04-rear-gabled-canopy.png",
+      "source_prompts": "00-existing/prompt-sources/merchant-stall-2026-10-04-v2-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          36,
+          38,
+          1225,
+          1230
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1782091,
+        "sha256": "e163c166358a0a464cb28c51eecfbf432788fd704c55286a860505d8c61751d9",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "existing-01-crates-and-boxes",
+      "title": "Ящики и короба",
+      "group": "00-existing/goods-sheets",
+      "file": "00-existing/goods-sheets/01-crates-and-boxes.png",
+      "kind": "Товарный лист · 4 предмета",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-goods-2026-10-04-v2/01-crates-and-boxes.png",
+      "source_prompts": "00-existing/prompt-sources/merchant-goods-2026-10-04-v2-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          40,
+          43,
+          1225,
+          1232
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1726612,
+        "sha256": "b93f9acb988cd246afe79391457907191c871de31cd17fa21b8f998f91bbce33",
+        "byte_exact_source_copy": true
+      },
+      "notes": "Один PNG содержит четыре отдельных предмета. Для одиночной модели Tripo выбирайте один предмет."
+    },
+    {
+      "id": "existing-02-textiles-and-rolls",
+      "title": "Ткани и рулоны",
+      "group": "00-existing/goods-sheets",
+      "file": "00-existing/goods-sheets/02-textiles-and-rolls.png",
+      "kind": "Товарный лист · 4 предмета",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-goods-2026-10-04-v2/02-textiles-and-rolls.png",
+      "source_prompts": "00-existing/prompt-sources/merchant-goods-2026-10-04-v2-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          56,
+          119,
+          1202,
+          1133
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1278639,
+        "sha256": "c0f2c252b240d6c9e60c7856c798fbc0d2ef64c9e7426aaa4128240223041774",
+        "byte_exact_source_copy": true
+      },
+      "notes": "Один PNG содержит четыре отдельных предмета. Для одиночной модели Tripo выбирайте один предмет."
+    },
+    {
+      "id": "existing-03-sacks-and-parcels",
+      "title": "Мешки и свёртки",
+      "group": "00-existing/goods-sheets",
+      "file": "00-existing/goods-sheets/03-sacks-and-parcels.png",
+      "kind": "Товарный лист · 4 предмета",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-goods-2026-10-04-v2/03-sacks-and-parcels.png",
+      "source_prompts": "00-existing/prompt-sources/merchant-goods-2026-10-04-v2-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          1,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          53,
+          66,
+          1219,
+          1180
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1373564,
+        "sha256": "255a72ddfb7c8a017ba5f539e7b00d5cfc9dbb3a89e236244502759d5d7c9b78",
+        "byte_exact_source_copy": true
+      },
+      "notes": "Один PNG содержит четыре отдельных предмета. Для одиночной модели Tripo выбирайте один предмет."
+    },
+    {
+      "id": "existing-04-pottery-and-containers",
+      "title": "Керамика и тара",
+      "group": "00-existing/goods-sheets",
+      "file": "00-existing/goods-sheets/04-pottery-and-containers.png",
+      "kind": "Товарный лист · 4 предмета",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-goods-2026-10-04-v2/04-pottery-and-containers.png",
+      "source_prompts": "00-existing/prompt-sources/merchant-goods-2026-10-04-v2-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          63,
+          30,
+          1212,
+          1210
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1506677,
+        "sha256": "dbe4df31bd87e07a6c2a7c71c2b4fa3bf60ba5c25e080db612cb2fcb5570b8ef",
+        "byte_exact_source_copy": true
+      },
+      "notes": "Один PNG содержит четыре отдельных предмета. Для одиночной модели Tripo выбирайте один предмет."
+    },
+    {
+      "id": "existing-01-portable-floor-lantern",
+      "title": "Переносной напольный фонарь",
+      "group": "00-existing/lighting",
+      "file": "00-existing/lighting/01-portable-floor-lantern.png",
+      "kind": "Светильник / основание для Tripo",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/floor-light-2026-10-04/01-portable-floor-lantern.png",
+      "source_prompts": "00-existing/prompt-sources/floor-light-2026-10-04-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          167,
+          37,
+          1090,
+          1227
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1330195,
+        "sha256": "ad09f8b4b6d73e451ffa5afe8a0515deacdb8b28d31fe80bbb0ca056bb5c043a",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "existing-01-camp-lantern-post-tall",
+      "title": "Высокий лагерный фонарь на стойке",
+      "group": "00-existing/lighting",
+      "file": "00-existing/lighting/01-camp-lantern-post-tall.png",
+      "kind": "Светильник / основание для Tripo",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/standing-lantern-2026-10-04-v2/01-camp-lantern-post-tall.png",
+      "source_prompts": "00-existing/prompt-sources/standing-lantern-2026-10-04-v2-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          484,
+          15,
+          828,
+          1228
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 314874,
+        "sha256": "c2d82bf5bd3fba920de13e6e57fae907d21993d5b7c05ba23f3d2ab25b50eea5",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "existing-01-lantern-with-base",
+      "title": "Фонарь с основанием",
+      "group": "00-existing/lighting",
+      "file": "00-existing/lighting/01-lantern-with-base.png",
+      "kind": "Светильник / основание для Tripo",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/lantern-base-2026-10-04/01-lantern-with-base.png",
+      "source_prompts": "00-existing/prompt-sources/lantern-base-2026-10-04-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          402,
+          16,
+          851,
+          1233
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 466649,
+        "sha256": "bb015ad1f8de1fa54195082d6e17c664302d77aca4e7136d0a22ca3620dddf73",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "existing-02-base-and-guard-only",
+      "title": "Основание с оградкой отдельно",
+      "group": "00-existing/lighting",
+      "file": "00-existing/lighting/02-base-and-guard-only.png",
+      "kind": "Светильник / основание для Tripo",
+      "generation_mode": "previous image_gen output; byte-exact copy",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/lantern-base-2026-10-04/02-base-and-guard-only.png",
+      "source_prompts": "00-existing/prompt-sources/lantern-base-2026-10-04-prompts.json",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          50,
+          194,
+          1223,
+          1180
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1233257,
+        "sha256": "95cab552dd7420f44da765e25d10b22d04715d60558ef1728f0cbcb642aec787",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "main-firepit",
+      "title": "Каменное кострище",
+      "group": "01-main",
+      "file": "01-main/01-firepit.png",
+      "dimensions": "диаметр 1,7 м, высота камней 0,25–0,35 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b70e33a2-3898-463d-9fbe-fe57d6be8a6e.png",
+      "prompt_id": "main-firepit",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          57,
+          186,
+          1194,
+          1070
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1497170,
+        "sha256": "d3372ba7bc5c58792266ba5bda72e8dd59dd7296140af9f040e0aafac3df821a",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "main-prep-table",
+      "title": "Походный стол",
+      "group": "01-main",
+      "file": "01-main/02-expedition-table.png",
+      "dimensions": "1,6 × 0,85 м, высота 0,85 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-c7e15314-6e19-40d0-a196-97d9de977de8.png",
+      "prompt_id": "main-prep-table",
+      "notes": "Чистый пергамент. Отдельную карту накладывать поверх после создания модели.",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          24,
+          103,
+          1243,
+          1179
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1515063,
+        "sha256": "afbd49ed8d3ef0ef034dd493d47ab1cbe100f786321e0df6be88de5e72977823",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "merchant-body",
+      "title": "Корпус лавки отдельно",
+      "group": "02-merchant",
+      "file": "02-merchant/05-counter-body.png",
+      "dimensions": "ширина 4,0 м, глубина 1,8 м, прилавок 1,05 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-2c773770-19e1-4b14-84ea-7e9f2a0752d3.png",
+      "prompt_id": "merchant-body",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          31,
+          233,
+          1225,
+          1175
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1362626,
+        "sha256": "d1eac317c1d35566d6c07edb93de01c65b2eb23c57f85c453fa0cd462f9b27e3",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "merchant-canopy",
+      "title": "Задний навес отдельно",
+      "group": "02-merchant",
+      "file": "02-merchant/06-rear-canopy-module.png",
+      "dimensions": "3,8 × 0,9 м, высота стоек 2,7 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-8810686b-7e9c-4b92-b915-3a47cb16db54.png",
+      "prompt_id": "merchant-canopy",
+      "notes": "Отдельный неглубокий задний навес; открытая передняя зона.",
+      "validation": {
+        "width": 1402,
+        "height": 1122,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          81,
+          31,
+          1354,
+          1057
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 889231,
+        "sha256": "675f8a23e494f8a0108cfcec43adaabedb3218466d4957a3fb67b77cce69b4d4",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "pelag-rope",
+      "title": "Канат Пелага",
+      "group": "03-pelag",
+      "file": "03-pelag/01-rope-coil.png",
+      "dimensions": "диаметр 0,65 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-bfa77853-b718-4d9d-9879-af233b94a61c.png",
+      "prompt_id": "pelag-rope",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          81,
+          208,
+          1188,
+          1071
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1448396,
+        "sha256": "2133d1fed637b08a0af2c5ee36222d4c3769a5132e13816ea5726e7d59908d76",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "pelag-chest",
+      "title": "Походный сундук Пелага",
+      "group": "03-pelag",
+      "file": "03-pelag/02-travelling-chest.png",
+      "dimensions": "1,05 × 0,6 м, высота 0,6 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e2ecc591-cf48-4fb4-bf51-0cf84c377330.png",
+      "prompt_id": "pelag-chest",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          40,
+          139,
+          1218,
+          1155
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1708736,
+        "sha256": "02584944d2cfcda999793c172167fe1c5e34aeadf16190b001dec10e362cba55",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "pelag-tackle",
+      "title": "Снасти Пелага",
+      "group": "03-pelag",
+      "file": "03-pelag/03-fishing-tackle.png",
+      "dimensions": "комплект шириной 0,85 м, высота 1,1 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b5741f3d-3999-40c2-99cc-87e1cbbad1aa.png",
+      "prompt_id": "pelag-tackle",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          148,
+          186,
+          1123,
+          1204
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1239111,
+        "sha256": "5e8c3d48b3b522c4e4680432aeb811d274d1e5accc220f2829797cbca68b59f0",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "pelag-map",
+      "title": "Свёрнутая карта Пелага",
+      "group": "03-pelag",
+      "file": "03-pelag/04-map-and-case.png",
+      "dimensions": "длина 0,65 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-21ae1b98-aa3b-404b-b756-cd213e621da6.png",
+      "prompt_id": "pelag-map",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          14,
+          176,
+          1248,
+          1102
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1504275,
+        "sha256": "c1f578e69716062b4226179dfabda49111db9fbe8b2244ec2c423b19d9bcd02b",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "eni-rank-1",
+      "title": "Эни I — точильный круг",
+      "group": "04-eni",
+      "file": "04-eni/01-rank-1-grindstone.png",
+      "dimensions": "0,9 × 0,6 м, высота 0,85 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-4bbdece2-0f7f-4880-b853-b712bf149481.png",
+      "prompt_id": "eni-rank-1",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          95,
+          70,
+          1201,
+          1202
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1347447,
+        "sha256": "76bd1a041e54557924ed4aa4ceb48ecb1345bdd2b618a877a359ec3f1b2c5012",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "eni-rank-2",
+      "title": "Эни II — сталь и зажим",
+      "group": "04-eni",
+      "file": "04-eni/02-rank-2-steel-and-clamp.png",
+      "dimensions": "0,9 × 0,55 м, высота 0,8 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-bee3b262-7f53-4d77-9dc1-74fa11923b1a.png",
+      "prompt_id": "eni-rank-2",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          53,
+          88,
+          1232,
+          1175
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1725626,
+        "sha256": "06b34dcfbbe4fe75c1c1a7dbe1cca22df4050ae96fa50fc855ac2af41df1596b",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "eni-rank-3",
+      "title": "Эни III — стол переноса",
+      "group": "04-eni",
+      "file": "04-eni/03-rank-3-donor-workbench.png",
+      "dimensions": "1,2 × 0,65 м, высота 0,85 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-273de756-dd40-4f0d-ada0-dfeddeaa9dc7.png",
+      "prompt_id": "eni-rank-3",
+      "validation": {
+        "width": 1402,
+        "height": 1122,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          17,
+          8,
+          1390,
+          1112
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1789318,
+        "sha256": "fa3c52e239c869bd412613bd87026fbd641985543cdabf2d22f272436cb95aca",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "ven-rank-1",
+      "title": "Вен I — дополнительная выкладка",
+      "group": "05-ven",
+      "file": "05-ven/01-rank-1-extra-display.png",
+      "dimensions": "1,1 × 0,6 м, высота 0,7 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-cf1a2fa1-9e27-49e1-9737-e840a9c83db6.png",
+      "prompt_id": "ven-rank-1",
+      "validation": {
+        "width": 1374,
+        "height": 1145,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          120,
+          23,
+          1275,
+          1114
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1613960,
+        "sha256": "25599b7dd1e9f059bfde0bcfe54d3996e96c5f946570014c718aa3e9c2a9fd1b",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "ven-rank-2",
+      "title": "Вен II — ящик резерва",
+      "group": "05-ven",
+      "file": "05-ven/02-rank-2-reserve-box.png",
+      "dimensions": "0,8 × 0,55 м, высота 0,55 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-2140e99b-959f-4b59-a137-a2a05e541f61.png",
+      "prompt_id": "ven-rank-2",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          69,
+          160,
+          1210,
+          1223
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1611826,
+        "sha256": "8a8781fdc7887bc55a28b69fd63c6c33858049fea973e647696fae0c4a704ee7",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "ven-rank-3",
+      "title": "Вен III — витрина категорий",
+      "group": "05-ven",
+      "file": "05-ven/03-rank-3-category-display.png",
+      "dimensions": "1,15 × 0,55 м, высота 0,95 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-91e47153-b219-4198-8219-08b9ed3bb7e3.png",
+      "prompt_id": "ven-rank-3",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          77,
+          75,
+          1204,
+          1160
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1600262,
+        "sha256": "1737af5a819d8a344e5f542407b53b669f9110709421a77e3d26d67191925c60",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "leo-rank-1",
+      "title": "Лео I — большие бутыли",
+      "group": "06-leo",
+      "file": "06-leo/01-rank-1-large-bottles.png",
+      "dimensions": "0,8 × 0,4 м, высота 0,55 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-8aad0242-8d8e-409d-a90e-d839c2911d62.png",
+      "prompt_id": "leo-rank-1",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          97,
+          66,
+          1170,
+          1194
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1639267,
+        "sha256": "2329753ef25597c5933b1738901bd7d079559dc57fac53c51efcc31acc0b8e89",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "leo-rank-2",
+      "title": "Лео II — травы и живица",
+      "group": "06-leo",
+      "file": "06-leo/02-rank-2-herbs-and-resin.png",
+      "dimensions": "0,8 × 0,45 м, высота 0,9 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-51e27bd3-264f-4f4b-970e-83052a2b1841.png",
+      "prompt_id": "leo-rank-2",
+      "validation": {
+        "width": 1199,
+        "height": 1312,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          163,
+          30,
+          1060,
+          1281
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1644183,
+        "sha256": "3d1c0bcb984db2ec1ac645b91e33eb1dbabbc72e733943971e8f03aa76a6db6f",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "leo-rank-3",
+      "title": "Лео III — смешивание и фильтр",
+      "group": "06-leo",
+      "file": "06-leo/03-rank-3-mixing-and-filter.png",
+      "dimensions": "0,95 × 0,55 м, высота 0,85 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-04139816-dd32-408e-b9d8-9acaeb94e4f3.png",
+      "prompt_id": "leo-rank-3",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          45,
+          32,
+          1228,
+          1233
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1936986,
+        "sha256": "c00183d16ddcddb79584a187e2e7126290c0f69393b387fc57e15b1dc8a00904",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "tree-broad",
+      "title": "Широкое лиственное дерево",
+      "group": "07-trees",
+      "file": "07-trees/01-broadleaf-wide.png",
+      "dimensions": "высота 5,5 м, крона около 4 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png",
+      "prompt_id": "tree-broad",
+      "validation": {
+        "width": 1145,
+        "height": 1374,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          45,
+          27,
+          1112,
+          1325
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1375118,
+        "sha256": "a79034d16d5d93cee942ba3b995edce8c9b562692cb5e926193a445bac327f52",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "tree-crooked",
+      "title": "Изогнутое лиственное дерево",
+      "group": "07-trees",
+      "file": "07-trees/02-crooked-broadleaf.png",
+      "dimensions": "высота 5 м, крона около 3,5 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-8c24549f-9c4c-42d7-a0e6-f909ec4c4c64.png",
+      "prompt_id": "tree-crooked",
+      "validation": {
+        "width": 1122,
+        "height": 1402,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          70,
+          48,
+          1086,
+          1359
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1109107,
+        "sha256": "60cea6bbc5b7ff2c2fb8718195dc994eb0f6597daf67150ebadaffd0e65c30a6",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "tree-conifer",
+      "title": "Узкое хвойное дерево",
+      "group": "07-trees",
+      "file": "07-trees/03-narrow-conifer.png",
+      "dimensions": "высота 6 м, ширина около 2,4 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b18a358a-e55e-46bd-9228-865cccad3de9.png",
+      "prompt_id": "tree-conifer",
+      "validation": {
+        "width": 1145,
+        "height": 1374,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          270,
+          22,
+          931,
+          1340
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 768156,
+        "sha256": "36325638a61eca5e1949585ee352cf22153e5249019ac08e556807a44cdc4f1b",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "tree-sparse",
+      "title": "Разреженное дерево",
+      "group": "07-trees",
+      "file": "07-trees/04-sparse-broadleaf.png",
+      "dimensions": "высота 5,2 м, крона около 3,2 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-6449270e-3e67-4451-a431-aeea0cb0844c.png",
+      "prompt_id": "tree-sparse",
+      "validation": {
+        "width": 1145,
+        "height": 1374,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          101,
+          27,
+          1109,
+          1340
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 930436,
+        "sha256": "04e6b195af0f36b3d66539826fdb07e68997851021a392c1f50ffd3a6b983318",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "rock-boulder",
+      "title": "Одиночный валун",
+      "group": "08-stones",
+      "file": "08-stones/01-faceted-boulder.png",
+      "dimensions": "1,4 × 1,0 м, высота 0,85 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png",
+      "prompt_id": "rock-boulder",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          59,
+          188,
+          1210,
+          1117
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1424982,
+        "sha256": "88d1500e799e3f11e85acffff007ad448db7e8be95636624b7a877c0e34c8da8",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "rock-flat",
+      "title": "Низкая группа плоских камней",
+      "group": "08-stones",
+      "file": "08-stones/02-low-flat-stones.png",
+      "dimensions": "пятно около 1,5 × 0,9 м, высота 0,3 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-021d72cd-4e34-46ff-9cf0-7684ece1a8fe.png",
+      "prompt_id": "rock-flat",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          23,
+          316,
+          1234,
+          921
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1079307,
+        "sha256": "deed58739118acd6f733cb151a703adf23f952b676c60bb35217a56229d9459f",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "rock-shore",
+      "title": "Береговые камни",
+      "group": "08-stones",
+      "file": "08-stones/03-rounded-shore-stones.png",
+      "dimensions": "пятно около 1,3 × 0,8 м, высота 0,35 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-73e5a940-10bf-4e09-96da-b29accdfa3a1.png",
+      "prompt_id": "rock-shore",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          42,
+          322,
+          1216,
+          919
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1041372,
+        "sha256": "13cf3b21db0f8c1cae6b6a7350d1730f6ec6f86dccaae5a285078056e57b4762",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "wood-roots",
+      "title": "Отдельное корневое основание",
+      "group": "09-woodland",
+      "file": "09-woodland/01-root-base.png",
+      "dimensions": "диаметр около 1,4 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-2fecf7cc-85cf-4a1e-ab05-61bb69d45da1.png",
+      "prompt_id": "wood-roots",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          61,
+          265,
+          1230,
+          1051
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 862416,
+        "sha256": "81ab77bd5e42bbbb05c3d69b5833aeab800123717eef6137d5355de983d19cc0",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "wood-cut-stump",
+      "title": "Рубленый пень",
+      "group": "09-woodland",
+      "file": "09-woodland/02-cut-stump.png",
+      "dimensions": "диаметр 0,65 м, высота 0,45 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-49f78456-c5f7-46de-9842-b1cc5e1ed8a1.png",
+      "prompt_id": "wood-cut-stump",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          85,
+          152,
+          1173,
+          1139
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1232177,
+        "sha256": "f2904fe7135ad497f2c8b6954cf6f7e6e4b1f312b8d9d82793a6ffeee3be92fd",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "wood-old-stump",
+      "title": "Старый сломанный пень",
+      "group": "09-woodland",
+      "file": "09-woodland/03-old-broken-stump.png",
+      "dimensions": "0,8 × 0,6 м, высота 0,65 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b18e8955-b3e5-4861-bc66-ab58950352fb.png",
+      "prompt_id": "wood-old-stump",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          105,
+          57,
+          1150,
+          1197
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1087578,
+        "sha256": "0b8f3404aa62cb22d77ee1ea4ae3e4b133e575dc9627e25795aa76adeab4d8b7",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "wood-fallen-log",
+      "title": "Поваленное бревно",
+      "group": "09-woodland",
+      "file": "09-woodland/04-fallen-split-log.png",
+      "dimensions": "длина 1,8 м, диаметр 0,45 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-f73833c3-222a-4b0e-b05c-a98e6bb3ba25.png",
+      "prompt_id": "wood-fallen-log",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          30,
+          273,
+          1231,
+          1061
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1146444,
+        "sha256": "486362279d8d7fdc1ad9cdb8f01d58f07ec4a1c23f3af57241d275ca86a44599",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "plant-grass",
+      "title": "Низкая куртина травы",
+      "group": "10-plants",
+      "file": "10-plants/01-low-grass-clump.png",
+      "dimensions": "около 0,8 × 0,55 м, высота 0,25 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-64cf7100-bf3e-446d-be7b-3422ffd73b6e.png",
+      "prompt_id": "plant-grass",
+      "validation": {
+        "width": 1330,
+        "height": 1183,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          114,
+          190,
+          1221,
+          1032
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 819397,
+        "sha256": "4a35a2b7d15cc6fc550d9b76c1e43646b5f84ea196c98d7fff53eedcd7403d8b",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "plant-ferns",
+      "title": "Папоротники",
+      "group": "10-plants",
+      "file": "10-plants/02-fern-clump.png",
+      "dimensions": "около 0,9 × 0,6 м, высота 0,4 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-3ebf2144-7ded-41ff-a29c-11be29ab48ba.png",
+      "prompt_id": "plant-ferns",
+      "validation": {
+        "width": 1330,
+        "height": 1183,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          138,
+          130,
+          1198,
+          1053
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 843532,
+        "sha256": "7f717f27e4ad98c5814be896bb8c50fbd219f64d6e6aa7d83290a73e445f5f5d",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "plant-shrub",
+      "title": "Низкий лиственный куст",
+      "group": "10-plants",
+      "file": "10-plants/03-low-leaf-shrub.png",
+      "dimensions": "около 1,0 × 0,65 м, высота 0,6 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-caae9983-a815-47f7-b393-b2b9a471fd6a.png",
+      "prompt_id": "plant-shrub",
+      "validation": {
+        "width": 1536,
+        "height": 1024,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 254,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          48,
+          110,
+          1482,
+          858
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1706900,
+        "sha256": "b4cf819e361f38fe952fa88c49bc560c2ef389b3aac53d5acb5a4c0f2c8a5240",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "plant-flowers",
+      "title": "Небольшое цветочное пятно",
+      "group": "10-plants",
+      "file": "10-plants/04-small-flower-patch.png",
+      "dimensions": "около 0,65 × 0,45 м, высота 0,25 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-bbdfa70a-ffac-43a6-a455-5ce2d23a26c1.png",
+      "prompt_id": "plant-flowers",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          16,
+          127,
+          1238,
+          1122
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1401228,
+        "sha256": "b04bc49476c7265ac5ac29feab56ccb94b16403933f43c3ef8f1abfd8a69cfd8",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "plant-sedge",
+      "title": "Невысокая береговая осока",
+      "group": "10-plants",
+      "file": "10-plants/05-bank-sedge.png",
+      "dimensions": "около 0,75 × 0,5 м, высота 0,5 м",
+      "kind": "Концепт для Tripo",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-ebad3e70-2e37-48d2-9ce8-5b94a7efd9f1.png",
+      "prompt_id": "plant-sedge",
+      "validation": {
+        "width": 1402,
+        "height": 1122,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          148,
+          41,
+          1300,
+          1080
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1062191,
+        "sha256": "14436591c6c6ab0a91ec5795d73dfe1cab05836109a98fb9e6d850c58bf88cb2",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "ground-dry",
+      "title": "Сухая земля рабочего места",
+      "group": "11-ground-decals",
+      "file": "11-ground-decals/01-dry-workground.png",
+      "dimensions": "масштабируемое плоское пятно",
+      "kind": "Плоская декаль грунта",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-1fb1d8b5-5764-4537-9505-1e4d5469c65c.png",
+      "prompt_id": "ground-dry",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 254,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          76,
+          127,
+          1192,
+          1137
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1759440,
+        "sha256": "0f0d0af698991d8ef25c34ee915a43dc75a52d8b1b1175b4532f10a944619c52",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "ground-ash",
+      "title": "Пепел и обожжённая земля",
+      "group": "11-ground-decals",
+      "file": "11-ground-decals/02-ash-and-scorch.png",
+      "dimensions": "масштабируемое плоское пятно",
+      "kind": "Плоская декаль грунта",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-9c6e9825-a17b-4a64-9e00-69222d7c496b.png",
+      "prompt_id": "ground-ash",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 254,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          75,
+          113,
+          1169,
+          1169
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 2046236,
+        "sha256": "a1e2c37b0762ce884b46df3b900fd347662bc4e99602a20c7d1ecbdace94a44f",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "ground-wet",
+      "title": "Влажная прибрежная земля",
+      "group": "11-ground-decals",
+      "file": "11-ground-decals/03-damp-bank.png",
+      "dimensions": "масштабируемое плоское пятно",
+      "kind": "Плоская декаль грунта",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-1da7e70e-7b67-4485-aa8c-c88c1548c7ad.png",
+      "prompt_id": "ground-wet",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          52,
+          85,
+          1198,
+          1187
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 1883892,
+        "sha256": "68339c3d061c05f8e6143e950ea5661f18a8806af095f422089fa7d8c536a1ba",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "ground-litter",
+      "title": "Лесная подстилка",
+      "group": "11-ground-decals",
+      "file": "11-ground-decals/04-forest-litter.png",
+      "dimensions": "масштабируемое плоское пятно",
+      "kind": "Плоская декаль грунта",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-f8f5b251-fba7-41ea-aab2-185badbede9f.png",
+      "prompt_id": "ground-litter",
+      "validation": {
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          62,
+          72,
+          1200,
+          1174
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 2005501,
+        "sha256": "aa99eff455c3e86552268375d70a0860233cd2ac96543db6db79bb93d0c8a535",
+        "byte_exact_source_copy": true
+      }
+    },
+    {
+      "id": "world-map-texture",
+      "title": "Карта мира — плоская текстура",
+      "group": "12-map-texture",
+      "file": "12-map-texture/01-world-map-topdown.png",
+      "dimensions": "плоская карта, ориентир пропорции 4:3",
+      "kind": "Плоская текстура карты",
+      "generation_mode": "image_gen generation/edit",
+      "source_png": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-77428834-2eed-4376-aadb-2a63d1dc08b3.png",
+      "prompt_id": "world-map-texture",
+      "notes": "Отдельная карта строго сверху по географии пользователя; без перспективы и флагов.",
+      "validation": {
+        "width": 1448,
+        "height": 1086,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 255,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "visible_bbox_alpha_gt_8": [
+          12,
+          20,
+          1437,
+          1075
+        ],
+        "visible_bbox_touches_canvas": false,
+        "bytes": 3404709,
+        "sha256": "f1f91e733fc87bac3aa1a320dbeced1f3cb5f55b01d33308b534a6bc45508524",
+        "byte_exact_source_copy": true
+      }
+    }
+  ]
+}

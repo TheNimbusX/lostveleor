@@ -176,6 +176,9 @@ namespace Game.Tests
             ClearRiftAndReachExit(run);
             Take(run, RunCommand.ChooseReward1);
             var offer = run.GetRoute(2);
+            // Экономика 06.10: золото пути — 2 × номер следующей арены, «Сложно» ×2.
+            Assert.That(offer.BonusGold, Is.EqualTo(2 * RunEconomy.ArenaClearGoldPerArena * (run.Depth + 1)));
+            Assert.That(run.GetRoute(0).BonusGold, Is.EqualTo(RunEconomy.ArenaClearGoldPerArena * (run.Depth + 1)));
             run.Step(Command(RunCommand.ChooseRoute3));
             Assert.That(run.CurrentRoute.Hard, Is.True);
             // Хранитель 270 (ревью владельца 01.10, было 500) × 100% уровня × 125% «Сложно».
@@ -183,9 +186,15 @@ namespace Game.Tests
             int before = run.Gold;
             KillAllEnemies(run);
             run.Step(Idle);
-            Assert.That(run.Gold, Is.EqualTo(before + offer.BonusGold));
+            // Плюс 25 за каждую элиту, павшую событием смерти; снятые правкой Alive его не дают.
+            int elites = 0;
+            foreach (SimEvent e in run.Sim.Events)
+                if (e.Type == SimEventType.Death && e.Target != run.BossId && run.Encounters != null
+                    && run.Encounters.IsElite(e.Target)) elites++;
+            Assert.That(run.Gold, Is.EqualTo(before + offer.BonusGold + RunEconomy.EliteGold * elites));
+            int after = run.Gold;
             run.Step(Idle);
-            Assert.That(run.Gold, Is.EqualTo(before + offer.BonusGold));
+            Assert.That(run.Gold, Is.EqualTo(after));
         }
 
         [Test]

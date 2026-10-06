@@ -78,8 +78,9 @@ namespace Game.Tests
             Assert.IsFalse(PelagForms.IsValid(PelagForm.WhirlwindOnTheMove));
             Assert.IsNull(PelagForms.KeyOf(PelagForm.WhirlwindOnTheMove));
             Assert.AreEqual(0, PelagForms.FormTalentCount(PelagForm.WhirlwindOnTheMove));
-            // 7: номер 4 убранной формы не освобождается, 5–7 — формы Шквала (02.10).
-            Assert.AreEqual(7, PelagForms.Count, "номер убранной формы не освобождается");
+            // 13: номер 4 убранной формы не освобождается, 5–7 — формы Шквала, 8–10 — Абордажа (02.10),
+            // 11–13 — Крушения, 14–16 — Броска якоря (03.10).
+            Assert.AreEqual(16, PelagForms.Count, "номер убранной формы не освобождается");
             Assert.AreEqual(AbilityDefinition.WhirlwindId, PelagKit.PoolDefinition(PelagForms.LineOf(PelagForm.WhirlwindStorm)).Id);
             // Формы сабли и остальных навыков владелец ещё не утвердил.
             Assert.AreEqual(0, PelagForms.FormCount(PelagKit.SabreLine, readyOnly: false));

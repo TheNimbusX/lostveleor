@@ -1,0 +1,82 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_WreckIron_Ground
+  m_Shader: {fileID: 4800000, guid: 35663939ca55e184990f8e994b46714a, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2992
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BranchTex:
+        m_Texture: {fileID: 2800000, guid: aa881f5cb8fc67548869e35567272b46, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CrackTex:
+        m_Texture: {fileID: 2800000, guid: 43a08fdad1cd95d45b1f7214c96b615d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CraterCrackTex:
+        m_Texture: {fileID: 2800000, guid: 82c85ba9e7f36664fbc5a47e49fc4b1e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DirtTex:
+        m_Texture: {fileID: 2800000, guid: fa64409114f8d564d8dde73c320ae627, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoiseTex:
+        m_Texture: {fileID: 2800000, guid: 0d30b359af34f9049bdf5863b06dd25f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SplatTex:
+        m_Texture: {fileID: 2800000, guid: b29507bc7f717994a87765b98ab5e1d7, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _StarTex:
+        m_Texture: {fileID: 2800000, guid: df140764cd277ab4591e380324386729, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Age: 0
+    - _BranchGlow: 0.9
+    - _Cool: 0.22
+    - _CrackDark: 0.9
+    - _CrackReach: 0.7
+    - _CraterCrackGlow: 1
+    - _CraterGlow: 0.3
+    - _DarkAlpha: 0.78
+    - _FadeTime: 0.35
+    - _GlowBase: 0.8
+    - _GlowBlur: 2.6
+    - _GlowHot: 0.4
+    - _Hold: 1
+    - _LaneEdgeGlow: 0.25
+    - _LaneTile: 1.35
+    - _LinkA: 0.23124999
+    - _LinkC: 0.3
+    - _LinkTube: 0.09375
+    - _SplatScale: 0.85
+    - _SpotGlow: 1.5
+    - _StarScale: 0.8
+    m_Colors:
+    - _DarkColor: {r: 0.13, g: 0.085, b: 0.06, a: 1}
+    - _GlowColor: {r: 0.08, g: 0.38, b: 1, a: 1}
+    - _HotColor: {r: 0.34, g: 0.68, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

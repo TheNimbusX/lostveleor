@@ -38,14 +38,19 @@ namespace Game.Sim
             return build != null && build.DefinitionId == definitionId && build.Has(flag);
         }
 
-        /// <summary>Проверка цели до прерывания текущего действия и расхода кулдауна.</summary>
+        /// <summary>
+        /// Проверка цели до прерывания текущего действия и расхода кулдауна. Абордажу
+        /// ещё нужен проходимый путь до точки посадки (стены, уступы арены) — HUD
+        /// подсвечивает цель тем же вопросом.
+        /// </summary>
         public bool ValidAbilityTarget(int target, AbilityBuild build)
             => build != null && target > 0 && target < Entities.Count && Entities.Alive[target]
                 && Entities.Side[target] != Entities.Side[PlayerId] && !ThicketShielded(target)
                 && ((Entities.Position[target] - Entities.Position[PlayerId]).LengthSq
                     <= build.Get(AbilityStatType.Radius) * build.Get(AbilityStatType.Radius)
                     // Хозяин Чащи — по корпусу (Simulation.ForestBoss.Hull).
-                    || ThicketHullWithin(target, Entities.Position[PlayerId], build.Get(AbilityStatType.Radius)));
+                    || ThicketHullWithin(target, Entities.Position[PlayerId], build.Get(AbilityStatType.Radius)))
+                && (build.DefinitionId != AbilityDefinition.AnchorLeapId || AbordagePathClear(target, Entities.Position[PlayerId]));
 
         /// <summary>Возврат лавидия игроку, не выше потолка.</summary>
         private void RefundLavidium(int amount)
@@ -66,6 +71,8 @@ namespace Game.Sim
             EnsureArtifactBuffers();
             EnsureWhirlwindFormBuffers();
             EnsureSquallFoamBuffers();
+            EnsureAbordageBuffers();
+            EnsureAnchorThrowBuffers();
             if (_igniteUntil != null) return;
             _igniteUntil = new int[Entities.Capacity];
             _ignitePulseDamage = new int[Entities.Capacity];
@@ -146,7 +153,7 @@ namespace Game.Sim
                 BeginStorm();
                 return;
             }
-            _whirlChannelEndTick = Tick - WhirlwindContactDelayTicks + WhirlwindChannelTicks;
+            _whirlChannelEndTick = Tick - WhirlwindContactDelayFor(slot) + WhirlwindChannelTicks;
             _whirlChannelNextPulse = Tick + WhirlwindPulseTicks;
         }
 
@@ -346,8 +353,9 @@ namespace Game.Sim
         public bool SquallShielded => SquallInvulnerableNow;
 
         // Вступление Хозяина Чащи (кат-сцена) — герой неуязвим, пока оно идёт (Simulation.ForestBoss.Intro).
+        // OathShields — секунда неуязвимости после «Последнего вдоха» (клятвы, Simulation.Oaths).
         private bool PlayerImmune => PlayerInvulnerable || SquallShielded || ArtifactShields || DashInvulnerable
-            || ThicketIntroHoldsHero;
+            || ThicketIntroHoldsHero || OathShields;
 
         private void TalentOnKill(int target, int killer, int slot)
         {
@@ -409,14 +417,16 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// «Два заряда»: если запасной заряд накоплен, кнопка возвращается сразу
-        /// после прыжка, а сам заряд копится полной перезарядкой.
+        /// «Два заряда»: если запасной заряд накоплен, кнопка возвращается тиком
+        /// после удара (Simulation.Abordage уточняет его в тик зацепа), а сам заряд
+        /// копится полной перезарядкой.
         /// </summary>
         private void AnchorTalentAfterCast(int slot, AbilityBuild build)
         {
             if (build.DefinitionId != AbilityDefinition.AnchorLeapId || !build.Has(AbilityFlag.BoardingTwoCharges)) return;
             if (Tick < _boardingSpareReadyTick) return;
-            _abilityReadyTick[slot] = Tick + AbilityExecutionTicks(AnchorKit.LeapWindupTicks) + AnchorKit.LeapTicks;
+            _abilityReadyTick[slot] = _abordage.ArriveTick + 1;
+            _abordage.Spare = true;
             _boardingSpareReadyTick = Tick + AbilityCooldownTicks(build);
         }
 

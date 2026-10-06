@@ -1,0 +1,54 @@
+{
+  "bridge": {
+    "selectedFaces": 1607,
+    "totalFaces": 5255,
+    "selectedSurfaceArea": 1.4821592154157628,
+    "mask": "C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\Environment\\Camp\\BridgePolish\\Textures\\bridge_wood_mask.png",
+    "resolution": 1024,
+    "channels": {
+      "R": "wood selection",
+      "G": "lowest bridge support wood dampness; all other assets zero",
+      "B": "unused"
+    },
+    "method": "UV polygon/shell selection, EMIT bake; original meshes/textures untouched"
+  },
+  "fence": {
+    "selectedFaces": 915,
+    "totalFaces": 1486,
+    "selectedSurfaceArea": 0.7187085757650493,
+    "mask": "C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\Environment\\Camp\\BridgePolish\\Textures\\fence_wood_mask.png",
+    "resolution": 1024,
+    "channels": {
+      "R": "wood selection",
+      "G": "lowest bridge support wood dampness; all other assets zero",
+      "B": "unused"
+    },
+    "method": "UV polygon/shell selection, EMIT bake; original meshes/textures untouched"
+  },
+  "bench": {
+    "selectedFaces": 3000,
+    "totalFaces": 3000,
+    "selectedSurfaceArea": 1.0910712755744498,
+    "mask": "C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\Environment\\Camp\\BridgePolish\\Textures\\bench_wood_mask.png",
+    "resolution": 1024,
+    "channels": {
+      "R": "wood selection",
+      "G": "lowest bridge support wood dampness; all other assets zero",
+      "B": "unused"
+    },
+    "method": "UV polygon/shell selection, EMIT bake; original meshes/textures untouched"
+  },
+  "crate": {
+    "selectedFaces": 1015,
+    "totalFaces": 1505,
+    "selectedSurfaceArea": 3.976735748469082,
+    "mask": "C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\Environment\\Camp\\BridgePolish\\Textures\\crate_wood_mask.png",
+    "resolution": 1024,
+    "channels": {
+      "R": "wood selection",
+      "G": "lowest bridge support wood dampness; all other assets zero",
+      "B": "unused"
+    },
+    "method": "UV polygon/shell selection, EMIT bake; original meshes/textures untouched"
+  }
+}

@@ -33,8 +33,10 @@ namespace Game.EditorTools
         /// «[Alt] Подробнее», вложенная подсказка ключевого слова у подсказки способности и артефакта.
         /// v4 (02.10, владелец: «ЛКМ показывается в HUD слотом, как навык»): плитка ЛКМ — серия саблей — первой слева
         /// от способности 1; полоса шире на плитку, середина HUD на месте (CombatHudWcBuilder.Attack).
+        /// v5 (06.10, серия Крушения — целевой кадр series-ui.png): у каждой плитки способности узел «Серия Крушения» —
+        /// ряд звеньев под кейкапом и кольцо окна по кромке (CombatHudWcBuilder.WreckSeries); остальное не тронуто.
         /// </summary>
-        public const int LayoutVersion = 4;
+        public const int LayoutVersion = 5;
         const float OldMapSize = 230f;
 
         static bool _waiting;
@@ -143,6 +145,7 @@ namespace Game.EditorTools
             if (view.LayoutVersion < 2) MigrateTo2(root, view);
             if (view.LayoutVersion < 3) MigrateTo3(root, view);
             if (view.LayoutVersion < 4) MigrateTo4(root, view);
+            if (view.LayoutVersion < 5) MigrateTo5(root, view);
             view.LayoutVersion = LayoutVersion;
             EditorUtility.SetDirty(view);
         }

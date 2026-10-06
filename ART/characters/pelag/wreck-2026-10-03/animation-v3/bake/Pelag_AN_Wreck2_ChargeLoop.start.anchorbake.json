@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "clip": "p_start",
+  "note": "orbit start: head 1.98 m from grip@0 at azimuth 220\u00B0, tangential speed omega*R",
+  "samples": [
+    {
+      "t": 0,
+      "p": [
+        -1.07542,
+        1.68,
+        -1.24597
+      ],
+      "q": [
+        0.54168,
+        0,
+        -0.45452,
+        0.70711
+      ],
+      "v": [
+        23.82534,
+        0,
+        -19.99183
+      ],
+      "w": [
+        0,
+        -15.70796,
+        0
+      ]
+    }
+  ]
+}

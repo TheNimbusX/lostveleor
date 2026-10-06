@@ -12,8 +12,9 @@ namespace Game.Sim
     {
         private int _pendingXp;
         private bool _heroBaseline;
+        private HeroBaseline _baseline = HeroBaseline.Reference;
 
-        /// <summary>Стоит ли на герое база эталонного героя (<see cref="ApplyHeroBaseline"/>).</summary>
+        /// <summary>Стоит ли на герое база героя (<see cref="ApplyHeroBaseline()"/>).</summary>
         public bool HasHeroBaseline => _heroBaseline;
 
         /// <summary>
@@ -33,10 +34,18 @@ namespace Game.Sim
         /// Первая постановка на живого героя доводит и текущее здоровье на
         /// прибавку, как было с уровнем: потолок и полоса растут вместе.
         /// </summary>
-        public void ApplyHeroBaseline()
+        public void ApplyHeroBaseline() => ApplyHeroBaseline(HeroBaseline.Reference);
+
+        /// <summary>
+        /// То же с выбранной базой (06.10): лагерь даёт новой игре 200/40, эталон 270/54 —
+        /// Sandbox, тестовые забеги и стенды (Camp.HeroBaselineFor). Повтор той же базы
+        /// ничего не меняет; другая база заменяет прибавки, рост потолка доводит и здоровье.
+        /// </summary>
+        public void ApplyHeroBaseline(in HeroBaseline baseline)
         {
-            if (_heroBaseline) return;
+            if (_heroBaseline && _baseline.Equals(baseline)) return;
             _heroBaseline = true;
+            _baseline = baseline;
             if (Entities.Count <= PlayerId) return;
             int before = Entities.MaxHealth[PlayerId];
             ApplyHeroBaselineModifiers(Entities.Stats[PlayerId]);
@@ -54,9 +63,9 @@ namespace Game.Sim
         {
             sheet.RemoveSource(ModifierSource.Level, 0);
             if (!_heroBaseline) return;
-            sheet.Add(StatModifier.Flat(StatType.MaxHealth, Fix64.FromInt(Progression.HeroBaselineHealth), ModifierSource.Level, 0));
-            sheet.Add(StatModifier.Flat(StatType.Damage, Fix64.FromInt(Progression.HeroBaselineDamage), ModifierSource.Level, 0));
-            sheet.Add(StatModifier.Flat(StatType.MaxLavidium, Fix64.FromInt(Progression.HeroBaselineLavidium), ModifierSource.Level, 0));
+            sheet.Add(StatModifier.Flat(StatType.MaxHealth, Fix64.FromInt(_baseline.Health), ModifierSource.Level, 0));
+            sheet.Add(StatModifier.Flat(StatType.Damage, Fix64.FromInt(_baseline.Damage), ModifierSource.Level, 0));
+            sheet.Add(StatModifier.Flat(StatType.MaxLavidium, Fix64.FromInt(_baseline.Lavidium), ModifierSource.Level, 0));
         }
 
         /// <summary>Опыт, набранный с прошлого забора и ещё не отданный в лагерь.</summary>
@@ -120,6 +129,14 @@ namespace Game.Sim
             // только если стоит (хеши голых симуляций тестов не меняются), и тем же
             // числом, что прежний 5-й уровень: симуляция на базе хешируется как он.
             if (_heroBaseline) Hashing.Mix(ref hash, Progression.ReferenceHeroLevel);
+            // Не эталонная база (новая игра 200/40) — ещё и её числа; эталон хешируется
+            // как раньше, прибитые хеши не сдвигаются.
+            if (_heroBaseline && !_baseline.Equals(HeroBaseline.Reference))
+            {
+                Hashing.Mix(ref hash, _baseline.Health);
+                Hashing.Mix(ref hash, _baseline.Damage);
+                Hashing.Mix(ref hash, _baseline.Lavidium);
+            }
         }
     }
 }

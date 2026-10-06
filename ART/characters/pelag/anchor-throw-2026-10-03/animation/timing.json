@@ -1,0 +1,5325 @@
+{
+ "skill": "Бросок якоря (Pelag_AN_AnchorThrow_*, 03.10): база по листу B-key-poses-higgsfield.png (позы 1–6) и видео anchor-throw-kling.mp4 (бросок, натяг, рывок; ловля — по позе 6). Формы — на клипах базы (рефов форм нет)",
+ "fps": 30,
+ "frame_is_tick": "при самой длинной раскладке (замах W = 2, полёт F = 10, возврат R = 8); короче — растяжка по таблицам ниже",
+ "root_motion": "нет: таз по XY постоянен (только присед по Z, ≥ −7,5 см); Sim героя не двигает (MovesHero = false), поворот корня к Dir — вид",
+ "rig": "Pelag_v6_MixamoRig, привязка Pelag_AN_AnchorThrowBind — покой v6 стоя, объект +90° по X, масштаб .01 (как Abordage2Bind/DashBind)",
+ "base_stance": "стойка серии сабли (кадр 2 Pelag_MX_SaberCombo на v6, как у рывка, Шквала, Абордажа v2): Throw кадр 0 и Catch кадр 9 — она же",
+ "hands": "сабля за кушаком у левого бедра (вид: PelagEquipmentView.BeginAnchorUse), рукоять цепи в ЛЕВОМ кулаке весь навык (gL), якорь бросает и ловит ПРАВАЯ; в полёте и тяге правая лежит на цепи впереди рукояти: опорная точка правой кисти (grip_socket.json support) на прямой из кольца рукояти вдоль Dir, 15–28 см впереди (anchor-core §4.1, проверка #11)",
+ "sim_timeline": "C — тик нажатия; замах W = 2 (курсор за спиной — 3); выпуск C+W; полёт F = clamp(⌈(R_як − 0,5)/1⌉, 1, 10), голова в конце C+W+F; натяг T = C+W+F+1; возврат R = clamp(round((R_як − 0,5)/0,8), 4, 8); ловля T+R; удержание 3; выход 6 (ходьба срывает с ловли + 5); конец ловля + 9. 7 м: выпуск 2, натяг 10, ловля 18, ходьба 23, конец 27 (Sim, отчёт 03.10)",
+ "chain": "Throw (0..5) → Fly (0..3) → Yank (0..2) → Haul (0..6; короткий возврат — с кадра 3) → Catch (0..9) → стойка; все стыки 0°",
+ "retime": {
+  "windup": {
+   "2": [
+    0.0,
+    1.0,
+    2.0
+   ],
+   "3": [
+    0.0,
+    0.6667,
+    1.3333,
+    2.0
+   ]
+  },
+  "flight": {
+   "rule": "тики от выпуска u = 0..F+1 → кадр: Throw 2..5 (проводка 1:1 при F ≥ 3), затем Fly 0..3 растянут на F − 2 тиков; натяг u = F+1 — Yank 0 (= Fly 3). F = 2: 0, 1, 3,5, 6; F = 1: 0, 1, 6 (проводка и упор за тик, путь ≤ 35°)",
+   "table": {
+    "1": [
+     [
+      "Throw",
+      2.0
+     ],
+     [
+      "Throw",
+      3.0
+     ],
+     [
+      "Yank",
+      0.0
+     ]
+    ],
+    "2": [
+     [
+      "Throw",
+      2.0
+     ],
+     [
+      "Throw",
+      3.0
+     ],
+     [
+      "Fly",
+      0.5
+     ],
+     [
+      "Yank",
+      0.0
+     ]
+    ],
+    "3": [
+     [
+      "Throw",
+      2.0
+     ],
+     [
+      "Throw",
+      3.0
+     ],
+     [
+      "Throw",
+      4.0
+     ],
+     [
+      "Throw",
+      5.0
+     ],
+     [
+      "Yank",
+      0.0
+     ]
+    ],
+    "4": [
+     [
+      "Throw",
+      2.0
+     ],
+     [
+      "Throw",
+      3.0
+     ],
+     [
+      "Throw",
+      4.0
+     ],
+     [
+      "Throw",
+      5.0
+     ],
+     [
+      "Fly",
+      1.5
+     ],
+     [
+      "Yank",
+      0.0
+     ]
+    ],
+    "5": [
+     [
+      "Throw",
+      2.0
+     ],
+     [
+      "Throw",
+      3.0
+     ],
+     [
+      "Throw",
+      4.0
+     ],
+     [
+      "Throw",
+      5.0
+     ],
+     [
+      "Fly",
+      1.0
+     ],
+     [
+      "Fly",
+      2.0
+     ],
+     [
+      "Yank",
+      0.0
+     ]
+    ],
+    "6": [
+     [
+      "Throw",
+      2.0
+     ],
+     [
+      "Throw",
+      3.0
+     ],
+     [
+      "Throw",
+      4.0
+     ],
+     [
+      "Throw",
+      5.0
+     ],
+     [
+      "Fly",
+      0.75
+     ],
+     [
+      "Fly",
+      1.5
+     ],
+     [
+      "Fly",
+      2.25
+     ],
+     [
+      "Yank",
+      0.0
+     ]
+    ],
+    "7": [
+     [
+      "Throw",
+      2.0
+     ],
+     [
+      "Throw",
+      3.0
+     ],
+     [
+      "Throw",
+      4.0
+     ],
+     [
+      "Throw",
+      5.0
+     ],
+     [
+      "Fly",
+      0.6
+     ],
+     [
+      "Fly",
+      1.2
+     ],
+     [
+      "Fly",
+      1.8
+     ],
+     [
+      "Fly",
+      2.4
+     ],
+     [
+      "Yank",
+      0.0
+     ]
+    ],
+    "8": [
+     [
+      "Throw",
+      2.0
+     ],
+     [
+      "Throw",
+      3.0
+     ],
+     [
+      "Throw",
+      4.0
+     ],
+     [
+      "Throw",
+      5.0
+     ],
+     [
+      "Fly",
+      0.5
+     ],
+     [
+      "Fly",
+      1.0
+     ],
+     [
+      "Fly",
+      1.5
+     ],
+     [
+      "Fly",
+      2.0
+     ],
+     [
+      "Fly",
+      2.5
+     ],
+     [
+      "Yank",
+      0.0
+     ]
+    ],
+    "9": [
+     [
+      "Throw",
+      2.0
+     ],
+     [
+      "Throw",
+      3.0
+     ],
+     [
+      "Throw",
+      4.0
+     ],
+     [
+      "Throw",
+      5.0
+     ],
+     [
+      "Fly",
+      0.4286
+     ],
+     [
+      "Fly",
+      0.8571
+     ],
+     [
+      "Fly",
+      1.2857
+     ],
+     [
+      "Fly",
+      1.7143
+     ],
+     [
+      "Fly",
+      2.1429
+     ],
+     [
+      "Fly",
+      2.5714
+     ],
+     [
+      "Yank",
+      0.0
+     ]
+    ],
+    "10": [
+     [
+      "Throw",
+      2.0
+     ],
+     [
+      "Throw",
+      3.0
+     ],
+     [
+      "Throw",
+      4.0
+     ],
+     [
+      "Throw",
+      5.0
+     ],
+     [
+      "Fly",
+      0.375
+     ],
+     [
+      "Fly",
+      0.75
+     ],
+     [
+      "Fly",
+      1.125
+     ],
+     [
+      "Fly",
+      1.5
+     ],
+     [
+      "Fly",
+      1.875
+     ],
+     [
+      "Fly",
+      2.25
+     ],
+     [
+      "Fly",
+      2.625
+     ],
+     [
+      "Yank",
+      0.0
+     ]
+    ]
+   }
+  },
+  "yank": "натяг T — Yank 0, T+1 — Yank 1 (рывок), T+2 — Yank 2 (= Haul 0 = Haul 3), всегда 1:1",
+  "haul": {
+   "rule": "тики возврата k = 2..R → кадры Haul; R = 8 — 1:1 (два перехвата), 7 и 6 — ≤ 1,5 кадра за тик, 5 и 4 — вход с кадра 3 (та же поза, что 0 и Yank 2: один перехват); последний — 6 = Catch 0 в тик ловли",
+   "table": {
+    "4": [
+     3,
+     4.5,
+     6
+    ],
+    "5": [
+     3,
+     4,
+     5,
+     6
+    ],
+    "6": [
+     0,
+     1.5,
+     3,
+     4.5,
+     6
+    ],
+    "7": [
+     0,
+     1,
+     2,
+     3,
+     4.5,
+     6
+    ],
+    "8": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ]
+   }
+  },
+  "catch": "ловля — Catch 0, удержание 1–3, выход 3–9, 1:1"
+ },
+ "keys": {
+  "release": {
+   "clip": "Pelag_AN_AnchorThrow_Throw",
+   "frame": 2,
+   "tick": "C+W"
+  },
+  "taut": {
+   "clip": "Pelag_AN_AnchorThrow_Yank",
+   "frame": 0,
+   "same_as": "Pelag_AN_AnchorThrow_Fly кадр 3",
+   "tick": "T"
+  },
+  "catch": {
+   "clip": "Pelag_AN_AnchorThrow_Catch",
+   "frame": 0,
+   "same_as": "Pelag_AN_AnchorThrow_Haul кадр 6",
+   "tick": "T+R"
+  },
+  "stow_handoff": {
+   "clip": "Pelag_AN_AnchorThrow_Catch",
+   "frame": 3,
+   "what": "правая с кольцом у правого плеча (якорь уходит на спину), левая разжимает рукоять с кадра 3 (gL 1 → 0 к кадру 9): вид переносит рукоять на спину скольжением за 2 кадра (компромисс DESIGN §4.3) — левая кисть клипа до спины не тянется"
+  },
+  "walk_from": {
+   "clip": "Pelag_AN_AnchorThrow_Catch",
+   "frame": 5
+  },
+  "end": {
+   "clip": "Pelag_AN_AnchorThrow_Catch",
+   "frame": 9
+  }
+ },
+ "clips": {
+  "Pelag_AN_AnchorThrow_Throw": {
+   "frames": 6,
+   "ticks": "замах W (2–3) + первые 3 тика полёта",
+   "authored_at": "W = 2 (кадр = тик)",
+   "segments": {
+    "windup": [
+     0,
+     1
+    ],
+    "release": [
+     1,
+     2
+    ],
+    "follow": [
+     2,
+     5
+    ]
+   },
+   "notes": "1 — замах в пределах 35° за тик (лист 2 целиком не помещается: правая от сабли до плеча — 80°+): корпус закручен назад, правая подбирает якорь, правая стопа оторвана (вид крутит корень вокруг левой лодыжки); 2 — выпуск (лист 3): плоско от плеча вперёд, ладонь раскрыта (С-хват −32°), вес на левой, правая встала назад на носок; 3 — рука вытянута по Dir; 4–5 — правая ложится на цепь впереди рукояти; левая с рукоятью выходит вперёд к груди",
+   "fingers": "gL 0 → 0,34 → 0,68 → 1 (кадры 0–3); gR 0, 0, −1 (выпуск), −0,85 → −0,2",
+   "frame_marks": {
+    "0": "стойка",
+    "1": "замах",
+    "2": "ВЫПУСК",
+    "3": "рука по Dir",
+    "5": "на цепь"
+   }
+  },
+  "Pelag_AN_AnchorThrow_Fly": {
+   "frames": 4,
+   "ticks": "остаток полёта до натяга: F − 2 тиков (растяжка)",
+   "authored_at": "F = 5 (кадр = тик)",
+   "notes": "обе руки на цепи вперёд у груди (видео 2,0–3,8 с, целевой кадр A-base), левая подаёт цепь короткими движениями, колени собираются в упор, корпус выпрямляется 14° → 3°; 3 — натяг = Yank 0 (лист 4); стопы стоят",
+   "frame_marks": {
+    "0": "проводка",
+    "3": "упор (лист 4)"
+   }
+  },
+  "Pelag_AN_AnchorThrow_Yank": {
+   "frames": 3,
+   "ticks": "натяг T и 2 первых тика возврата, 1:1",
+   "authored_at": "1:1",
+   "notes": "0 — натяг (упор); 1 — рывок: корпус назад 13°, кулаки к груди, правая стопа в воздухе над местом шага; 2 — тянет (лист 5): корпус назад 15,5°, правая сзади плашмя, лицо к Dir (голова опущена к груди)",
+   "frame_marks": {
+    "0": "НАТЯГ",
+    "1": "рывок",
+    "2": "тянет (лист 5)"
+   }
+  },
+  "Pelag_AN_AnchorThrow_Haul": {
+   "frames": 7,
+   "ticks": "возврат k = 2..R (растяжка, таблица haul)",
+   "authored_at": "R = 8 (кадр = тик)",
+   "notes": "перехват правой: 1 и 4 — дотянуться вперёд по цепи (кисть полураскрыта), 2 — схватить и рвануть, 3 = 0 — кулак у груди; 5 — правая отпускает цепь и раскрывается навстречу якорю; 6 — ЛОВЛЯ = Catch 0; корпус назад 13–16°, стойка широкая, стопы плашмя, голова к Dir",
+   "frame_marks": {
+    "0": "тянет",
+    "1": "вперёд",
+    "2": "рвёт",
+    "3": "= 0",
+    "5": "навстречу",
+    "6": "ЛОВЛЯ"
+   }
+  },
+  "Pelag_AN_AnchorThrow_Catch": {
+   "frames": 10,
+   "ticks": "удержание 3 + выход 6, кадр 0 = тик ловли, 1:1",
+   "authored_at": "1:1",
+   "notes": "0 — ловля (лист 6): раскрытая правая у груди на линии возврата; 1 — кулак сжат, рывок кисти от удара, корпус назад; 2–3 — якорь через правое плечо на спину (кадр 3 — передача на спину); 4–5 — шаг правой в стойку по воздуху; 9 — стойка серии сабли (= конец рывка, Шквала, Абордажа v2, 0°)",
+   "frame_marks": {
+    "0": "ЛОВЛЯ",
+    "1": "удар в ладонь",
+    "3": "на спину",
+    "5": "ходьба можно",
+    "9": "стойка"
+   }
+  }
+ },
+ "sheet_pose_map": {
+  "1": {
+   "clip": "Pelag_AN_AnchorThrow_Throw",
+   "frame": 0,
+   "what": "в игре якорь на спине, быстрый каст — позы готовности нет: стойка серии сабли"
+  },
+  "2": {
+   "clip": "Pelag_AN_AnchorThrow_Throw",
+   "frame": 1,
+   "what": "замах ≤ 35° за тик: корпус закручен назад, правая отведена назад, правая стопа оторвана"
+  },
+  "3": {
+   "clip": "Pelag_AN_AnchorThrow_Throw",
+   "frame": 2,
+   "what": "выпуск: правая выброшена плоско вперёд, ладонь раскрыта, вес на левой"
+  },
+  "4": {
+   "clip": "Pelag_AN_AnchorThrow_Yank",
+   "frame": 0,
+   "what": "натяг: обе руки на цепи вперёд, колени собраны (видео 2,5–3,8 с)"
+  },
+  "5": {
+   "clip": "Pelag_AN_AnchorThrow_Yank",
+   "frame": 2,
+   "what": "тянет: корпус назад, кулаки к груди, правая нога сзади"
+  },
+  "6": {
+   "clip": "Pelag_AN_AnchorThrow_Catch",
+   "frame": 1,
+   "what": "ловля: кольцо в правой у груди, рывок кисти от удара"
+  }
+ },
+ "forms": {
+  "rule": "Невод, Веер, Гарпун — на клипах базы (спека §3, §4: «пока формы на клипах базы, отличие — VFX и механика»); рефов поз форм нет",
+  "refs_would_add": [
+   "Веер: лист поз «бросок с маха сбоку, рука проходит +30° → −30°» → Pelag_AN_AnchorThrow_Throw_Fan (кадры 2–4 своей проводкой, стыки — кадры базы)",
+   "Невод: лист поз «тянет обеими широко, низкая стойка, волочёт сеть» → Pelag_AN_AnchorThrow_Haul_Net (те же 7 кадров, руки шире, присед глубже)",
+   "Гарпун: лист поз «копьё над плечом, глубже выпад» и «рывок одной тяжёлой цели, сильнее наклон» → Pelag_AN_AnchorThrow_Throw_Harpoon + Pelag_AN_AnchorThrow_Yank_Harpoon",
+   "видео-реф формы (seedance/kling по start-frame-studio.png) — тот же порядок: лист → выбор владельца → клип"
+  ]
+ },
+ "deviations": [
+  "Haul 7 кадров (не 8): кадр 0 = Yank 2 (тик T+2), а не T+1 — у спеки Yank (T..T+2) и Haul (с T+1) перекрывались; кадр = тик при R = 8",
+  "Catch 10 кадров (не 9): удержание 3 + выход 6 = 9 тиков от ловли до конца, кадр 9 — стойка в тик конца",
+  "Fly — не «правая вытянута»: правая ложится на цепь уже в проводке (Throw 4–5), иначе стена (F = 1–2) проходит проводку и упор за 1 тик с путём кости > 35°; так же на видео — руки вперёд на цепи сразу после выпуска",
+  "замах — поза 1 Абордажа v2 (≤ 35° за тик), без якоря над плечом из листа 2: 2 тика замаха (решение «летит сразу») — физически только подбор"
+ ],
+ "view_requirements": [
+  "RazlomPelagV5AnimatorBuilder: Build(\"Pelag_AN_AnchorThrow_*\", false, \"Pelag_AN_AnchorThrowBind\") — смещение таза 0,387 < 0,40",
+  "FBX и привязку — в Assets/Resources/Characters/Pelag_v5/Mixamo/ рядом с Pelag_AN_Abordage2_*; сборщик без общего SaveAssets",
+  "время вида Tick − 2 + Alpha; кадр по таблицам retime (W, F, R из снимка AnchorThrowState: WindupTicks, FlightTicks, ReturnTicks)",
+  "замах (тики C→C+W): корень к Dir вокруг ЛЕВОЙ лодыжки, как Абордаж; голова якоря в правом кулаке (AnchorThrowPosition / support трека)",
+  "с выпуска: AnchorRig Thrown → Yank, цепь прямая из кольца рукояти (grip трека) к голове на линии Sim; правая опора на цепи — точка support трека (≤ 4 см от цепи при 4–9,5 м); в ловлю кольцо проходит раскрытую правую (≤ 6 см от линии возврата)",
+  "WalkedOut с Catch 5 — смешивание в ходьбу; Done/Interrupted до ловли — Catch не играть, вид гасит по своей ветке",
+  "формы — те же клипы; Веер: два призрака — VFX; Гарпун: тот же Yank (тяжелее — VFX/камера), отдельные клипы — когда будут рефы"
+ ],
+ "limits": {
+  "source": "at_check.py при сборке (снимки позы, все раскладки W 2–3 × F 1–10 × R 4–8) + независимая проверка выгруженных FBX методом проверяющего Шквала/Абордажа (artifacts/anchor-throw/clips-check/measure.py, summary.py)",
+  "violations_build": 0,
+  "violations_independent": 0,
+  "per_tick": {
+   "rule": "ПУТЬ кости за тик (сумма поворотов по всем целым кадрам, которые тик проходит, и через стыки клипов) ≤ 35° во всех раскладках; правая рука ≤ 70° в тики удара (выпуск C+W−1→C+W и первый тик полёта); пальцы — кости тела",
+   "worst_build": {
+    "body": [
+     34.0,
+     "W2F1R6 t2 Th1.00>Th2.00",
+     "LeftForeArm",
+     true
+    ],
+    "arm": [
+     62.0,
+     "W2F1R6 t2 Th1.00>Th2.00",
+     "RightArm",
+     true
+    ]
+   },
+   "ticks_checked": 131
+  },
+  "seam_max_bone_deg": {
+   "limit": 0.0,
+   "value": 0.0,
+   "seams": [
+    {
+     "from_clip": "stance",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_AnchorThrow_Throw",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_AnchorThrow_Throw",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_AnchorThrow_Fly",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_AnchorThrow_Fly",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_AnchorThrow_Yank",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_AnchorThrow_Yank",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_AnchorThrow_Haul",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_AnchorThrow_Haul",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_AnchorThrow_Catch",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_AnchorThrow_Catch",
+     "from_frame": "last",
+     "to_clip": "stance",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_AnchorThrow_Yank",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_AnchorThrow_Haul",
+     "to_frame": 3,
+     "max_bone_deg": 0.0,
+     "bone": ""
+    }
+   ],
+   "independent": [
+    {
+     "frm": "Pelag_AN_Sabre1[0]",
+     "to": "Pelag_AN_AnchorThrow_Throw[0]",
+     "top": [
+      30.06,
+      "LeftLeg"
+     ]
+    },
+    {
+     "frm": "Pelag_AN_AnchorThrow_Throw[5]",
+     "to": "Pelag_AN_AnchorThrow_Fly[0]",
+     "top": [
+      0.0,
+      "Spine2"
+     ]
+    },
+    {
+     "frm": "Pelag_AN_AnchorThrow_Fly[3]",
+     "to": "Pelag_AN_AnchorThrow_Yank[0]",
+     "top": [
+      0.0,
+      "Spine2"
+     ]
+    },
+    {
+     "frm": "Pelag_AN_AnchorThrow_Yank[2]",
+     "to": "Pelag_AN_AnchorThrow_Haul[0]",
+     "top": [
+      0.0,
+      "Spine2"
+     ]
+    },
+    {
+     "frm": "Pelag_AN_AnchorThrow_Yank[2]",
+     "to": "Pelag_AN_AnchorThrow_Haul[3]",
+     "top": [
+      0.0,
+      "Spine2"
+     ]
+    },
+    {
+     "frm": "Pelag_AN_AnchorThrow_Haul[6]",
+     "to": "Pelag_AN_AnchorThrow_Catch[0]",
+     "top": [
+      0.0,
+      "Spine2"
+     ]
+    },
+    {
+     "frm": "Pelag_AN_AnchorThrow_Catch[9]",
+     "to": "Pelag_AN_Sabre1[0]",
+     "top": [
+      30.06,
+      "LeftLeg"
+     ]
+    },
+    {
+     "frm": "Pelag_AN_AnchorThrow_Catch[9]",
+     "to": "Pelag_AN_Dash[12]",
+     "top": [
+      0.0,
+      "Spine2"
+     ]
+    },
+    {
+     "frm": "Pelag_AN_AnchorThrow_Catch[9]",
+     "to": "Pelag_AN_Squall2_FinishFore[9]",
+     "top": [
+      0.0,
+      "Spine2"
+     ]
+    },
+    {
+     "frm": "Pelag_AN_AnchorThrow_Catch[9]",
+     "to": "Pelag_AN_Abordage2_Recover[6]",
+     "top": [
+      0.0,
+      "Spine2"
+     ]
+    },
+    {
+     "frm": "Pelag_AN_Dash[12]",
+     "to": "Pelag_AN_AnchorThrow_Throw[0]",
+     "top": [
+      0.0,
+      "Spine2"
+     ]
+    }
+   ]
+  },
+  "between_frames": {
+   "Throw": {
+    "low": [
+     -0.0021,
+     "Left x0.50"
+    ],
+    "slide": [
+     0.0024,
+     "Left x1.25"
+    ],
+    "drift": [
+     0.0023,
+     "Left ..x1.00"
+    ]
+   },
+   "Fly": {
+    "low": [
+     -0.0004,
+     "Left x0.75"
+    ],
+    "slide": [
+     0.0014,
+     "Right x1.00"
+    ],
+    "drift": [
+     0.0047,
+     "Right ..x3.00"
+    ]
+   },
+   "Yank": {
+    "low": [
+     -0.0012,
+     "Right x2.00"
+    ],
+    "slide": [
+     0.0002,
+     "Left x1.00"
+    ],
+    "drift": [
+     0.0009,
+     "Left ..x2.00"
+    ]
+   },
+   "Haul": {
+    "low": [
+     -0.0014,
+     "Right x2.00"
+    ],
+    "slide": [
+     0.0004,
+     "Right x1.25"
+    ],
+    "drift": [
+     0.0018,
+     "Right ..x6.00"
+    ]
+   },
+   "Catch": {
+    "low": [
+     -0.001,
+     "Right x1.00"
+    ],
+    "slide": [
+     0.001,
+     "Right x2.25"
+    ],
+    "drift": [
+     0.0048,
+     "Right ..x3.00"
+    ]
+   }
+  },
+  "lean_deg": {
+   "rule": "бросок вперёд ≤ 35°; назад только замах (≥ −8°); натяг и тяга НАЗАД 12–25° (спека §4: исключение из правила «назад — никогда»)",
+   "ranges": {
+    "Throw": [
+     -4.9,
+     17.9
+    ],
+    "Fly": [
+     3.1,
+     13.9
+    ],
+    "Yank": [
+     -15.4,
+     3.1
+    ],
+    "Haul": [
+     -15.9,
+     -12.9
+    ],
+    "Catch": [
+     -14.9,
+     6.5
+    ]
+   }
+  },
+  "chest_to_pelvis_twist_deg": {
+   "limit": 45.0,
+   "value": 35.3,
+   "at": [
+    "Pelag_AN_AnchorThrow_Throw",
+    3
+   ]
+  },
+  "forearm_twist_from_rest_deg": {
+   "limit": 70.0,
+   "value": 19.7
+  },
+  "head": {
+   "rule": "голова за грудью (вбок ≤ 30°, вверх к груди не выше стойки); в натяге и тяге корпус откинут — голова опущена к груди, лицо держится на уровне стойки (к Dir)",
+   "max_relP_over_stance": 0.0
+  },
+  "feet": "левая (опорная, вокруг неё вид крутит корень на замахе) стоит плашмя на месте стойки весь навык и не едет; правая — шаги только по воздуху (замах, рывок, выход), опорные точки не скользят (между кадрами ≤ 4 мм, дрейф ≤ 6 мм); под землю — нигде",
+  "arms_in_thighs": "нет ни в одном кадре (кисть/предплечье обеих рук против обоих бёдер, голеней, торса и головы, сетка Pelag_v6); правая на цепи не входит в левую кисть (подбор посадки at_search.py)",
+  "unity_transfer": {
+   "max_hip_offset_ratio": 0.387,
+   "limit": 0.5,
+   "unity_default": 0.4,
+   "independent": 0.387,
+   "note": "присед ограничен −7,5 см (at_pose.DZ_MIN): сборка проходит и с порогом по умолчанию"
+  }
+ },
+ "thrown_check": {
+  "tool": "at_thrown_check.py по трекам хвата grip/*.grip.json (шаг A anchor-core: anchor_grip_export.py) и формуле головы Sim (Simulation.AnchorThrow.cs AnchorThrowHead); режимы Thrown/Yank DESIGN §1.2 — цепь прямая хват → кольцо, длина = расстояние",
+  "limits": {
+   "body_clear_min": -0.01,
+   "support_max": 0.06,
+   "hands_along": [
+    0.1,
+    0.3
+   ],
+   "grip_speed_max": 8.0,
+   "grip_acc_max": 150.0,
+   "catch_palm_max": 0.1
+  },
+  "pass_4_to_9_5_m": true,
+  "scenarios": [
+   {
+    "reach": 9.5,
+    "F": 9,
+    "R": 8,
+    "taut": 12,
+    "catch": 20,
+    "worst": {
+     "body_clear": [
+      -0.0,
+      [
+       19,
+       "Haul",
+       5.0,
+       "RightForeArm-RightHand"
+      ]
+     ],
+     "support": [
+      0.025,
+      [
+       4,
+       "Throw",
+       4.0
+      ]
+     ],
+     "hands": [
+      0.154,
+      0.275
+     ],
+     "grip_speed": [
+      4.85,
+      [
+       2,
+       "Throw",
+       2.0
+      ]
+     ],
+     "grip_acc": [
+      115.7,
+      [
+       3,
+       "Throw",
+       3.0
+      ]
+     ],
+     "grip_speed_60": [
+      6.37,
+      [
+       2,
+       "Throw",
+       2.0
+      ]
+     ],
+     "catch": [
+      0.043,
+      0.149
+     ]
+    },
+    "passed": {
+     "body_clear": true,
+     "support": true,
+     "hands": true,
+     "grip_speed": true,
+     "grip_acc": true,
+     "catch": true
+    }
+   },
+   {
+    "reach": 7.0,
+    "F": 7,
+    "R": 8,
+    "taut": 10,
+    "catch": 18,
+    "worst": {
+     "body_clear": [
+      0.006,
+      [
+       17,
+       "Haul",
+       5.0,
+       "RightForeArm-RightHand"
+      ]
+     ],
+     "support": [
+      0.037,
+      [
+       16,
+       "Haul",
+       4.0
+      ]
+     ],
+     "hands": [
+      0.153,
+      0.273
+     ],
+     "grip_speed": [
+      4.85,
+      [
+       2,
+       "Throw",
+       2.0
+      ]
+     ],
+     "grip_acc": [
+      115.7,
+      [
+       3,
+       "Throw",
+       3.0
+      ]
+     ],
+     "grip_speed_60": [
+      6.37,
+      [
+       2,
+       "Throw",
+       2.0
+      ]
+     ],
+     "catch": [
+      0.046,
+      0.148
+     ]
+    },
+    "passed": {
+     "body_clear": true,
+     "support": true,
+     "hands": true,
+     "grip_speed": true,
+     "grip_acc": true,
+     "catch": true
+    }
+   },
+   {
+    "reach": 5.0,
+    "F": 5,
+    "R": 6,
+    "taut": 8,
+    "catch": 14,
+    "worst": {
+     "body_clear": [
+      0.009,
+      [
+       13,
+       "Haul",
+       4.5,
+       "RightForeArm-RightHand"
+      ]
+     ],
+     "support": [
+      0.031,
+      [
+       12,
+       "Haul",
+       3.0
+      ]
+     ],
+     "hands": [
+      0.151,
+      0.276
+     ],
+     "grip_speed": [
+      4.85,
+      [
+       2,
+       "Throw",
+       2.0
+      ]
+     ],
+     "grip_acc": [
+      116.3,
+      [
+       9,
+       "Yank",
+       1.0
+      ]
+     ],
+     "grip_speed_60": [
+      6.37,
+      [
+       2,
+       "Throw",
+       2.0
+      ]
+     ],
+     "catch": [
+      0.052,
+      0.146
+     ]
+    },
+    "passed": {
+     "body_clear": true,
+     "support": true,
+     "hands": true,
+     "grip_speed": true,
+     "grip_acc": true,
+     "catch": true
+    }
+   },
+   {
+    "reach": 4.0,
+    "F": 4,
+    "R": 4,
+    "taut": 7,
+    "catch": 11,
+    "worst": {
+     "body_clear": [
+      0.005,
+      [
+       10,
+       "Haul",
+       4.5,
+       "RightForeArm-RightHand"
+      ]
+     ],
+     "support": [
+      0.029,
+      [
+       8,
+       "Yank",
+       1.0
+      ]
+     ],
+     "hands": [
+      0.151,
+      0.267
+     ],
+     "grip_speed": [
+      4.85,
+      [
+       2,
+       "Throw",
+       2.0
+      ]
+     ],
+     "grip_acc": [
+      115.7,
+      [
+       3,
+       "Throw",
+       3.0
+      ]
+     ],
+     "grip_speed_60": [
+      6.37,
+      [
+       2,
+       "Throw",
+       2.0
+      ]
+     ],
+     "catch": [
+      0.057,
+      0.144
+     ]
+    },
+    "passed": {
+     "body_clear": true,
+     "support": true,
+     "hands": true,
+     "grip_speed": true,
+     "grip_acc": true,
+     "catch": true
+    }
+   },
+   {
+    "reach": 2.0,
+    "F": 2,
+    "R": 4,
+    "taut": 5,
+    "catch": 9,
+    "worst": {
+     "body_clear": [
+      0.027,
+      [
+       8,
+       "Haul",
+       4.5,
+       "RightForeArm-RightHand"
+      ]
+     ],
+     "support": [
+      0.063,
+      [
+       7,
+       "Haul",
+       3.0
+      ]
+     ],
+     "hands": [
+      0.14,
+      0.264
+     ],
+     "grip_speed": [
+      5.02,
+      [
+       4,
+       "Fly",
+       0.5
+      ]
+     ],
+     "grip_acc": [
+      118.3,
+      [
+       5,
+       "Yank",
+       0.0
+      ]
+     ],
+     "grip_speed_60": [
+      6.37,
+      [
+       2,
+       "Throw",
+       2.0
+      ]
+     ],
+     "catch": [
+      0.082,
+      0.132
+     ]
+    },
+    "passed": {
+     "body_clear": true,
+     "support": false,
+     "hands": true,
+     "grip_speed": true,
+     "grip_acc": true,
+     "catch": true
+    }
+   },
+   {
+    "reach": 1.0,
+    "F": 1,
+    "R": 4,
+    "taut": 4,
+    "catch": 8,
+    "worst": {
+     "body_clear": [
+      0.04,
+      [
+       7,
+       "Haul",
+       4.5,
+       "RightForeArm-RightHand"
+      ]
+     ],
+     "support": [
+      0.115,
+      [
+       5,
+       "Yank",
+       1.0
+      ]
+     ],
+     "hands": [
+      0.11,
+      0.252
+     ],
+     "grip_speed": [
+      6.29,
+      [
+       4,
+       "Yank",
+       0.0
+      ]
+     ],
+     "grip_acc": [
+      138.9,
+      [
+       4,
+       "Yank",
+       0.0
+      ]
+     ],
+     "grip_speed_60": [
+      6.37,
+      [
+       2,
+       "Throw",
+       2.0
+      ]
+     ],
+     "catch": [
+      0.124,
+      0.093
+     ]
+    },
+    "passed": {
+     "body_clear": true,
+     "support": false,
+     "hands": true,
+     "grip_speed": true,
+     "grip_acc": true,
+     "catch": false
+    }
+   }
+  ],
+  "note": "стены 1–2 м: голова у ног, цепь круто вниз — правая выходит из прямой на 6–12 см (порог 6 см) и в ловлю на 12 см (порог 10): вид держит опорную кисть лёгким SolveArm (DESIGN §4.1, ≤ 6 см) или принимает; клип под это не ломаем",
+  "live_catch_dry_run": "anchorbake (artifacts/anchor-core/bake, сборка в artifacts/anchor-throw/obj-anchorbake) на треке Catch, старт rest и taut:0 (голова впереди): проникновение головы 0, растяжение 0, скачков нет, провиса на скорости нет — artifacts/anchor-throw/clips/bake; проверки 5–6 (точка/скорость маха) к ловле не относятся"
+ },
+ "grip_tracks": {
+  "rule": "шаг A конвейера запечки anchor-core (DESIGN §3.1): хват (кольцо рукояти в левой), опора правой, капсулы тела, Spine2 в осях корня Unity по кадрам (⅛ кадра); замах Броска запечки не требует — голова в правом кулаке (support), полёт и возврат ведёт Sim (DESIGN §3.3 п.3)",
+  "clips": {
+   "Throw": {
+    "file": "grip/Pelag_AN_AnchorThrow_Throw.grip.json",
+    "sha256": "8dbef83bb09d3ca698baa5f06642853da3da2bd5dd137e32146af6e45829f06d",
+    "fbx_sha256": "24460c87b0ab3ae345461b606df31a322a367195606c28e9eb565c8dea59eb34"
+   },
+   "Fly": {
+    "file": "grip/Pelag_AN_AnchorThrow_Fly.grip.json",
+    "sha256": "c5d51900a0019e048a5a8034b987136dafc00f4933e6c1df4071a0a1fb1a57bc",
+    "fbx_sha256": "9be44abaeeb324cf9bd9d72c934983a9821ae65b1505af379afb82e1bf1e7ef8"
+   },
+   "Yank": {
+    "file": "grip/Pelag_AN_AnchorThrow_Yank.grip.json",
+    "sha256": "e64eecb29c456bddd3f6eac0159692b41e20b84949cec7b3bfb3aa7bdd2d20bf",
+    "fbx_sha256": "8c61a5d0e536384437866fed98da2574de1be2beec264ec6822b0fba7a4b6336"
+   },
+   "Haul": {
+    "file": "grip/Pelag_AN_AnchorThrow_Haul.grip.json",
+    "sha256": "297a1f08f9845b9d4f6b8cb8938281bc6cb75a1b744b9fdb20ad3f051e32991c",
+    "fbx_sha256": "1293c2718e54c25585c857b253c19c310a3c23eac1b6f04aed063a91857d8c22"
+   },
+   "Catch": {
+    "file": "grip/Pelag_AN_AnchorThrow_Catch.grip.json",
+    "sha256": "1ca38308f1b0c40809d4b0770d5885a944a84f34015419b6a97a9e6400ff1b42",
+    "fbx_sha256": "a7849d1c2c67dd5694658a5365e982f80f838431a7bb82596794b9e419dd1f85"
+   }
+  },
+  "command": "blender -b --factory-startup -P artifacts/anchor-core/bake/anchor_grip_export.py -- --clip <clip.fbx> --bind Pelag_AN_AnchorThrowBind.fbx --hip-limit .5 --dump-rig --out grip"
+ },
+ "layouts": {
+  "rule": "тик от нажатия → [тик, клип, кадр]; вид играет кадр по прямой между тиками (время Tick − 2 + Alpha)",
+  "examples": {
+   "W2 F7 R8 (7 м)": [
+    [
+     0,
+     "Throw",
+     0.0
+    ],
+    [
+     1,
+     "Throw",
+     1.0
+    ],
+    [
+     2,
+     "Throw",
+     2.0
+    ],
+    [
+     3,
+     "Throw",
+     3.0
+    ],
+    [
+     4,
+     "Throw",
+     4.0
+    ],
+    [
+     5,
+     "Throw",
+     5.0
+    ],
+    [
+     6,
+     "Fly",
+     0.6
+    ],
+    [
+     7,
+     "Fly",
+     1.2
+    ],
+    [
+     8,
+     "Fly",
+     1.8
+    ],
+    [
+     9,
+     "Fly",
+     2.4
+    ],
+    [
+     10,
+     "Yank",
+     0.0
+    ],
+    [
+     11,
+     "Yank",
+     1.0
+    ],
+    [
+     12,
+     "Yank",
+     2.0
+    ],
+    [
+     13,
+     "Haul",
+     1.0
+    ],
+    [
+     14,
+     "Haul",
+     2.0
+    ],
+    [
+     15,
+     "Haul",
+     3.0
+    ],
+    [
+     16,
+     "Haul",
+     4.0
+    ],
+    [
+     17,
+     "Haul",
+     5.0
+    ],
+    [
+     18,
+     "Catch",
+     0.0
+    ],
+    [
+     19,
+     "Catch",
+     1.0
+    ],
+    [
+     20,
+     "Catch",
+     2.0
+    ],
+    [
+     21,
+     "Catch",
+     3.0
+    ],
+    [
+     22,
+     "Catch",
+     4.0
+    ],
+    [
+     23,
+     "Catch",
+     5.0
+    ],
+    [
+     24,
+     "Catch",
+     6.0
+    ],
+    [
+     25,
+     "Catch",
+     7.0
+    ],
+    [
+     26,
+     "Catch",
+     8.0
+    ],
+    [
+     27,
+     "Catch",
+     9.0
+    ]
+   ],
+   "W3 F7 R8 (курсор за спиной)": [
+    [
+     0,
+     "Throw",
+     0.0
+    ],
+    [
+     1,
+     "Throw",
+     0.6667
+    ],
+    [
+     2,
+     "Throw",
+     1.3333
+    ],
+    [
+     3,
+     "Throw",
+     2.0
+    ],
+    [
+     4,
+     "Throw",
+     3.0
+    ],
+    [
+     5,
+     "Throw",
+     4.0
+    ],
+    [
+     6,
+     "Throw",
+     5.0
+    ],
+    [
+     7,
+     "Fly",
+     0.6
+    ],
+    [
+     8,
+     "Fly",
+     1.2
+    ],
+    [
+     9,
+     "Fly",
+     1.8
+    ],
+    [
+     10,
+     "Fly",
+     2.4
+    ],
+    [
+     11,
+     "Yank",
+     0.0
+    ],
+    [
+     12,
+     "Yank",
+     1.0
+    ],
+    [
+     13,
+     "Yank",
+     2.0
+    ],
+    [
+     14,
+     "Haul",
+     1.0
+    ],
+    [
+     15,
+     "Haul",
+     2.0
+    ],
+    [
+     16,
+     "Haul",
+     3.0
+    ],
+    [
+     17,
+     "Haul",
+     4.0
+    ],
+    [
+     18,
+     "Haul",
+     5.0
+    ],
+    [
+     19,
+     "Catch",
+     0.0
+    ],
+    [
+     20,
+     "Catch",
+     1.0
+    ],
+    [
+     21,
+     "Catch",
+     2.0
+    ],
+    [
+     22,
+     "Catch",
+     3.0
+    ],
+    [
+     23,
+     "Catch",
+     4.0
+    ],
+    [
+     24,
+     "Catch",
+     5.0
+    ],
+    [
+     25,
+     "Catch",
+     6.0
+    ],
+    [
+     26,
+     "Catch",
+     7.0
+    ],
+    [
+     27,
+     "Catch",
+     8.0
+    ],
+    [
+     28,
+     "Catch",
+     9.0
+    ]
+   ],
+   "W2 F4 R4 (стена 4 м)": [
+    [
+     0,
+     "Throw",
+     0.0
+    ],
+    [
+     1,
+     "Throw",
+     1.0
+    ],
+    [
+     2,
+     "Throw",
+     2.0
+    ],
+    [
+     3,
+     "Throw",
+     3.0
+    ],
+    [
+     4,
+     "Throw",
+     4.0
+    ],
+    [
+     5,
+     "Throw",
+     5.0
+    ],
+    [
+     6,
+     "Fly",
+     1.5
+    ],
+    [
+     7,
+     "Yank",
+     0.0
+    ],
+    [
+     8,
+     "Yank",
+     1.0
+    ],
+    [
+     9,
+     "Haul",
+     3.0
+    ],
+    [
+     10,
+     "Haul",
+     4.5
+    ],
+    [
+     11,
+     "Catch",
+     0.0
+    ],
+    [
+     12,
+     "Catch",
+     1.0
+    ],
+    [
+     13,
+     "Catch",
+     2.0
+    ],
+    [
+     14,
+     "Catch",
+     3.0
+    ],
+    [
+     15,
+     "Catch",
+     4.0
+    ],
+    [
+     16,
+     "Catch",
+     5.0
+    ],
+    [
+     17,
+     "Catch",
+     6.0
+    ],
+    [
+     18,
+     "Catch",
+     7.0
+    ],
+    [
+     19,
+     "Catch",
+     8.0
+    ],
+    [
+     20,
+     "Catch",
+     9.0
+    ]
+   ],
+   "W2 F1 R4 (стена < 1,5 м)": [
+    [
+     0,
+     "Throw",
+     0.0
+    ],
+    [
+     1,
+     "Throw",
+     1.0
+    ],
+    [
+     2,
+     "Throw",
+     2.0
+    ],
+    [
+     3,
+     "Throw",
+     3.0
+    ],
+    [
+     4,
+     "Yank",
+     0.0
+    ],
+    [
+     5,
+     "Yank",
+     1.0
+    ],
+    [
+     6,
+     "Haul",
+     3.0
+    ],
+    [
+     7,
+     "Haul",
+     4.5
+    ],
+    [
+     8,
+     "Catch",
+     0.0
+    ],
+    [
+     9,
+     "Catch",
+     1.0
+    ],
+    [
+     10,
+     "Catch",
+     2.0
+    ],
+    [
+     11,
+     "Catch",
+     3.0
+    ],
+    [
+     12,
+     "Catch",
+     4.0
+    ],
+    [
+     13,
+     "Catch",
+     5.0
+    ],
+    [
+     14,
+     "Catch",
+     6.0
+    ],
+    [
+     15,
+     "Catch",
+     7.0
+    ],
+    [
+     16,
+     "Catch",
+     8.0
+    ],
+    [
+     17,
+     "Catch",
+     9.0
+    ]
+   ],
+   "W2 F9 R8 (9,5 м, талант)": [
+    [
+     0,
+     "Throw",
+     0.0
+    ],
+    [
+     1,
+     "Throw",
+     1.0
+    ],
+    [
+     2,
+     "Throw",
+     2.0
+    ],
+    [
+     3,
+     "Throw",
+     3.0
+    ],
+    [
+     4,
+     "Throw",
+     4.0
+    ],
+    [
+     5,
+     "Throw",
+     5.0
+    ],
+    [
+     6,
+     "Fly",
+     0.4286
+    ],
+    [
+     7,
+     "Fly",
+     0.8571
+    ],
+    [
+     8,
+     "Fly",
+     1.2857
+    ],
+    [
+     9,
+     "Fly",
+     1.7143
+    ],
+    [
+     10,
+     "Fly",
+     2.1429
+    ],
+    [
+     11,
+     "Fly",
+     2.5714
+    ],
+    [
+     12,
+     "Yank",
+     0.0
+    ],
+    [
+     13,
+     "Yank",
+     1.0
+    ],
+    [
+     14,
+     "Yank",
+     2.0
+    ],
+    [
+     15,
+     "Haul",
+     1.0
+    ],
+    [
+     16,
+     "Haul",
+     2.0
+    ],
+    [
+     17,
+     "Haul",
+     3.0
+    ],
+    [
+     18,
+     "Haul",
+     4.0
+    ],
+    [
+     19,
+     "Haul",
+     5.0
+    ],
+    [
+     20,
+     "Catch",
+     0.0
+    ],
+    [
+     21,
+     "Catch",
+     1.0
+    ],
+    [
+     22,
+     "Catch",
+     2.0
+    ],
+    [
+     23,
+     "Catch",
+     3.0
+    ],
+    [
+     24,
+     "Catch",
+     4.0
+    ],
+    [
+     25,
+     "Catch",
+     5.0
+    ],
+    [
+     26,
+     "Catch",
+     6.0
+    ],
+    [
+     27,
+     "Catch",
+     7.0
+    ],
+    [
+     28,
+     "Catch",
+     8.0
+    ],
+    [
+     29,
+     "Catch",
+     9.0
+    ]
+   ]
+  }
+ },
+ "planted_ankles": {
+  "Throw": [
+   {
+    "frame": 0,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.23,
+     "l": -0.085,
+     "u": 0.136,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 1,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.27,
+     "l": -0.095,
+     "u": 0.206,
+     "contact": "air"
+    }
+   },
+   {
+    "frame": 2,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.324,
+     "l": -0.129,
+     "u": 0.16,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 3,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.32,
+     "l": -0.138,
+     "u": 0.175,
+     "contact": "toe"
+    }
+   },
+   {
+    "frame": 4,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.32,
+     "l": -0.138,
+     "u": 0.175,
+     "contact": "toe"
+    }
+   },
+   {
+    "frame": 5,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.32,
+     "l": -0.138,
+     "u": 0.175,
+     "contact": "toe"
+    }
+   }
+  ],
+  "Fly": [
+   {
+    "frame": 0,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.32,
+     "l": -0.138,
+     "u": 0.175,
+     "contact": "toe"
+    }
+   },
+   {
+    "frame": 1,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.33,
+     "l": -0.115,
+     "u": 0.136,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 2,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.33,
+     "l": -0.115,
+     "u": 0.136,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 3,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.322,
+     "l": -0.134,
+     "u": 0.168,
+     "contact": "flat"
+    }
+   }
+  ],
+  "Yank": [
+   {
+    "frame": 0,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.322,
+     "l": -0.134,
+     "u": 0.168,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 1,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.21,
+     "contact": "air"
+    }
+   },
+   {
+    "frame": 2,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   }
+  ],
+  "Haul": [
+   {
+    "frame": 0,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 1,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 2,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 3,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 4,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 5,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 6,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   }
+  ],
+  "Catch": [
+   {
+    "frame": 0,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 1,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 2,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 3,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.42,
+     "l": -0.135,
+     "u": 0.142,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 4,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.4,
+     "l": -0.13,
+     "u": 0.2,
+     "contact": "air"
+    }
+   },
+   {
+    "frame": 5,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.23,
+     "l": -0.085,
+     "u": 0.196,
+     "contact": "air"
+    }
+   },
+   {
+    "frame": 6,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.23,
+     "l": -0.085,
+     "u": 0.136,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 7,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.23,
+     "l": -0.085,
+     "u": 0.136,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 8,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.23,
+     "l": -0.085,
+     "u": 0.136,
+     "contact": "flat"
+    }
+   },
+   {
+    "frame": 9,
+    "Left": {
+     "f": 0.476,
+     "l": 0.163,
+     "u": 0.136,
+     "contact": "flat"
+    },
+    "Right": {
+     "f": -0.23,
+     "l": -0.085,
+     "u": 0.136,
+     "contact": "flat"
+    }
+   }
+  ]
+ },
+ "rows": {
+  "Pelag_AN_AnchorThrow_Throw": [
+   {
+    "lean": 6.5,
+    "pelvis_yaw": -52.1,
+    "chest_yaw": -30.0,
+    "twist": 22.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -33.18,
+    "face_yaw": -0.41,
+    "hips_z": 0.845,
+    "forearm_twist": {
+     "Left": -18.9,
+     "Right": 11.9
+    },
+    "blade_dir": [
+     -0.2,
+     -0.69,
+     0.69
+    ],
+    "blade_tip": [
+     -0.7,
+     -0.699,
+     1.376
+    ],
+    "hand_R": [
+     -0.454,
+     0.033,
+     0.823
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -15.7,
+    "armLeft": {
+     "flex": 30.0,
+     "up": [
+      0.49,
+      0.45,
+      -0.74
+     ],
+     "elbow": [
+      0.323,
+      0.156,
+      1.052
+     ],
+     "n": [
+      -0.65,
+      -0.37,
+      -0.66
+     ]
+    },
+    "armRight": {
+     "flex": 48.2,
+     "up": [
+      -0.51,
+      -0.26,
+      -0.82
+     ],
+     "elbow": [
+      -0.089,
+      -0.297,
+      1.016
+     ],
+     "n": [
+      -0.41,
+      -0.76,
+      0.5
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 0,
+    "W": 0.0
+   },
+   {
+    "lean": -4.9,
+    "pelvis_yaw": -54.7,
+    "chest_yaw": -60.4,
+    "twist": -5.7,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -63.18,
+    "face_yaw": -3.65,
+    "hips_z": 0.815,
+    "forearm_twist": {
+     "Left": -19.0,
+     "Right": 11.6
+    },
+    "blade_dir": [
+     -0.43,
+     -0.76,
+     0.49
+    ],
+    "blade_tip": [
+     -0.885,
+     -0.387,
+     1.273
+    ],
+    "hand_R": [
+     -0.387,
+     0.341,
+     0.921
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -29.7,
+    "armLeft": {
+     "flex": 57.6,
+     "up": [
+      0.53,
+      0.65,
+      -0.55
+     ],
+     "elbow": [
+      0.298,
+      0.13,
+      1.093
+     ],
+     "n": [
+      -0.73,
+      0.01,
+      -0.69
+     ]
+    },
+    "armRight": {
+     "flex": 74.9,
+     "up": [
+      -0.86,
+      0.07,
+      -0.51
+     ],
+     "elbow": [
+      -0.33,
+      -0.174,
+      1.062
+     ],
+     "n": [
+      -0.48,
+      -0.47,
+      0.74
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.095,
+      0.27,
+      0.206
+     ],
+     "toe_z": 0.0616
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": 14.9,
+    "pelvis_yaw": -46.2,
+    "chest_yaw": -14.8,
+    "twist": 31.4,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -19.13,
+    "face_yaw": -0.0,
+    "hips_z": 0.785,
+    "forearm_twist": {
+     "Left": -19.3,
+     "Right": 11.8
+    },
+    "blade_dir": [
+     0.78,
+     -0.51,
+     0.36
+    ],
+    "blade_tip": [
+     0.124,
+     -1.08,
+     1.526
+    ],
+    "hand_R": [
+     -0.547,
+     -0.48,
+     1.223
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 56.9,
+    "armLeft": {
+     "flex": 91.6,
+     "up": [
+      0.45,
+      0.43,
+      -0.79
+     ],
+     "elbow": [
+      0.347,
+      0.172,
+      0.955
+     ],
+     "n": [
+      -0.59,
+      -0.52,
+      -0.62
+     ]
+    },
+    "armRight": {
+     "flex": 53.6,
+     "up": [
+      0.33,
+      -0.94,
+      -0.02
+     ],
+     "elbow": [
+      0.24,
+      -0.469,
+      1.181
+     ],
+     "n": [
+      -0.2,
+      -0.09,
+      0.98
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.129,
+      0.324,
+      0.16
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 2,
+    "W": 1.0
+   },
+   {
+    "lean": 17.9,
+    "pelvis_yaw": -42.3,
+    "chest_yaw": -6.9,
+    "twist": 35.3,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -11.01,
+    "face_yaw": 0.04,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.4,
+     "Right": 11.6
+    },
+    "blade_dir": [
+     0.58,
+     0.18,
+     0.79
+    ],
+    "blade_tip": [
+     0.411,
+     -0.534,
+     1.772
+    ],
+    "hand_R": [
+     -0.21,
+     -0.59,
+     1.055
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 107.4,
+    "armLeft": {
+     "flex": 103.7,
+     "up": [
+      0.42,
+      0.26,
+      -0.87
+     ],
+     "elbow": [
+      0.345,
+      0.144,
+      0.912
+     ],
+     "n": [
+      -0.64,
+      -0.6,
+      -0.48
+     ]
+    },
+    "armRight": {
+     "flex": 78.1,
+     "up": [
+      0.66,
+      -0.48,
+      -0.58
+     ],
+     "elbow": [
+      0.373,
+      -0.331,
+      0.998
+     ],
+     "n": [
+      0.17,
+      -0.65,
+      0.74
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.138,
+      0.32,
+      0.175
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 3,
+    "W": 1.0
+   },
+   {
+    "lean": 16.9,
+    "pelvis_yaw": -42.2,
+    "chest_yaw": -8.2,
+    "twist": 34.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -11.99,
+    "face_yaw": 0.0,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.5,
+     "Right": 11.6
+    },
+    "blade_dir": [
+     0.59,
+     0.13,
+     0.8
+    ],
+    "blade_tip": [
+     0.416,
+     -0.583,
+     1.756
+    ],
+    "hand_R": [
+     -0.212,
+     -0.588,
+     1.044
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 102.3,
+    "armLeft": {
+     "flex": 115.3,
+     "up": [
+      0.34,
+      0.17,
+      -0.92
+     ],
+     "elbow": [
+      0.323,
+      0.115,
+      0.898
+     ],
+     "n": [
+      -0.74,
+      -0.56,
+      -0.38
+     ]
+    },
+    "armRight": {
+     "flex": 74.3,
+     "up": [
+      0.67,
+      -0.46,
+      -0.58
+     ],
+     "elbow": [
+      0.366,
+      -0.328,
+      0.998
+     ],
+     "n": [
+      0.19,
+      -0.65,
+      0.74
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.138,
+      0.32,
+      0.175
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 4,
+    "W": 1.0
+   },
+   {
+    "lean": 13.9,
+    "pelvis_yaw": -43.2,
+    "chest_yaw": -10.0,
+    "twist": 33.2,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -14.04,
+    "face_yaw": 0.01,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.6,
+     "Right": 11.7
+    },
+    "blade_dir": [
+     0.6,
+     0.11,
+     0.79
+    ],
+    "blade_tip": [
+     0.411,
+     -0.588,
+     1.767
+    ],
+    "hand_R": [
+     -0.22,
+     -0.576,
+     1.057
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 100.7,
+    "armLeft": {
+     "flex": 121.0,
+     "up": [
+      0.26,
+      0.16,
+      -0.95
+     ],
+     "elbow": [
+      0.288,
+      0.106,
+      0.898
+     ],
+     "n": [
+      -0.81,
+      -0.51,
+      -0.3
+     ]
+    },
+    "armRight": {
+     "flex": 71.0,
+     "up": [
+      0.7,
+      -0.45,
+      -0.55
+     ],
+     "elbow": [
+      0.35,
+      -0.329,
+      1.012
+     ],
+     "n": [
+      0.17,
+      -0.65,
+      0.74
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.138,
+      0.32,
+      0.175
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 5,
+    "W": 1.0
+   }
+  ],
+  "Pelag_AN_AnchorThrow_Fly": [
+   {
+    "lean": 13.9,
+    "pelvis_yaw": -43.2,
+    "chest_yaw": -10.0,
+    "twist": 33.2,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -14.04,
+    "face_yaw": 0.01,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.6,
+     "Right": 11.7
+    },
+    "blade_dir": [
+     0.6,
+     0.11,
+     0.79
+    ],
+    "blade_tip": [
+     0.411,
+     -0.588,
+     1.767
+    ],
+    "hand_R": [
+     -0.22,
+     -0.576,
+     1.057
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 100.7,
+    "armLeft": {
+     "flex": 121.0,
+     "up": [
+      0.26,
+      0.16,
+      -0.95
+     ],
+     "elbow": [
+      0.288,
+      0.106,
+      0.898
+     ],
+     "n": [
+      -0.81,
+      -0.51,
+      -0.3
+     ]
+    },
+    "armRight": {
+     "flex": 71.0,
+     "up": [
+      0.7,
+      -0.45,
+      -0.55
+     ],
+     "elbow": [
+      0.35,
+      -0.329,
+      1.012
+     ],
+     "n": [
+      0.17,
+      -0.65,
+      0.74
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.138,
+      0.32,
+      0.175
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 0,
+    "W": 1.0
+   },
+   {
+    "lean": 10.1,
+    "pelvis_yaw": -44.1,
+    "chest_yaw": -11.8,
+    "twist": 32.3,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -16.11,
+    "face_yaw": 0.01,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.6,
+     "Right": 11.7
+    },
+    "blade_dir": [
+     0.59,
+     0.14,
+     0.8
+    ],
+    "blade_tip": [
+     0.421,
+     -0.529,
+     1.775
+    ],
+    "hand_R": [
+     -0.204,
+     -0.546,
+     1.061
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 103.4,
+    "armLeft": {
+     "flex": 123.9,
+     "up": [
+      0.21,
+      0.2,
+      -0.96
+     ],
+     "elbow": [
+      0.254,
+      0.111,
+      0.908
+     ],
+     "n": [
+      -0.84,
+      -0.47,
+      -0.28
+     ]
+    },
+    "armRight": {
+     "flex": 71.4,
+     "up": [
+      0.71,
+      -0.42,
+      -0.56
+     ],
+     "elbow": [
+      0.325,
+      -0.323,
+      1.014
+     ],
+     "n": [
+      0.2,
+      -0.65,
+      0.73
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.115,
+      0.33,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": 6.1,
+    "pelvis_yaw": -44.0,
+    "chest_yaw": -12.6,
+    "twist": 31.4,
+    "relP": 8.44,
+    "relP_over_stance": -1.31,
+    "head_relY": -17.12,
+    "face_yaw": 0.12,
+    "hips_z": 0.77,
+    "forearm_twist": {
+     "Left": -19.6,
+     "Right": 11.7
+    },
+    "blade_dir": [
+     0.61,
+     0.08,
+     0.79
+    ],
+    "blade_tip": [
+     0.414,
+     -0.576,
+     1.766
+    ],
+    "hand_R": [
+     -0.221,
+     -0.531,
+     1.061
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 97.4,
+    "armLeft": {
+     "flex": 124.2,
+     "up": [
+      0.19,
+      0.22,
+      -0.95
+     ],
+     "elbow": [
+      0.226,
+      0.116,
+      0.916
+     ],
+     "n": [
+      -0.85,
+      -0.44,
+      -0.28
+     ]
+    },
+    "armRight": {
+     "flex": 66.0,
+     "up": [
+      0.73,
+      -0.42,
+      -0.54
+     ],
+     "elbow": [
+      0.301,
+      -0.325,
+      1.021
+     ],
+     "n": [
+      0.17,
+      -0.65,
+      0.74
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.115,
+      0.33,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 2,
+    "W": 1.0
+   },
+   {
+    "lean": 3.1,
+    "pelvis_yaw": -43.9,
+    "chest_yaw": -13.5,
+    "twist": 30.4,
+    "relP": 2.54,
+    "relP_over_stance": -7.21,
+    "head_relY": -17.99,
+    "face_yaw": 0.76,
+    "hips_z": 0.77,
+    "forearm_twist": {
+     "Left": -19.6,
+     "Right": 11.8
+    },
+    "blade_dir": [
+     0.62,
+     0.01,
+     0.79
+    ],
+    "blade_tip": [
+     0.42,
+     -0.636,
+     1.741
+    ],
+    "hand_R": [
+     -0.219,
+     -0.522,
+     1.048
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 90.5,
+    "armLeft": {
+     "flex": 119.8,
+     "up": [
+      0.24,
+      0.26,
+      -0.94
+     ],
+     "elbow": [
+      0.219,
+      0.123,
+      0.93
+     ],
+     "n": [
+      -0.83,
+      -0.45,
+      -0.33
+     ]
+    },
+    "armRight": {
+     "flex": 58.7,
+     "up": [
+      0.77,
+      -0.37,
+      -0.52
+     ],
+     "elbow": [
+      0.287,
+      -0.314,
+      1.024
+     ],
+     "n": [
+      0.19,
+      -0.65,
+      0.74
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.134,
+      0.322,
+      0.168
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 3,
+    "W": 1.0
+   }
+  ],
+  "Pelag_AN_AnchorThrow_Yank": [
+   {
+    "lean": 3.1,
+    "pelvis_yaw": -43.9,
+    "chest_yaw": -13.5,
+    "twist": 30.4,
+    "relP": 2.54,
+    "relP_over_stance": -7.21,
+    "head_relY": -17.99,
+    "face_yaw": 0.76,
+    "hips_z": 0.77,
+    "forearm_twist": {
+     "Left": -19.6,
+     "Right": 11.8
+    },
+    "blade_dir": [
+     0.62,
+     0.01,
+     0.79
+    ],
+    "blade_tip": [
+     0.42,
+     -0.636,
+     1.741
+    ],
+    "hand_R": [
+     -0.219,
+     -0.522,
+     1.048
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 90.5,
+    "armLeft": {
+     "flex": 119.8,
+     "up": [
+      0.24,
+      0.26,
+      -0.94
+     ],
+     "elbow": [
+      0.219,
+      0.123,
+      0.93
+     ],
+     "n": [
+      -0.83,
+      -0.45,
+      -0.33
+     ]
+    },
+    "armRight": {
+     "flex": 58.7,
+     "up": [
+      0.77,
+      -0.37,
+      -0.52
+     ],
+     "elbow": [
+      0.287,
+      -0.314,
+      1.024
+     ],
+     "n": [
+      0.19,
+      -0.65,
+      0.74
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.134,
+      0.322,
+      0.168
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 0,
+    "W": 1.0
+   },
+   {
+    "lean": -12.9,
+    "pelvis_yaw": -45.3,
+    "chest_yaw": -17.1,
+    "twist": 28.2,
+    "relP": -21.93,
+    "relP_over_stance": -31.68,
+    "head_relY": -26.38,
+    "face_yaw": 6.49,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.6,
+     "Right": 11.5
+    },
+    "blade_dir": [
+     0.57,
+     0.32,
+     0.76
+    ],
+    "blade_tip": [
+     0.37,
+     -0.155,
+     1.803
+    ],
+    "hand_R": [
+     -0.241,
+     -0.338,
+     1.099
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 119.3,
+    "armLeft": {
+     "flex": 122.5,
+     "up": [
+      0.51,
+      0.32,
+      -0.8
+     ],
+     "elbow": [
+      0.189,
+      0.124,
+      1.002
+     ],
+     "n": [
+      -0.72,
+      -0.35,
+      -0.6
+     ]
+    },
+    "armRight": {
+     "flex": 88.4,
+     "up": [
+      0.63,
+      -0.56,
+      -0.54
+     ],
+     "elbow": [
+      0.136,
+      -0.367,
+      1.008
+     ],
+     "n": [
+      0.07,
+      -0.66,
+      0.75
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.21
+     ],
+     "toe_z": 0.0614
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": -15.4,
+    "pelvis_yaw": -46.2,
+    "chest_yaw": -19.1,
+    "twist": 27.2,
+    "relP": -25.65,
+    "relP_over_stance": -35.4,
+    "head_relY": -30.74,
+    "face_yaw": 8.29,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.7,
+     "Right": 11.4
+    },
+    "blade_dir": [
+     0.55,
+     0.4,
+     0.73
+    ],
+    "blade_tip": [
+     0.359,
+     -0.042,
+     1.795
+    ],
+    "hand_R": [
+     -0.243,
+     -0.3,
+     1.107
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 125.5,
+    "armLeft": {
+     "flex": 126.4,
+     "up": [
+      0.57,
+      0.35,
+      -0.74
+     ],
+     "elbow": [
+      0.191,
+      0.125,
+      1.02
+     ],
+     "n": [
+      -0.67,
+      -0.31,
+      -0.67
+     ]
+    },
+    "armRight": {
+     "flex": 94.4,
+     "up": [
+      0.61,
+      -0.59,
+      -0.54
+     ],
+     "elbow": [
+      0.109,
+      -0.375,
+      1.001
+     ],
+     "n": [
+      0.03,
+      -0.66,
+      0.75
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0094
+    },
+    "frame": 2,
+    "W": 1.0
+   }
+  ],
+  "Pelag_AN_AnchorThrow_Haul": [
+   {
+    "lean": -15.4,
+    "pelvis_yaw": -46.2,
+    "chest_yaw": -19.1,
+    "twist": 27.2,
+    "relP": -25.65,
+    "relP_over_stance": -35.4,
+    "head_relY": -30.74,
+    "face_yaw": 8.29,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.7,
+     "Right": 11.4
+    },
+    "blade_dir": [
+     0.55,
+     0.4,
+     0.73
+    ],
+    "blade_tip": [
+     0.359,
+     -0.042,
+     1.795
+    ],
+    "hand_R": [
+     -0.243,
+     -0.3,
+     1.107
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 125.5,
+    "armLeft": {
+     "flex": 126.4,
+     "up": [
+      0.57,
+      0.35,
+      -0.74
+     ],
+     "elbow": [
+      0.191,
+      0.125,
+      1.02
+     ],
+     "n": [
+      -0.67,
+      -0.31,
+      -0.67
+     ]
+    },
+    "armRight": {
+     "flex": 94.4,
+     "up": [
+      0.61,
+      -0.59,
+      -0.54
+     ],
+     "elbow": [
+      0.109,
+      -0.375,
+      1.001
+     ],
+     "n": [
+      0.03,
+      -0.66,
+      0.75
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0094
+    },
+    "frame": 0,
+    "W": 1.0
+   },
+   {
+    "lean": -13.9,
+    "pelvis_yaw": -46.3,
+    "chest_yaw": -17.0,
+    "twist": 29.3,
+    "relP": -23.34,
+    "relP_over_stance": -33.09,
+    "head_relY": -26.69,
+    "face_yaw": 7.0,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.7,
+     "Right": 11.7
+    },
+    "blade_dir": [
+     0.6,
+     0.22,
+     0.77
+    ],
+    "blade_tip": [
+     0.395,
+     -0.305,
+     1.813
+    ],
+    "hand_R": [
+     -0.234,
+     -0.384,
+     1.106
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 109.8,
+    "armLeft": {
+     "flex": 126.9,
+     "up": [
+      0.55,
+      0.31,
+      -0.78
+     ],
+     "elbow": [
+      0.192,
+      0.119,
+      1.008
+     ],
+     "n": [
+      -0.7,
+      -0.33,
+      -0.63
+     ]
+    },
+    "armRight": {
+     "flex": 70.7,
+     "up": [
+      0.77,
+      -0.45,
+      -0.45
+     ],
+     "elbow": [
+      0.166,
+      -0.341,
+      1.029
+     ],
+     "n": [
+      0.06,
+      -0.66,
+      0.75
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0095
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": -15.9,
+    "pelvis_yaw": -46.2,
+    "chest_yaw": -19.4,
+    "twist": 26.8,
+    "relP": -26.43,
+    "relP_over_stance": -36.18,
+    "head_relY": -30.96,
+    "face_yaw": 8.58,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.7,
+     "Right": 11.6
+    },
+    "blade_dir": [
+     0.6,
+     0.25,
+     0.76
+    ],
+    "blade_tip": [
+     0.373,
+     -0.227,
+     1.801
+    ],
+    "hand_R": [
+     -0.255,
+     -0.34,
+     1.097
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 112.8,
+    "armLeft": {
+     "flex": 124.5,
+     "up": [
+      0.6,
+      0.28,
+      -0.75
+     ],
+     "elbow": [
+      0.195,
+      0.104,
+      1.017
+     ],
+     "n": [
+      -0.7,
+      -0.27,
+      -0.66
+     ]
+    },
+    "armRight": {
+     "flex": 79.4,
+     "up": [
+      0.69,
+      -0.54,
+      -0.49
+     ],
+     "elbow": [
+      0.126,
+      -0.363,
+      1.011
+     ],
+     "n": [
+      0.03,
+      -0.66,
+      0.75
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0094
+    },
+    "frame": 2,
+    "W": 1.0
+   },
+   {
+    "lean": -15.4,
+    "pelvis_yaw": -46.2,
+    "chest_yaw": -19.1,
+    "twist": 27.2,
+    "relP": -25.65,
+    "relP_over_stance": -35.4,
+    "head_relY": -30.74,
+    "face_yaw": 8.29,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.7,
+     "Right": 11.4
+    },
+    "blade_dir": [
+     0.55,
+     0.4,
+     0.73
+    ],
+    "blade_tip": [
+     0.359,
+     -0.042,
+     1.795
+    ],
+    "hand_R": [
+     -0.243,
+     -0.3,
+     1.107
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 125.5,
+    "armLeft": {
+     "flex": 126.4,
+     "up": [
+      0.57,
+      0.35,
+      -0.74
+     ],
+     "elbow": [
+      0.191,
+      0.125,
+      1.02
+     ],
+     "n": [
+      -0.67,
+      -0.31,
+      -0.67
+     ]
+    },
+    "armRight": {
+     "flex": 94.4,
+     "up": [
+      0.61,
+      -0.59,
+      -0.54
+     ],
+     "elbow": [
+      0.109,
+      -0.375,
+      1.001
+     ],
+     "n": [
+      0.03,
+      -0.66,
+      0.75
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0094
+    },
+    "frame": 3,
+    "W": 1.0
+   },
+   {
+    "lean": -13.9,
+    "pelvis_yaw": -46.3,
+    "chest_yaw": -17.0,
+    "twist": 29.3,
+    "relP": -23.34,
+    "relP_over_stance": -33.09,
+    "head_relY": -26.69,
+    "face_yaw": 7.0,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.7,
+     "Right": 11.7
+    },
+    "blade_dir": [
+     0.6,
+     0.22,
+     0.77
+    ],
+    "blade_tip": [
+     0.395,
+     -0.305,
+     1.813
+    ],
+    "hand_R": [
+     -0.234,
+     -0.384,
+     1.106
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 109.8,
+    "armLeft": {
+     "flex": 126.9,
+     "up": [
+      0.55,
+      0.31,
+      -0.78
+     ],
+     "elbow": [
+      0.192,
+      0.119,
+      1.008
+     ],
+     "n": [
+      -0.7,
+      -0.33,
+      -0.63
+     ]
+    },
+    "armRight": {
+     "flex": 70.7,
+     "up": [
+      0.77,
+      -0.45,
+      -0.45
+     ],
+     "elbow": [
+      0.166,
+      -0.341,
+      1.029
+     ],
+     "n": [
+      0.06,
+      -0.66,
+      0.75
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0095
+    },
+    "frame": 4,
+    "W": 1.0
+   },
+   {
+    "lean": -13.9,
+    "pelvis_yaw": -46.3,
+    "chest_yaw": -15.8,
+    "twist": 30.5,
+    "relP": -23.34,
+    "relP_over_stance": -33.09,
+    "head_relY": -26.69,
+    "face_yaw": 7.0,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.6,
+     "Right": 11.6
+    },
+    "blade_dir": [
+     0.56,
+     0.3,
+     0.77
+    ],
+    "blade_tip": [
+     0.406,
+     -0.205,
+     1.813
+    ],
+    "hand_R": [
+     -0.2,
+     -0.37,
+     1.1
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 118.0,
+    "armLeft": {
+     "flex": 122.8,
+     "up": [
+      0.48,
+      0.46,
+      -0.75
+     ],
+     "elbow": [
+      0.17,
+      0.162,
+      1.016
+     ],
+     "n": [
+      -0.63,
+      -0.41,
+      -0.66
+     ]
+    },
+    "armRight": {
+     "flex": 76.2,
+     "up": [
+      0.77,
+      -0.42,
+      -0.49
+     ],
+     "elbow": [
+      0.167,
+      -0.331,
+      1.018
+     ],
+     "n": [
+      0.12,
+      -0.65,
+      0.75
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0095
+    },
+    "frame": 5,
+    "W": 1.0
+   },
+   {
+    "lean": -12.9,
+    "pelvis_yaw": -46.4,
+    "chest_yaw": -15.7,
+    "twist": 30.6,
+    "relP": -21.77,
+    "relP_over_stance": -31.52,
+    "head_relY": -26.35,
+    "face_yaw": 6.5,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.7,
+     "Right": 11.5
+    },
+    "blade_dir": [
+     0.53,
+     0.4,
+     0.75
+    ],
+    "blade_tip": [
+     0.383,
+     -0.086,
+     1.818
+    ],
+    "hand_R": [
+     -0.205,
+     -0.35,
+     1.12
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 126.7,
+    "armLeft": {
+     "flex": 127.3,
+     "up": [
+      0.41,
+      0.53,
+      -0.74
+     ],
+     "elbow": [
+      0.159,
+      0.18,
+      1.016
+     ],
+     "n": [
+      -0.63,
+      -0.43,
+      -0.65
+     ]
+    },
+    "armRight": {
+     "flex": 85.9,
+     "up": [
+      0.72,
+      -0.48,
+      -0.5
+     ],
+     "elbow": [
+      0.163,
+      -0.346,
+      1.018
+     ],
+     "n": [
+      0.09,
+      -0.66,
+      0.75
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0095
+    },
+    "frame": 6,
+    "W": 1.0
+   }
+  ],
+  "Pelag_AN_AnchorThrow_Catch": [
+   {
+    "lean": -12.9,
+    "pelvis_yaw": -46.4,
+    "chest_yaw": -15.7,
+    "twist": 30.6,
+    "relP": -21.77,
+    "relP_over_stance": -31.52,
+    "head_relY": -26.35,
+    "face_yaw": 6.5,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.7,
+     "Right": 11.5
+    },
+    "blade_dir": [
+     0.53,
+     0.4,
+     0.75
+    ],
+    "blade_tip": [
+     0.383,
+     -0.086,
+     1.818
+    ],
+    "hand_R": [
+     -0.205,
+     -0.35,
+     1.12
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 126.7,
+    "armLeft": {
+     "flex": 127.3,
+     "up": [
+      0.41,
+      0.53,
+      -0.74
+     ],
+     "elbow": [
+      0.159,
+      0.18,
+      1.016
+     ],
+     "n": [
+      -0.63,
+      -0.43,
+      -0.65
+     ]
+    },
+    "armRight": {
+     "flex": 85.9,
+     "up": [
+      0.72,
+      -0.48,
+      -0.5
+     ],
+     "elbow": [
+      0.163,
+      -0.346,
+      1.018
+     ],
+     "n": [
+      0.09,
+      -0.66,
+      0.75
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0095
+    },
+    "frame": 0,
+    "W": 1.0
+   },
+   {
+    "lean": -14.9,
+    "pelvis_yaw": -46.3,
+    "chest_yaw": -17.2,
+    "twist": 29.1,
+    "relP": -24.86,
+    "relP_over_stance": -34.61,
+    "head_relY": -30.5,
+    "face_yaw": 8.0,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.6,
+     "Right": 11.5
+    },
+    "blade_dir": [
+     0.51,
+     0.51,
+     0.69
+    ],
+    "blade_tip": [
+     0.372,
+     0.055,
+     1.81
+    ],
+    "hand_R": [
+     -0.2,
+     -0.32,
+     1.15
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 135.0,
+    "armLeft": {
+     "flex": 119.6,
+     "up": [
+      0.39,
+      0.55,
+      -0.74
+     ],
+     "elbow": [
+      0.144,
+      0.181,
+      1.019
+     ],
+     "n": [
+      -0.64,
+      -0.41,
+      -0.65
+     ]
+    },
+    "armRight": {
+     "flex": 90.2,
+     "up": [
+      0.75,
+      -0.48,
+      -0.44
+     ],
+     "elbow": [
+      0.153,
+      -0.348,
+      1.026
+     ],
+     "n": [
+      0.02,
+      -0.66,
+      0.75
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0094
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": -10.9,
+    "pelvis_yaw": -47.4,
+    "chest_yaw": -20.5,
+    "twist": 27.0,
+    "relP": -9.8,
+    "relP_over_stance": -19.55,
+    "head_relY": -30.88,
+    "face_yaw": 3.5,
+    "hips_z": 0.78,
+    "forearm_twist": {
+     "Left": -19.6,
+     "Right": 11.2
+    },
+    "blade_dir": [
+     0.55,
+     0.67,
+     0.5
+    ],
+    "blade_tip": [
+     0.343,
+     0.279,
+     1.719
+    ],
+    "hand_R": [
+     -0.26,
+     -0.25,
+     1.21
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 140.8,
+    "armLeft": {
+     "flex": 121.4,
+     "up": [
+      0.22,
+      0.66,
+      -0.72
+     ],
+     "elbow": [
+      0.131,
+      0.206,
+      1.025
+     ],
+     "n": [
+      -0.7,
+      -0.41,
+      -0.58
+     ]
+    },
+    "armRight": {
+     "flex": 113.1,
+     "up": [
+      0.57,
+      -0.7,
+      -0.43
+     ],
+     "elbow": [
+      0.121,
+      -0.408,
+      1.047
+     ],
+     "n": [
+      -0.22,
+      -0.63,
+      0.74
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0096
+    },
+    "frame": 2,
+    "W": 1.0
+   },
+   {
+    "lean": -5.9,
+    "pelvis_yaw": -48.6,
+    "chest_yaw": -23.5,
+    "twist": 25.2,
+    "relP": 1.93,
+    "relP_over_stance": -7.82,
+    "head_relY": -32.29,
+    "face_yaw": 0.96,
+    "hips_z": 0.79,
+    "forearm_twist": {
+     "Left": -19.5,
+     "Right": 10.9
+    },
+    "blade_dir": [
+     0.55,
+     0.78,
+     0.31
+    ],
+    "blade_tip": [
+     0.29,
+     0.455,
+     1.641
+    ],
+    "hand_R": [
+     -0.3,
+     -0.19,
+     1.27
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 144.9,
+    "armLeft": {
+     "flex": 112.3,
+     "up": [
+      0.13,
+      0.72,
+      -0.68
+     ],
+     "elbow": [
+      0.147,
+      0.221,
+      1.04
+     ],
+     "n": [
+      -0.7,
+      -0.42,
+      -0.58
+     ]
+    },
+    "armRight": {
+     "flex": 127.7,
+     "up": [
+      0.48,
+      -0.73,
+      -0.48
+     ],
+     "elbow": [
+      0.119,
+      -0.421,
+      1.057
+     ],
+     "n": [
+      -0.49,
+      -0.68,
+      0.55
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.135,
+      0.42,
+      0.142
+     ],
+     "toe_z": 0.0097
+    },
+    "frame": 3,
+    "W": 1.0
+   },
+   {
+    "lean": -0.9,
+    "pelvis_yaw": -49.8,
+    "chest_yaw": -25.0,
+    "twist": 24.8,
+    "relP": 8.6,
+    "relP_over_stance": -1.15,
+    "head_relY": -33.61,
+    "face_yaw": 0.1,
+    "hips_z": 0.8,
+    "forearm_twist": {
+     "Left": -19.3,
+     "Right": 10.6
+    },
+    "blade_dir": [
+     0.65,
+     0.5,
+     0.57
+    ],
+    "blade_tip": [
+     0.31,
+     0.192,
+     1.797
+    ],
+    "hand_R": [
+     -0.34,
+     -0.16,
+     1.2
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 127.8,
+    "armLeft": {
+     "flex": 98.5,
+     "up": [
+      0.16,
+      0.75,
+      -0.64
+     ],
+     "elbow": [
+      0.189,
+      0.23,
+      1.054
+     ],
+     "n": [
+      -0.65,
+      -0.4,
+      -0.64
+     ]
+    },
+    "armRight": {
+     "flex": 140.2,
+     "up": [
+      -0.05,
+      -0.66,
+      -0.75
+     ],
+     "elbow": [
+      0.007,
+      -0.405,
+      1.006
+     ],
+     "n": [
+      -0.49,
+      -0.64,
+      0.6
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.13,
+      0.4,
+      0.2
+     ],
+     "toe_z": 0.0517
+    },
+    "frame": 4,
+    "W": 1.0
+   },
+   {
+    "lean": 3.1,
+    "pelvis_yaw": -50.9,
+    "chest_yaw": -28.1,
+    "twist": 22.8,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -33.65,
+    "face_yaw": -0.01,
+    "hips_z": 0.815,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 10.9
+    },
+    "blade_dir": [
+     0.32,
+     -0.37,
+     0.87
+    ],
+    "blade_tip": [
+     -0.141,
+     -0.552,
+     1.843
+    ],
+    "hand_R": [
+     -0.4,
+     -0.08,
+     1.06
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 41.2,
+    "armLeft": {
+     "flex": 73.4,
+     "up": [
+      0.28,
+      0.69,
+      -0.67
+     ],
+     "elbow": [
+      0.245,
+      0.215,
+      1.051
+     ],
+     "n": [
+      -0.64,
+      -0.39,
+      -0.66
+     ]
+    },
+    "armRight": {
+     "flex": 127.8,
+     "up": [
+      -0.69,
+      -0.21,
+      -0.69
+     ],
+     "elbow": [
+      -0.147,
+      -0.289,
+      1.027
+     ],
+     "n": [
+      -0.42,
+      -0.67,
+      0.62
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.196
+     ],
+     "toe_z": 0.0558
+    },
+    "frame": 5,
+    "W": 1.0
+   },
+   {
+    "lean": 5.6,
+    "pelvis_yaw": -52.0,
+    "chest_yaw": -29.1,
+    "twist": 22.8,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -33.45,
+    "face_yaw": -0.01,
+    "hips_z": 0.83,
+    "forearm_twist": {
+     "Left": -19.0,
+     "Right": 11.4
+    },
+    "blade_dir": [
+     -0.08,
+     -0.71,
+     0.7
+    ],
+    "blade_tip": [
+     -0.57,
+     -0.784,
+     1.518
+    ],
+    "hand_R": [
+     -0.44,
+     -0.03,
+     0.955
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -6.2,
+    "armLeft": {
+     "flex": 47.0,
+     "up": [
+      0.42,
+      0.56,
+      -0.71
+     ],
+     "elbow": [
+      0.297,
+      0.184,
+      1.048
+     ],
+     "n": [
+      -0.64,
+      -0.37,
+      -0.67
+     ]
+    },
+    "armRight": {
+     "flex": 98.9,
+     "up": [
+      -0.71,
+      -0.15,
+      -0.68
+     ],
+     "elbow": [
+      -0.143,
+      -0.272,
+      1.04
+     ],
+     "n": [
+      -0.4,
+      -0.71,
+      0.58
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 6,
+    "W": 1.0
+   },
+   {
+    "lean": 6.2,
+    "pelvis_yaw": -52.1,
+    "chest_yaw": -29.7,
+    "twist": 22.4,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -33.41,
+    "face_yaw": -0.13,
+    "hips_z": 0.838,
+    "forearm_twist": {
+     "Left": -18.9,
+     "Right": 11.7
+    },
+    "blade_dir": [
+     -0.29,
+     -0.78,
+     0.55
+    ],
+    "blade_tip": [
+     -0.772,
+     -0.789,
+     1.275
+    ],
+    "hand_R": [
+     -0.449,
+     0.009,
+     0.872
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -20.2,
+    "armLeft": {
+     "flex": 36.9,
+     "up": [
+      0.46,
+      0.5,
+      -0.73
+     ],
+     "elbow": [
+      0.313,
+      0.167,
+      1.049
+     ],
+     "n": [
+      -0.65,
+      -0.37,
+      -0.66
+     ]
+    },
+    "armRight": {
+     "flex": 72.1,
+     "up": [
+      -0.63,
+      -0.19,
+      -0.75
+     ],
+     "elbow": [
+      -0.12,
+      -0.279,
+      1.027
+     ],
+     "n": [
+      -0.41,
+      -0.75,
+      0.53
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 7,
+    "W": 0.815
+   },
+   {
+    "lean": 6.5,
+    "pelvis_yaw": -52.1,
+    "chest_yaw": -30.0,
+    "twist": 22.2,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -33.24,
+    "face_yaw": -0.33,
+    "hips_z": 0.843,
+    "forearm_twist": {
+     "Left": -18.9,
+     "Right": 11.8
+    },
+    "blade_dir": [
+     -0.31,
+     -0.77,
+     0.56
+    ],
+    "blade_tip": [
+     -0.801,
+     -0.752,
+     1.24
+    ],
+    "hand_R": [
+     -0.453,
+     0.03,
+     0.828
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -22.1,
+    "armLeft": {
+     "flex": 30.9,
+     "up": [
+      0.49,
+      0.46,
+      -0.74
+     ],
+     "elbow": [
+      0.322,
+      0.157,
+      1.051
+     ],
+     "n": [
+      -0.65,
+      -0.37,
+      -0.66
+     ]
+    },
+    "armRight": {
+     "flex": 51.7,
+     "up": [
+      -0.53,
+      -0.25,
+      -0.81
+     ],
+     "elbow": [
+      -0.094,
+      -0.294,
+      1.017
+     ],
+     "n": [
+      -0.41,
+      -0.76,
+      0.5
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 8,
+    "W": 0.407
+   },
+   {
+    "lean": 6.5,
+    "pelvis_yaw": -52.1,
+    "chest_yaw": -30.0,
+    "twist": 22.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -33.18,
+    "face_yaw": -0.41,
+    "hips_z": 0.845,
+    "forearm_twist": {
+     "Left": -18.9,
+     "Right": 11.9
+    },
+    "blade_dir": [
+     -0.2,
+     -0.69,
+     0.69
+    ],
+    "blade_tip": [
+     -0.7,
+     -0.699,
+     1.376
+    ],
+    "hand_R": [
+     -0.454,
+     0.033,
+     0.823
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -15.7,
+    "armLeft": {
+     "flex": 30.0,
+     "up": [
+      0.49,
+      0.45,
+      -0.74
+     ],
+     "elbow": [
+      0.323,
+      0.156,
+      1.052
+     ],
+     "n": [
+      -0.65,
+      -0.37,
+      -0.66
+     ]
+    },
+    "armRight": {
+     "flex": 48.2,
+     "up": [
+      -0.51,
+      -0.26,
+      -0.82
+     ],
+     "elbow": [
+      -0.089,
+      -0.297,
+      1.016
+     ],
+     "n": [
+      -0.41,
+      -0.76,
+      0.5
+     ]
+    },
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 9,
+    "W": 0.0
+   }
+  ]
+ }
+}

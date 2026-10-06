@@ -39,10 +39,10 @@ namespace Game.Tests
             Assert.That((int)EnemyKind.ForestSplitter, Is.EqualTo(8));
             Assert.That((int)EnemyKind.ForestSplitling, Is.EqualTo(9));
             Assert.That((int)EnemyKind.ForestThicketMaster, Is.EqualTo(10));
-            // Хозяин Чащи (01.10): своё здоровье 6600, лапа 10 (16 на арене 9; баланс 02.10, было 6000 и 25), окна лапы 24 / 1 + 24, тело 0,95.
+            // Хозяин Чащи (01.10): своё здоровье 7300 (перебаланс 03.10 после нырка «под героя»; было 7500, 7600, 6600, до баланса 6000), лапа 14 (23 на арене 9; перебаланс 03.10; было 12, 15, 9, 10, 25), окна лапы 24 / 1 + 24, тело 0,95.
             var master = EnemyArchetypes.Get(EnemyKind.ForestThicketMaster);
-            Assert.That(master.BaseHealth, Is.EqualTo(6600));
-            Assert.That(master.BaseDamage, Is.EqualTo(10));
+            Assert.That(master.BaseHealth, Is.EqualTo(7300));
+            Assert.That(master.BaseDamage, Is.EqualTo(14));
             Assert.That(master.WindupTicks, Is.EqualTo(Simulation.ThicketPawWindupTicks));
             Assert.That(master.RecoveryTicks, Is.EqualTo(Simulation.ThicketPawStrikeTicks + Simulation.ThicketPawRecoveryTicks));
             Assert.That(master.BodyRadius, Is.EqualTo(EntityStore.MaxBodyRadius));

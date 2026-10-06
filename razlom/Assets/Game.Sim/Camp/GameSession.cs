@@ -3,9 +3,10 @@ namespace Game.Sim
     /// <summary>
     /// Итоги забега — то, что показывает экран выхода.
     ///
-    /// В лагерь уезжают ТОЛЬКО предметы и золото, и только при выходе или
-    /// прохождении: способности и таланты живут внутри забега, а смерть
-    /// отнимает всё найденное (решение владельца от 15 сентября).
+    /// Экономика 06.10: вещи доезжают при выходе или прохождении, золото — целиком,
+    /// при смерти — половина. Сталь, пепел и сердце уже лежат в лагере: они
+    /// начисляются сразу, как опыт (GameSession.RunHaul), и здесь только
+    /// пересказаны. Способности и таланты живут внутри забега.
     /// </summary>
     public readonly struct RunSummary
     {
@@ -28,6 +29,15 @@ namespace Game.Sim
         /// <summary>Сколько золота осталось в Разломе после смерти.</summary>
         public readonly int GoldLeftBehind;
 
+        /// <summary>Сталь забега: элитные встречи и босс. Уже в лагере при любом исходе.</summary>
+        public readonly int SteelKept;
+
+        /// <summary>Пепел забега: 1 / 5 / 20 за обычного, элиту, босса. Уже в лагере при любом исходе.</summary>
+        public readonly int AshKept;
+
+        /// <summary>Сердца боссов за забег. Уже в лагере при любом исходе.</summary>
+        public readonly int HeartsKept;
+
         private readonly RunStats _stats;
 
         /// <summary>
@@ -38,7 +48,8 @@ namespace Game.Sim
         public RunStats Stats => _stats ?? RunStats.Empty;
 
         public RunSummary(RunOutcome outcome, int depth, int riftsCleared, int itemsKept, int itemsLost,
-            int goldKept = 0, int itemsLeftBehind = 0, int goldLeftBehind = 0, RunStats stats = null)
+            int goldKept = 0, int itemsLeftBehind = 0, int goldLeftBehind = 0, RunStats stats = null,
+            int steelKept = 0, int ashKept = 0, int heartsKept = 0)
         {
             Outcome = outcome;
             Depth = depth;
@@ -48,6 +59,9 @@ namespace Game.Sim
             GoldKept = goldKept;
             ItemsLeftBehind = itemsLeftBehind;
             GoldLeftBehind = goldLeftBehind;
+            SteelKept = steelKept;
+            AshKept = ashKept;
+            HeartsKept = heartsKept;
             _stats = stats;
         }
 
@@ -65,6 +79,14 @@ namespace Game.Sim
             Hashing.Mix(ref hash, GoldKept);
             Hashing.Mix(ref hash, ItemsLeftBehind);
             Hashing.Mix(ref hash, GoldLeftBehind);
+            // Ресурсы лагеря — только если есть: итоги без них хешируются как до 06.10.
+            if (SteelKept != 0 || AshKept != 0 || HeartsKept != 0)
+            {
+                Hashing.Mix(ref hash, 0x48415553);
+                Hashing.Mix(ref hash, SteelKept);
+                Hashing.Mix(ref hash, AshKept);
+                Hashing.Mix(ref hash, HeartsKept);
+            }
         }
     }
 
@@ -88,11 +110,6 @@ namespace Game.Sim
         private readonly int _simCapacity;
 
         private Pcg32 _runSeeds;
-        private int _alchemyTrackedDepth;
-        private bool _alchemyLevelWithoutPotion;
-        public bool AlchemyCleanLevelInProgress => Mode == GameMode.Rift && !IsDeveloperRun
-            && _alchemyTrackedDepth == Run.Depth && _alchemyLevelWithoutPotion
-            && Camp.AlchemyStatus(AlchemistOrder.Surge) == AlchemistOrderStatus.Accepted;
 
         public Camp Camp { get; }
         public GameMode Mode { get; private set; }
@@ -171,6 +188,18 @@ namespace Game.Sim
         public CombatFeelCaptureTier CombatFeelShowcase { get; set; }
         public int CombatFeelEnemyCount { get; set; } = 1;
 
+        /// <summary>
+        /// Съёмка (capture.ps1): забег идёт эталонным героем 270/54 при любом профиле. Съёмка
+        /// грузит новый лагерь, а он с 06.10 даёт 200/40 — без флага менялись бы темп боя на
+        /// кадрах и время убийств, и записи «до/после» и замеры по эталону стали бы несравнимы.
+        /// </summary>
+        public bool CaptureReferenceHero { get; set; }
+
+        /// <summary>Тестовый забег, съёмка и стенды меряют бой — им эталон 270/54 (Camp.HeroBaselineFor).</summary>
+        private bool RunUsesReferenceHero(bool developer)
+            => developer || CaptureReferenceHero || WhirlwindShowcase
+            || CombatFeelShowcase != CombatFeelCaptureTier.None;
+
         public GameSession(ulong sessionSeed, Camp camp, ModuleSet modules, int[] itemBaseIds,
             int simCapacity = 512, LocationDefinition location = null)
         {
@@ -189,8 +218,9 @@ namespace Game.Sim
 
             Mode = GameMode.Camp;
             CampSim = new Simulation(sessionSeed, simCapacity);
-            // Герой любого уровня — эталонный (владелец, 29 сентября): уровень статов не даёт.
-            CampSim.ApplyHeroBaseline();
+            // Уровень статов не даёт (29 сентября). База героя — от лагеря (06.10): новая игра
+            // 200/40, Sandbox и тестовые забеги — эталон 270/54 (Camp.HeroBaselineFor).
+            CampSim.ApplyHeroBaseline(Camp.HeroBaselineFor(false));
             CampSim.SetupCamp(FixVec2.Zero, null);
             BindCampEquipment();
         }
@@ -235,6 +265,9 @@ namespace Game.Sim
             CampSim.RefreshPlayerStats(true);
             CampSim.StopPlayerMovement();
             Training?.Populate(CampSim);
+            // Статовые клятвы героя лагеря — и после загрузки сохранения, а не только после покупки.
+            // Без клятв SetBoons выходит сразу, лист героя прежний.
+            RefreshCampOaths();
         }
 
         /// <summary>
@@ -294,18 +327,18 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Подтверждает всем живым симуляциям базу эталонного героя. До 29
+        /// Подтверждает всем живым симуляциям базу героя (Camp.HeroBaselineFor). До 29
         /// сентября раздавал уровень лагеря и статы героя; теперь уровень
         /// статов не даёт (Progression), и вызов после ручной смены уровня
         /// разработчиком или в стенде баланса ничего не меняет — база уже стоит
-        /// с создания симуляции, повтор её не трогает. Оставлен ради этих
+        /// с создания симуляции, повтор той же базы её не трогает. Оставлен ради этих
         /// вызовов: уровень в меню разработчика должен оставаться безопасным.
         /// </summary>
         public void SyncPlayerLevel()
         {
-            CampSim.ApplyHeroBaseline();
-            Ground?.Sim.ApplyHeroBaseline();
-            Run?.Sim.ApplyHeroBaseline();
+            CampSim.ApplyHeroBaseline(Camp.HeroBaselineFor(false));
+            Ground?.Sim.ApplyHeroBaseline(Camp.HeroBaselineFor(false));
+            Run?.Sim.ApplyHeroBaseline(Camp.HeroBaselineFor(RunUsesReferenceHero(IsDeveloperRun)));
         }
 
         /// <summary>
@@ -320,7 +353,7 @@ namespace Game.Sim
             if (!Camp.Has(CampService.ProvingGround)) return;
 
             Ground = new ProvingGround();
-            Ground.Sim.ApplyHeroBaseline();
+            Ground.Sim.ApplyHeroBaseline(Camp.HeroBaselineFor(false));
             Ground.Setup(dummyHealth, Fix64.Zero, Fix64.Zero);
             Camp.Worn.Bind(Ground.Sim.Entities.Stats[Simulation.PlayerId]);
             Ground.Sim.RefreshPlayerStats(true);
@@ -354,10 +387,11 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Немедленно вернуться в лагерь из системного меню. Активный забег
-        /// считается покинутым: незавершённые награды не переносятся, экран
-        /// итогов не создаётся. Это отдельное системное действие, а не команда
-        /// боевого тика, поэтому меню может выполнить его даже на паузе.
+        /// Немедленно вернуться в лагерь — системное действие F8 и тестов (из паузы
+        /// игрока его больше нет, 06.10). Активный забег считается покинутым: золото
+        /// и вещи не переносятся, экран итогов не создаётся; уже начисленные пепел,
+        /// сталь, сердца и опыт остаются в лагере. Это не команда боевого тика,
+        /// поэтому меню может выполнить его даже на паузе.
         /// </summary>
         public void ReturnToCamp()
         {
@@ -373,7 +407,6 @@ namespace Game.Sim
             IsDeveloperRun = false;
             Ground = null;
             Mode = GameMode.Camp;
-            _alchemyTrackedDepth=0;_alchemyLevelWithoutPotion=false;
             BindCampEquipment();
             Generation++;
         }
@@ -412,15 +445,6 @@ namespace Game.Sim
             BeginRift(location, seed, 1, false, true, count);
         }
 
-        /// <summary>Изолированный стенд алхимика: обычные правила заказов, но гарантированный Бутон.</summary>
-        public void StartAlchemyBudTrial(LocationDefinition location, ulong seed)
-        {
-            if (location == null) throw new System.ArgumentNullException(nameof(location));
-            location.ValidateCapacity(_simCapacity);
-            LeaveProvingGround();
-            BeginRift(location, seed, 1, false, false, 1);
-        }
-
         public void StartWendigoTest(LocationDefinition location, ulong seed, bool withPack = false)
         {
             location?.ValidateCapacity(_simCapacity);
@@ -439,6 +463,9 @@ namespace Game.Sim
             int forestBudCount = 0, int wendigoShowcase = 0, int stonehoofCount = 0, bool stonehoofObstacle = false)
         {
             PreparationRequested = false;
+            // Закалка «Ещё удар?» закрывается при входе в Разлом с тем, что набрано (план T1);
+            // оплаченные переплавка и добавление ждут выбора и остаются.
+            Camp.SettleForgeSession();
             bool invulnerable = developer && DeveloperInvulnerable;
             LastRunSeed = seed;
             RunNumber++;
@@ -447,8 +474,9 @@ namespace Game.Sim
             BeginRunStats();
 
             var sim = new Simulation(seed, _simCapacity);
-            // База героя ДО расстановки: ConfigurePlayer вешает её прибавки.
-            sim.ApplyHeroBaseline();
+            // База героя ДО расстановки: ConfigurePlayer вешает её прибавки. Тестовый
+            // забег, съёмка и стенды — эталон 270/54 при любом профиле: на нём меряют бой (06.10).
+            sim.ApplyHeroBaseline(Camp.HeroBaselineFor(RunUsesReferenceHero(developer)));
 
             // Привязка ДО StartRun: расстановка первого Разлома уже позовёт
             // Reapply, и снаряжению к этому моменту нужен лист.
@@ -457,6 +485,8 @@ namespace Game.Sim
             Run = new RiftRun(sim, location?.Modules ?? _modules, Camp.Items, _itemBaseIds, location: location);
             Run.PlayerEquipment = Camp.Worn;
             if (!developer) { var preparation = Camp.CreateRunPreparation(); Run.SetPreparation(in preparation); }
+            // Клятвы и грани сердца — только в настоящем забеге: тестовый идёт эталонным героем без них (M6).
+            if (!developer) Run.SetBoons(Camp.CreateRunBoons());
             Run.WhirlwindShowcase = !developer && WhirlwindShowcase;
             Run.CombatFeelShowcase = developer ? CombatFeelCaptureTier.None : CombatFeelShowcase;
             Run.CombatFeelEnemyCount = CombatFeelEnemyCount;
@@ -471,10 +501,10 @@ namespace Game.Sim
                 Run.Loadout.CopyFrom(CampLoadout);
                 Run.ApplyLoadout();
             }
+            // Стартовый навык — уже «когда-либо взятый» (GameSession.RunHaul).
+            TrackRunProgress();
 
             Mode = GameMode.Rift;
-            _alchemyTrackedDepth=Run.Depth;
-            _alchemyLevelWithoutPotion=!developer;
             Generation++;
         }
 
@@ -486,23 +516,12 @@ namespace Game.Sim
             int depthBefore = Run.Depth;
             int tickBefore = Run.Sim.Tick;
             Run.Step(in input);
+            // Навыки и артефакты, взятые этим шагом, — сразу в лагерь (06.10).
+            TrackRunProgress();
             bool simStepped = (beforePhase == RunPhase.Clearing || beforePhase == RunPhase.SeekingExit)
                 && Run.Depth == depthBefore && Run.Sim.Tick != tickBefore;
             RecordRunStats(simStepped, boss);
             if (simStepped) { Run.AdvancePotionCooldown(); RecordMaterialDeaths(); }
-            if(!IsDeveloperRun)
-            {
-                if(beforePhase==RunPhase.Clearing || beforePhase==RunPhase.SeekingExit)
-                    RecordAlchemyDeaths(Run.Sim.Events,Run.Sim);
-                if(_alchemyTrackedDepth==Run.Depth && _alchemyLevelWithoutPotion
-                    && Run.Phase==RunPhase.ChoosingReward && beforePhase!=RunPhase.ChoosingReward)
-                    Camp.CompleteAlchemyOrder(AlchemistOrder.Surge);
-            }
-            if(Run.Depth!=_alchemyTrackedDepth)
-            {
-                _alchemyTrackedDepth=Run.Depth;
-                _alchemyLevelWithoutPotion=!IsDeveloperRun;
-            }
             if(!IsDeveloperRun && bossWasAlive && Run.BossId==boss && !Run.Sim.Entities.Alive[boss] && Run.Sim.Entities.Alive[Simulation.PlayerId])Camp.RefreshTraderAfterBoss();
 
             // Опыт забега уходит в лагерь сразу, а не на экране итогов: смерть
@@ -540,30 +559,22 @@ namespace Game.Sim
             if (simStepped) _runStats.Record(Run.Sim.Events, Run.Sim, bossId);
         }
 
-        internal void RecordAlchemyDeaths(System.Collections.Generic.IReadOnlyList<SimEvent> events, Simulation sim)
-        {
-            if(IsDeveloperRun || Camp.AlchemyStatus(AlchemistOrder.Resin)!=AlchemistOrderStatus.Accepted)return;
-            foreach(var e in events)
-                if(e.Type==SimEventType.Death && e.Source==Simulation.PlayerId && e.Target>0
-                    && e.Target<sim.Entities.Count && sim.Entities.Kind[e.Target]==EnemyKind.ForestBud)
-                    Camp.CompleteAlchemyOrder(AlchemistOrder.Resin);
-        }
-
         /// <summary>
         /// Забег кончился — найденное переезжает в лагерь.
         ///
-        /// СМЕРТЬ ОТНИМАЕТ ВСЁ. Решение владельца от 15 сентября: вещи и золото
-        /// доезжают до лагеря только при выходе или прохождении, поэтому выбор
-        /// «идти глубже или уйти с добычей» и есть главное решение Разлома.
-        /// Уровень и опыт смерть не трогает — они уходят в лагерь сразу.
-        /// Не влезшее в сумку теряется — и это тоже решение, принятое до входа.
+        /// Экономика 06.10: при выходе или прохождении доезжают вещи и всё золото,
+        /// при смерти вещи теряются, а золота доезжает половина (DeathGoldPercent,
+        /// округление вниз от суммы). Пепел, сталь, сердца, победы над боссами,
+        /// навыки и артефакты сюда не ждут: они ушли в лагерь в момент находки,
+        /// как опыт (GameSession.RunHaul), — выход из игры посреди забега их не
+        /// отнимает. Не влезшее в сумку теряется — решение, принятое до входа.
         /// </summary>
         private void FinishRun()
         {
-            bool keeps = !IsDeveloperRun && Run.Outcome != RunOutcome.Died;
+            bool real = !IsDeveloperRun, died = Run.Outcome == RunOutcome.Died, keeps = real && !died;
             int kept = 0, lost = 0, behind = 0;
 
-            for (int i = 0; !IsDeveloperRun && i < Run.TakenRewardCount; i++)
+            for (int i = 0; real && i < Run.TakenRewardCount; i++)
             {
                 RewardOffer offer = Run.GetTaken(i);
                 if (offer.Kind != RewardKind.Item) continue;
@@ -573,13 +584,14 @@ namespace Game.Sim
                 else lost++;
             }
 
-            int gold = IsDeveloperRun ? 0 : Run.Gold;
-            if (keeps) Camp.Earn(CurrencyType.Gold, gold);
+            int found = real ? Run.Gold : 0;
+            int goldKept = died ? RunEconomy.Percent(found, DeathGoldPercent) : found;
+            Camp.Earn(CurrencyType.Gold, goldKept);
 
             _runStats?.Finish(Camp.Level, Camp.Experience);
-            LastRun = new RunSummary(Run.Outcome, Run.Depth, Run.RiftsCleared, kept, lost,
-                keeps ? gold : 0, behind, keeps ? 0 : gold, _runStats);
-            CompleteRealAttempt(kept, keeps);
+            LastRun = new RunSummary(Run.Outcome, Run.Depth, Run.RiftsCleared, kept, lost, goldKept, behind,
+                found - goldKept, _runStats, steelKept: _runSteel, ashKept: _runAsh, heartsKept: _runHearts);
+            CompleteRealAttempt(kept);
             Mode = GameMode.Summary;
         }
 
@@ -627,8 +639,6 @@ namespace Game.Sim
             Hashing.Mix(ref hash, RunNumber);
             if (IsDeveloperRun) Hashing.Mix(ref hash, 0x444556);
             Hashing.Mix(ref hash, LastRunSeed);
-            Hashing.Mix(ref hash, _alchemyTrackedDepth);
-            Hashing.Mix(ref hash, _alchemyLevelWithoutPotion ? 1 : 0);
             LastRun.HashInto(ref hash);
 
             Camp.HashInto(ref hash);

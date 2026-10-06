@@ -5,7 +5,7 @@ from b_common import blade
 from s_lib import pchip, sagittal_lean, Body
 from sq_rig import M, SIDES, yaw_of
 
-FIELDS = ("W", "dz", "pyaw", "cyaw", "lean", "wB", "look", "sv", "tv")
+FIELDS = ("W", "dz", "pyaw", "cyaw", "lean", "wB", "look", "sv", "tv", "wd", "wf")
 
 
 def flat(p):

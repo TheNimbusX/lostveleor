@@ -32,7 +32,8 @@ namespace Game.Sim
         private void WhirlwindUpgradesAtCast(int slot)
         {
             AbilityBuild build = _abilityBuilds[slot];
-            int contact = AbilityExecutionTicks(WhirlwindContactDelayTicks);
+            // Контакт этого каста: у формы Водоворот он позже (после тяги) — кокон и «Затягивает» от него же.
+            int contact = AbilityExecutionTicks(WhirlwindContactDelayFor(slot));
             if (build.Has(AbilityFlag.WhirlwindCocoon)) _cocoonUntilTick = Tick + contact + WhirlwindCocoonTailTicks;
             if (!build.Has(AbilityFlag.WhirlwindPull)) return;
 
@@ -257,11 +258,11 @@ namespace Game.Sim
             _abilityReadyTick[slot] = reduced < Tick ? Tick : reduced;
         }
 
-        // ---- Крушение: «Неудержимый», «Сотрясение», «Раскрутка» ----
+        // ---- Крушение: «Неудержимый» (Simulation.Wreck.Forms), «Сотрясение», «Раскрутка» ----
 
         private const int WreckConcussTicks = 9;
 
-        /// <summary>«Раскрутка»: каждый следующий удар серии +15%.</summary>
+        /// <summary>«Раскрутка»: каждый следующий удар серии +15% (мах 2 +15, удар оземь и вал +30, четвёртый +45).</summary>
         private static int WreckMomentum(AbilityBuild build, int stage, int damage)
             => build.Has(AbilityFlag.WreckMomentum) ? damage * (100 + 15 * stage) / 100 : damage;
 
@@ -273,20 +274,21 @@ namespace Game.Sim
         private FixVec2 _leapFrom;
         private int _sureCritUntilTick;
 
-        private void BoardingUpgradesAtLaunch(AbilityBuild build)
+        /// <summary>Тик зацепа Абордажа (Simulation.Abordage): отсчёт «Разгона» и «Сорвать атаку».</summary>
+        private void BoardingUpgradesAtHook(AbilityBuild build, int target)
         {
             _leapFrom = Entities.Position[PlayerId];
             if (build == null || !build.Has(AbilityFlag.BoardingInterrupt)) return;
-            if ((uint)_leapTarget >= (uint)Entities.Count || !Entities.Alive[_leapTarget]) return;
+            if ((uint)target >= (uint)Entities.Count || !Entities.Alive[target]) return;
             // Зацеп сбивает замах: начатая атака врага пропадает, как от оглушения,
             // вместе с меткой на земле и с той же паузой перед следующим замахом.
-            InterruptEnemySwing(_leapTarget);
-            Entities.PendingAttackTarget[_leapTarget] = -1;
-            Entities.AttackImpactTick[_leapTarget] = 0;
-            Entities.PendingAttackVariant[_leapTarget] = 0;
+            InterruptEnemySwing(target);
+            Entities.PendingAttackTarget[target] = -1;
+            Entities.AttackImpactTick[target] = 0;
+            Entities.PendingAttackVariant[target] = 0;
         }
 
-        /// <summary>«Разгон»: +10% урона кулака за каждый метр полёта.</summary>
+        /// <summary>«Разгон»: +10% урона кулака за каждый метр тяги (от места зацепа до удара).</summary>
         private int BoardingMomentum(AbilityBuild build, int damage)
         {
             if (!build.Has(AbilityFlag.BoardingMomentum)) return damage;
@@ -356,12 +358,15 @@ namespace Game.Sim
             return dx * dx + dy * dy <= Entities.BodyRadius[entity] * Entities.BodyRadius[entity];
         }
 
-        /// <summary>Защита героя от усилений: «Стальной кокон» −30% во время Вихря, «Неудержимый» −25% во время Крушения.</summary>
-        private int ApplyUpgradeReduction(int target, int damage)
+        /// <summary>
+        /// Защита героя от усилений: «Стальной кокон» −30% во время Вихря, «Неудержимый» −25%
+        /// в серии Крушения до удара оземь и в его удержании. («Якорная броня» −40% убрана 06.10 вечером.)
+        /// </summary>
+        private int ApplyUpgradeReduction(int source, int target, int damage)
         {
             if (target != PlayerId) return damage;
             if (CocoonActive) damage = damage * 70 / 100;
-            if (_wreckSlot >= 0 && BuildHas(_wreckSlot, AbilityFlag.WreckUnstoppable, AbilityDefinition.WreckId)) damage = damage * 75 / 100;
+            if (WreckUnstoppableNow) damage = damage * 75 / 100;
             return damage;
         }
 

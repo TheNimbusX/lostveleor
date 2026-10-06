@@ -17,9 +17,16 @@ namespace Game.View
             var asset=Resources.Load<TextAsset>("Localization/Camp/"+Locale);
             _translation=asset!=null?JsonUtility.FromJson<Table>(asset.text):null;
         }
-        public static string Get(string key)
+        // Только перевод из таблицы языка, без русского запасного: новые окна лагеря (CampWindowText) держат русский текст у
+        // места вызова и не дописывают ключи в общий switch ниже — его параллельно правят другие окна.
+        public static string Translated(string key)
         {
             if(_translation?.entries!=null)foreach(var e in _translation.entries)if(e.key==key && !string.IsNullOrEmpty(e.value))return e.value;
+            return null;
+        }
+        public static string Get(string key)
+        {
+            string translated=Translated(key);if(translated!=null)return translated;
             switch(key)
             {
                 case "npc.smith":return "Эни";

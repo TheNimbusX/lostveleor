@@ -61,12 +61,5 @@ namespace Game.Tests
             s.Step(new InputFrame{PotionMask=48});
             Assert.AreEqual(PotionKind.LargeHealth,s.Run.Preparation.Potion1);Assert.AreEqual(PotionKind.SmallHealth,s.Run.Preparation.Potion2);
         }
-        [Test] public void VersionFiveMigratesWithEmptyPotionsAndRetainsMerchant()
-        {
-            var c=Ready().Camp;c.RefreshTrader();
-            var restored=CampSaveCodec.Decode(LegacyCampSaveFixture.Encode(c,5),c.Items);
-            Assert.AreEqual(c.TraderGeneration,restored.TraderGeneration);Assert.AreEqual(c.Money(CurrencyType.Gold),restored.Money(CurrencyType.Gold));
-            for(int i=0;i<Camp.PotionKindCount;i++)Assert.AreEqual(0,restored.PotionCount((PotionKind)i));
-        }
     }
 }

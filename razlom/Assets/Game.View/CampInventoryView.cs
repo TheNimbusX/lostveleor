@@ -35,16 +35,27 @@ namespace Game.View
         static readonly string[] Names = { "Оружие", "Броня", "Кольцо", "Талисман", "Артефакт" };
         public void Initialize(TickDriver driver) { _driver = driver; }
         public static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-        public void Open() { if (_root == null) Build(); _driver.ClearCapturedInput(); _driver.Sim?.StopPlayerMovement(); if (_closing) { UiMotion.Stop(RootGroup); _closing = false; RootGroup.alpha = 1f; RootGroup.blocksRaycasts = true; } _root.SetActive(true); SyncPortraitStage(); _openedFrame = Time.frameCount; GameSound.Sequence(("tent_flap", 0f, .7f), ("bag_open", .12f, .6f)); Refresh(); if (_tent != null) StartCoroutine(RevealTent()); }
+        public void Open() { if (_root == null) Build(); _driver.ClearCapturedInput(); _driver.Sim?.StopPlayerMovement(); if (_closing) { UiMotion.Stop(RootGroup); _closing = false; RootGroup.alpha = 1f; RootGroup.blocksRaycasts = true; } _root.SetActive(true); SyncPortraitStage(); _openedFrame = Time.frameCount; GameSound.Sequence(("tent_flap", 0f, .7f), ("bag_open", .12f, .6f)); ApplyPendingPage(); Refresh(); if (_tent != null) StartCoroutine(RevealTent()); }
         public static int ClosedFrame { get; private set; } = -1;
         public void Close() { if (IsOpen) { GameSound.Play("tent_cloth", .45f); _closing = true; FadeOutRoot(); SyncPortraitStage(); _driver.ClearCapturedInput(); ClosedFrame = Time.frameCount; } }
         void Update()
         {
             if (!IsOpen || _openedFrame == Time.frameCount) return;
+            // На «Клятвах» действие карточки — E, как у всех действий лагеря и на концепте «Поклясться [E]».
+            // «Взаимодействие» по умолчанию I и закрывает палатку — его тут не брать (06.10).
+            if (_page == TentPage.Oaths && HasOathPage && OathKeyPressed()) { ActOnCard(); return; }
 #if ENABLE_INPUT_SYSTEM
             if ((Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) || GameKeyBindings.Pressed(GameAction.Interact) || (Gamepad.current!=null && Gamepad.current.buttonEast.wasPressedThisFrame)) Close();
 #else
             if (Input.GetKeyDown(KeyCode.Escape) || GameKeyBindings.Pressed(GameAction.Interact)) Close();
+#endif
+        }
+        static bool OathKeyPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.E);
 #endif
         }
         const float Width=1672, Height=941;
@@ -94,6 +105,8 @@ namespace Game.View
             Label(_board,"ЛЕСНОЙ ЛАГЕРЬ",65,58,290,35,18);
             Title(_board,"СНАРЯЖЕНИЕ",505,46,660,50,34,TextAnchor.MiddleCenter);
             _wallet=Label(_board,"",1210,54,335,45,23);
+            // Пять валют не влезают в строку 335 px размером 23: текст ужимается, а не обрезается.
+            _wallet.resizeTextForBestFit=true;_wallet.resizeTextMinSize=12;_wallet.resizeTextMaxSize=23;
             Button(_board,"×",1570,38,64,64,Close);
             _equipmentPage=Page("Equipment page");
 
@@ -271,7 +284,9 @@ namespace Game.View
             if(_tent!=null){RefreshTent();return;}
             RefreshPotionStock();
             var camp=_driver.Session.Camp;
-            _wallet.text="● "+camp.Money(CurrencyType.Gold)+"    ◆ "+camp.Money(CurrencyType.Shards)+"    ◈ "+camp.Money(CurrencyType.Lavidium);
+            // Пепел (клятвы) и сталь (Эни) с 06.10 тоже в кошельке лагеря; словами — у них ещё нет своих значков.
+            _wallet.text="● "+camp.Money(CurrencyType.Gold)+"   ◆ "+camp.Money(CurrencyType.Shards)+"   ◈ "+camp.Money(CurrencyType.Lavidium)
+                +"   пепел "+camp.Money(CurrencyType.Ash)+"   сталь "+camp.Money(CurrencyType.Steel);
             int count=0;
             for(int i=0;i<48;i++)
             {

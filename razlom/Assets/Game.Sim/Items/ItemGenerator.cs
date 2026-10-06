@@ -102,42 +102,101 @@ namespace Game.Sim
                 into.Replace(slot,new RolledAffix(old.AffixId,old.Stat,old.Op,old.Value+(max-old.Value)*fraction));
             }
 
+            // Закалка 06.10 уровень вещи не двигает: сдвиг остался только у старой перековки.
             int craftLevel = item.OriginalLevel + item.LegacyReforgeCount * (1 + (int)item.Rarity);
+            // Рост базового свойства копится по всем закалкам и упирается в потолок; применяется
+            // в конце вместе с шедевром, чтобы порядок шагов не менял итог.
+            Fix64 implicitGrowth = Fix64.Zero;
+            bool masterpiece = false;
             if (item.Crafting != null)
                 for (int i = 0; i < item.Crafting.Count; i++)
                 {
                     var step = item.Crafting.Step(i);
-                    if (step.Operation == ForgeOperation.Refine)
+                    // Шедевр — последняя ступень вещи: дальше вплавляется только сердце.
+                    if (masterpiece && step.Operation != ForgeOperation.Heart) return false;
+                    switch (step.Operation)
                     {
-                        if (step.Slot >= into.AffixCount || step.Fraction < Fix64.Ratio(1,4) || step.Fraction > Fix64.One) return false;
-                        var old = into.GetAffix(step.Slot); int definition = db.IndexOfAffix(old.AffixId);
-                        if (definition < 0) return false;
-                        Fix64 max = Fix64.Max(old.Value, db.GetAffix(definition).MaxValue);
-                        into.Replace(step.Slot, new RolledAffix(old.AffixId, old.Stat, old.Op, old.Value + (max - old.Value) * step.Fraction));
-                        craftLevel += 1 + (int)item.Rarity;
-                    }
-                    else
-                    {
-                        int definition = db.IndexOfAffix(step.AffixId);
-                        if (definition < 0) return false;
-                        var affix = db.GetAffix(definition);
-                        if (!affix.AllowedOn(baseDef.Category) || affix.MinItemLevel > craftLevel || step.Fraction < Fix64.Zero || step.Fraction > Fix64.One) return false;
-                        for (int existing = 0; existing < into.AffixCount; existing++)
+                        case ForgeOperation.Temper:
                         {
-                            if (step.Operation != ForgeOperation.Add && existing == step.Slot) continue;
-                            int existingDefinition = db.IndexOfAffix(into.GetAffix(existing).AffixId);
-                            if (existingDefinition >= 0 && db.GetAffix(existingDefinition).Group == affix.Group) return false;
+                            if (step.Fraction <= Fix64.Zero || step.Fraction > Fix64.One) return false;
+                            if (step.Slot == CraftingRecipe.BaseSlot)
+                            {
+                                if (item.Rarity != ItemRarity.Normal || !into.HasImplicit) return false;
+                                implicitGrowth = Fix64.Min(implicitGrowth + step.Fraction, CraftingRecipe.ImplicitTemperCap);
+                                break;
+                            }
+                            if (step.Slot >= into.AffixCount) return false;
+                            var old = into.GetAffix(step.Slot); int definition = db.IndexOfAffix(old.AffixId);
+                            if (definition < 0) return false;
+                            var affix = db.GetAffix(definition);
+                            // Рост — доля всего диапазона свойства, потолок — его максимум (до шедевра).
+                            Fix64 max = Fix64.Max(old.Value, affix.MaxValue);
+                            Fix64 range = Fix64.Max(Fix64.Zero, affix.MaxValue - affix.MinValue);
+                            into.Replace(step.Slot, new RolledAffix(old.AffixId, old.Stat, old.Op, Fix64.Min(old.Value + range * step.Fraction, max)));
+                            break;
                         }
-                        var rolled = new RolledAffix(affix.Id, affix.Stat, affix.Op, affix.MinValue + (affix.MaxValue - affix.MinValue) * step.Fraction);
-                        if (step.Operation == ForgeOperation.Add)
-                        { int cap = item.Rarity == ItemRarity.Magic ? 2 : item.Rarity == ItemRarity.Rare ? 4 : 0;
-                            if (step.Slot != into.AffixCount || into.AffixCount >= cap) return false; into.Add(rolled); }
-                        else { if (step.Slot >= into.AffixCount) return false; into.Replace(step.Slot, rolled); }
+                        case ForgeOperation.Crack:
+                            if (step.Slot != CraftingRecipe.BaseSlot || step.Fraction != Fix64.Zero) return false;
+                            break;
+                        case ForgeOperation.Masterpiece:
+                        {
+                            if (step.Slot != CraftingRecipe.BaseSlot || step.Fraction != Fix64.Zero) return false;
+                            masterpiece = true;
+                            for (int a = 0; a < into.AffixCount; a++)
+                            {
+                                var old = into.GetAffix(a); int definition = db.IndexOfAffix(old.AffixId);
+                                if (definition < 0) return false;
+                                var affix = db.GetAffix(definition);
+                                Fix64 range = Fix64.Max(Fix64.Zero, affix.MaxValue - affix.MinValue);
+                                into.Replace(a, new RolledAffix(old.AffixId, old.Stat, old.Op, old.Value + range * CraftingRecipe.MasterpieceStep));
+                            }
+                            break;
+                        }
+                        case ForgeOperation.Heart:
+                            // Сердце на числа вещи не влияет: грань читает забег (Camp.WornHeartFacetMask).
+                            if (step.Fraction != Fix64.Zero || !Camp.IsHeartFacetOf(step.AffixId, (HeartFacet)step.Slot)) return false;
+                            break;
+                        case ForgeOperation.Remelt:
+                        case ForgeOperation.Add:
+                        {
+                            int definition = db.IndexOfAffix(step.AffixId);
+                            if (definition < 0) return false;
+                            var affix = db.GetAffix(definition);
+                            if (!affix.AllowedOn(baseDef.Category) || affix.MinItemLevel > craftLevel || step.Fraction < Fix64.Zero || step.Fraction > Fix64.One) return false;
+                            for (int existing = 0; existing < into.AffixCount; existing++)
+                            {
+                                if (step.Operation != ForgeOperation.Add && existing == step.Slot) continue;
+                                int existingDefinition = db.IndexOfAffix(into.GetAffix(existing).AffixId);
+                                if (existingDefinition >= 0 && db.GetAffix(existingDefinition).Group == affix.Group) return false;
+                            }
+                            var rolled = new RolledAffix(affix.Id, affix.Stat, affix.Op, affix.MinValue + (affix.MaxValue - affix.MinValue) * step.Fraction);
+                            if (step.Operation == ForgeOperation.Add)
+                            {
+                                // Лимит редкости плюс одно свойство перелива (пробел №16); обычная и уникальная не дополняются.
+                                int cap = AddCap(item.Rarity);
+                                if (cap == 0 || step.Slot != into.AffixCount || into.AffixCount >= cap + 1) return false;
+                                into.Add(rolled);
+                            }
+                            else { if (step.Slot >= into.AffixCount) return false; into.Replace(step.Slot, rolled); }
+                            break;
+                        }
+                        default:
+                            // Transfer и неизвестные значения: такую историю не записывал ни один кузнец.
+                            return false;
                     }
                 }
 
+            if (into.HasImplicit && (implicitGrowth > Fix64.Zero || masterpiece))
+            {
+                Fix64 baseValue = into.ImplicitValue;
+                into.ImplicitValue = baseValue + baseValue * (implicitGrowth + (masterpiece ? CraftingRecipe.MasterpieceStep : Fix64.Zero));
+            }
+
             return true;
         }
+
+        /// <summary>Сколько свойств даёт добавление без перелива: редкая 2, эпическая 4, остальные не дополняются.</summary>
+        public static int AddCap(ItemRarity rarity) => rarity == ItemRarity.Magic ? 2 : rarity == ItemRarity.Rare ? 4 : 0;
 
         /// <summary>
         /// Взвешенный выбор аффикса среди подходящих.

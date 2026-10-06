@@ -22,6 +22,8 @@ public sealed class HudPortraitImporter : AssetPostprocessor
     {
         if (!assetPath.StartsWith("Assets/Resources/UI/HUD/") &&
             !assetPath.StartsWith("Assets/Resources/UI/Abilities/")) return;
+        // Звенья серии Крушения (06.10) — спрайты для Image и звеньев над героем: импорт задаёт их .meta.
+        if (assetPath.StartsWith("Assets/Resources/UI/HUD/WreckSeries/")) return;
         Apply((TextureImporter)assetImporter, assetPath);
     }
 

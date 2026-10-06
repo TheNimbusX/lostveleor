@@ -35,7 +35,8 @@ namespace Game.View
             _root = new GameObject("Тени под ногами жителей").transform;
             foreach (var npc in FindObjectsByType<CampServiceNpc>(FindObjectsInactive.Exclude))
             {
-                if (npc.Kind == CampServiceKind.Tent) continue;
+                // Палатка и доска клятв — предметы, а не жители: пятно тени им не нужно.
+                if (npc.Kind == CampServiceKind.Tent || npc.Kind == CampServiceKind.OathBoard) continue;
                 Bounds body = BodyBounds(npc);
                 var blob = Blob("Под жителем — " + npc.Kind, NpcSize);
                 blob.position = new Vector3(body.center.x, GroundAt(body.center, body.min.y) + Lift, body.center.z);

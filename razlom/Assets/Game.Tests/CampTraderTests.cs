@@ -11,12 +11,13 @@ namespace Game.Tests
     {
         [Test] public void RanksExpandWithoutResettingSoldSlotsAndReserveSurvivesRefresh()
         {
-            var camp = PrototypeContent.NewCamp(); camp.RecordRealAttemptEnded(1, 0); camp.DeveloperSetLevel(10); camp.Earn(CurrencyType.Gold, 10000);
+            // Ранги лагеря (06.10) — босс вместе с уровнем: уровень 18 есть сразу, ступени дают боссы.
+            var camp = PrototypeContent.NewCamp(); camp.RecordRealAttemptEnded(1, 0); camp.DeveloperSetLevel(18); camp.Earn(CurrencyType.Gold, 10000);
             Assert.AreEqual(4, camp.TraderStockCount); var retained = camp.TraderStock(1); Assert.Greater(camp.BuyFromTrader(0), 0);
-            Assert.AreEqual(CampUpgradeResult.Success, camp.TryUpgradeResident(CampResident.Trader));
+            camp.DeveloperCreditBoss(0); Assert.AreEqual(1, camp.Rank(CampResident.Trader));
             Assert.AreEqual(6, camp.TraderStockCount); Assert.True(camp.TraderStock(0).IsEmpty); Assert.True(retained.SameRecipe(camp.TraderStock(1)));
-            Assert.False(camp.ReserveTraderStock(1)); camp.TryUpgradeResident(CampResident.Trader); Assert.True(camp.ReserveTraderStock(1));
-            Assert.False(camp.ChooseTraderCategory(ItemCategory.Armor)); camp.TryUpgradeResident(CampResident.Trader); Assert.True(camp.ChooseTraderCategory(ItemCategory.Armor));
+            Assert.False(camp.ReserveTraderStock(1)); camp.DeveloperCreditBoss(1); Assert.True(camp.ReserveTraderStock(1));
+            Assert.False(camp.ChooseTraderCategory(ItemCategory.Armor)); camp.DeveloperCreditBoss(2); Assert.True(camp.ChooseTraderCategory(ItemCategory.Armor));
             Assert.True(camp.RefreshTrader()); Assert.True(retained.SameRecipe(camp.TraderStock(1)));
             Assert.AreEqual(ItemCategory.Armor, camp.Items.GetBase(camp.Items.IndexOfBase(camp.TraderStock(0).BaseId)).Category);
             camp.RefreshTraderAfterBoss(); Assert.True(retained.SameRecipe(camp.TraderStock(1)));
@@ -57,10 +58,19 @@ namespace Game.Tests
             Assert.Greater(rareBoss,rarePaid);Assert.Greater(rarePaid,0);Assert.AreEqual(100000,boss.Money(CurrencyType.Gold));
             boss=CampSaveCodec.Decode(CampSaveCodec.Encode(boss),boss.Items);Assert.True(boss.TraderBossStock);boss.RefreshTrader();Assert.False(boss.TraderBossStock);
         }
+        /// <summary>
+        /// Обычный уход с добычей лавку не обновляет. Уйти можно только между аренами
+        /// (06.10), поэтому забег сначала доходит до экрана награды.
+        /// </summary>
         [Test] public void OrdinaryRunExitDoesNotRefreshShop()
         {
-            var session=PrototypeContent.NewSession(123);session.EnterRift();
-            session.Step(new InputFrame{Command=(byte)RunCommand.Leave});Assert.AreEqual(0,session.Camp.TraderGeneration);
+            var session=PrototypeContent.NewSession(123);session.Camp.DeveloperSetLevel(Camp.ResidentsLevel);session.EnterRift();
+            var entities=session.Run.Sim.Entities;
+            for(int i=0;i<entities.Count;i++)if(entities.Side[i]!=Faction.Wole)entities.Alive[i]=false;
+            session.Step(InputFrame.Empty);entities.Position[Simulation.PlayerId]=session.Run.Map.ExitPoint(0);session.Step(InputFrame.Empty);
+            Assert.AreEqual(RunPhase.ChoosingReward,session.Run.Phase);
+            session.Step(new InputFrame{Command=(byte)RunCommand.Leave});
+            Assert.AreNotEqual(GameMode.Rift,session.Mode);Assert.AreEqual(0,session.Camp.TraderGeneration);
         }
         static Camp Rich(int gold = 10000)
         {

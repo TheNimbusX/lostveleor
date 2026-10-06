@@ -64,6 +64,54 @@ namespace Game.View
         [Tooltip("Шаблон ячейки атласа; сам остаётся выключенным")] public CampAtlasEntry AtlasTemplate;
         public TMP_Text AtlasCount;
 
+        // ---- вкладки «Сумка · Клятвы · Атлас» (06.10, концепты oaths-b / atlas-a; миграция v103) ----
+        // Старый префаб CampTent (CampTentBuilder) этих частей не имеет: окно проверяет каждую на null.
+
+        [Header("Вкладки (06.10)")]
+        [Tooltip("Строка вкладок капсом над окнами и пепел справа; приезжает вместе с панелями")] public RectTransform TabBar;
+        public Button OathsTab;
+        public GameObject OathsPage;
+        [Tooltip("Пепел справа сверху: значок и число")] public RawImage AshIcon;
+        public TMP_Text AshCount;
+        [Tooltip("«[Esc] Закрыть» внизу справа")] public TMP_Text EscLabel;
+
+        [Header("Клятвы")]
+        [Tooltip("Ряд слотов: 6 мест, закрытые — замок и «Ур. N»")] public CampOathSeal[] OathSlots = new CampOathSeal[6];
+        [Tooltip("Печати доски по номеру клятвы: [OathId − 1]")] public CampOathSeal[] OathSeals = new CampOathSeal[17];
+        [Tooltip("Временные знаки клятв из сборки; окончательные окно берёт из Resources/UI/OathIcons, если они есть")]
+        public Texture[] OathIcons = new Texture[17];
+        [Tooltip("«В силе · 2 из 3» над рядом слотов")] public TMP_Text OathSlotsCount;
+        [Tooltip("Карта морехода владельца под группами")] public RawImage OathMap;
+        public TMP_Text[] OathGroupTitles = new TMP_Text[4];
+        [Tooltip("Большая печать карточки")] public CampOathSeal OathCardSeal;
+        public TMP_Text OathCardName;
+        [Tooltip("«Герой · ступень 2 из 3»")] public TMP_Text OathCardMeta;
+        [Tooltip("Ступени ◆◆◆ под именем; только у клятв героя")] public Image[] OathCardPips = new Image[3];
+        public TMP_Text OathCardEffect;
+        [Tooltip("«Сейчас +60 · дальше +90»")] public TMP_Text OathCardProgress;
+        [Tooltip("Заметка: «эффект появится с блоком лута»")] public TMP_Text OathCardNote;
+        [Tooltip("Строка цены: значок пепла и число")] public GameObject OathCardPriceRow;
+        public RawImage OathCardPriceIcon;
+        public TMP_Text OathCardPrice;
+        [Tooltip("«Поклясться [E]» / «Укрепить» / «Включить» / «Выключить»")] public Button OathAction;
+        public TMP_Text OathActionLabel;
+        public TMP_Text OathActionKey;
+        [Tooltip("«[ПКМ] по печати — включить или выключить»")] public TMP_Text OathCardHint;
+        [Tooltip("Почему кнопка притухла / «ляжет в запас»")] public TMP_Text OathCardWarning;
+
+        [Header("Атлас 3×4 (06.10)")]
+        [Tooltip("Восемь артефактов акта I и четыре места акта II")] public CampOathSeal[] AtlasSeals = new CampOathSeal[12];
+        [Tooltip("«Акт I · Чаща» справа от счётчика")] public TMP_Text AtlasAct;
+        public CampOathSeal AtlasCardSeal;
+        public TMP_Text AtlasCardName;
+        public TMP_Text AtlasCardEffect;
+        [Tooltip("«[F] Включить · перезарядка 60 с» или «Срабатывает сам»")] public TMP_Text AtlasCardUse;
+        [Tooltip("Строка «Источник»: узел, значок, текст")] public GameObject AtlasCardSourceRow;
+        public TMP_Text AtlasCardSource;
+        [Tooltip("Строка «Можно взять с собой на столе сборов»")] public GameObject AtlasCardCarryRow;
+        public TMP_Text AtlasCardCarry;
+        [Tooltip("Нити карточки между строками: прячутся вместе со строками у неизвестного")] public GameObject[] AtlasCardLines = new GameObject[0];
+
         [Header("Подсказка")]
         [Tooltip("Карточка у ячейки под мышью: вещь, стат или зелье")] public RectTransform Tooltip;
         public CanvasGroup TooltipGroup;
@@ -162,13 +210,22 @@ namespace Game.View
             }
         }
 
-        public void ShowPage(bool atlas)
+        /// <summary>Сумка или атлас — для прежних вызовов (сборщик, съёмка); новые зовут <see cref="ShowPage(int)"/>.</summary>
+        public void ShowPage(bool atlas) => ShowPage(atlas ? 2 : 0);
+
+        /// <summary>Страница палатки: 0 — сумка, 1 — клятвы, 2 — атлас (порядок вкладок «Сумка · Клятвы · Атлас»).</summary>
+        public void ShowPage(int page)
         {
-            if (BagPage != null) BagPage.SetActive(!atlas);
+            // Префаб без клятв (до v103, старый CampTent): просьба о клятвах открывает сумку.
+            if (page == 1 && OathsPage == null) page = 0;
+            bool atlas = page == 2;
+            if (BagPage != null) BagPage.SetActive(page == 0);
+            if (OathsPage != null) OathsPage.SetActive(page == 1);
             if (AtlasPage != null) AtlasPage.SetActive(atlas);
             if (TabOn == null)
             {
-                CampShopView.SetTab(BagTab, !atlas);
+                CampShopView.SetTab(BagTab, page == 0);
+                CampShopView.SetTab(OathsTab, page == 1);
                 CampShopView.SetTab(AtlasTab, atlas);
             }
             else
@@ -291,6 +348,8 @@ namespace Game.View
 
         IEnumerable<RectTransform> Panels()
         {
+            // Строка вкладок приезжает первой: на концептах она над обеими панелями.
+            if (TabBar != null) yield return TabBar;
             yield return HeroPanel;
             yield return BagPanel;
         }

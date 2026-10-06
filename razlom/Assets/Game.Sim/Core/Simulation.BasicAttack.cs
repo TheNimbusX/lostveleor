@@ -38,7 +38,7 @@ namespace Game.Sim
             && !_pelagBasicAttack.ContactProcessed && Tick <= _pelagBasicAttack.ContactTick;
 
         // Удержание ЛКМ не считается намерением оборвать Вихрь или Крушение.
-        bool PelagBasicAbilityBlocking => WhirlwindChanneling || _wreckSlot >= 0 || SquallHoldsHero
+        bool PelagBasicAbilityBlocking => WhirlwindChanneling || _wreckSlot >= 0 || SquallHoldsHero || AbordageHoldsHero || AnchorThrowHoldsHero
             || _playerAction.ActiveAt(Tick) && _playerAction.DefinitionId == AbilityDefinition.WhirlwindId;
 
         void UpdatePelagBasicContinuation()

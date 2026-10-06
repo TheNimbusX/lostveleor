@@ -42,7 +42,10 @@ namespace Game.View
             { Check(false, "navigation initialized"); Finish(); yield break; }
             _root = world.CampRoot.transform;
             Check(_camp.Active && _camp.WalkMap.Contains(Flat(_camp.InteractionPosition)), "initial spawn lies on walk map");
-            while (_driver.Session.Camp.AttemptCount < 3) _driver.Session.Camp.RecordRealAttemptEnded(1, 0);
+            // Все рабочие места: Вен и Лео приходят на уровне 3, стол — после первого завершённого забега (06.10).
+            var reviewCamp = _driver.Session.Camp;
+            reviewCamp.DeveloperSetLevel(Math.Max(3, reviewCamp.Level));
+            if (reviewCamp.AttemptCount == 0) reviewCamp.RecordRealAttemptEnded(1, 0);
             // Скрытые жители появляются через обычный lifecycle SceneWorldView.
             yield return null;
             yield return WaitForControl();

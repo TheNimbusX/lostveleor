@@ -91,10 +91,11 @@ namespace Game.Tests
 
         private static int PlayWreck(Simulation sim, int enemy, int presses)
         {
+            // Нажатия 0 / 16 / 32 / 48: каждое — после удара прошлого этапа (сроки v4 06.10: удары +5, +5, +8).
             for (int p = 0; p < presses; p++)
             {
                 sim.Step(Press(0));
-                Idle(sim, 10);
+                Idle(sim, 15);
             }
             Idle(sim, 40);
             return Lost(sim, enemy);
@@ -124,7 +125,8 @@ namespace Game.Tests
             int target = Enemy(sim, 4, 0);
             int neighbour = Enemy(sim, 4, 1.2f);
             sim.Step(Press(0, 4, 0, target));
-            Idle(sim, 34);
+            // Абордаж v2 (02.10): удар на 10-м тике, оглушение «Тяжёлого кулака» 0,5 с — смотрим на 15-м.
+            Idle(sim, 14);
 
             Assert.AreEqual(75, Lost(sim, target), "кулак не попал в цель");
             Assert.AreEqual(75, Lost(sim, neighbour), "на абордаж! не задел соседа");
@@ -135,7 +137,7 @@ namespace Game.Tests
             int t = Enemy(plain, 4, 0);
             int n = Enemy(plain, 4, 1.2f);
             plain.Step(Press(0, 4, 0, t));
-            Idle(plain, 34);
+            Idle(plain, 14);
             Assert.AreEqual(0, Lost(plain, n), "сосед задет без таланта");
             Assert.IsFalse(plain.Statuses.IsStunned(t, plain.Tick), "оглушение без таланта");
         }

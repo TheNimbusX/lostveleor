@@ -6,7 +6,9 @@ namespace Game.View
     /// Тексты форм навыков Пелага (план форм 02.10). Как у талантов (SabreTalentTexts): бой знает только
     /// номера PelagForm, формулировки живут здесь. Формы и их суть — AGENTS/DESIGN.md «Пелаг — новая структура
     /// набора»: Вихрь — Буря (держать до 3 с), Водоворот (стягивает на 4 м и сбивает), Пенные волны (2 кольца
-    /// до 5 м), Вихрь на ходу (убрана). Шквал (02.10) — Охота, Пенный след, Неуловимый. Остальные формы не утверждены.
+    /// до 5 м), Вихрь на ходу (убрана). Шквал (02.10) — Охота, Пенный след, Неуловимый. Абордаж (02.10) — Обвал,
+    /// Гейзер, Пробоина. Крушение (03.10; 06.10 вечером) — Волнорез, Девятый вал, Призрачный якорь (вместо «Якорной брони»). Бросок якоря (03.10) — Невод,
+    /// Веер, Гарпун. Остальные формы не утверждены.
     ///
     /// Описание — одна строка простым языком: на карточке экрана формы оно не переносится. Число на карточке —
     /// из утверждённого описания; когда у формы будет механика, его даст сборка.
@@ -38,6 +40,15 @@ namespace Game.View
                 case PelagForm.SquallHunt: return "Охота";
                 case PelagForm.SquallFoamTrail: return "Пенный след";
                 case PelagForm.SquallElusive: return "Неуловимый";
+                case PelagForm.AbordageQuake: return "Обвал";
+                case PelagForm.AbordageGeyser: return "Гейзер";
+                case PelagForm.AbordageBreach: return "Пробоина";
+                case PelagForm.WreckBreakwater: return "Волнорез";
+                case PelagForm.WreckNinthWave: return "Девятый вал";
+                case PelagForm.WreckGhostAnchor: return "Призрачный якорь";
+                case PelagForm.AnchorThrowNet: return "Невод";
+                case PelagForm.AnchorThrowFan: return "Веер";
+                case PelagForm.AnchorThrowHarpoon: return "Гарпун";
                 case PelagForm.None: return string.Empty;
                 default: return "Форма " + (int)form;
             }
@@ -55,6 +66,15 @@ namespace Game.View
                 case PelagForm.SquallHunt: return "Прыжки к самым раненым; убийство даёт лишний прыжок.";
                 case PelagForm.SquallFoamTrail: return "Прыжки оставляют пену: она бьёт и замедляет врагов.";
                 case PelagForm.SquallElusive: return "Неуязвим в прыжках, последний возвращает на место.";
+                case PelagForm.AbordageQuake: return "Кулак в землю: волна до 3 м сбивает с ног.";
+                case PelagForm.AbordageGeyser: return "Апперкот: столб воды подбрасывает, вода падает.";
+                case PelagForm.AbordageBreach: return "Удар насквозь: за целью бьёт струя воды на 4 м.";
+                case PelagForm.WreckBreakwater: return "Стена воды на 8 м несёт врагов и обрушивается.";
+                case PelagForm.WreckNinthWave: return "Мах по врагу заряжает выпад: полоса и урон до ×2, +2 м.";
+                case PelagForm.WreckGhostAnchor: return "За выпадом падает призрачный якорь: круг 3 м, оглушение.";
+                case PelagForm.AnchorThrowNet: return "За якорем сеть пены 3 м: ловит и тянет всю полосу.";
+                case PelagForm.AnchorThrowFan: return "Три якоря веером: настоящий и два водяных под ±30°.";
+                case PelagForm.AnchorThrowHarpoon: return "Вонзается в первого: ×2 урона, тянет даже элиту.";
                 default: return string.Empty;
             }
         }
@@ -71,6 +91,15 @@ namespace Game.View
                 case PelagForm.SquallHunt: return "Лишние прыжки";
                 case PelagForm.SquallFoamTrail: return "Замедление";
                 case PelagForm.SquallElusive: return "Неуязвимость";
+                case PelagForm.AbordageQuake: return "Волна";
+                case PelagForm.AbordageGeyser: return "В воздухе";
+                case PelagForm.AbordageBreach: return "Струя";
+                case PelagForm.WreckBreakwater: return "Стена";
+                case PelagForm.WreckNinthWave: return "Заряд";
+                case PelagForm.WreckGhostAnchor: return "Якорь";
+                case PelagForm.AnchorThrowNet: return "Сеть";
+                case PelagForm.AnchorThrowFan: return "Полосы";
+                case PelagForm.AnchorThrowHarpoon: return "Укус";
                 default: return string.Empty;
             }
         }
@@ -87,6 +116,15 @@ namespace Game.View
                 case PelagForm.SquallHunt: return "до 4";
                 case PelagForm.SquallFoamTrail: return "−30% · 3 с";
                 case PelagForm.SquallElusive: return "все прыжки";
+                case PelagForm.AbordageQuake: return "3 м";
+                case PelagForm.AbordageGeyser: return "0,8 с";
+                case PelagForm.AbordageBreach: return "4 м";
+                case PelagForm.WreckBreakwater: return "8 м · до 6";
+                case PelagForm.WreckNinthWave: return "до ×2 · +2 м";
+                case PelagForm.WreckGhostAnchor: return "3 м · ×1,5";
+                case PelagForm.AnchorThrowNet: return "3 м · 50%";
+                case PelagForm.AnchorThrowFan: return "3 · ±30°";
+                case PelagForm.AnchorThrowHarpoon: return "×2";
                 default: return string.Empty;
             }
         }
@@ -96,6 +134,8 @@ namespace Game.View
         {
             int line = PelagForms.LineOf(form);
             if (line == PelagKit.SabreLine) return "Сабля";
+            // У Броска якоря линии талантов пока нет (вторая очередь) — имя навыка своё.
+            if (line == PelagKit.PoolIndexOf(AbilityDefinition.AnchorThrowId)) return "Бросок якоря";
             if (!SabreTalents.TryLineOf(line, out SabreTalentLine talents)) return "Навык";
             return Capitalized(SabreTalentTexts.LineName(talents));
         }

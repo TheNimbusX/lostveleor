@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Wreck2 Swing2 v3: grip-path optimiser (figure-eight backhand). Physics = the game's own sources
+       (razlom/Assets/Game.View: AnchorRigCore.StepLive, AnchorRigBody ...), checks = the anchor bake tool's sources
+       (anchorbake: BakeSim, Validation). artifacts/anchor-core was removed 06.10 ~03:51: pass -p:AnchorCore=<copy>
+       (identical snapshot of 03.10 16:31). Build with an artifacts path outside the repo. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>GripOpt2</RootNamespace>
+    <TieredCompilation>false</TieredCompilation>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Repo>../../../../../../..</Repo>
+    <AnchorCore Condition="'$(AnchorCore)' == ''">$(Repo)/artifacts/anchor-core</AnchorCore>
+    <Bake>$(AnchorCore)/bake/anchorbake</Bake>
+    <GameView>$(Repo)/razlom/Assets/Game.View</GameView>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(GameView)/AnchorHeadDynamics.cs" Link="View/AnchorHeadDynamics.cs" />
+    <Compile Include="$(GameView)/AnchorChainSolver.cs" Link="View/AnchorChainSolver.cs" />
+    <Compile Include="$(GameView)/AnchorRigBlend.cs" Link="Rig/AnchorRigBlend.cs" />
+    <Compile Include="$(GameView)/AnchorRigCore.cs" Link="Rig/AnchorRigCore.cs" />
+    <Compile Include="$(GameView)/AnchorRigBody.cs" Link="Rig/AnchorRigBody.cs" />
+    <Compile Include="$(GameView)/AnchorBake.cs" Link="Rig/AnchorBake.cs" />
+    <Compile Include="$(GameView)/AnchorChainLine.cs" Link="Rig/AnchorChainLine.cs" />
+    <Compile Include="$(GameView)/AnchorSlackChain.cs" Link="Rig/AnchorSlackChain.cs" />
+    <Compile Include="$(Bake)/GripTrack.cs" Link="Bake/GripTrack.cs" />
+    <Compile Include="$(Bake)/HeadModel.cs" Link="Bake/HeadModel.cs" />
+    <Compile Include="$(Bake)/BakeSim.cs" Link="Bake/BakeSim.cs" />
+    <Compile Include="$(Bake)/Validate.cs" Link="Bake/Validate.cs" />
+    <Compile Include="../gripopt/Cma.cs" Link="Cma.cs" />
+  </ItemGroup>
+</Project>

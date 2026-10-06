@@ -1,0 +1,1564 @@
+{
+ "rule": [
+  "python at_thrown_check.py <anim_dir> [out.json]",
+  "",
+  "Цепь в бросках всегда натянута и прямая: кольцо рукояти в левой (grip) → кольцо головы на линии Sim; длина = расстояние.",
+  "Что меряем по тикам Sim (W = 2, F и R из дальности; вид — время Tick − 2 + Alpha, здесь целые тики и ¼ тика):",
+  "  #3  цепь сквозь тело: расстояние прямой хват→кольцо до осей капсул (торс r 0,22, бёдра/голени 0,10, плечи/предплечья 0,07)",
+  "      ≥ r − 1 см; левая кисть и предплечье (держат рукоять) и правая кисть (опора на цепи) не в счёт;",
+  "  #11 опорная рука: правая (точка опоры кисти) от цепи ≤ 6 см, пока обе руки на цепи (Fly, Yank, Haul 0–4), кисти 0,10–0,30 м;",
+  "  #DESIGN §6 хват: скорость ≤ 8 м/с, ускорение ≤ 150 м/с² (по времени Sim, с растяжкой клипов);",
+  "  ловля: правая кисть в тик ловли от линии возврата (хват → конец) ≤ 0,10 м и впереди хвата (кольцо приходит в ладонь);",
+  "  #4  растяжение: в Thrown/Yank длина = расстояние — растяжения нет по построению (проверяется только выдача ≥ 0)."
+ ],
+ "scenarios": [
+  {
+   "reach": 9.5,
+   "W": 2,
+   "F": 9,
+   "R": 8,
+   "taut": 12,
+   "catch": 20,
+   "ticks": [
+    {
+     "tick": 0,
+     "clip": "Throw",
+     "frame": 0.0
+    },
+    {
+     "tick": 1,
+     "clip": "Throw",
+     "frame": 1.0
+    },
+    {
+     "tick": 2,
+     "clip": "Throw",
+     "frame": 2.0
+    },
+    {
+     "tick": 3,
+     "clip": "Throw",
+     "frame": 3.0,
+     "payout": 1.0,
+     "body_clear": [
+      0.041,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 4,
+     "clip": "Throw",
+     "frame": 4.0,
+     "payout": 2.044,
+     "body_clear": [
+      0.039,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.025,
+     "hands_along": 0.201
+    },
+    {
+     "tick": 5,
+     "clip": "Throw",
+     "frame": 5.0,
+     "payout": 3.094,
+     "body_clear": [
+      0.033,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.018,
+     "hands_along": 0.246
+    },
+    {
+     "tick": 6,
+     "clip": "Fly",
+     "frame": 0.43,
+     "payout": 4.11,
+     "body_clear": [
+      0.028,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.005,
+     "hands_along": 0.251
+    },
+    {
+     "tick": 7,
+     "clip": "Fly",
+     "frame": 0.86,
+     "payout": 5.127,
+     "body_clear": [
+      0.027,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.006,
+     "hands_along": 0.256
+    },
+    {
+     "tick": 8,
+     "clip": "Fly",
+     "frame": 1.29,
+     "payout": 6.141,
+     "body_clear": [
+      0.036,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.006,
+     "hands_along": 0.263
+    },
+    {
+     "tick": 9,
+     "clip": "Fly",
+     "frame": 1.71,
+     "payout": 7.154,
+     "body_clear": [
+      0.051,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.007,
+     "hands_along": 0.271
+    },
+    {
+     "tick": 10,
+     "clip": "Fly",
+     "frame": 2.14,
+     "payout": 8.163,
+     "body_clear": [
+      0.06,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.011,
+     "hands_along": 0.275
+    },
+    {
+     "tick": 11,
+     "clip": "Fly",
+     "frame": 2.57,
+     "payout": 9.162,
+     "body_clear": [
+      0.054,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.01,
+     "hands_along": 0.271
+    },
+    {
+     "tick": 12,
+     "clip": "Yank",
+     "frame": 0.0,
+     "payout": 9.16,
+     "body_clear": [
+      0.048,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.01,
+     "hands_along": 0.266
+    },
+    {
+     "tick": 13,
+     "clip": "Yank",
+     "frame": 1.0,
+     "payout": 8.806,
+     "body_clear": [
+      0.053,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.008,
+     "hands_along": 0.168
+    },
+    {
+     "tick": 14,
+     "clip": "Yank",
+     "frame": 2.0,
+     "payout": 8.18,
+     "body_clear": [
+      0.047,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.004,
+     "hands_along": 0.154
+    },
+    {
+     "tick": 15,
+     "clip": "Haul",
+     "frame": 1.0,
+     "payout": 7.341,
+     "body_clear": [
+      0.042,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.01,
+     "hands_along": 0.247
+    },
+    {
+     "tick": 16,
+     "clip": "Haul",
+     "frame": 2.0,
+     "payout": 6.33,
+     "body_clear": [
+      0.048,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.012,
+     "hands_along": 0.218
+    },
+    {
+     "tick": 17,
+     "clip": "Haul",
+     "frame": 3.0,
+     "payout": 5.105,
+     "body_clear": [
+      0.047,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.01,
+     "hands_along": 0.154
+    },
+    {
+     "tick": 18,
+     "clip": "Haul",
+     "frame": 4.0,
+     "payout": 3.719,
+     "body_clear": [
+      0.042,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.022,
+     "hands_along": 0.246
+    },
+    {
+     "tick": 19,
+     "clip": "Haul",
+     "frame": 5.0,
+     "payout": 2.074,
+     "body_clear": [
+      -0.0,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 20,
+     "clip": "Catch",
+     "frame": 0.0,
+     "catch_palm_off": 0.043,
+     "catch_palm_along": 0.149
+    },
+    {
+     "tick": 21,
+     "clip": "Catch",
+     "frame": 1.0
+    },
+    {
+     "tick": 22,
+     "clip": "Catch",
+     "frame": 2.0
+    },
+    {
+     "tick": 23,
+     "clip": "Catch",
+     "frame": 3.0
+    },
+    {
+     "tick": 24,
+     "clip": "Catch",
+     "frame": 4.0
+    },
+    {
+     "tick": 25,
+     "clip": "Catch",
+     "frame": 5.0
+    },
+    {
+     "tick": 26,
+     "clip": "Catch",
+     "frame": 6.0
+    },
+    {
+     "tick": 27,
+     "clip": "Catch",
+     "frame": 7.0
+    },
+    {
+     "tick": 28,
+     "clip": "Catch",
+     "frame": 8.0
+    },
+    {
+     "tick": 29,
+     "clip": "Catch",
+     "frame": 9.0
+    }
+   ],
+   "worst": {
+    "body_clear": [
+     -0.0,
+     [
+      19,
+      "Haul",
+      5.0,
+      "RightForeArm-RightHand"
+     ]
+    ],
+    "support": [
+     0.025,
+     [
+      4,
+      "Throw",
+      4.0
+     ]
+    ],
+    "hands": [
+     0.154,
+     0.275
+    ],
+    "grip_speed": [
+     4.85,
+     [
+      2,
+      "Throw",
+      2.0
+     ]
+    ],
+    "grip_acc": [
+     115.7,
+     [
+      3,
+      "Throw",
+      3.0
+     ]
+    ],
+    "grip_speed_60": [
+     6.37,
+     [
+      2,
+      "Throw",
+      2.0
+     ]
+    ],
+    "catch": [
+     0.043,
+     0.149
+    ]
+   },
+   "pass": {
+    "body_clear": true,
+    "support": true,
+    "hands": true,
+    "grip_speed": true,
+    "grip_acc": true,
+    "catch": true
+   }
+  },
+  {
+   "reach": 7.0,
+   "W": 2,
+   "F": 7,
+   "R": 8,
+   "taut": 10,
+   "catch": 18,
+   "ticks": [
+    {
+     "tick": 0,
+     "clip": "Throw",
+     "frame": 0.0
+    },
+    {
+     "tick": 1,
+     "clip": "Throw",
+     "frame": 1.0
+    },
+    {
+     "tick": 2,
+     "clip": "Throw",
+     "frame": 2.0
+    },
+    {
+     "tick": 3,
+     "clip": "Throw",
+     "frame": 3.0,
+     "payout": 0.926,
+     "body_clear": [
+      0.041,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 4,
+     "clip": "Throw",
+     "frame": 4.0,
+     "payout": 1.9,
+     "body_clear": [
+      0.039,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.025,
+     "hands_along": 0.201
+    },
+    {
+     "tick": 5,
+     "clip": "Throw",
+     "frame": 5.0,
+     "payout": 2.879,
+     "body_clear": [
+      0.033,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.019,
+     "hands_along": 0.246
+    },
+    {
+     "tick": 6,
+     "clip": "Fly",
+     "frame": 0.6,
+     "payout": 3.831,
+     "body_clear": [
+      0.024,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.003,
+     "hands_along": 0.253
+    },
+    {
+     "tick": 7,
+     "clip": "Fly",
+     "frame": 1.2,
+     "payout": 4.782,
+     "body_clear": [
+      0.023,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.007,
+     "hands_along": 0.262
+    },
+    {
+     "tick": 8,
+     "clip": "Fly",
+     "frame": 1.8,
+     "payout": 5.729,
+     "body_clear": [
+      0.032,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.011,
+     "hands_along": 0.273
+    },
+    {
+     "tick": 9,
+     "clip": "Fly",
+     "frame": 2.4,
+     "payout": 6.663,
+     "body_clear": [
+      0.045,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.013,
+     "hands_along": 0.273
+    },
+    {
+     "tick": 10,
+     "clip": "Yank",
+     "frame": 0.0,
+     "payout": 6.661,
+     "body_clear": [
+      0.048,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.012,
+     "hands_along": 0.266
+    },
+    {
+     "tick": 11,
+     "clip": "Yank",
+     "frame": 1.0,
+     "payout": 6.446,
+     "body_clear": [
+      0.053,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.013,
+     "hands_along": 0.168
+    },
+    {
+     "tick": 12,
+     "clip": "Yank",
+     "frame": 2.0,
+     "payout": 6.003,
+     "body_clear": [
+      0.047,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.007,
+     "hands_along": 0.154
+    },
+    {
+     "tick": 13,
+     "clip": "Haul",
+     "frame": 1.0,
+     "payout": 5.4,
+     "body_clear": [
+      0.042,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.011,
+     "hands_along": 0.247
+    },
+    {
+     "tick": 14,
+     "clip": "Haul",
+     "frame": 2.0,
+     "payout": 4.677,
+     "body_clear": [
+      0.048,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.011,
+     "hands_along": 0.218
+    },
+    {
+     "tick": 15,
+     "clip": "Haul",
+     "frame": 3.0,
+     "payout": 3.794,
+     "body_clear": [
+      0.047,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.017,
+     "hands_along": 0.153
+    },
+    {
+     "tick": 16,
+     "clip": "Haul",
+     "frame": 4.0,
+     "payout": 2.804,
+     "body_clear": [
+      0.042,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.037,
+     "hands_along": 0.245
+    },
+    {
+     "tick": 17,
+     "clip": "Haul",
+     "frame": 5.0,
+     "payout": 1.602,
+     "body_clear": [
+      0.006,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 18,
+     "clip": "Catch",
+     "frame": 0.0,
+     "catch_palm_off": 0.046,
+     "catch_palm_along": 0.148
+    },
+    {
+     "tick": 19,
+     "clip": "Catch",
+     "frame": 1.0
+    },
+    {
+     "tick": 20,
+     "clip": "Catch",
+     "frame": 2.0
+    },
+    {
+     "tick": 21,
+     "clip": "Catch",
+     "frame": 3.0
+    },
+    {
+     "tick": 22,
+     "clip": "Catch",
+     "frame": 4.0
+    },
+    {
+     "tick": 23,
+     "clip": "Catch",
+     "frame": 5.0
+    },
+    {
+     "tick": 24,
+     "clip": "Catch",
+     "frame": 6.0
+    },
+    {
+     "tick": 25,
+     "clip": "Catch",
+     "frame": 7.0
+    },
+    {
+     "tick": 26,
+     "clip": "Catch",
+     "frame": 8.0
+    },
+    {
+     "tick": 27,
+     "clip": "Catch",
+     "frame": 9.0
+    }
+   ],
+   "worst": {
+    "body_clear": [
+     0.006,
+     [
+      17,
+      "Haul",
+      5.0,
+      "RightForeArm-RightHand"
+     ]
+    ],
+    "support": [
+     0.037,
+     [
+      16,
+      "Haul",
+      4.0
+     ]
+    ],
+    "hands": [
+     0.153,
+     0.273
+    ],
+    "grip_speed": [
+     4.85,
+     [
+      2,
+      "Throw",
+      2.0
+     ]
+    ],
+    "grip_acc": [
+     115.7,
+     [
+      3,
+      "Throw",
+      3.0
+     ]
+    ],
+    "grip_speed_60": [
+     6.37,
+     [
+      2,
+      "Throw",
+      2.0
+     ]
+    ],
+    "catch": [
+     0.046,
+     0.148
+    ]
+   },
+   "pass": {
+    "body_clear": true,
+    "support": true,
+    "hands": true,
+    "grip_speed": true,
+    "grip_acc": true,
+    "catch": true
+   }
+  },
+  {
+   "reach": 5.0,
+   "W": 2,
+   "F": 5,
+   "R": 6,
+   "taut": 8,
+   "catch": 14,
+   "ticks": [
+    {
+     "tick": 0,
+     "clip": "Throw",
+     "frame": 0.0
+    },
+    {
+     "tick": 1,
+     "clip": "Throw",
+     "frame": 1.0
+    },
+    {
+     "tick": 2,
+     "clip": "Throw",
+     "frame": 2.0
+    },
+    {
+     "tick": 3,
+     "clip": "Throw",
+     "frame": 3.0,
+     "payout": 0.892,
+     "body_clear": [
+      0.042,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 4,
+     "clip": "Throw",
+     "frame": 4.0,
+     "payout": 1.841,
+     "body_clear": [
+      0.039,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.023,
+     "hands_along": 0.201
+    },
+    {
+     "tick": 5,
+     "clip": "Throw",
+     "frame": 5.0,
+     "payout": 2.793,
+     "body_clear": [
+      0.033,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.019,
+     "hands_along": 0.246
+    },
+    {
+     "tick": 6,
+     "clip": "Fly",
+     "frame": 1.0,
+     "payout": 3.734,
+     "body_clear": [
+      0.019,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.01,
+     "hands_along": 0.258
+    },
+    {
+     "tick": 7,
+     "clip": "Fly",
+     "frame": 2.0,
+     "payout": 4.666,
+     "body_clear": [
+      0.028,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.018,
+     "hands_along": 0.276
+    },
+    {
+     "tick": 8,
+     "clip": "Yank",
+     "frame": 0.0,
+     "payout": 4.663,
+     "body_clear": [
+      0.024,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.015,
+     "hands_along": 0.266
+    },
+    {
+     "tick": 9,
+     "clip": "Yank",
+     "frame": 1.0,
+     "payout": 4.468,
+     "body_clear": [
+      0.053,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.021,
+     "hands_along": 0.167
+    },
+    {
+     "tick": 10,
+     "clip": "Yank",
+     "frame": 2.0,
+     "payout": 4.004,
+     "body_clear": [
+      0.047,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.015,
+     "hands_along": 0.153
+    },
+    {
+     "tick": 11,
+     "clip": "Haul",
+     "frame": 1.5,
+     "payout": 3.358,
+     "body_clear": [
+      0.045,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.024,
+     "hands_along": 0.232
+    },
+    {
+     "tick": 12,
+     "clip": "Haul",
+     "frame": 3.0,
+     "payout": 2.541,
+     "body_clear": [
+      0.047,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.031,
+     "hands_along": 0.151
+    },
+    {
+     "tick": 13,
+     "clip": "Haul",
+     "frame": 4.5,
+     "payout": 1.574,
+     "body_clear": [
+      0.009,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 14,
+     "clip": "Catch",
+     "frame": 0.0,
+     "catch_palm_off": 0.052,
+     "catch_palm_along": 0.146
+    },
+    {
+     "tick": 15,
+     "clip": "Catch",
+     "frame": 1.0
+    },
+    {
+     "tick": 16,
+     "clip": "Catch",
+     "frame": 2.0
+    },
+    {
+     "tick": 17,
+     "clip": "Catch",
+     "frame": 3.0
+    },
+    {
+     "tick": 18,
+     "clip": "Catch",
+     "frame": 4.0
+    },
+    {
+     "tick": 19,
+     "clip": "Catch",
+     "frame": 5.0
+    },
+    {
+     "tick": 20,
+     "clip": "Catch",
+     "frame": 6.0
+    },
+    {
+     "tick": 21,
+     "clip": "Catch",
+     "frame": 7.0
+    },
+    {
+     "tick": 22,
+     "clip": "Catch",
+     "frame": 8.0
+    },
+    {
+     "tick": 23,
+     "clip": "Catch",
+     "frame": 9.0
+    }
+   ],
+   "worst": {
+    "body_clear": [
+     0.009,
+     [
+      13,
+      "Haul",
+      4.5,
+      "RightForeArm-RightHand"
+     ]
+    ],
+    "support": [
+     0.031,
+     [
+      12,
+      "Haul",
+      3.0
+     ]
+    ],
+    "hands": [
+     0.151,
+     0.276
+    ],
+    "grip_speed": [
+     4.85,
+     [
+      2,
+      "Throw",
+      2.0
+     ]
+    ],
+    "grip_acc": [
+     116.3,
+     [
+      9,
+      "Yank",
+      1.0
+     ]
+    ],
+    "grip_speed_60": [
+     6.37,
+     [
+      2,
+      "Throw",
+      2.0
+     ]
+    ],
+    "catch": [
+     0.052,
+     0.146
+    ]
+   },
+   "pass": {
+    "body_clear": true,
+    "support": true,
+    "hands": true,
+    "grip_speed": true,
+    "grip_acc": true,
+    "catch": true
+   }
+  },
+  {
+   "reach": 4.0,
+   "W": 2,
+   "F": 4,
+   "R": 4,
+   "taut": 7,
+   "catch": 11,
+   "ticks": [
+    {
+     "tick": 0,
+     "clip": "Throw",
+     "frame": 0.0
+    },
+    {
+     "tick": 1,
+     "clip": "Throw",
+     "frame": 1.0
+    },
+    {
+     "tick": 2,
+     "clip": "Throw",
+     "frame": 2.0
+    },
+    {
+     "tick": 3,
+     "clip": "Throw",
+     "frame": 3.0,
+     "payout": 0.862,
+     "body_clear": [
+      0.042,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 4,
+     "clip": "Throw",
+     "frame": 4.0,
+     "payout": 1.789,
+     "body_clear": [
+      0.039,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.023,
+     "hands_along": 0.201
+    },
+    {
+     "tick": 5,
+     "clip": "Throw",
+     "frame": 5.0,
+     "payout": 2.718,
+     "body_clear": [
+      0.033,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.021,
+     "hands_along": 0.246
+    },
+    {
+     "tick": 6,
+     "clip": "Fly",
+     "frame": 1.5,
+     "payout": 3.652,
+     "body_clear": [
+      0.024,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.015,
+     "hands_along": 0.267
+    },
+    {
+     "tick": 7,
+     "clip": "Yank",
+     "frame": 0.0,
+     "payout": 3.664,
+     "body_clear": [
+      0.022,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.019,
+     "hands_along": 0.266
+    },
+    {
+     "tick": 8,
+     "clip": "Yank",
+     "frame": 1.0,
+     "payout": 3.381,
+     "body_clear": [
+      0.053,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.029,
+     "hands_along": 0.166
+    },
+    {
+     "tick": 9,
+     "clip": "Haul",
+     "frame": 3.0,
+     "payout": 2.702,
+     "body_clear": [
+      0.047,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.028,
+     "hands_along": 0.151
+    },
+    {
+     "tick": 10,
+     "clip": "Haul",
+     "frame": 4.5,
+     "payout": 1.706,
+     "body_clear": [
+      0.005,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 11,
+     "clip": "Catch",
+     "frame": 0.0,
+     "catch_palm_off": 0.057,
+     "catch_palm_along": 0.144
+    },
+    {
+     "tick": 12,
+     "clip": "Catch",
+     "frame": 1.0
+    },
+    {
+     "tick": 13,
+     "clip": "Catch",
+     "frame": 2.0
+    },
+    {
+     "tick": 14,
+     "clip": "Catch",
+     "frame": 3.0
+    },
+    {
+     "tick": 15,
+     "clip": "Catch",
+     "frame": 4.0
+    },
+    {
+     "tick": 16,
+     "clip": "Catch",
+     "frame": 5.0
+    },
+    {
+     "tick": 17,
+     "clip": "Catch",
+     "frame": 6.0
+    },
+    {
+     "tick": 18,
+     "clip": "Catch",
+     "frame": 7.0
+    },
+    {
+     "tick": 19,
+     "clip": "Catch",
+     "frame": 8.0
+    },
+    {
+     "tick": 20,
+     "clip": "Catch",
+     "frame": 9.0
+    }
+   ],
+   "worst": {
+    "body_clear": [
+     0.005,
+     [
+      10,
+      "Haul",
+      4.5,
+      "RightForeArm-RightHand"
+     ]
+    ],
+    "support": [
+     0.029,
+     [
+      8,
+      "Yank",
+      1.0
+     ]
+    ],
+    "hands": [
+     0.151,
+     0.267
+    ],
+    "grip_speed": [
+     4.85,
+     [
+      2,
+      "Throw",
+      2.0
+     ]
+    ],
+    "grip_acc": [
+     115.7,
+     [
+      3,
+      "Throw",
+      3.0
+     ]
+    ],
+    "grip_speed_60": [
+     6.37,
+     [
+      2,
+      "Throw",
+      2.0
+     ]
+    ],
+    "catch": [
+     0.057,
+     0.144
+    ]
+   },
+   "pass": {
+    "body_clear": true,
+    "support": true,
+    "hands": true,
+    "grip_speed": true,
+    "grip_acc": true,
+    "catch": true
+   }
+  },
+  {
+   "reach": 2.0,
+   "W": 2,
+   "F": 2,
+   "R": 4,
+   "taut": 5,
+   "catch": 9,
+   "ticks": [
+    {
+     "tick": 0,
+     "clip": "Throw",
+     "frame": 0.0
+    },
+    {
+     "tick": 1,
+     "clip": "Throw",
+     "frame": 1.0
+    },
+    {
+     "tick": 2,
+     "clip": "Throw",
+     "frame": 2.0
+    },
+    {
+     "tick": 3,
+     "clip": "Throw",
+     "frame": 3.0,
+     "payout": 0.724,
+     "body_clear": [
+      0.047,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 4,
+     "clip": "Fly",
+     "frame": 0.5,
+     "payout": 1.624,
+     "body_clear": [
+      0.03,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.033,
+     "hands_along": 0.25
+    },
+    {
+     "tick": 5,
+     "clip": "Yank",
+     "frame": 0.0,
+     "payout": 1.672,
+     "body_clear": [
+      0.028,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.038,
+     "hands_along": 0.264
+    },
+    {
+     "tick": 6,
+     "clip": "Yank",
+     "frame": 1.0,
+     "payout": 1.705,
+     "body_clear": [
+      0.051,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.063,
+     "hands_along": 0.156
+    },
+    {
+     "tick": 7,
+     "clip": "Haul",
+     "frame": 3.0,
+     "payout": 1.457,
+     "body_clear": [
+      0.047,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.063,
+     "hands_along": 0.14
+    },
+    {
+     "tick": 8,
+     "clip": "Haul",
+     "frame": 4.5,
+     "payout": 1.065,
+     "body_clear": [
+      0.027,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 9,
+     "clip": "Catch",
+     "frame": 0.0,
+     "catch_palm_off": 0.082,
+     "catch_palm_along": 0.132
+    },
+    {
+     "tick": 10,
+     "clip": "Catch",
+     "frame": 1.0
+    },
+    {
+     "tick": 11,
+     "clip": "Catch",
+     "frame": 2.0
+    },
+    {
+     "tick": 12,
+     "clip": "Catch",
+     "frame": 3.0
+    },
+    {
+     "tick": 13,
+     "clip": "Catch",
+     "frame": 4.0
+    },
+    {
+     "tick": 14,
+     "clip": "Catch",
+     "frame": 5.0
+    },
+    {
+     "tick": 15,
+     "clip": "Catch",
+     "frame": 6.0
+    },
+    {
+     "tick": 16,
+     "clip": "Catch",
+     "frame": 7.0
+    },
+    {
+     "tick": 17,
+     "clip": "Catch",
+     "frame": 8.0
+    },
+    {
+     "tick": 18,
+     "clip": "Catch",
+     "frame": 9.0
+    }
+   ],
+   "worst": {
+    "body_clear": [
+     0.027,
+     [
+      8,
+      "Haul",
+      4.5,
+      "RightForeArm-RightHand"
+     ]
+    ],
+    "support": [
+     0.063,
+     [
+      7,
+      "Haul",
+      3.0
+     ]
+    ],
+    "hands": [
+     0.14,
+     0.264
+    ],
+    "grip_speed": [
+     5.02,
+     [
+      4,
+      "Fly",
+      0.5
+     ]
+    ],
+    "grip_acc": [
+     118.3,
+     [
+      5,
+      "Yank",
+      0.0
+     ]
+    ],
+    "grip_speed_60": [
+     6.37,
+     [
+      2,
+      "Throw",
+      2.0
+     ]
+    ],
+    "catch": [
+     0.082,
+     0.132
+    ]
+   },
+   "pass": {
+    "body_clear": true,
+    "support": false,
+    "hands": true,
+    "grip_speed": true,
+    "grip_acc": true,
+    "catch": true
+   }
+  },
+  {
+   "reach": 1.0,
+   "W": 2,
+   "F": 1,
+   "R": 4,
+   "taut": 4,
+   "catch": 8,
+   "ticks": [
+    {
+     "tick": 0,
+     "clip": "Throw",
+     "frame": 0.0
+    },
+    {
+     "tick": 1,
+     "clip": "Throw",
+     "frame": 1.0
+    },
+    {
+     "tick": 2,
+     "clip": "Throw",
+     "frame": 2.0
+    },
+    {
+     "tick": 3,
+     "clip": "Throw",
+     "frame": 3.0,
+     "payout": 0.485,
+     "body_clear": [
+      0.055,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 4,
+     "clip": "Yank",
+     "frame": 0.0,
+     "payout": 0.694,
+     "body_clear": [
+      0.041,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.087,
+     "hands_along": 0.252
+    },
+    {
+     "tick": 5,
+     "clip": "Yank",
+     "frame": 1.0,
+     "payout": 0.971,
+     "body_clear": [
+      0.049,
+      "RightForeArm-RightHand"
+     ],
+     "support_off": 0.115,
+     "hands_along": 0.123
+    },
+    {
+     "tick": 6,
+     "clip": "Haul",
+     "frame": 3.0,
+     "payout": 0.933,
+     "body_clear": [
+      0.047,
+      "Hips-Spine2"
+     ],
+     "support_off": 0.108,
+     "hands_along": 0.11
+    },
+    {
+     "tick": 7,
+     "clip": "Haul",
+     "frame": 4.5,
+     "payout": 0.817,
+     "body_clear": [
+      0.04,
+      "RightForeArm-RightHand"
+     ]
+    },
+    {
+     "tick": 8,
+     "clip": "Catch",
+     "frame": 0.0,
+     "catch_palm_off": 0.124,
+     "catch_palm_along": 0.093
+    },
+    {
+     "tick": 9,
+     "clip": "Catch",
+     "frame": 1.0
+    },
+    {
+     "tick": 10,
+     "clip": "Catch",
+     "frame": 2.0
+    },
+    {
+     "tick": 11,
+     "clip": "Catch",
+     "frame": 3.0
+    },
+    {
+     "tick": 12,
+     "clip": "Catch",
+     "frame": 4.0
+    },
+    {
+     "tick": 13,
+     "clip": "Catch",
+     "frame": 5.0
+    },
+    {
+     "tick": 14,
+     "clip": "Catch",
+     "frame": 6.0
+    },
+    {
+     "tick": 15,
+     "clip": "Catch",
+     "frame": 7.0
+    },
+    {
+     "tick": 16,
+     "clip": "Catch",
+     "frame": 8.0
+    },
+    {
+     "tick": 17,
+     "clip": "Catch",
+     "frame": 9.0
+    }
+   ],
+   "worst": {
+    "body_clear": [
+     0.04,
+     [
+      7,
+      "Haul",
+      4.5,
+      "RightForeArm-RightHand"
+     ]
+    ],
+    "support": [
+     0.115,
+     [
+      5,
+      "Yank",
+      1.0
+     ]
+    ],
+    "hands": [
+     0.11,
+     0.252
+    ],
+    "grip_speed": [
+     6.29,
+     [
+      4,
+      "Yank",
+      0.0
+     ]
+    ],
+    "grip_acc": [
+     138.9,
+     [
+      4,
+      "Yank",
+      0.0
+     ]
+    ],
+    "grip_speed_60": [
+     6.37,
+     [
+      2,
+      "Throw",
+      2.0
+     ]
+    ],
+    "catch": [
+     0.124,
+     0.093
+    ]
+   },
+   "pass": {
+    "body_clear": true,
+    "support": false,
+    "hands": true,
+    "grip_speed": true,
+    "grip_acc": true,
+    "catch": false
+   }
+  }
+ ],
+ "limits": {
+  "body_clear_min": -0.01,
+  "support_max": 0.06,
+  "hands_along": [
+   0.1,
+   0.3
+  ],
+  "grip_speed_max": 8.0,
+  "grip_acc_max": 150.0,
+  "catch_palm_max": 0.1
+ },
+ "pass_main": true
+}

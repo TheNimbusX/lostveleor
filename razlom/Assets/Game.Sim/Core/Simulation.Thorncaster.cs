@@ -611,14 +611,22 @@ namespace Game.Sim
         /// выпуск считает ту же длину, что и начало замаха, из того же Origin.
         /// </summary>
         public Fix64 ThornShotFlightLength(FixVec2 origin, FixVec2 direction)
+            => GroundPathLength(origin, direction, ThornShotStartOffset, ThornShotMaxLength);
+
+        /// <summary>
+        /// Путь снаряда вдоль земли — общий для шипа Шипомёта и семян Хозяина Чащи
+        /// (Simulation.ForestBoss.Seeds): от origin + direction × startOffset до первой точки, где
+        /// пола нет, не длиннее maxLength; путь от тела до начала тоже обязан быть чист — иначе ноль.
+        /// </summary>
+        internal Fix64 GroundPathLength(FixVec2 origin, FixVec2 direction, Fix64 startOffset, Fix64 maxLength)
         {
-            if (_layout == null) return ThornShotMaxLength;
-            var start = origin + direction * ThornShotStartOffset;
+            if (_layout == null) return maxLength;
+            var start = origin + direction * startOffset;
             if (!ThornGroundClear(origin, start, 4)) return Fix64.Zero;
             var clear = Fix64.Zero;
-            while (clear < ThornShotMaxLength)
+            while (clear < maxLength)
             {
-                var step = Fix64.Min(ThornShotProbeStep, ThornShotMaxLength - clear);
+                var step = Fix64.Min(ThornShotProbeStep, maxLength - clear);
                 var from = start + direction * clear;
                 if (_layout.CanTravel(from, start + direction * (clear + step), ThornGroundProbe))
                 {
@@ -635,7 +643,7 @@ namespace Game.Sim
                 }
                 return clear;
             }
-            return ThornShotMaxLength;
+            return maxLength;
         }
 
         /// <summary>

@@ -112,7 +112,9 @@ namespace Game.View
             GUILayout.Label($"ЛАГЕРЬ · акт {camp.Act}", _title);
             GUILayout.Label($"золото {camp.Money(CurrencyType.Gold)}   " +
                             $"осколки {camp.Money(CurrencyType.Shards)}   " +
-                            $"лавидий {camp.Money(CurrencyType.Lavidium)}", _line);
+                            $"лавидий {camp.Money(CurrencyType.Lavidium)}   " +
+                            $"пепел {camp.Money(CurrencyType.Ash)}   " +
+                            $"сталь {camp.Money(CurrencyType.Steel)}", _line);
 
             DrawWorn(camp);
 

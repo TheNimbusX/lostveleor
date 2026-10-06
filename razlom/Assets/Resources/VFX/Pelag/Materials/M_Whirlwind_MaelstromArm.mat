@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_Whirlwind_MaelstromArm
-  m_Shader: {fileID: 4800000, guid: 79e85fa9f21c2c944abe1412cac3ab97, type: 3}
+  m_Shader: {fileID: 4800000, guid: e650da1306214e819516156d7c8caa1a, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -23,37 +23,39 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _ErodeTex:
+        m_Texture: {fileID: 2800000, guid: 0d30b359af34f9049bdf5863b06dd25f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _FoamTex:
         m_Texture: {fileID: 2800000, guid: b0c552b9a0531564dbf486ea02aab0e8, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Aspect: 7
-    - _CameraPush: 0
-    - _EdgeRag: 0.24
-    - _ErodeAlong: 0.8
-    - _ErodeFrom: 0.4
-    - _ErodeGain: 1.6
-    - _ErodeTo: 0.74
-    - _FadeFrom: 0.64
-    - _FadeTo: 0.8
-    - _FlowSpeed: 1.6
-    - _Glow: 0.15
-    - _HeadFoam: 0.3
-    - _HeadFrom: 0.3
-    - _HeadSeconds: 0.14
-    - _LifeSeconds: 0.8
-    - _Opacity: 1
-    - _OutlinePx: 2.2
-    - _Streaks: 1
+    - _BreakRimPx: 1.5
+    - _BreakScale: 2.2
+    - _ClumpScale: 0.4
+    - _CoarseScale: 0.5
+    - _DropLife: 0.07
+    - _EdgeEarly: 0.03
+    - _EndRag: 0.3
+    - _FadeFrom: 0.74
+    - _FadeTo: 0.82
+    - _Glow: 0.2
+    - _OutlinePx: 2
     m_Colors:
-    - _Bands: {r: 0.14, g: 0.38, b: 0.62, a: 0.32}
+    - _Across: {r: 0.95, g: 0.8, b: 0.25, a: 0.75}
+    - _Bands: {r: 0.15, g: 0.75, b: 0.55, a: 0.4}
+    - _Break: {r: 0.62, g: 0.06, b: 0, a: 0.14}
+    - _Crest: {r: 0.22, g: 0.16, b: 0.035, a: 0.12}
+    - _DarkLines: {r: 3, g: 2.2, b: 0.35, a: 0.45}
     - _Deep: {r: 0.12, g: 0.04, b: 0.3, a: 1}
-    - _Foam: {r: 1.12, g: 1.22, b: 1.22, a: 1}
-    - _FoamScale: {r: 6, g: 1.1, b: 2.2, a: 0.5}
-    - _FoamShade: {r: 0.62, g: 0.86, b: 0.91, a: 1}
+    - _Foam: {r: 1.12, g: 1.06, b: 1.14, a: 1}
+    - _FoamShade: {r: 0.78, g: 0.7, b: 0.96, a: 1}
+    - _Lines: {r: 4, g: 1.5, b: 0.45, a: 0.95}
     - _Outline: {r: 0.02, g: 0.08, b: 0.11, a: 0.92}
+    - _Over: {r: 1, g: 0.25, b: 0.45, a: 0.3}
     - _Shallow: {r: 0.66, g: 0.48, b: 0.95, a: 1}
     - _Water: {r: 0.36, g: 0.16, b: 0.7, a: 1}
   m_BuildTextureStacks: []

@@ -15,7 +15,8 @@ namespace Game.View
     /// вида ForestThicketMaster, тело — через ArenaView.TryGetEntityView, вид тела —
     /// ThicketMasterAnimatorView (у серой заглушки его нет — тогда кости и бугор пустые).
     ///
-    /// События — EnemyAction* с EnemyActionKind.Thicket* (SimEvent.cs, 11…19), тик
+    /// События — EnemyAction* с EnemyActionKind.Thicket* (SimEvent.cs, 11…19; терновник 21 — ещё и
+    /// EnemyProjectileLaunched его шипов, ThicketMasterCombatView.Seeds.cs), тик
     /// каждого — тик Sim, в котором оно родилось (FrameEventContext.SimulationTick − 1):
     /// эффект, поставленный по нему, повторяется съёмкой и держит паузу.
     /// </summary>
@@ -59,6 +60,8 @@ namespace Game.View
             ThicketStormDangerView.EnsureOn(gameObject);
             // Вступление-кат-сцена: камера, полосы, HUD, титр (владелец 02.10).
             ThicketMasterIntroView.EnsureOn(gameObject);
+            // Смерть: наезд камеры на добивании (владелец 02.10, вечер: «смерть надо доработать»).
+            ThicketMasterDeathView.EnsureOn(gameObject);
         }
 
         private void LateUpdate()
@@ -132,7 +135,7 @@ namespace Game.View
                     continue;
                 }
                 if (e.Type != SimEventType.EnemyActionStarted && e.Type != SimEventType.EnemyActionImpact
-                    && e.Type != SimEventType.EnemyActionCancelled) continue;
+                    && e.Type != SimEventType.EnemyActionCancelled && e.Type != SimEventType.EnemyProjectileLaunched) continue;
                 var kind = (EnemyActionKind)e.ActionVariant;
                 if (!ThicketMasterClipRules.IsThicketKind(kind)) continue;
                 if (e.Source < 0 || e.Source >= sim.Entities.Count || sim.Entities.Kind[e.Source] != EnemyKind.ForestThicketMaster)
@@ -142,6 +145,10 @@ namespace Game.View
                 {
                     case SimEventType.EnemyActionStarted: Started(sim, e.Source, kind, e.Amount, tick, at); break;
                     case SimEventType.EnemyActionImpact: Impact(e.Source, kind, e.Amount, e.Flag, tick, at); break;
+                    // Шип терновника сорвался с куста (Amount — номер шипа, Position — начало пути): § 17.2.
+                    case SimEventType.EnemyProjectileLaunched:
+                        if (kind == EnemyActionKind.ThicketSeeds) OnSeedLaunched(e.Source, tick, e.Amount, at);
+                        break;
                     default: OnActionCancelled(e.Source, kind, e.Amount, tick); break;
                 }
             }
@@ -182,6 +189,10 @@ namespace Game.View
                     if (amount == 0) OnStormBegin(boss, tick, a.ImpactTick);
                     else OnStormSecondWaveMarked(boss, tick, a.LastImpactTick);
                     break;
+                // Терновник (§ 17.2): Amount 0 — жест каста; кусты (k ≥ 1) и линии вид читает из Sim (TryGetThicketBush).
+                case EnemyActionKind.ThicketSeeds:
+                    if (amount == 0 && a.Action == ThicketMasterAction.Seeds) OnSeedsWindup(boss, tick, a.ImpactTick);
+                    break;
             }
         }
 
@@ -197,6 +208,8 @@ namespace Game.View
                 case EnemyActionKind.ThicketPollen: OnPollenLand(boss, tick, amount, at, hit); break;
                 case EnemyActionKind.ThicketRain: OnRainVolley(boss, tick, amount, at, hit); break;
                 case EnemyActionKind.ThicketStorm: OnStormWave(boss, tick, amount, at, hit); break;
+                // Шип встал: Amount — номер шипа, at — где (у тела героя или конец линии), hit — попал.
+                case EnemyActionKind.ThicketSeeds: OnSeedStopped(boss, tick, amount, at, hit); break;
             }
         }
 
@@ -299,10 +312,22 @@ namespace Game.View
         /// <summary>Волна бури wave (0–1): бьёт всех вне кругов света.</summary>
         partial void OnStormWave(int boss, int tick, int wave, Vector3 at, bool hit);
 
-        /// <summary>Действие снято до удара (смерть, смерть героя): погасить его замах.</summary>
+        /// <summary>Жест терновника (§ 17.2): лапы в землю; кусты растут сами (launchTick — конец жеста, не выпуск).</summary>
+        partial void OnSeedsWindup(int boss, int tick, int launchTick);
+
+        /// <summary>Шип serial сорвался с куста (EnemyProjectileLaunched): at — начало его пути.</summary>
+        partial void OnSeedLaunched(int boss, int tick, int serial, Vector3 at);
+
+        /// <summary>Шип serial встал в at: hit — в герое (лопается), иначе — конец линии (уходит в землю).</summary>
+        partial void OnSeedStopped(int boss, int tick, int serial, Vector3 at, bool hit);
+
+        /// <summary>
+        /// Действие снято до удара (смерть, смерть героя): погасить его замах. Терновник: stage — номер летящего шипа,
+        /// снятого в полёте (жест Cancelled не шлёт; кусты Sim снимает сразу — вид дорисовывает увядание сам).
+        /// </summary>
         partial void OnActionCancelled(int boss, EnemyActionKind kind, int stage, int tick);
 
-        /// <summary>Босс убит: такт убийства — EnemyPresentationProfile.Kill, тело — ThicketMasterAnimatorView.</summary>
+        /// <summary>Босс убит: такт убийства — EnemyPresentationProfile.Kill, тело — ThicketMasterAnimatorView, холм — ThicketMasterDeathRules.</summary>
         partial void OnBossKilled(int boss, int tick, Vector3 at);
 
         /// <summary>Сетка перед героем: amount 0 — тело целиком, 1 — сквозь него виден герой (SeeThrough.cs).</summary>

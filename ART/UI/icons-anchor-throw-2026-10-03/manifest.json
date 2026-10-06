@@ -1,0 +1,8 @@
+{
+  "what": "Anchor Throw icon sheet 2x2, Higgsfield gpt_image_2_5 medium 1k, 1:1",
+  "date": "2026-10-03",
+  "refs_in_order": ["artifacts/hf/r9_icons_abordage.jpg (Image 1, approved icon style)", "artifacts/hf/r3_anchor.jpg (Image 2, anchor design)"],
+  "sheet.png": {"job_id": "6fbe3e6a-d554-4929-8bfb-eb3b1ee3c522"},
+  "tiles": {"top_left": "base, turquoise #2EC4C9 straight water line", "top_right": "Net, cobalt #2D5BE3 wide foam net", "bottom_left": "Fan, indigo-violet #4B3FD0 three-way fan with two ghost anchors", "bottom_right": "Harpoon, magenta #D23C9C stab"},
+  "note": "one try, the anchor is the same in all four tiles (same shape, angle, tassel), so no second try"
+}

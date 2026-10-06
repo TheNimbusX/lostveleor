@@ -1,0 +1,103 @@
+{
+ "repo": "C:/Users/d.grab/Desktop/the-game",
+ "chain": 0.45,
+ "tail": 0.3,
+ "passes": 14,
+ "segments": [
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Draw.track.json",
+   "from": 0,
+   "to": 8
+  },
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Swing1.track.json",
+   "from": 0,
+   "to": 9
+  },
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Swing2.track.json",
+   "from": 0,
+   "to": 9,
+   "yaw": 2.6179938779914944,
+   "turn": 3
+  },
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Lunge.track.json",
+   "from": 0,
+   "to": 16
+  },
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Stow.track.json",
+   "from": 0,
+   "to": 8
+  }
+ ],
+ "mace": {
+  "omega": 16,
+  "zeta": 0.6,
+  "droop": 0.45,
+  "maxW": 19,
+  "impactMaxW": 30,
+  "recoil": 0.35,
+  "soft": 0.55,
+  "softEnd": 3,
+  "rollRate": 3,
+  "feed": 0.6
+ },
+ "draw": {
+  "seg": 0,
+  "grab": 3.25,
+  "end": 8,
+  "lift": 0.4,
+  "back": 0.1,
+  "out": 0.4,
+  "peel": 3,
+  "spin": 6,
+  "pitch": 25
+ },
+ "contacts": [
+  {
+   "seg": 1,
+   "frame": 5,
+   "fwd": 1.25,
+   "side": 0.0,
+   "h": 0.85,
+   "aimIn": 6,
+   "aimOut": 4
+  },
+  {
+   "seg": 2,
+   "frame": 5,
+   "fwd": 1.25,
+   "side": 0.0,
+   "h": 0.85,
+   "aimIn": 7,
+   "aimOut": 4
+  }
+ ],
+ "lunge": {
+  "seg": 3,
+  "release": 4.5,
+  "contact": 8,
+  "hold": 10.5,
+  "short": 14.5,
+  "reach": 2.2,
+  "bounce": 0.12,
+  "windup": -2,
+  "relSide": -0.25,
+  "relUp": 0.4,
+  "relFwd": 0.92,
+  "apexBack": 0.1
+ },
+ "stow": {
+  "seg": 4,
+  "start": 0,
+  "lay0": 3.0,
+  "lay1": 4.0,
+  "land": 5.5,
+  "landSpeed": 1.5,
+  "up": 0.45,
+  "out": 0.4,
+  "back": 0.15
+ }
+}

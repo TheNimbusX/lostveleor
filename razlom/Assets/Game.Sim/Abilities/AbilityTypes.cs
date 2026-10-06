@@ -90,7 +90,14 @@ namespace Game.Sim
         /// </summary>
         LavidiumCost = 23,
 
-        Count = 24,
+        /// <summary>
+        /// Длина полосы от героя, метры. «Крушение»: вал удара оземь бежит до неё
+        /// (6 м; Simulation.Wreck). Сборка хеширует статы с этого номера только
+        /// ненулевыми — у прочих способностей хеш прежний (AbilityBuild.HashInto).
+        /// </summary>
+        LaneLength = 24,
+
+        Count = 25,
     }
 
     /// <summary>

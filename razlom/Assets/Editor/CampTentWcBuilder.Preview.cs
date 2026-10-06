@@ -27,6 +27,58 @@ namespace Game.EditorTools
 
         static bool _statPreview;
 
+        /// <summary>Кадр вкладки «Клятвы» без Play (v103): пример лагеря — 4 слота, клятвы в силе и в запасе, карточка «Крепкой шкуры».</summary>
+        public static string CaptureOaths(string outPath) => CapturePage(outPath, 1);
+
+        /// <summary>Кадр вкладки «Атлас» без Play (v103): три найденных артефакта, первый босс побеждён, карточка первого.</summary>
+        public static string CaptureAtlas(string outPath) => CapturePage(outPath, 2);
+
+        /// <summary>Страница кадра: 0 — сумка с карточкой вещи (Capture), 1 — клятвы, 2 — атлас.</summary>
+        static int _previewPage;
+
+        static string CapturePage(string outPath, int page)
+        {
+            Build(false);
+            _statPreview = false;
+            _previewPage = page;
+            try { return UiKitShowcase.Capture(outPath, PrefabPath, 1920, 1080, Preview); }
+            finally { _previewPage = 0; }
+        }
+
+        /// <summary>
+        /// Пример лагеря для кадров клятв и атласа: ур. 7 (4 слота), шкура на 2-й ступени, глаз, стойкость и монета в силе,
+        /// второй взгляд в запасе (слоты полны), пепла хватает на следующую покупку; три артефакта открыты, Хозяин Чащи побеждён.
+        /// Рисует тот же код, что игра (CampInventoryView.PaintOaths / PaintAtlas).
+        /// </summary>
+        static Game.Sim.Camp SampleCamp()
+        {
+            Game.Sim.Camp camp = Game.Sim.PrototypeContent.NewCamp();
+            camp.DeveloperSetLevel(7);
+            camp.Earn(Game.Sim.CurrencyType.Ash, 900);
+            Game.Sim.OathId[] buys =
+            {
+                Game.Sim.OathId.ToughHide, Game.Sim.OathId.ToughHide, Game.Sim.OathId.KeenEye, Game.Sim.OathId.Steadfast,
+                Game.Sim.OathId.RingingCoin, Game.Sim.OathId.SecondLook,
+            };
+            foreach (Game.Sim.OathId id in buys) camp.BuyOath(id);
+            camp.OpenArtifact(Game.Sim.RunArtifacts.At(0));
+            camp.OpenArtifact(Game.Sim.RunArtifacts.At(2));
+            camp.OpenArtifact(Game.Sim.RunArtifacts.At(5));
+            camp.RecordBossDefeat(Game.Sim.RunBossKeys.ThicketMaster);
+            return camp;
+        }
+
+        /// <summary>Вкладка клятв или атласа поверх готового кадра: карточка вещи прячется, страница рисуется примером лагеря.</summary>
+        static void PreviewPage(CampTentView view)
+        {
+            view.ShowPage(_previewPage);
+            if (view.TooltipGroup != null) view.TooltipGroup.alpha = 0f;
+            Game.Sim.Camp camp = SampleCamp();
+            if (_previewPage == 1) CampInventoryView.PaintOaths(view, camp, Game.Sim.OathId.ToughHide, Game.Sim.OathId.ToughHide, null, null);
+            else CampInventoryView.PaintAtlas(view, camp, 0, 0);
+            Canvas.ForceUpdateCanvases();
+        }
+
         static Sprite ItemSprite(string key)
         {
             var tex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/UI/Items/" + key + ".png");
@@ -113,6 +165,7 @@ namespace Game.EditorTools
 
             foreach (var motion in inst.GetComponentsInChildren<UiHoverMotion>(true))
                 if (motion.Highlight != null && !(_statPreview && motion.transform == view.StatRows[9])) motion.Highlight.canvasRenderer.SetAlpha(0f);
+            if (_previewPage != 0) PreviewPage(view);
         }
     }
 }

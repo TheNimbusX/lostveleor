@@ -13,6 +13,18 @@
     <Compile Include="../../razlom/Assets/Game.View/HudAbilityAvailability.cs" Link="HudAbilityAvailability.cs" />
     <Compile Include="../../razlom/Assets/Game.View/AnchorHeadDynamics.cs" Link="AnchorHeadDynamics.cs" />
     <Compile Include="../../razlom/Assets/Game.View/AnchorChainSolver.cs" Link="AnchorChainSolver.cs" />
+    <!-- Риг якоря на цепи (anchor-core 03.10): сшивка режимов, живая физика без пружин, запечка, цепь, решение по снимку Крушения. -->
+    <Compile Include="../../razlom/Assets/Game.View/AnchorRigBlend.cs" Link="AnchorRigBlend.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorRigCore.cs" Link="AnchorRigCore.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorRigBody.cs" Link="AnchorRigBody.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorRigThrowPlan.cs" Link="AnchorRigThrowPlan.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorBake.cs" Link="AnchorBake.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorChainLine.cs" Link="AnchorChainLine.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorSlackChain.cs" Link="AnchorSlackChain.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorRigWreckPlan.cs" Link="AnchorRigWreckPlan.cs" />
+    <!-- Крушение v4 (06.10): цепь-хлыст и вторичный поворот головы (перенос слоя превью wreck4anchor). -->
+    <Compile Include="../../razlom/Assets/Game.View/AnchorWhipChain.cs" Link="AnchorWhipChain.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorSecondary.cs" Link="AnchorSecondary.cs" />
     <Compile Include="../../razlom/Assets/Game.View/PelagBasicAttackTiming.cs" Link="PelagBasicAttackTiming.cs" />
     <Compile Include="../../razlom/Assets/Game.View/EliteBarLayout.cs" Link="EliteBarLayout.cs" />
     <Compile Include="../../razlom/Assets/Game.View/MobSoundBank.cs" Link="MobSoundBank.cs" />
@@ -21,7 +33,13 @@
     <Compile Include="../../razlom/Assets/Game.View/HudPortraitCurves.cs" Link="HudPortraitCurves.cs" />
     <!-- Кузнец и торговец на одной странице: цена, выход и запреты до нажатия, раскладка в холст (29.09). -->
     <Compile Include="../../razlom/Assets/Game.View/CampShopDeals.cs" Link="CampShopDeals.cs" />
+    <!-- Кузница Эни вкладками (06.10, temper-a.png): ранги вкладок, план кнопки, цена и нехватка, дуга риска, отметки попыток. -->
+    <Compile Include="../../razlom/Assets/Game.View/CampTemperRules.cs" Link="CampTemperRules.cs" />
     <Compile Include="../../razlom/Assets/Game.View/CampNavigationRules.cs" Link="CampNavigationRules.cs" />
+    <!-- Палатка: вкладки «Клятвы» и «Атлас» (06.10) — группы, кнопка карточки, пороги и порядок слотов, тексты клятв, атлас 3×4. -->
+    <Compile Include="../../razlom/Assets/Game.View/CampOathRules.cs" Link="CampOathRules.cs" />
+    <!-- Стол «Перед походом» (06.10): куда встаёт зелье, ряд «Другие зелья», «Отправиться», артефакты в «с собой», ранг Лео. -->
+    <Compile Include="../../razlom/Assets/Game.View/CampTravelRules.cs" Link="CampTravelRules.cs" />
     <!-- Окно «Настройки Б» (30.09): новые настройки, умолчания, сохранение, описания опций. -->
     <Compile Include="../../razlom/Assets/Game.View/SettingsModel.cs" Link="SettingsModel.cs" />
     <!-- Строка добычи под панелью забега (выбор владельца 30.09, кадр b1): что уносится, окно ряда, «+K», сумка, счёт золота. -->
@@ -49,6 +67,12 @@
     <!-- Тлеющие метки у края экрана и пунктир дуги превью (этап 4, кадр 2a): проекция на край, панели HUD, слияние, подпись. -->
     <Compile Include="../../razlom/Assets/Game.View/WorldEdgeMarksLayout.cs" Link="WorldEdgeMarksLayout.cs" />
     <Compile Include="../../razlom/Assets/Game.View/HudRangePreviewArc.cs" Link="HudRangePreviewArc.cs" />
+    <!-- Превью прицела Крушения v2 (SPEC 6, 03.10): какая фигура в какой фазе серии, полоса за кругом удара, контур полного заряда. -->
+    <Compile Include="../../razlom/Assets/Game.View/HudWreckReachRules.cs" Link="HudWreckReachRules.cs" />
+    <!-- Индикатор серии Крушения (06.10, series-ui.png): звенья под плиткой, кольцо окна, звенья над героем. -->
+    <Compile Include="../../razlom/Assets/Game.View/HudWreckSeriesRules.cs" Link="HudWreckSeriesRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/HudWreckSeriesTracker.cs" Link="HudWreckSeriesTracker.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckSeriesMarkRules.cs" Link="PelagWreckSeriesMarkRules.cs" />
     <!-- Комикс-рисовка мира (проба 01.10): пределы настроек, ступени тона, толщина туши, вес диорамы. -->
     <Compile Include="../../razlom/Assets/Game.View/ComicStyleRules.cs" Link="ComicStyleRules.cs" />
     <!-- Свет арены по глубине (световая арка акта I, 01.10): ось по аренам, веса пресетов, ключ съёмки, пятно поляны. -->
@@ -67,6 +91,14 @@
     <Compile Include="../../razlom/Assets/Game.View/ThicketStormDangerRules.cs" Link="ThicketStormDangerRules.cs" />
     <!-- Хозяин Чащи (02.10): кат-сцена вступления — камера, полосы, HUD, титр, тряска рёва, полоса босса по тикам окна Sim. -->
     <Compile Include="../../razlom/Assets/Game.View/ThicketMasterIntroRules.cs" Link="ThicketMasterIntroRules.cs" />
+    <!-- Хозяин Чащи (02.10, вечер): смерть «цветущий холм» — наезд камеры, холм, тело под ним, цветение по секундам от Death. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterDeathRules.cs" Link="ThicketMasterDeathRules.cs" />
+    <!-- Хозяин Чащи (V14, 04.10): земля нырка и выхода — сроки слоёв по тикам Sim, рваная полоса по контуру (не кольцо), выброс вдоль тела, бюджет, пулы, свет из ямы. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterEarthRules.cs" Link="ThicketMasterEarthRules.cs" />
+    <!-- Хозяин Чащи (07.10, § 16): веер шипов-семян — остриё вида = остриё Sim, бросок с куста, набухание и блик, остановка. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterSeedRules.cs" Link="ThicketMasterSeedRules.cs" />
+    <!-- Хозяин Чащи (08.10, «ноги проскальзывают при ходьбе»): шаг под поворот, замок стоящих лап, двухкостная ИК. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterWalkRules.cs" Link="ThicketMasterWalkRules.cs" />
     <!-- Формы навыков (план форм 02.10, шаг 3): правило иконки (способность, форма) → файл и метка формы, тексты и экран «Выбери форму». -->
     <Compile Include="../../razlom/Assets/Game.View/AbilityIconRules.cs" Link="AbilityIconRules.cs" />
     <Compile Include="../../razlom/Assets/Game.View/PelagFormTexts.cs" Link="PelagFormTexts.cs" />
@@ -75,6 +107,44 @@
     <Compile Include="../../razlom/Assets/Game.View/DevMenuRules.cs" Link="DevMenuRules.cs" />
     <!-- Вид форм Вихря (02.10): фронт кольца Пенных волн по Sim, оглушение Водоворота, ритм Бури. -->
     <Compile Include="../../razlom/Assets/Game.View/PelagWhirlwindFormRules.cs" Link="PelagWhirlwindFormRules.cs" />
+    <!-- Вид Абордажа v2 (02.10): якорь к укусу, натяг цепи, кто бит, фронт Обвала/Пробоины по Sim, подъём Гейзера — без Unity. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagAbordageVfxRules.cs" Link="PelagAbordageVfxRules.cs" />
+    <!-- Вид Броска якоря (03.10): голова полосы по формуле Sim, фазы рига, высота и дёрг, сеть Невода, призраки Веера — без Unity. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagAnchorThrowVfxRules.cs" Link="PelagAnchorThrowVfxRules.cs" />
+    <!-- Вид Шквала v2 (02.10): распад полосы Пенного следа, ход воды, последний удар, кольцо пены — без Unity. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagSquallFoamRules.cs" Link="PelagSquallFoamRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckVfxRules.cs" Link="PelagWreckVfxRules.cs" />
+    <!-- Крушение «холодное железо» (06.10): камни круга и полосы, звенья, сроки появления по фронту Sim. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckIronRules.cs" Link="PelagWreckIronRules.cs" />
+    <!-- Махи Крушения «холодное железо» (06.10): сроки дуги по снимку Sim, полоса, звенья-призраки, цвета форм, знаки на задетых. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckSwingRules.cs" Link="PelagWreckSwingRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckSwingImpact.cs" Link="PelagWreckSwingImpact.cs" />
+    <!-- Махи Крушения V2 (06.10): одна таблица цветов форм, путь серпа между кадрами показа (без Unity). -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckSwingLook.cs" Link="PelagWreckSwingLook.cs" />
+    <!-- Крушение на рисованных текстурах (06.10 вечер): цвет формы, полумесяц маха, полоса выпада. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckPaintedLook.cs" Link="PelagWreckPaintedLook.cs" />
+    <!-- Махи Крушения на стеке серии сабли (06.10 поздно): палитра форм (кобальт и сталь у базы), раскладка полумесяца. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckComboLook.cs" Link="PelagWreckComboLook.cs" />
+    <!-- Выпад Крушения на стеке серии сабли (06.10 поздно): профиль стоячего гребня, высоты форм, размеры всплеска. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckComboLungeLook.cs" Link="PelagWreckComboLungeLook.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckSwingSweep.cs" Link="PelagWreckSwingSweep.cs" />
+    <!-- Шквал v2 (02.10): кадр клипа по тикам полёта, лента каста из событий Sim, поворот вокруг лодыжки. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagSquallClipRules.cs" Link="PelagSquallClipRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagSquallTimeline.cs" Link="PelagSquallTimeline.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagSquallFeed.cs" Link="PelagSquallFeed.cs" />
+    <!-- Абордаж v2 (02.10): кадр клипа по тикам Sim (throw/pull_retime), лента каста из снимка и событий Sim. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagAbordageClipRules.cs" Link="PelagAbordageClipRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagAbordageTimeline.cs" Link="PelagAbordageTimeline.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagAbordageFeed.cs" Link="PelagAbordageFeed.cs" />
+    <!-- Бросок якоря (03.10): кадр клипа по тикам Sim (цепочка Throw→Fly→Yank→Haul→Catch), лента каста из снимка и событий Sim. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagAnchorThrowClipRules.cs" Link="PelagAnchorThrowClipRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagAnchorThrowTimeline.cs" Link="PelagAnchorThrowTimeline.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagAnchorThrowFeed.cs" Link="PelagAnchorThrowFeed.cs" />
+    <!-- Крушение v2 (03.10): кадр клипа по тикам Sim, лента серии из снимка WreckState, поворот вокруг лодыжки. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckClipRules.cs" Link="PelagWreckClipRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckTimeline.cs" Link="PelagWreckTimeline.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckTimeline.Sample.cs" Link="PelagWreckTimeline.Sample.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckFeed.cs" Link="PelagWreckFeed.cs" />
     <!-- Топот роя (SwarmScuttleClock в MobSoundBank.cs) считает бегущих по EntityStore. -->
     <Compile Include="../../razlom/Assets/Game.Sim/**/*.cs" Link="Game.Sim/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>

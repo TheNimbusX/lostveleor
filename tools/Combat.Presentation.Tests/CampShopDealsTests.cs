@@ -51,28 +51,34 @@ public sealed class CampShopDealsTests
     public void FitScaleSurvivesAnEmptyCanvas() => Assert.That(CampShopDeals.FitScale(0f, 0f), Is.EqualTo(1f));
 
     [Test]
-    public void ReforgeShowsPriceAndLevelBeforeTheClick()
+    public void TemperShowsPriceGrowthAndRiskBeforeTheClick()
     {
         var camp = NewCamp(200, 20);
         int slot = camp.Bag.Add(MagicSword);
-        var plan = CampShopDeals.PlanReforge(camp, slot, false, 0);
+        int affix = CampShopDeals.DefaultAffix(camp, slot, false, 1);
+        var plan = CampShopDeals.PlanTemper(camp, slot, false, affix);
         Assert.That(plan.Block, Is.EqualTo(Block.None));
-        Assert.That(plan.Gold, Is.EqualTo(Camp.ReforgeGold(camp.Bag.At(slot))));
-        Assert.That(plan.Shards, Is.EqualTo(Camp.ReforgeShards(camp.Bag.At(slot))));
-        Assert.That(plan.LevelFrom, Is.EqualTo(10));
-        Assert.That(plan.LevelTo, Is.EqualTo(12), "уровень растёт на 1 + редкость (Camp.TryPayReforge)");
-        Assert.That(plan.Upper, Is.GreaterThan(plan.Lower));
+        Assert.That(plan.Gold, Is.EqualTo(80));
+        Assert.That(plan.Shards, Is.EqualTo(5));
+        Assert.That(plan.Used, Is.EqualTo(0));
+        Assert.That(plan.Limit, Is.EqualTo(3), "редкая вещь: три попытки");
+        Assert.That(plan.Growth, Is.EqualTo(Camp.TemperGrowth(0)));
+        Assert.That(plan.RiskPercent, Is.EqualTo(0), "первый удар без риска");
 
-        Assert.That(camp.Reforge(slot, 0), Is.EqualTo(SmithResult.Success));
-        Assert.That(camp.Bag.At(slot).ItemLevel, Is.EqualTo(plan.LevelTo), "предпросмотр совпадает с тем, что делает кузнец");
+        Assert.That(camp.Strike(ForgeTarget.Bag(slot), affix, out _), Is.EqualTo(SmithResult.Success));
+        Assert.That(camp.Bag.At(slot).ItemLevel, Is.EqualTo(10), "закалка уровень вещи не меняет");
+        Assert.That(camp.Money(CurrencyType.Gold), Is.EqualTo(200 - plan.Gold), "предпросмотр совпадает с тем, что берёт кузнец");
+        var next = CampShopDeals.PlanTemper(camp, slot, false, affix);
+        Assert.That(next.Gold, Is.EqualTo(0), "следующий удар в сессии бесплатный");
+        Assert.That(next.Used, Is.EqualTo(1));
     }
 
     [Test]
-    public void ReforgeNamesTheExactShortfall()
+    public void TemperNamesTheExactShortfall()
     {
         var camp = NewCamp(10, 1);
         int slot = camp.Bag.Add(MagicSword);
-        var plan = CampShopDeals.PlanReforge(camp, slot, false, 0);
+        var plan = CampShopDeals.PlanTemper(camp, slot, false, CampShopDeals.DefaultAffix(camp, slot, false, 1));
         Assert.That(plan.Block, Is.EqualTo(Block.Funds));
         Assert.That(plan.GoldShort, Is.EqualTo(plan.Gold - 10));
         Assert.That(plan.ShardsShort, Is.EqualTo(plan.Shards - 1));
@@ -80,34 +86,41 @@ public sealed class CampShopDealsTests
     }
 
     [Test]
-    public void ThirdReforgeClosesTheButtonAndHidesThePrice()
-    {
-        var camp = NewCamp(1000, 100);
-        int slot = camp.Bag.Add(MagicSword);
-        for (int i = 0; i < CampShopDeals.ReforgeLimit; i++) Assert.That(camp.Reforge(slot, 0), Is.EqualTo(SmithResult.Success));
-        var plan = CampShopDeals.PlanReforge(camp, slot, false, 0);
-        Assert.That(plan.Block, Is.EqualTo(Block.Exhausted));
-        Assert.That(plan.Used, Is.EqualTo(3));
-        Assert.That(plan.ShowsCost, Is.False);
-    }
-
-    [Test]
-    public void NormalItemHasNothingToReforgeButCanBeDismantled()
+    public void SpentAttemptsTurnTemperIntoRiskyStrike()
     {
         var camp = NewCamp(1000, 100);
         int slot = camp.Bag.Add(new ItemInstance(StableId.Of("base.rusty_sword"), 4, ItemRarity.Normal, 7));
-        Assert.That(CampShopDeals.PlanReforge(camp, slot, false, 0).Block, Is.EqualTo(Block.NoAffix));
+        for (int i = 0; i < Camp.TemperAttempts(ItemRarity.Normal); i++)
+        {
+            Assert.That(camp.Strike(ForgeTarget.Bag(slot), -1, out _), Is.EqualTo(SmithResult.Success));
+            Assert.That(camp.TakeTemper(), Is.EqualTo(SmithResult.Success));
+        }
+        var plan = CampShopDeals.PlanTemper(camp, slot, false, -1);
+        Assert.That(plan.Used, Is.EqualTo(2));
+        Assert.That(plan.Risky, Is.True);
+        Assert.That(plan.RiskPercent, Is.EqualTo(50));
+        Assert.That(plan.Gold, Is.EqualTo(180), "цена растёт ×1,5 за каждое оплаченное действие");
+    }
+
+    [Test]
+    public void NormalItemTempersItsBaseAndCanBeDismantled()
+    {
+        var camp = NewCamp(1000, 100);
+        int slot = camp.Bag.Add(new ItemInstance(StableId.Of("base.rusty_sword"), 4, ItemRarity.Normal, 7));
+        Assert.That(CampShopDeals.DefaultAffix(camp, slot, false, 0), Is.EqualTo(-1));
+        Assert.That(CampShopDeals.PlanTemper(camp, slot, false, 0).Block, Is.EqualTo(Block.NoAffix));
+        Assert.That(CampShopDeals.PlanTemper(camp, slot, false, -1).Block, Is.EqualTo(Block.None));
         Assert.That(CampShopDeals.PlanDismantle(camp, slot, false).Allowed, Is.True);
     }
 
     [Test]
-    public void WornItemReforgesButDoesNotDismantle()
+    public void WornItemTempersButDoesNotDismantle()
     {
         var camp = NewCamp(200, 20);
         camp.Bag.Add(MagicSword);
         Assert.That(camp.EquipFromBag(0), Is.True);
         int weapon = (int)EquipSlot.Weapon;
-        Assert.That(CampShopDeals.PlanReforge(camp, weapon, true, 0).Allowed, Is.True);
+        Assert.That(CampShopDeals.PlanTemper(camp, weapon, true, CampShopDeals.DefaultAffix(camp, weapon, true, 1)).Allowed, Is.True);
         var scrap = CampShopDeals.PlanDismantle(camp, weapon, true);
         Assert.That(scrap.Block, Is.EqualTo(Block.Worn));
         Assert.That(scrap.Allowed, Is.False);
@@ -120,7 +133,7 @@ public sealed class CampShopDealsTests
         int slot = camp.Bag.Add(MagicSword);
         var plan = CampShopDeals.PlanDismantle(camp, slot, false);
         Assert.That(plan.Block, Is.EqualTo(Block.None));
-        Assert.That(plan.Shards, Is.EqualTo(Inventory.ShardsFor(camp.Bag.At(slot))));
+        Assert.That(plan.Shards, Is.EqualTo(camp.SalvageShards(camp.Bag.At(slot))));
         camp.Bag.SetKeep(slot, true);
         Assert.That(CampShopDeals.PlanDismantle(camp, slot, false).Block, Is.EqualTo(Block.Protected));
         Assert.That(camp.Dismantle(slot, out _), Is.EqualTo(SmithResult.Protected), "запрет окна совпадает с запретом лагеря");
@@ -128,14 +141,14 @@ public sealed class CampShopDealsTests
     }
 
     [Test]
-    public void DefaultAffixIsReforgeable()
+    public void DefaultAffixIsTemperable()
     {
         var camp = NewCamp(1000, 100);
         int slot = camp.Bag.Add(MagicSword);
         var roll = new GeneratedItem();
         Assert.That(ItemGenerator.Generate(camp.Bag.At(slot), camp.Items, roll), Is.True);
         int affix = CampShopDeals.DefaultAffix(camp, slot, false, roll.AffixCount);
-        Assert.That(camp.ReforgeRange(slot, affix, out _, out _), Is.EqualTo(SmithResult.Success));
+        Assert.That(camp.Quote(EniAction.Temper, ForgeTarget.Bag(slot), affix).Status, Is.EqualTo(SmithResult.Success));
         Assert.That(CampShopDeals.DefaultAffix(camp, slot, false, 0), Is.EqualTo(0));
     }
 

@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 #if ENABLE_INPUT_SYSTEM
@@ -200,9 +201,61 @@ namespace Game.View
             if (panel.Exit != null) panel.Exit.onClick.AddListener(() => Activate(2));
             if (panel.NewGame != null) panel.NewGame.onClick.AddListener(() => ShowConfirm(panel, true));
             if (panel.ConfirmNo != null) panel.ConfirmNo.onClick.AddListener(() => ShowConfirm(panel, false));
-            if (panel.ConfirmYes != null) panel.ConfirmYes.onClick.AddListener(NewGame);
+            if (panel.ConfirmYes != null) panel.ConfirmYes.onClick.AddListener(() => { if (_saveNotice) DismissSaveNotice(panel); else NewGame(); });
             ShowConfirm(panel, false);
             return panel;
+        }
+
+        /// <summary>Окно подтверждения сейчас показывает предупреждение о сохранении, а не «Начать новую игру?».</summary>
+        private bool _saveNotice;
+        private string[] _confirmTexts;
+
+        /// <summary>
+        /// Предупреждение о сохранении (решение 06.10): повреждённое — лагерь начат заново, копия файла лежит
+        /// рядом; от более новой версии игры — запись выключена. Временно на окне подтверждения новой игры
+        /// с одной кнопкой «Понятно»; настоящее окно — в UI-проходе.
+        /// </summary>
+        private void ShowSaveNotice(MainMenuPanel panel)
+        {
+            bool corrupt = CampSaveStore.CorruptNotice, future = CampSaveStore.FutureVersionNotice;
+            if (!corrupt && !future || panel.Confirm == null || panel.ConfirmYes == null) return;
+            TMP_Text[] labels = ConfirmLabels(panel);
+            if (labels == null)
+            {
+                Debug.LogWarning("[Разлом] Главное меню: в окне подтверждения нет надписей, предупреждение о сохранении не показано.");
+                return;
+            }
+            if (_confirmTexts == null) _confirmTexts = new[] { labels[0].text, labels[1].text, labels[2].text };
+            string copy = CampSaveStore.NoticeCopyPath;
+            labels[0].text = corrupt ? "Сохранение повреждено" : "Сохранение новее игры";
+            labels[1].text = corrupt
+                ? "Начата новая игра." + (copy != null ? " Копия файла: " + System.IO.Path.GetFileName(copy) : "")
+                : "Сохранение от более новой версии игры — запись выключена. Файл не тронут.";
+            labels[2].text = "Понятно";
+            if (panel.ConfirmNo != null) panel.ConfirmNo.gameObject.SetActive(false);
+            _saveNotice = true;
+            ShowConfirm(panel, true);
+        }
+
+        private void DismissSaveNotice(MainMenuPanel panel)
+        {
+            _saveNotice = false;
+            CampSaveStore.AcknowledgeNotice();
+            TMP_Text[] labels = ConfirmLabels(panel);
+            if (labels != null && _confirmTexts != null)
+                for (int i = 0; i < labels.Length; i++) labels[i].text = _confirmTexts[i];
+            if (panel.ConfirmNo != null) panel.ConfirmNo.gameObject.SetActive(true);
+            ShowConfirm(panel, false);
+        }
+
+        /// <summary>Заголовок, пояснение и надпись «Начать заново» окна подтверждения (узлы MainMenuWcBuilder.BuildConfirm).</summary>
+        private static TMP_Text[] ConfirmLabels(MainMenuPanel panel)
+        {
+            Transform card = panel.Confirm.transform.Find("Карточка");
+            TMP_Text title = card != null ? card.Find("Заголовок/Надпись")?.GetComponent<TMP_Text>() : null;
+            TMP_Text body = card != null ? card.Find("Пояснение/Надпись")?.GetComponent<TMP_Text>() : null;
+            TMP_Text yes = panel.ConfirmYes.transform.Find("Надпись")?.GetComponent<TMP_Text>();
+            return title != null && body != null && yes != null ? new[] { title, body, yes } : null;
         }
 
         private static void ShowConfirm(MainMenuPanel panel, bool shown)
@@ -245,6 +298,8 @@ namespace Game.View
                 _skipOnce = false;
                 StartGame();
             }
+            // Загрузка лагеря уже прошла (TickDriver.Awake): решено, было ли сохранение повреждено.
+            else if (_panel != null) ShowSaveNotice(_panel);
 
             // Игровую камеру меню НЕ трогает. Раньше ей обнуляли маску, чтобы
             // лагерь не рисовался под сценой впустую, и возвращали её после

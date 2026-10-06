@@ -537,6 +537,13 @@ namespace Game.View
                     case SimEventType.DashEnded:
                         if (e.Source == Simulation.PlayerId) PlayDashPlant();
                         break;
+                    // Абордаж v2: «металл по телу» — в тик показа укуса, как всплеск укуса у вида (тик
+                    // события = SimulationTick − 1, показ = sim.Tick − 2 + Alpha). Слои те же, новых нет.
+                    case SimEventType.AbordageHook:
+                        if (e.Source == Simulation.PlayerId)
+                            _anchorImpactAt = Time.time + Mathf.Max(0f, _cause.Tick - 1
+                                - PelagAbordageVfxRules.ShownTick(_driver.Sim.Tick, _driver.Alpha)) / Simulation.TicksPerSecond;
+                        break;
                     case SimEventType.Stun:
                         if (e.Target == Simulation.PlayerId) _basicWhooshes.Clear();
                         break;
@@ -584,7 +591,9 @@ namespace Game.View
                             if (_driver.Sim.GetAbility(e.Amount)?.DefinitionId == AbilityDefinition.AnchorLeapId)
                             {
                                 // Даже промах имеет контакт с землёй; попадания во врагов звучат по Damage.
-                                _anchorImpactAt = Time.time + PelagAbilityTiming.LeapWindup;
+                                // Абордаж v2: металл — по укусу (AbordageHook ниже), а не через LeapWindup
+                                // (0,5 с — теперь это уже после кулака).
+                                _anchorImpactAt = _driver.Sim.AbordageActive ? -1f : Time.time + PelagAbilityTiming.LeapWindup;
                                 _anchorLandAt = Time.time + (_driver.Sim.PlayerAction.ContactTick - _driver.Sim.Tick + 1) / (float)Simulation.TicksPerSecond;
                             }
                             if (IsWhirlwindSlot(e.Amount))
@@ -1051,6 +1060,17 @@ namespace Game.View
                     if (sim.TryGetWendigoAction(e.Source, out var sweep) && sweep.Kind == WendigoAction.Sweep)
                         QueueMobCue(MobCueKind.Wendigo, e.Source, sweep.Serial, sweep.ImpactTick - Ticks(MobSoundBank.SweepPeakSeconds),
                             Sound.WendigoSweep, MobVolume * 1.1f, 1f);
+                    break;
+                // Вступление Хозяина Чащи (герой ступил на поляну) — кат-сцена, а не атака:
+                // без общего сигнала (владелец 02.10, вечер: «убери»).
+                case EnemyActionKind.ThicketIntro:
+                    break;
+                // Пробуждение и рёв внутри окна вступления — та же кат-сцена, тоже без сигнала; рёвы
+                // порогов 66/50/33 и стенды без поляны — с ним (ThicketMasterIntroRules.SilencesWarning).
+                // Тик события — завершённый шаг (контекст снят после Tick++).
+                case EnemyActionKind.ThicketWake:
+                case EnemyActionKind.ThicketRoar:
+                    if (!ThicketMasterIntroRules.SilencesWarning(sim, e.Source, _cause.Tick - 1)) PlayWarning();
                     break;
                 default:
                     PlayWarning();

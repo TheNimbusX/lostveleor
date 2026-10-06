@@ -13,6 +13,8 @@ using Rules = Game.View.ThicketMasterIntroRules;
 /// камера домой, в тик E (герой свободен, босс бьёт) полосы уезжают, HUD и полоса босса возвращаются.
 /// Кривые непрерывны, пауза не трясёт, смерть босса в окне отпускает всё от тика смерти, Часы двигают
 /// рёв и титр. Живая сцена: настоящий уровень босса — события Sim ложатся ровно на тики правил.
+/// Метки на земле (владелец 02.10, вечер: «убери»): кольцо рёва вступления не рисуется, метки первой
+/// атаки с тика E и рёв стенда без поляны — как раньше.
 /// </summary>
 public sealed class ThicketMasterIntroRulesTests
 {
@@ -337,5 +339,161 @@ public sealed class ThicketMasterIntroRulesTests
         var sim = new Simulation(7, 64);
         Assert.That(Rules.HoldsBossBar(sim, 1), Is.False, "нет сущности — нечего держать");
         Assert.That(Rules.HoldsBossBar(sim, -1), Is.False);
+    }
+
+    // ------------------------------------------------------------ метки на земле (владелец 02.10, вечер: «убери»)
+
+    /// <summary>Забег на уровне босса до тика S: герой идёт по тропе к боссу. start — тик S (−1 — не дошёл).</summary>
+    private static RiftRun RunToIntro(ulong seed, out int boss, out int start)
+    {
+        var location = ForestLocation();
+        var run = new RiftRun(new Simulation(seed, 512), location.Modules, PrototypeContent.Items(),
+            PrototypeContent.ItemBaseIds(), location: location);
+        run.StartTestAtLevel(9, true);
+        var sim = run.Sim;
+        boss = run.BossId;
+        start = -1;
+        for (int k = 0; k < 200 && start < 0; k++)
+        {
+            int tick = sim.Tick;
+            run.Step(Walk(sim, sim.Entities.Position[boss]));
+            if (Saw(sim, boss, SimEventType.EnemyActionStarted, EnemyActionKind.ThicketIntro)) start = tick;
+        }
+        return run;
+    }
+
+    [Test]
+    public void LiveBossLevel_IntroRoarRingIsNotDrawn_FirstAttackMarksAre()
+    {
+        for (ulong seed = 1; seed <= 2; seed++)
+        {
+            string where = "сид " + seed;
+            var run = RunToIntro(seed, out int boss, out int start);
+            var sim = run.Sim;
+            Assert.That(start, Is.GreaterThanOrEqualTo(0), "дошёл до поляны, " + where);
+            Assert.That(sim.TryGetThicketIntro(boss, out int s, out int wake, out int end), Is.True, where);
+
+            bool ringHidden = false, drawnAfter = false;
+            int until = end + 120;
+            while (sim.Tick <= until && sim.Entities.Alive[Hero])
+            {
+                int tick = sim.Tick;
+                run.Step(Walk(sim, sim.Entities.Position[boss]));
+                for (int slot = 0; slot < sim.TelegraphHighWater; slot++)
+                {
+                    if (!sim.TryGetTelegraph(slot, out var t) || !t.SharedView) continue;
+                    bool hides = Rules.HidesTelegraph(sim, t.Source, t.StartTick);
+                    if (t.Source != boss)
+                    {
+                        Assert.That(hides, Is.False, "чужие метки — как раньше, тик " + tick + ", " + where);
+                        continue;
+                    }
+                    bool inWindow = t.StartTick >= s && t.StartTick < end;
+                    Assert.That(hides, Is.EqualTo(inWindow), "метка босса с тика " + t.StartTick + ", тик " + tick + ", " + where);
+                    if (hides && t.Shape == TelegraphShape.Ring)
+                    {
+                        Assert.That(t.StartTick, Is.EqualTo(Rules.TitleStart(wake)), "кольцо — рёв вступления, " + where);
+                        ringHidden = true;
+                    }
+                    if (!hides) drawnAfter = true;
+                }
+            }
+            Assert.That(ringHidden, Is.True, "красное кольцо рёва в кат-сцене не рисуется, " + where);
+            Assert.That(drawnAfter, Is.True, "метки первых атак после E рисуются, " + where);
+        }
+    }
+
+    // ------------------------------------------------------------ сигнал угрозы (владелец 02.10, вечер: «убери»)
+
+    [Test]
+    public void LiveBossLevel_CutsceneStartsHaveNoWarning_FirstAttackDoes()
+    {
+        for (ulong seed = 1; seed <= 2; seed++)
+        {
+            string where = "сид " + seed;
+            var run = RunToIntro(seed, out int boss, out int start);
+            var sim = run.Sim;
+            Assert.That(start, Is.GreaterThanOrEqualTo(0), "дошёл до поляны, " + where);
+            Assert.That(sim.TryGetThicketIntro(boss, out int s, out int wake, out int end), Is.True, where);
+            // Само вступление — тик S (CombatAudio молчит на нём всегда, правило с ним согласно).
+            Assert.That(Rules.SilencesWarning(sim, boss, s), Is.True, "вступление, " + where);
+
+            bool wakeQuiet = false, roarQuiet = false, attackWarns = false;
+            int until = end + 60;
+            while (sim.Tick <= until && sim.Entities.Alive[Hero])
+            {
+                // Тик события — завершённый шаг (CombatAudio: контекст кадра − 1).
+                int tick = sim.Tick;
+                run.Step(Walk(sim, sim.Entities.Position[boss]));
+                foreach (var e in sim.Events)
+                {
+                    if (e.Type != SimEventType.EnemyActionStarted) continue;
+                    bool quiet = Rules.SilencesWarning(sim, e.Source, tick);
+                    if (e.Source != boss)
+                    {
+                        Assert.That(quiet, Is.False, "чужие действия — с сигналом, тик " + tick + ", " + where);
+                        continue;
+                    }
+                    Assert.That(quiet, Is.EqualTo(tick >= s && tick < end), "действие " + (EnemyActionKind)e.ActionVariant
+                        + " на тике " + tick + ", " + where);
+                    if (e.ActionVariant == (int)EnemyActionKind.ThicketWake && quiet)
+                    {
+                        Assert.That(tick, Is.EqualTo(wake), "пробуждение — тик W, " + where);
+                        wakeQuiet = true;
+                    }
+                    if (e.ActionVariant == (int)EnemyActionKind.ThicketRoar && quiet)
+                    {
+                        Assert.That(tick, Is.EqualTo(Rules.TitleStart(wake)), "рёв вступления, " + where);
+                        roarQuiet = true;
+                    }
+                    if (tick == end && !quiet) attackWarns = true;
+                }
+            }
+            Assert.That(wakeQuiet, Is.True, "пробуждение в кат-сцене без сигнала, " + where);
+            Assert.That(roarQuiet, Is.True, "рёв вступления без сигнала, " + where);
+            Assert.That(attackWarns, Is.True, "первая атака (тик E) — с сигналом, " + where);
+        }
+    }
+
+    [Test]
+    public void TelegraphHiding_StandWithoutAClearing_DrawsTheRoarRing()
+    {
+        Assert.That(Rules.HidesTelegraph(null, 1, 0), Is.False);
+        var empty = new Simulation(7, 64);
+        Assert.That(Rules.HidesTelegraph(empty, -1, 0), Is.False);
+        Assert.That(Rules.HidesTelegraph(empty, 1, 0), Is.False, "нет сущности");
+        Assert.That(Rules.HidesTelegraph(empty, empty.Entities.Count + 5, 0), Is.False);
+
+        // Стенд «Темп боя»: поляны и окна нет — пробуждение по 9 м и рёв со своим кольцом, как раньше.
+        const int boss = 1;
+        var sim = new Simulation(77, 64);
+        sim.SetupKindTestArena(EnemyKind.ForestThicketMaster, 1, arena: 9, distance: Fix64.FromInt(6));
+        Assert.That(sim.Entities.Kind[boss], Is.EqualTo(EnemyKind.ForestThicketMaster));
+        Assert.That(sim.ThicketWakesOnClearing(boss), Is.False);
+        bool ring = false, wakeWarns = false, roarWarns = false;
+        Assert.That(Rules.SilencesWarning(null, boss, 0), Is.False);
+        Assert.That(Rules.SilencesWarning(empty, -1, 0), Is.False);
+        for (int k = 0; k < 400 && !ring; k++)
+        {
+            sim.Entities.Health[Hero] = sim.Entities.MaxHealth[Hero];
+            int tick = sim.Tick;
+            sim.Step(InputFrame.Empty);
+            foreach (var e in sim.Events)
+            {
+                if (e.Type != SimEventType.EnemyActionStarted || e.Source != boss) continue;
+                bool quiet = Rules.SilencesWarning(sim, e.Source, tick);
+                Assert.That(quiet, Is.False, "стенд — сигнал как раньше, " + (EnemyActionKind)e.ActionVariant);
+                wakeWarns |= e.ActionVariant == (int)EnemyActionKind.ThicketWake;
+                roarWarns |= e.ActionVariant == (int)EnemyActionKind.ThicketRoar;
+            }
+            for (int slot = 0; slot < sim.TelegraphHighWater; slot++)
+            {
+                if (!sim.TryGetTelegraph(slot, out var t) || !t.SharedView || t.Source != boss) continue;
+                Assert.That(Rules.HidesTelegraph(sim, t.Source, t.StartTick), Is.False, "стенд — метки как раньше");
+                ring |= t.Shape == TelegraphShape.Ring;
+            }
+        }
+        Assert.That(ring, Is.True, "рёв стенда рисует своё кольцо");
+        Assert.That(wakeWarns && roarWarns, Is.True, "пробуждение и рёв стенда — с сигналом");
     }
 }

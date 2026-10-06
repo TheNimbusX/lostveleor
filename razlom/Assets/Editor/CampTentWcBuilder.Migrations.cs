@@ -31,8 +31,11 @@ namespace Game.EditorTools
         /// фильтров сумки — Philosopher, как у кнопок. Только шрифт: размер и раскладка те же.
         /// v102 (01.10, владелец: ресурс Пелага — «Концентрация», «лавидий у Пелага звучит глупо»): заголовок группы
         /// листа героя «ЛАВИДИЙ» → «КОНЦЕНТРАЦИЯ» с нитью за новой шириной подписи; заготовки подписей строк.
+        /// v103 (06.10, окна лагеря owner-review-0610): строка вкладок «СУМКА ◇ КЛЯТВЫ ◇ АТЛАС» над окнами и пепел справа,
+        /// вкладка «Клятвы» (ряд слотов, карта владельца, 4 группы печатей, карточка), атлас 3×4 с карточкой вместо
+        /// всплывашки, «[Esc] Закрыть» (CampTentWcBuilder.Oaths / .Atlas). Старые вкладки в панели выключены, сумка на месте.
         /// </summary>
-        public const int LayoutVersion = 102;
+        public const int LayoutVersion = 104;
 
         static bool _waiting;
 
@@ -130,7 +133,10 @@ namespace Game.EditorTools
             {
                 PrefabUtility.UnloadPrefabContents(contents);
             }
-            AssetDatabase.SaveAssets();
+            // Не общий SaveAssets: он сбрасывал на диск чужие грязные ассеты (02.10 откатил 3 материала босса). Префаб уже
+            // записан SaveAsPrefabAsset, тема сохраняет себя сама; дописываются только материалы «Дыма и света», если миграция
+            // их тронула.
+            CampInkParts.SaveInkMaterials();
             return true;
         }
 
@@ -138,6 +144,8 @@ namespace Game.EditorTools
         {
             if (view.LayoutVersion < 101) MigrateTo101(view);
             if (view.LayoutVersion < 102) MigrateTo102(view);
+            if (view.LayoutVersion < 103) MigrateTo103(view);
+            if (view.LayoutVersion < 104) MigrateTo104(view);
             view.LayoutVersion = LayoutVersion;
             EditorUtility.SetDirty(view);
         }

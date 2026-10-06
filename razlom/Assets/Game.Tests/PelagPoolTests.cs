@@ -53,12 +53,44 @@ namespace Game.Tests
                 AbilityDefinition.WhirlwindId, AbilityDefinition.CleaveId, AbilityDefinition.BlazeId,
                 AbilityDefinition.ChainStepId, AbilityDefinition.AnchorSlamId, AbilityDefinition.WreckId,
                 AbilityDefinition.AnchorLeapId, AbilityDefinition.FireFlaskId, AbilityDefinition.SkewerId, AbilityDefinition.BackblastId,
+                AbilityDefinition.AnchorThrowId,   // 03.10, в конец пула
             };
             Assert.AreEqual(expected.Length, PelagKit.PoolSize);
             for (int i = 0; i < expected.Length; i++)
             {
                 Assert.AreEqual(expected[i], PelagKit.PoolDefinition(i).Id, $"пул {i}");
                 Assert.AreEqual(i, PelagKit.PoolIndexOf(expected[i]), $"обратный поиск {i}");
+            }
+        }
+
+        /// <summary>
+        /// Убранные индексы (03.10): 4 — Удар якорем (влит в Крушение), 8 — «На вылет»
+        /// (убран владельцем). Номер держат (PoolDefinition прежний), но наградой не приходят.
+        /// </summary>
+        [Test]
+        public void RetiredPoolIndices_AreNeverOffered()
+        {
+            for (int i = 0; i < PelagKit.PoolSize; i++)
+                // 10 — Бросок якоря (03.10): не убран, но в награды — только по слову владельца (пока F8).
+                Assert.AreEqual(i != 4 && i != 8 && i != 10, PelagKit.InRewardPool(i), "пул " + i);
+            Assert.AreEqual(AbilityDefinition.AnchorSlamId, PelagKit.PoolDefinition(4).Id, "номер не переиспользован");
+            Assert.AreEqual(AbilityDefinition.SkewerId, PelagKit.PoolDefinition(8).Id);
+
+            for (ulong seed = 1; seed <= 12; seed++)
+            {
+                RiftRun run = FormBaselineScenarios.NewPrototypeRun(seed);
+                run.StartRun();
+                for (int screen = 0; screen < 6; screen++)
+                {
+                    if (!FormBaselineScenarios.ClearToReward(run)) break;
+                    for (int card = 0; card < RiftRun.RewardChoices; card++)
+                    {
+                        RewardOffer offer = run.GetOffer(card);
+                        if (offer.Kind != RewardKind.Ability) continue;
+                        Assert.IsTrue(offer.PoolIndex != 4 && offer.PoolIndex != 8 && offer.PoolIndex != 10, "сид " + seed + ": предложен убранный " + offer.PoolIndex);
+                    }
+                    FormBaselineScenarios.Choose(run, 0, screen);
+                }
             }
         }
 

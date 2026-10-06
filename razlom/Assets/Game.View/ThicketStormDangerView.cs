@@ -13,13 +13,22 @@ namespace Game.View
     /// ударе — вспышка, между волнами и после бури — угасание. Шейдер — Razlom/Thicket Storm Danger
     /// (Assets/Shaders/ThicketStormDanger.shader), время и пол — ThicketStormDangerRules.
     ///
+    /// Ревью 02.10, вечер («буря — непонятно… дольше и более явно», волны 90 / 75): поле плотнее,
+    /// фронт заливки — широкий горячий гребень, в каждом укрытии золотая дуга-отсчёт по кругу
+    /// (замкнулась — удар), последнюю секунду поле и золото бьются пульсом всё чаще (_Pulse из
+    /// ThicketStormDangerRules.PulseOf).
+    ///
+    /// Ревью 02.10, вечер («круг укрытия у босса розовый, а остальные золотые»): аура канала у ног босса
+    /// (розовое кольцо r 2,6 м и пульсы от тела) — теперь слой этого же поля (_Aura, ThicketStormDangerRules.AuraOf),
+    /// под заливкой; внутри укрытий она гаснет до лёгкой дымки — золото кромки у всех кругов одно.
+    ///
     /// Круги — из Sim, те же, по которым считается урон (Simulation.ThicketStormSafeAt):
     /// TryGetThicketShape места 0–2 — волна 1, 3–5 — волна 2, радиус ThicketStormSafeRadius. Метки
     /// SafeZone общий вид не рисует (GroundTelegraphView их пропускает), столбы света над кругами
     /// остаются эффектом боя (ThicketMasterCombatView.Vfx, LightPillar).
     ///
     /// Поле — сетка на весь пол поляны (GladeRegion босса из карты забега; на стенде без поляны —
-    /// пол 20 × 15 м вокруг его места) по высоте земли LayoutView.WeaponGroundHeight; край пола
+    /// пол поляны босса GladeLayout.BossClearingRadii вокруг его места) по высоте земли LayoutView.WeaponGroundHeight; край пола
     /// растворяется (доля в uv.x вершины). Без света, прозрачное, под всеми прозрачными эффектами
     /// и метками (очередь Transparent−15), персонажи закрывают его глубиной. Сетка строится при
     /// первой встрече с боссом, а не в бою; в бою каждый кадр меняются только векторы материала.
@@ -43,7 +52,8 @@ namespace Game.View
         private const float FallbackFillMetres = 12f;
 
         private static readonly int WaveAId = Shader.PropertyToID("_WaveA"), WaveBId = Shader.PropertyToID("_WaveB"),
-            SourceId = Shader.PropertyToID("_Source"), FloorId = Shader.PropertyToID("_Floor");
+            SourceId = Shader.PropertyToID("_Source"), FloorId = Shader.PropertyToID("_Floor"), PulseId = Shader.PropertyToID("_Pulse"),
+            AuraId = Shader.PropertyToID("_Aura");
 
         private static readonly int[] SafeIds =
         {
@@ -71,6 +81,8 @@ namespace Game.View
         /// <summary>Укрытия для шейдера: x, z, радиус, есть ли (держатся и после того, как Sim их снял, — на угасание).</summary>
         private readonly Vector4[] _safe = new Vector4[ThicketStormDangerRules.Slots];
         private int _stormSerial;
+        /// <summary>Канал бури для ауры: начало и конец (EndTick; Часы сдвигают, буря снята — гаснет за AuraCloseSeconds).</summary>
+        private int _auraStart, _auraEnd;
         private Vector2 _source;
         private float _fillLength = FallbackFillMetres;
         private bool _fillDirty = true;
@@ -121,6 +133,10 @@ namespace Game.View
             }
             _material.SetVector(WaveAId, new Vector4(first.Progress, first.Opacity, first.Flash, first.Rim));
             _material.SetVector(WaveBId, new Vector4(second.Progress, second.Opacity, second.Flash, second.Rim));
+            // Пульс последней секунды перед ударом каждой волны (ревью 02.10, вечер: волны 3 и 2,5 с).
+            _material.SetVector(PulseId, new Vector4(first.Pulse, second.Pulse, 0f, 0f));
+            _material.SetVector(AuraId, new Vector4(ThicketStormDangerRules.AuraRadiusMetres, ThicketStormDangerRules.AuraOf(tick, _auraStart, _auraEnd),
+                ThicketStormDangerRules.AuraSeconds(tick, _auraStart), Mathf.Max(first.Pulse, second.Pulse)));
             for (int i = 0; i < SafeIds.Length; i++) _material.SetVector(SafeIds[i], _safe[i]);
             _material.SetVector(SourceId, new Vector4(_source.x, _source.y, _fillLength, 0f));
             _material.SetVector(FloorId, _floor);
@@ -151,6 +167,9 @@ namespace Game.View
             if (!storm)
             {
                 for (int w = 0; w < _waves.Length; w++) ThicketStormDangerRules.Lose(ref _waves[w], now);
+                // Буря снята раньше конца (смерть босса или героя) — аура гаснет, а не висит до старого EndTick.
+                int close = Mathf.CeilToInt(ThicketStormDangerRules.AuraCloseSeconds * Simulation.TicksPerSecond);
+                if (_auraEnd > now + close) _auraEnd = now + close;
                 return;
             }
             if (a.Serial != _stormSerial)
@@ -162,6 +181,8 @@ namespace Game.View
                 _source = new Vector2(at.X.ToFloat(), at.Y.ToFloat());
                 _fillDirty = true;
             }
+            _auraStart = a.StartTick;
+            _auraEnd = a.EndTick;
             float radius = Simulation.ThicketStormSafeRadius.ToFloat();
             // Волна 1 считает от начала бури, волна 2 — от удара первой (в тот тик встают её круги).
             int start = a.StartTick;
@@ -188,12 +209,13 @@ namespace Game.View
             for (int w = 0; w < _waves.Length; w++) _waves[w] = default;
             for (int i = 0; i < _safe.Length; i++) _safe[i] = Vector4.zero;
             _stormSerial = 0;
+            _auraStart = _auraEnd = 0;
             _fillDirty = true;
         }
 
         // ------------------------------------------------------------ поле
 
-        /// <summary>Пол поляны, на которой стоит босс; стенд без поляны — пол 20 × 15 м вокруг его места.</summary>
+        /// <summary>Пол поляны, на которой стоит босс; стенд без поляны — пол поляны босса (BossClearingRadii) вокруг его места.</summary>
         private GladeRegion FloorOf(Simulation sim, int boss)
         {
             FixVec2 home = sim.TryGetThicketMasterMemory(boss, out ThicketMasterMemory m) ? m.Home : sim.Entities.Position[boss];

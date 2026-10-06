@@ -1,0 +1,23 @@
+{
+  "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\smithy-2026-10-04\\03-eni-smithy-ven-palette.png",
+  "size": [
+    1254,
+    1254
+  ],
+  "mode": "RGBA",
+  "corner_alpha": [
+    0,
+    0,
+    1,
+    0
+  ],
+  "visible_bbox_alpha_gt_8": [
+    80,
+    77,
+    1233,
+    1224
+  ],
+  "sha256": "3455eef95aaf8b49bc4e603fb6dd452c7d0b1b4f9967abc3cf12a683bebbfad2",
+  "byte_exact_generated_copy": true,
+  "image_pixels_edited": false
+}

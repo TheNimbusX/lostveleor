@@ -48,6 +48,8 @@ namespace Game.View
 
         private void CaptureDashTour(int tick)
         {
+            // Стык рывок → бег (06.10, ключ -capture-dash-run): TickDriver.DashRunCapture.cs.
+            if (DashRunRequested) { CaptureDashRunTour(tick); return; }
             var entities = Sim.Entities;
             if (_dashTourGeneration != Generation)
             {

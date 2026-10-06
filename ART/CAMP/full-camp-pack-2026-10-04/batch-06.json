@@ -1,0 +1,139 @@
+{
+  "mode": "built-in image_gen",
+  "transparent_background": true,
+  "records": [
+    {
+      "id": "plant-grass",
+      "group": "10-plants",
+      "file": "01-low-grass-clump.png",
+      "title": "Низкая куртина травы",
+      "dims": "около 0,8 × 0,55 м, высота 0,25 м",
+      "subject": "ONE small LOW grass clump for camp ground dressing, about 0.8 m wide and only 25 cm tall. Three overlapping tufts made of FEW wide tapered chunky olive/sage green blade shapes, clearly carved painterly colour planes, slightly darker base, varied tilt and muted yellow-green tips. Grass reads as large simple leaves rather than hundreds of fine thin strands. Roots concealed within the clump. NO soil island, ground disc, rocks, flowers, pedestal or other vegetation.",
+      "prompt": "One isolated TRANSPARENT PNG game prop. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE small LOW grass clump for camp ground dressing, about 0.8 m wide and only 25 cm tall. Three overlapping tufts made of FEW wide tapered chunky olive/sage green blade shapes, clearly carved painterly colour planes, slightly darker base, varied tilt and muted yellow-green tips. Grass reads as large simple leaves rather than hundreds of fine thin strands. Roots concealed within the clump. NO soil island, ground disc, rocks, flowers, pedestal or other vegetation.\nEmpty true transparent alpha between leaves and outside silhouette, no haze or glow, no physical soil/ground disk. Keep thick broad reconstructable leaf shapes.",
+      "references": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-64cf7100-bf3e-446d-be7b-3422ffd73b6e.png",
+      "status": "generated",
+      "selected": true
+    },
+    {
+      "id": "plant-ferns",
+      "group": "10-plants",
+      "file": "02-fern-clump.png",
+      "title": "Папоротники",
+      "dims": "около 0,9 × 0,6 м, высота 0,4 м",
+      "subject": "ONE compact woodland fern clump with FOUR large arcing fronds spreading from one low centre, max height 40 cm and width 90 cm. Each frond has only SIX to EIGHT broad stylized leaf lobes, deliberately thick sturdy leaf shapes, readable silhouette. Muted olive and cool sage greens, broad hand-painted facets without fine vein detail. No dozens of tiny leaves, no soil island, floor, stones, pots, flowers or other plants.",
+      "prompt": "One isolated TRANSPARENT PNG game prop. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE compact woodland fern clump with FOUR large arcing fronds spreading from one low centre, max height 40 cm and width 90 cm. Each frond has only SIX to EIGHT broad stylized leaf lobes, deliberately thick sturdy leaf shapes, readable silhouette. Muted olive and cool sage greens, broad hand-painted facets without fine vein detail. No dozens of tiny leaves, no soil island, floor, stones, pots, flowers or other plants.\nEmpty true transparent alpha between leaves and outside silhouette, no haze or glow, no physical soil/ground disk. Keep thick broad reconstructable leaf shapes.",
+      "references": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-6d393c46-5b40-4119-80ab-2845d3572a08.png",
+      "status": "generated",
+      "selected": false,
+      "rejection": "Цветной фон/ореол вокруг объекта; заменяется чистой генерацией."
+    },
+    {
+      "id": "plant-shrub",
+      "group": "10-plants",
+      "file": "03-low-leaf-shrub.png",
+      "title": "Низкий лиственный куст",
+      "dims": "около 1,0 × 0,65 м, высота 0,6 м",
+      "subject": "ONE low asymmetric broadleaf woodland shrub, 1 m wide and 0.6 m tall, formed by THREE chunky leafy lobes with a few visibly larger broad olive-green leaves at edges, short warm brown stems barely visible at centre. Painterly broad sage top and dark cool green underside, simplified faceted masses, no thousands of tiny leaves. Low enough for the camp hero to remain readable. No berries, flowers, ground mound, rocks, soil base or extra plants.",
+      "prompt": "One isolated TRANSPARENT PNG game prop. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE low asymmetric broadleaf woodland shrub, 1 m wide and 0.6 m tall, formed by THREE chunky leafy lobes with a few visibly larger broad olive-green leaves at edges, short warm brown stems barely visible at centre. Painterly broad sage top and dark cool green underside, simplified faceted masses, no thousands of tiny leaves. Low enough for the camp hero to remain readable. No berries, flowers, ground mound, rocks, soil base or extra plants.\nEmpty true transparent alpha between leaves and outside silhouette, no haze or glow, no physical soil/ground disk. Keep thick broad reconstructable leaf shapes.",
+      "references": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-cfd54787-c569-4d8b-a809-8e2991d806dd.png",
+      "status": "generated",
+      "selected": false,
+      "rejection": "Цветной фон/ореол вокруг объекта; заменяется чистой генерацией."
+    },
+    {
+      "id": "plant-flowers",
+      "group": "10-plants",
+      "file": "04-small-flower-patch.png",
+      "title": "Небольшое цветочное пятно",
+      "dims": "около 0,65 × 0,45 м, высота 0,25 м",
+      "subject": "ONE small sparse camp wildflower clump, 65 cm wide and only 25 cm tall. Seven clearly separated small warm-white five-petal flowers with muted ochre centres above a few broad olive-green leaves, two subtly cream flowers, simple chunky stems. Calm accents matching the flowers at the reference lantern base, not a bright garden bouquet. Broad painterly shapes and facets, no microscopic petals. No soil island, planter, pot, rocks, background or tall dense foliage.",
+      "prompt": "One isolated TRANSPARENT PNG game prop. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE small sparse camp wildflower clump, 65 cm wide and only 25 cm tall. Seven clearly separated small warm-white five-petal flowers with muted ochre centres above a few broad olive-green leaves, two subtly cream flowers, simple chunky stems. Calm accents matching the flowers at the reference lantern base, not a bright garden bouquet. Broad painterly shapes and facets, no microscopic petals. No soil island, planter, pot, rocks, background or tall dense foliage.\nEmpty true transparent alpha between leaves and outside silhouette, no haze or glow, no physical soil/ground disk. Keep thick broad reconstructable leaf shapes.",
+      "references": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-c2198ab8-75f9-4554-b322-fd7989bc7345.png",
+      "status": "generated",
+      "selected": false,
+      "rejection": "Цветной фон/ореол вокруг объекта; заменяется чистой генерацией."
+    },
+    {
+      "id": "plant-sedge",
+      "group": "10-plants",
+      "file": "05-bank-sedge.png",
+      "title": "Невысокая береговая осока",
+      "dims": "около 0,75 × 0,5 м, высота 0,5 м",
+      "subject": "ONE low riverbank sedge clump about 75 cm wide and 50 cm high. Two joined tufts of a FEW broad folded muted olive-green strap leaves with simple dark sage planes and three short plain ochre seed heads. More upright silhouette than meadow grass, thick blades not thin hair-like reeds, no tall wall. Hand-painted chunky fantasy asset. No water, mud, soil disc, stones, flowers or other plants.",
+      "prompt": "One isolated TRANSPARENT PNG game prop. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE low riverbank sedge clump about 75 cm wide and 50 cm high. Two joined tufts of a FEW broad folded muted olive-green strap leaves with simple dark sage planes and three short plain ochre seed heads. More upright silhouette than meadow grass, thick blades not thin hair-like reeds, no tall wall. Hand-painted chunky fantasy asset. No water, mud, soil disc, stones, flowers or other plants.\nEmpty true transparent alpha between leaves and outside silhouette, no haze or glow, no physical soil/ground disk. Keep thick broad reconstructable leaf shapes.",
+      "references": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-ebad3e70-2e37-48d2-9ce8-5b94a7efd9f1.png",
+      "status": "generated",
+      "selected": true
+    },
+    {
+      "id": "rock-flat",
+      "group": "08-stones",
+      "file": "02-low-flat-stones.png",
+      "title": "Низкая группа плоских камней",
+      "dims": "пятно около 1,5 × 0,9 м, высота 0,3 м",
+      "subject": "ONE low compact cluster of FIVE broad flat woodland stones overlapping naturally into an irregular low edge group. Grey-brown hand-painted polygonal stones with large simple facets and softly worn bevels, a couple of restrained olive moss patches on TWO stones. Total width 1.5 m, max height 0.3 m, shapes large enough to read from above. Connected coherent cluster, no circular paving pattern, no terrain base, soil, grass, flowers or magical features.",
+      "prompt": "Create a NEW low woodland stone group in exactly the painted faceted material style of this boulder. FIVE broad FLAT stone slabs, each only 10–20 cm thick, laid beside each other with light overlap into a LOW irregular cluster 1.5 m wide, total height no more than 25 cm. Much wider than high, NO tall boulder or vertical pile. Two restrained olive moss patches. Large painted flat grey-brown facets and softened worn edges. One coherent cluster shown orthographic from 48 degrees above. TRUE TRANSPARENT PNG CUTOUT, no brown haze, vignette, ground, terrain base, grass, cast shadow or background. Whole subject inside frame.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-021d72cd-4e34-46ff-9cf0-7684ece1a8fe.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-bbbbf8a4-0a56-452a-86f0-87bcb856d538.png",
+      "selected": true
+    },
+    {
+      "id": "rock-shore",
+      "group": "08-stones",
+      "file": "03-rounded-shore-stones.png",
+      "title": "Береговые камни",
+      "dims": "пятно около 1,3 × 0,8 м, высота 0,35 м",
+      "subject": "ONE natural low group of SIX large rounded riverbank stones of unequal size, smoother and softer than the woodland boulder but still visibly faceted and hand-painted. Muted cool grey/brown/slate, broad flat colour planes, lower areas a little darker suggesting wear, NOT shiny wet reflective PBR. Arranged as one compact irregular cluster 1.3 m wide and 0.35 m tall. No water, beach, dirt base, sand, tiny gravel or vegetation.",
+      "prompt": "Create a NEW low riverbank stone group using the reference's broad hand-painted grey stone colour planes, but distinctly smoother ROUND OVAL PEBBLES. Six large softly rounded river stones 25–50 cm across with only a few large subtle facets; NOT jagged angular boulders. Laid close together beside each other, unequal sizes, total group 1.3 m wide, only 25–30 cm high. Soft muted cool grey/slate/taupe painted planes, no gloss. High orthographic 48-degree view, all six rounded silhouettes clear. TRUE TRANSPARENT PNG CUTOUT with blank empty alpha outside object, no haze, vignette, ground, water, dirt, sand, vegetation or cast shadow.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-84ebd721-fa53-409f-a592-f363cdb5b7ab.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-2cc005d9-c83d-4642-92fe-caabb825381e.png",
+      "selected": false,
+      "rejection": "Цветной фон/ореол вокруг объекта; заменяется чистой генерацией."
+    },
+    {
+      "id": "wood-fallen-log",
+      "group": "09-woodland",
+      "file": "04-fallen-split-log.png",
+      "title": "Поваленное бревно",
+      "dims": "длина 1,8 м, диаметр 0,45 м",
+      "subject": "ONE fallen split tree log, 1.8 m long and 45 cm diameter, resting sideways with a large snapped branch nub and a clearly visible split end exposing warm honey wood. Thick dark brown bark with large carved facets, a small restrained moss strip on upper side. One long simple split opens the cylinder slightly without exploding into thin splinters. Entire log and branch fully visible. No soil, grass, rock base, tiny twigs or background.",
+      "prompt": "Create one NEW fallen split tree log in exactly this stump's chunky carved hand-painted wood style. One low horizontal log, 1.8 m long and 45 cm thick, broad warm honey split end, dark brown bark with a FEW large carved planes/cracks, just ONE thick snapped branch stub. A little simple olive moss on top. Log stays one complete physical piece, no fine splinters. High 48-degree orthographic three-quarter angle, whole log visible with margin. TRANSPARENT PNG CUTOUT, entirely empty alpha outside, no brown haze/vignette/glow, no floor, ground patch, grass, rocks or shadow. Match large painterly planes rather than realistic bark grain.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-49f78456-c5f7-46de-9842-b1cc5e1ed8a1.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-38b823c4-1614-4a4d-95bc-74b367757e36.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-491fd881-a978-4b78-b211-c93f68a1c693.png",
+      "selected": false,
+      "rejection": "Цветной фон/ореол вокруг объекта; заменяется чистой генерацией."
+    }
+  ]
+}

@@ -22,6 +22,11 @@ namespace Game.View
     ///   золото укрытий гаснет быстрее (<see cref="RimFadeTicks"/>): после удара круг уже не укрытие;
     /// • снята без удара (смерть босса или героя) — заливка замирает и гаснет за
     ///   Simulation.TelegraphLingerTicks, без вспышки: удара не было.
+    ///
+    /// Ревью 02.10, вечер («буря — непонятно… дольше и более явно»): волны стали 90 и 75 тиков (3 и
+    /// 2,5 с) — за долгую заливку конец теряется, поэтому последнюю секунду перед ударом поле бьётся
+    /// пульсом (<see cref="PulseOf"/>): <see cref="PulseBeats"/> ударов всё чаще и ярче, последний — в
+    /// тик удара, его подхватывает вспышка. Пульс — только у ждущей удара волны, от тика Sim.
     /// </summary>
     public static class ThicketStormDangerRules
     {
@@ -44,9 +49,19 @@ namespace Game.View
         public const float CancelFadeTicks = Simulation.TelegraphLingerTicks;
 
         /// <summary>
+        /// Пульс перед ударом: окно, тиков (разметка ударов — доля s = 1 − осталось/окно, удар k — при
+        /// PulseBeats·s² = k). При 54 и 5 удары за ~30, 20, 12, 6 тиков до удара волны и в тик удара:
+        /// всё чаще, первый — за секунду.
+        /// </summary>
+        public const float PulseLeadTicks = 54f;
+
+        /// <summary>Ударов пульса за окно; последний — в тик удара волны.</summary>
+        public const int PulseBeats = 5;
+
+        /// <summary>
         /// Край пола: поле опасности целиком до поля поляны <see cref="FloorFadeInner"/>, нет его от
         /// <see cref="FloorFadeOuter"/> (GladeRegion.Field, ≤ 1 — пол). У скруглённого пола босса
-        /// 20 × 15 м это ~0,4 м внутрь от кромки — ~0,55 м наружу, под камнями каймы.
+        /// 20,98 × 15,74 м это ~0,4 м внутрь от кромки — ~0,55 м наружу, под камнями каймы.
         /// </summary>
         public const float FloorFadeInner = .85f, FloorFadeOuter = 1.25f;
 
@@ -57,14 +72,14 @@ namespace Game.View
             public int StartTick, ImpactTick, CancelTick;
         }
 
-        /// <summary>Как рисовать волну в кадре: заливка, видимость, вспышка, золото укрытий (всё 0…1).</summary>
+        /// <summary>Как рисовать волну в кадре: заливка, видимость, вспышка, золото укрытий, пульс перед ударом (всё 0…1).</summary>
         public readonly struct Look
         {
-            public readonly float Progress, Opacity, Flash, Rim;
+            public readonly float Progress, Opacity, Flash, Rim, Pulse;
 
-            public Look(float progress, float opacity, float flash, float rim)
+            public Look(float progress, float opacity, float flash, float rim, float pulse = 0f)
             {
-                Progress = progress; Opacity = opacity; Flash = flash; Rim = rim;
+                Progress = progress; Opacity = opacity; Flash = flash; Rim = rim; Pulse = pulse;
             }
 
             public bool Visible => Opacity > 0f || Rim > 0f;
@@ -122,7 +137,24 @@ namespace Game.View
                 return new Look(frozen, shown, 0f, shown);
             }
             float appear = Appear(tick - wave.StartTick);
-            return new Look(Progress(tick, wave.StartTick, wave.ImpactTick), appear, 0f, appear);
+            return new Look(Progress(tick, wave.StartTick, wave.ImpactTick), appear, 0f, appear, appear * PulseOf(tick, wave.ImpactTick));
+        }
+
+        /// <summary>
+        /// Пульс ждущей волны в тик tick (0…1): 0 раньше окна <see cref="PulseLeadTicks"/> и после
+        /// удара; в окне — удары при PulseBeats·s² = k (s — доля окна), каждый вспыхивает сразу и
+        /// гаснет кубом до следующего, сила растёт к удару (0,55 → 1). В тик удара — 1.
+        /// </summary>
+        public static float PulseOf(float tick, int impact)
+        {
+            if (float.IsNaN(tick)) return 0f;
+            float left = impact - tick;
+            if (left < 0f || left > PulseLeadTicks) return 0f;
+            float s = 1f - left / PulseLeadTicks;
+            float phase = PulseBeats * s * s;
+            if (phase < 1f) return 0f;
+            float decay = 1f - (phase - (float)Math.Floor(phase));
+            return (.55f + .45f * s) * decay * decay * decay;
         }
 
         /// <summary>
@@ -152,6 +184,48 @@ namespace Game.View
             }
             return best > 0f ? (float)Math.Sqrt(best) : Math.Max(1f, fallback);
         }
+
+        // ---------------------------------------------------------------- аура канала у ног босса
+
+        /// <summary>
+        /// Аура канала (розовое кольцо у ног и пульсы от тела) — рисует поле (ревью 02.10, вечер: «круг укрытия
+        /// у босса розовый, а остальные золотые» — частицы ауры под полем заливали круг 0 розовым). Радиус, м
+        /// (2,3 × рост 1,15, как была частица), раскрытие и угасание, с.
+        /// </summary>
+        public const float AuraRadiusMetres = 2.645f, AuraOpenSeconds = .35f, AuraCloseSeconds = .45f;
+
+        /// <summary>
+        /// Видимость ауры 0…1 в тик tick: раскрывается за AuraOpenSeconds от начала бури start, гаснет за
+        /// AuraCloseSeconds к её концу end (EndTick; Часы его сдвигают — вид перечитывает); вне — 0.
+        /// </summary>
+        public static float AuraOf(float tick, int start, int end)
+        {
+            if (float.IsNaN(tick) || end <= start) return 0f;
+            float age = (tick - start) / Simulation.TicksPerSecond, left = (end - tick) / Simulation.TicksPerSecond;
+            if (age <= 0f || left <= 0f) return 0f;
+            return SmoothStep01(Clamp01(age / AuraOpenSeconds)) * SmoothStep01(Clamp01(left / AuraCloseSeconds));
+        }
+
+        /// <summary>Секунды канала для пульсов ауры (от начала бури, по тикам Sim — пауза держит); до начала — 0.</summary>
+        public static float AuraSeconds(float tick, int start)
+            => float.IsNaN(tick) ? 0f : Math.Max(0f, (tick - start) / Simulation.TicksPerSecond);
+
+        // ---------------------------------------------------------------- лепестки у героя
+
+        /// <summary>
+        /// Дольше этого, с, частица бури — не лепесток: лепестки, ветер, искры и листья бури живут до 3 с, луч
+        /// канала («Beam», «Beam Core») — одна частица на всю бурю (5,9 с).
+        /// </summary>
+        public const float HeroClearLifetimeMax = 4f;
+
+        /// <summary>
+        /// Гасит ли вид у героя частицы системы бури (ThicketMasterCombatView.ClearAroundHero: альфа частицы только
+        /// опускается и назад не встаёт — лепесток живёт 2–3 с, поток новых идёт). Одиночная или долгая частица
+        /// (луч канала с крон) — нет: погасив её, когда крона на экране легла на героя, вид прятал бы луч до конца
+        /// бури, даже когда герой ушёл (проверка находок 03.10). maxParticles и lifetimeMax — из модуля main.
+        /// </summary>
+        public static bool ClearsAroundHero(int maxParticles, float lifetimeMax)
+            => maxParticles > 1 && lifetimeMax <= HeroClearLifetimeMax;
 
         private static float Appear(float age) => SmoothStep01(Clamp01(age / FadeInTicks));
 

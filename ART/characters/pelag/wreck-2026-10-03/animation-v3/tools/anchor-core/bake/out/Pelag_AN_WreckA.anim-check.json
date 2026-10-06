@@ -1,0 +1,120 @@
+{
+ "pass": false,
+ "worstBone": 0.008391503468771261,
+ "worstSocket": 0.0076412624249003296,
+ "worstHandAngleDeg": 1.091277732573864,
+ "frames": [
+  {
+   "frame": 0,
+   "maxBone": 0.00023,
+   "worst": "RightToe_End",
+   "socket": 7e-05,
+   "handAngleDeg": 0.0
+  },
+  {
+   "frame": 1,
+   "maxBone": 0.00017,
+   "worst": "RightToe_End",
+   "socket": 7e-05,
+   "handAngleDeg": 0.0
+  },
+  {
+   "frame": 2,
+   "maxBone": 0.00454,
+   "worst": "HeadTop_End",
+   "socket": 0.00385,
+   "handAngleDeg": 0.524
+  },
+  {
+   "frame": 3,
+   "maxBone": 0.00036,
+   "worst": "RightToe_End",
+   "socket": 0.0001,
+   "handAngleDeg": 0.0
+  },
+  {
+   "frame": 4,
+   "maxBone": 0.00039,
+   "worst": "LeftHandIndex1",
+   "socket": 0.00037,
+   "handAngleDeg": 0.011
+  },
+  {
+   "frame": 5,
+   "maxBone": 0.00022,
+   "worst": "RightToe_End",
+   "socket": 7e-05,
+   "handAngleDeg": 0.0
+  },
+  {
+   "frame": 6,
+   "maxBone": 0.0003,
+   "worst": "RightToe_End",
+   "socket": 9e-05,
+   "handAngleDeg": 0.055
+  },
+  {
+   "frame": 7,
+   "maxBone": 0.00033,
+   "worst": "RightToe_End",
+   "socket": 0.00011,
+   "handAngleDeg": 0.0
+  },
+  {
+   "frame": 8,
+   "maxBone": 0.00035,
+   "worst": "RightToe_End",
+   "socket": 0.00011,
+   "handAngleDeg": 0.0
+  },
+  {
+   "frame": 9,
+   "maxBone": 0.00029,
+   "worst": "RightToe_End",
+   "socket": 9e-05,
+   "handAngleDeg": 0.0
+  },
+  {
+   "frame": 10,
+   "maxBone": 0.00018,
+   "worst": "LeftHandMiddle1",
+   "socket": 0.00017,
+   "handAngleDeg": 0.0
+  },
+  {
+   "frame": 11,
+   "maxBone": 0.00014,
+   "worst": "RightToe_End",
+   "socket": 5e-05,
+   "handAngleDeg": 0.0
+  },
+  {
+   "frame": 12,
+   "maxBone": 0.0072,
+   "worst": "LeftHandMiddle1",
+   "socket": 0.00663,
+   "handAngleDeg": 0.923
+  },
+  {
+   "frame": 13,
+   "maxBone": 0.00356,
+   "worst": "LeftHandMiddle1",
+   "socket": 0.00321,
+   "handAngleDeg": 0.498
+  },
+  {
+   "frame": 14,
+   "maxBone": 0.00839,
+   "worst": "LeftHandMiddle1",
+   "socket": 0.00764,
+   "handAngleDeg": 1.091
+  },
+  {
+   "frame": 15,
+   "maxBone": 0.00023,
+   "worst": "RightToe_End",
+   "socket": 7e-05,
+   "handAngleDeg": 0.0
+  }
+ ]
+}

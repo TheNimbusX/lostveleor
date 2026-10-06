@@ -272,13 +272,14 @@ namespace Game.Tests
             FixVec2 heavyAt = sim.Entities.Position[heavy], eliteAt = sim.Entities.Position[elite],
                 farAt = sim.Entities.Position[far];
 
-            var events = Run(sim, 14, t => Frame(t == 0, false));
+            var events = Run(sim, Simulation.MaelstromContactDelayTicks + 4, t => Frame(t == 0, false));
 
             var pull = Of(events, SimEventType.WhirlwindMaelstromPull);
             Assert.AreEqual(1, pull.Count);
             Assert.AreEqual(0, pull[0].tick, "тяга — в каст");
             Assert.AreEqual(1, pull[0].ev.Amount, "тянут только лёгкого");
-            Assert.AreEqual(Simulation.WhirlwindContactDelayTicks - 1, pull[0].ev.ActionVariant, "тяга кончается к контакту");
+            Assert.AreEqual(Simulation.MaelstromPullTicks, pull[0].ev.ActionVariant, "тяга — 16 тиков");
+            Assert.AreEqual(Simulation.MaelstromContactDelayTicks - 1, pull[0].ev.ActionVariant, "тяга кончается к контакту");
 
             Assert.Less(sim.Entities.Position[light].Length.ToFloat(), 1.5f, "лёгкого не стянуло");
             Assert.AreEqual(heavyAt, sim.Entities.Position[heavy], "тяжёлого сдвинуло");
@@ -288,7 +289,7 @@ namespace Game.Tests
             var stunned = new HashSet<int>();
             foreach (var e in Of(events, SimEventType.Stun))
             {
-                Assert.AreEqual(Simulation.WhirlwindContactDelayTicks, e.tick, "оглушение — в контакт");
+                Assert.AreEqual(Simulation.MaelstromContactDelayTicks, e.tick, "оглушение — в контакт, после тяги");
                 Assert.AreEqual(Simulation.MaelstromStaggerTicks, e.ev.Amount);
                 stunned.Add(e.ev.Target);
             }
@@ -309,10 +310,413 @@ namespace Game.Tests
             const int boss = 1;
             Assert.AreEqual(EnemyKind.ForestThicketMaster, sim.Entities.Kind[boss]);
 
-            var events = Run(sim, 14, t => Frame(t == 0, false));
+            var events = Run(sim, Simulation.MaelstromContactDelayTicks + 4, t => Frame(t == 0, false));
             Assert.AreEqual(0, Of(events, SimEventType.WhirlwindMaelstromPull)[0].ev.Amount);
             foreach (var e in Of(events, SimEventType.Stun)) Assert.AreNotEqual(boss, e.ev.Target, "босса оглушило");
             Assert.AreNotEqual((byte)ForcedMotionKind.Dragged, sim.Entities.ForcedKind[boss]);
+        }
+
+        [Test]
+        public void Maelstrom_Pull16Ticks_EasesIn_EndsAtTheStop_ContactRightAfter()
+        {
+            const int pullTicks = Simulation.MaelstromPullTicks, contact = Simulation.MaelstromContactDelayTicks;
+            Assert.AreEqual(16, pullTicks, "владелец 02.10: тяга ~0,5–0,6 с");
+            Assert.AreEqual(pullTicks + 1, contact);
+
+            Simulation sim = Arena(PelagForm.WhirlwindMaelstrom);
+            int farBody = Enemy(sim, 3500, 0);
+            int nearBody = Enemy(sim, 0, -2000);
+            int[] bodies = { farBody, nearBody };
+            Fix64 near = sim.Entities.BodyRadius[Simulation.PlayerId] + Fix64.Ratio(1, 2);
+            var start = new FixVec2[2];
+            var stop = new FixVec2[2];
+            for (int k = 0; k < 2; k++)
+            {
+                start[k] = sim.Entities.Position[bodies[k]];
+                Fix64 distance = start[k].Length;
+                stop[k] = start[k] / distance * (near + sim.Entities.BodyRadius[bodies[k]]);
+            }
+
+            var at = new FixVec2[2, contact + 3];
+            PlayerActionState action = default;
+            var events = Run(sim, contact + 3, t =>
+            {
+                if (t > 0) for (int k = 0; k < 2; k++) at[k, t - 1] = sim.Entities.Position[bodies[k]];
+                if (t == 1) action = sim.PlayerAction;
+                return Frame(t == 0, false);
+            });
+
+            // Часы героя покрывают длинный каст так же, как прежние 10 тиков: контакт — после тяги.
+            Assert.AreEqual(0, action.StartTick);
+            Assert.AreEqual(contact, action.ContactTick, "лок героя до контакта Водоворота");
+            Assert.AreEqual(contact + sim.AbilityExecutionTicks(12, 1), action.EndTick);
+
+            for (int k = 0; k < 2; k++)
+            {
+                float total = (start[k] - stop[k]).Length.ToFloat();
+                Assert.AreEqual(start[k], at[k, 0], "в тик каста тело ещё стоит, тело " + k);
+                float previousStep = 0f;
+                for (int t = 1; t <= pullTicks; t++)
+                {
+                    float travelled = (at[k, t] - start[k]).Length.ToFloat();
+                    float expected = total * Simulation.MaelstromPullProgress(t, pullTicks).ToFloat();
+                    Assert.AreEqual(expected, travelled, 2e-3f, $"доля пути по разгону, тело {k}, тик {t}");
+                    float step = (at[k, t] - at[k, t - 1]).Length.ToFloat();
+                    Assert.Greater(step, previousStep, $"тело разгоняется, тело {k}, тик {t}");
+                    Assert.Less(at[k, t].Length.ToFloat(), at[k, t - 1].Length.ToFloat(), $"тело всё время едет к герою, тело {k}, тик {t}");
+                    previousStep = step;
+                }
+                float linear = total / pullTicks;
+                // Проверка 02.10: x² вёз 10 см из 160 за шесть тиков — «стоит, потом влетает».
+                float first = (at[k, 1] - at[k, 0]).Length.ToFloat();
+                Assert.GreaterOrEqual(first, linear * .2f, "трогается с первого тика, тело " + k);
+                Assert.Less(first, linear * .5f, "но с места, а не ровным волоком, тело " + k);
+                // Проверка 03.10: 30% к середине (изгиб 4) начинались незаметно — теперь треть.
+                float half = (at[k, pullTicks / 2] - start[k]).Length.ToFloat() / total;
+                Assert.GreaterOrEqual(half, .32f, "к середине тяги — треть пути, тело " + k);
+                Assert.LessOrEqual(half, .35f, "к середине тяги — треть пути, тело " + k);
+                Assert.Greater((at[k, pullTicks] - at[k, pullTicks - 1]).Length.ToFloat(), linear * 1.5f, "к концу влетает");
+                Assert.AreNotEqual(at[k, pullTicks - 1], at[k, pullTicks], "тяга идёт до 16-го тика");
+                Assert.AreEqual(stop[k].X.ToFloat(), at[k, pullTicks].X.ToFloat(), 1e-4f, "конец тяги — прежняя точка, тело " + k);
+                Assert.AreEqual(stop[k].Y.ToFloat(), at[k, pullTicks].Y.ToFloat(), 1e-4f, "конец тяги — прежняя точка, тело " + k);
+                Assert.AreEqual(at[k, pullTicks], at[k, contact], "к контакту тело стоит");
+                Assert.AreEqual(0, sim.Entities.ForcedTicksLeft[bodies[k]]);
+            }
+
+            // Контакт — сразу за концом тяги: урон и оглушение тиком позже последнего шага, не раньше.
+            foreach (int body in bodies)
+            {
+                var hits = Of(events, SimEventType.Damage).FindAll(e => e.ev.Target == body);
+                Assert.IsNotEmpty(hits, "Водоворот не ударил тело " + body);
+                Assert.AreEqual(contact, hits[0].tick, "удар — в контакт");
+            }
+            foreach (var e in Of(events, SimEventType.Stun))
+                Assert.AreEqual(contact, e.tick);
+            Assert.AreEqual(2, Of(events, SimEventType.Stun).Count);
+            Assert.AreEqual(SingleWhirlwind(), Lost(sim, farBody), "урон прежний — обычный Вихрь");
+            Assert.AreEqual(SingleWhirlwind(), Lost(sim, nearBody));
+        }
+
+        [Test]
+        public void Maelstrom_PullCurve_MovesFromTheFirstTick_AThirdByTheMiddle()
+        {
+            const int pullTicks = Simulation.MaelstromPullTicks;
+            // Путь 1,6 м по тикам тяги, см: шаг 3,75 и растёт на 0,83 см за тик; к середине — 53,3 (треть).
+            // Проверка 03.10: при изгибе 4 (первый шаг 2,5 см, к середине 30%) начало тяги не читалось.
+            float[] cm = { 0f, 3.75f, 8.33333f, 13.75f, 20f, 27.08333f, 35f, 43.75f, 53.33333f, 63.75f, 75f,
+                87.08333f, 100f, 113.75f, 128.33333f, 143.75f, 160f };
+            Assert.AreEqual(pullTicks + 1, cm.Length);
+            for (int t = 0; t <= pullTicks; t++)
+                Assert.AreEqual(cm[t], 160f * Simulation.MaelstromPullProgress(t, pullTicks).ToFloat(), 1e-3f, "тик " + t);
+        }
+
+        /// <summary>Комната 20×20 с центром в нуле и камнем (как EnemyBrainTests.Room); герой в нуле.</summary>
+        private static Simulation RockArena(double rockX, double rockY, double rockRadius)
+        {
+            var room = new ModuleDefinition("maelstrom.rock", 10, 10, new ModuleConnector[0], isEntrance: true);
+            var map = new LayoutMap(new ModuleSet(new[] { room }));
+            map.TryPlace(0, 0, -5, -5);
+            map.AddTestObstacle(new LayoutObstacle(new FixVec2(Fix64.FromDouble(rockX), Fix64.FromDouble(rockY)),
+                Fix64.FromDouble(rockRadius), 0));
+            map.BuildRoutes();
+            var sim = new Simulation(1234, 128);
+            sim.SetupRift(map, 1234UL, 0, 0, 100);
+            sim.PlayerInvulnerable = true;
+            sim.Entities.Position[Simulation.PlayerId] = FixVec2.Zero;
+            Give(sim, PelagForm.WhirlwindMaelstrom);
+            return sim;
+        }
+
+        [Test]
+        public void Maelstrom_BodyBlockedByARock_WaitsThenCatchesUpGradually_NoJerk()
+        {
+            const int pullTicks = Simulation.MaelstromPullTicks, contact = Simulation.MaelstromContactDelayTicks;
+            float catchUp = Simulation.MaelstromPullCatchUp.ToFloat();
+            // Камень на пути: тело упирается и ползёт по его краю, потом сходит с него.
+            Simulation sim = RockArena(2.4, -1.3, 0.3);
+            int blocked = Enemy(sim, 3000, -1200);
+            int free = Enemy(sim, 0, 3000);
+            int[] bodies = { blocked, free };
+            Fix64 near = sim.Entities.BodyRadius[Simulation.PlayerId] + Fix64.Ratio(1, 2);
+            var total = new float[2];
+            var stopAt = new float[2];
+            for (int k = 0; k < 2; k++)
+            {
+                stopAt[k] = (near + sim.Entities.BodyRadius[bodies[k]]).ToFloat();
+                total[k] = sim.Entities.Position[bodies[k]].Length.ToFloat() - stopAt[k];
+            }
+
+            var at = new FixVec2[2, contact + 3];
+            Run(sim, contact + 3, t =>
+            {
+                if (t > 0) for (int k = 0; k < 2; k++) at[k, t - 1] = sim.Entities.Position[bodies[k]];
+                return Frame(t == 0, false);
+            });
+
+            int stuck = 0, movedAfterStuck = 0, caughtUp = 0;
+            for (int t = 1; t <= pullTicks; t++)
+            {
+                float step = (at[0, t] - at[0, t - 1]).Length.ToFloat();
+                float planned = total[0] * (Simulation.MaelstromPullProgress(t, pullTicks)
+                                            - Simulation.MaelstromPullProgress(t - 1, pullTicks)).ToFloat();
+                Assert.LessOrEqual(step, planned * catchUp + 1e-3f, $"отставшее тело догоняет рывком — шаг больше {catchUp} плана, тик {t}");
+                if (step < planned * .5f) stuck++;
+                else if (stuck > 0)
+                {
+                    movedAfterStuck++;
+                    if (step > planned * 1.2f) caughtUp++;
+                }
+            }
+            Assert.Greater(stuck, 1, "камень тело не задержал — сценарий не проверяет упор");
+            Assert.Greater(movedAfterStuck, 0, "тело так и не сошло с камня — сценарий не проверяет рывок после упора");
+            Assert.Greater(caughtUp, 0, "сойдя с камня, тело не догоняет план");
+            // Проверка 03.10: отставание в три тика догоняется к концу тяги — тело доезжает до прежней точки.
+            Assert.AreEqual(stopAt[0], at[0, pullTicks].Length.ToFloat(), 1e-3f, "отставание не догнано");
+            Assert.AreEqual(at[0, pullTicks], at[0, contact], "к контакту тело стоит");
+            Assert.AreEqual(stopAt[1], at[1, pullTicks].Length.ToFloat(), 1e-4f, "свободное тело доезжает до прежней точки");
+        }
+
+        /// <summary>
+        /// Корни держат тело 8 тиков середины тяги (тест возвращает его на место), потом
+        /// отпускают. Столько не догнать: тело идёт не быстрее CatchUp × план до самого
+        /// конца тяги — последний шаг тоже, — и недоезжает, а не прыгает к герою.
+        /// </summary>
+        [Test]
+        public void Maelstrom_BodyHeldMostOfThePull_FollowsWhenFree_NoJumpAtTheEnd()
+        {
+            const int pullTicks = Simulation.MaelstromPullTicks, contact = Simulation.MaelstromContactDelayTicks;
+            const int holdFrom = 5, holdTo = 12;
+            float catchUp = Simulation.MaelstromPullCatchUp.ToFloat();
+            Simulation sim = Arena(PelagForm.WhirlwindMaelstrom);
+            int body = Enemy(sim, 3000, 0);
+            float stopAt = (sim.Entities.BodyRadius[Simulation.PlayerId] + Fix64.Ratio(1, 2)
+                            + sim.Entities.BodyRadius[body]).ToFloat();
+            float total = 3f - stopAt;
+
+            var at = new FixVec2[contact + 1];
+            for (int t = 0; t <= contact; t++)
+            {
+                sim.Step(Frame(t == 0, false));
+                if (t >= holdFrom && t <= holdTo) sim.Entities.Position[body] = at[holdFrom - 1];
+                at[t] = sim.Entities.Position[body];
+            }
+
+            for (int t = holdTo + 1; t <= pullTicks; t++)
+            {
+                float step = (at[t] - at[t - 1]).Length.ToFloat();
+                float planned = total * (Simulation.MaelstromPullProgress(t, pullTicks)
+                                         - Simulation.MaelstromPullProgress(t - 1, pullTicks)).ToFloat();
+                Assert.GreaterOrEqual(step, planned * .99f, $"отпущенное тело стоит, тик {t}");
+                Assert.LessOrEqual(step, planned * catchUp + 1e-3f, $"отпущенное тело прыгает — шаг больше {catchUp} плана, тик {t}");
+            }
+            Assert.Greater(at[pullTicks].Length.ToFloat(), stopAt + .3f, "восемь тиков не догнать — тело недоезжает");
+            Assert.Less(at[pullTicks].Length.ToFloat(), at[holdTo].Length.ToFloat() - total * .3f, "но отпущенное тянется дальше");
+            Assert.AreEqual(at[pullTicks], at[contact], "к контакту тело стоит");
+        }
+
+        /// <summary>
+        /// Водоворот собирает толпу роя (радиус 0,45; сценарии независимой проверки 03.10).
+        /// Задние ряды, которых держат передние, догоняют план и встают у героя не дальше
+        /// 15 см от прежнего волока с полным догоном (1,40–1,50 м), а не в ~2 м, как без
+        /// догона; шаг заднего тела не больше CatchUp × план тика (полный догон давал
+        /// последний шаг до 1,6 плана). Тот же сид и ввод — те же позиции.
+        /// </summary>
+        [Test]
+        public void Maelstrom_GathersTheCrowd_BackRowsCatchUpWithoutAJerk()
+        {
+            // Двое на одном луче.
+            CrowdGathers(new[] { (3000, 0), (3950, 0) }, new[] { 1 }, new[] { 1.40f });
+            // Плотная пачка 4×2 с одной стороны: задние ряды — тела 4–7.
+            var pack = new List<(int, int)>();
+            for (int i = 0; i < 4; i++) for (int j = 0; j < 2; j++) pack.Add((2400 + i * 500, -500 + j * 1000));
+            CrowdGathers(pack.ToArray(), new[] { 4, 5, 6, 7 }, new[] { 1.45f, 1.45f, 1.48f, 1.48f });
+            // Дуга из шести на 3,2 м: тела 1–4 зажаты соседями.
+            var arc = new List<(int, int)>();
+            for (int i = 0; i < 6; i++)
+            {
+                double a = -0.6 + i * 0.24;
+                arc.Add(((int)System.Math.Round(3200 * System.Math.Cos(a)), (int)System.Math.Round(3200 * System.Math.Sin(a))));
+            }
+            CrowdGathers(arc.ToArray(), new[] { 1, 2, 3, 4 }, new[] { 1.47f, 1.50f, 1.50f, 1.47f });
+        }
+
+        private static void CrowdGathers((int x, int y)[] spotsMm, int[] backRows, float[] fullCatchUpEnd)
+        {
+            const int pullTicks = Simulation.MaelstromPullTicks, contact = Simulation.MaelstromContactDelayTicks;
+            float catchUp = Simulation.MaelstromPullCatchUp.ToFloat();
+            FixVec2[,] at = CrowdPull(spotsMm, out float stopAt);
+            FixVec2[,] again = CrowdPull(spotsMm, out _);
+            for (int k = 0; k < spotsMm.Length; k++)
+                for (int t = 0; t <= contact; t++)
+                    Assert.AreEqual(at[k, t], again[k, t], $"тот же сид и ввод — другие позиции, тело {k}, тик {t}");
+
+            for (int r = 0; r < backRows.Length; r++)
+            {
+                int k = backRows[r];
+                float end = at[k, contact].Length.ToFloat();
+                Assert.LessOrEqual(end, fullCatchUpEnd[r] + .15f,
+                    $"толпа не собрана: тело {k} встало в {end:F2} м, полный догон — {fullCatchUpEnd[r]:F2}");
+                Assert.GreaterOrEqual(end, stopAt - .05f, $"тело {k} протащило за точку остановки");
+                float total = at[k, 0].Length.ToFloat() - stopAt;
+                for (int t = 1; t <= pullTicks; t++)
+                {
+                    float step = (at[k, t] - at[k, t - 1]).Length.ToFloat();
+                    float planned = total * (Simulation.MaelstromPullProgress(t, pullTicks)
+                                             - Simulation.MaelstromPullProgress(t - 1, pullTicks)).ToFloat();
+                    Assert.LessOrEqual(step, planned * catchUp + .01f, $"задний ряд догоняет рывком: тело {k}, тик {t}");
+                }
+            }
+        }
+
+        /// <summary>Тела роя в точках (мм), каст Водоворота; позиции по тикам до контакта (0 — тик каста).</summary>
+        private static FixVec2[,] CrowdPull((int x, int y)[] spotsMm, out float stopAt)
+        {
+            const int contact = Simulation.MaelstromContactDelayTicks;
+            Simulation sim = Arena(PelagForm.WhirlwindMaelstrom);
+            var ids = new int[spotsMm.Length];
+            for (int k = 0; k < spotsMm.Length; k++)
+            {
+                ids[k] = Enemy(sim, spotsMm[k].x, spotsMm[k].y);
+                sim.Entities.BodyRadius[ids[k]] = Fix64.Ratio(45, 100);
+            }
+            stopAt = (sim.Entities.BodyRadius[Simulation.PlayerId] + Fix64.Ratio(1, 2) + Fix64.Ratio(45, 100)).ToFloat();
+            var at = new FixVec2[spotsMm.Length, contact + 1];
+            for (int t = 0; t <= contact; t++)
+            {
+                sim.Step(Frame(t == 0, false));
+                for (int k = 0; k < ids.Length; k++) at[k, t] = sim.Entities.Position[ids[k]];
+            }
+            return at;
+        }
+
+        /// <summary>
+        /// Проверка 03.10, раунд 2: тело держат до 13–15-го тика тяги и отпускают у самого конца.
+        /// Последний тик делил весь остаток мимо догона — отпущенное на 16-м тике прыгало к
+        /// герою на 52 см (догон 26,7). Теперь и последний шаг не больше CatchUp × план тика:
+        /// точка конца подходит к телу, тело недоезжает.
+        /// </summary>
+        [TestCase(13)]
+        [TestCase(14)]
+        [TestCase(15)]
+        public void Maelstrom_BodyHeldUntilTheLastTicks_LastStepNoJump(int holdTo)
+        {
+            const int pullTicks = Simulation.MaelstromPullTicks, contact = Simulation.MaelstromContactDelayTicks;
+            const int holdFrom = 5;
+            float catchUp = Simulation.MaelstromPullCatchUp.ToFloat();
+            Simulation sim = Arena(PelagForm.WhirlwindMaelstrom);
+            int body = Enemy(sim, 3000, 0);
+            float stopAt = (sim.Entities.BodyRadius[Simulation.PlayerId] + Fix64.Ratio(1, 2)
+                            + sim.Entities.BodyRadius[body]).ToFloat();
+            float total = 3f - stopAt;
+
+            var at = new FixVec2[contact + 1];
+            for (int t = 0; t <= contact; t++)
+            {
+                sim.Step(Frame(t == 0, false));
+                if (t >= holdFrom && t <= holdTo) sim.Entities.Position[body] = at[holdFrom - 1];
+                at[t] = sim.Entities.Position[body];
+            }
+
+            for (int t = holdTo + 1; t <= pullTicks; t++)
+            {
+                float step = (at[t] - at[t - 1]).Length.ToFloat();
+                float planned = total * (Simulation.MaelstromPullProgress(t, pullTicks)
+                                         - Simulation.MaelstromPullProgress(t - 1, pullTicks)).ToFloat();
+                Assert.GreaterOrEqual(step, planned * .99f, $"отпущенное тело стоит, тик {t}");
+                Assert.LessOrEqual(step, planned * catchUp + 1e-3f, $"отпущенное тело прыгает — шаг больше {catchUp} плана, тик {t}");
+            }
+            Assert.Greater(at[pullTicks].Length.ToFloat(), stopAt + .3f, "столько не догнать — тело недоезжает");
+            Assert.AreEqual(at[pullTicks], at[contact], "к контакту тело стоит");
+            Assert.AreEqual(0, sim.Entities.ForcedTicksLeft[body], "тяга кончилась");
+        }
+
+        /// <summary>
+        /// Плотные пачки роя (проверка 03.10, раунд 2): на последнем тике тяги задние тела
+        /// доезжали остатком целиком, шаг выходил за CatchUp × план. Теперь последний шаг
+        /// каждого тела не больше догона (толчки соседей тоже в шаге); тот же сид и ввод —
+        /// те же позиции.
+        /// </summary>
+        [Test]
+        public void Maelstrom_DensePacks_LastTickWithinTheCatchUp()
+        {
+            DensePackLastTick(Grid(3, 3, 2000, -900, 900, 900));
+            DensePackLastTick(Grid(4, 3, 2000, -900, 600, 900));
+            DensePackLastTick(Grid(5, 2, 1900, -450, 450, 900));
+            DensePackLastTick(Grid(4, 2, 2400, -500, 500, 1000));
+        }
+
+        private static (int, int)[] Grid(int rows, int columns, int x0, int y0, int dx, int dy)
+        {
+            var spots = new List<(int, int)>();
+            for (int i = 0; i < rows; i++) for (int j = 0; j < columns; j++) spots.Add((x0 + i * dx, y0 + j * dy));
+            return spots.ToArray();
+        }
+
+        private static void DensePackLastTick((int x, int y)[] spotsMm)
+        {
+            const int pullTicks = Simulation.MaelstromPullTicks, contact = Simulation.MaelstromContactDelayTicks;
+            float catchUp = Simulation.MaelstromPullCatchUp.ToFloat();
+            FixVec2[,] at = CrowdPull(spotsMm, out float stopAt);
+            FixVec2[,] again = CrowdPull(spotsMm, out _);
+            string pack = spotsMm.Length + " тел от " + spotsMm[0];
+            for (int k = 0; k < spotsMm.Length; k++)
+            {
+                for (int t = 0; t <= contact; t++)
+                    Assert.AreEqual(at[k, t], again[k, t], $"тот же сид и ввод — другие позиции, {pack}, тело {k}, тик {t}");
+                float total = at[k, 0].Length.ToFloat() - stopAt;
+                float step = (at[k, pullTicks] - at[k, pullTicks - 1]).Length.ToFloat();
+                float planned = total * (Simulation.MaelstromPullProgress(pullTicks, pullTicks)
+                                         - Simulation.MaelstromPullProgress(pullTicks - 1, pullTicks)).ToFloat();
+                Assert.LessOrEqual(step, planned * catchUp + 1e-3f, $"последний тик — рывок, {pack}, тело {k}");
+            }
+        }
+
+        [Test]
+        public void Maelstrom_NoFormWhirlwindKeepsTheTenTickContact()
+        {
+            Simulation sim = Arena(PelagForm.None);
+            Run(sim, 2, t => Frame(t == 0, false));
+            Assert.AreEqual(Simulation.WhirlwindContactDelayTicks, sim.PlayerAction.ContactTick - sim.PlayerAction.StartTick);
+            Assert.AreEqual(10, Simulation.WhirlwindContactDelayTicks);
+            Assert.Greater(Simulation.MaelstromContactDelayTicks, Simulation.WhirlwindContactDelayTicks, "контакт Водоворота позже");
+        }
+
+        /// <summary>Водоворот в толпе живых мобов: свёртка хешей и позиций по тикам.</summary>
+        private static ulong MaelstromCrowdScenario(out int pulled)
+        {
+            var sim = new Simulation(777, 128);
+            sim.SetupKindTestArena(EnemyKind.ForestGuardian, 4, distance: Fix64.FromInt(3));
+            FixVec2 hero = sim.Entities.Position[Simulation.PlayerId];
+            for (int k = 0; k < 5; k++)
+                sim.AddKindTestEnemy(EnemyKind.ForestRootSwarm,
+                    hero + FixVec2.FromAngle(Fix64.TwoPi * Fix64.Ratio(k, 5)) * Fix64.Ratio(20 + k * 4, 10), 400);
+            Give(sim, PelagForm.WhirlwindMaelstrom);
+            pulled = 0;
+            ulong fold = 14695981039346656037UL;
+            for (int t = 0; t < 120; t++)
+            {
+                sim.Step(Frame(t == 3 || t == 70, false));
+                sim.Entities.Health[Simulation.PlayerId] = sim.Entities.MaxHealth[Simulation.PlayerId];
+                fold = Mix(fold, sim.StateHash());
+                for (int i = 0; i < sim.Entities.Count; i++)
+                {
+                    fold = Mix(fold, (ulong)sim.Entities.Position[i].X.Raw);
+                    fold = Mix(fold, (ulong)sim.Entities.Position[i].Y.Raw);
+                }
+                foreach (SimEvent ev in sim.Events)
+                    if (ev.Type == SimEventType.WhirlwindMaelstromPull) pulled += ev.Amount;
+            }
+            return fold;
+        }
+
+        [Test]
+        public void Maelstrom_EasedPull_SameSeedSameInput_SameHashesAndPositions()
+        {
+            ulong a = MaelstromCrowdScenario(out int pulledA);
+            ulong b = MaelstromCrowdScenario(out int pulledB);
+            Assert.AreEqual(a, b);
+            Assert.AreEqual(pulledA, pulledB);
+            Assert.Greater(pulledA, 2, "сценарий никого не потянул");
         }
 
         // ---- Пенные волны ----

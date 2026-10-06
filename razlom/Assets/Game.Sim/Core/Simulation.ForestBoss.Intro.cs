@@ -191,14 +191,16 @@ namespace Game.Sim
 
         /// <summary>
         /// Первая атака сразу после рёва: серия лапы, если герой в досягаемости, иначе
-        /// нырок к нему (бугор едет под героя, круг — под ним) — без «первого выбора»
-        /// часов нырка, но с его перезарядкой (стенд или тест мог его закрыть). Нырок
-        /// заводит свои часы сам. Ни то ни другое — обычный выбор (ChooseThicketAction).
+        /// нырок к нему, если он в дальней полосе (с кромки поляны до угла босса —
+        /// ≈ 12,6 м: всегда так; бугор едет под героя, круг — под ним) — без двух секунд
+        /// дальней полосы, но с перезарядкой нырка (стенд или тест мог его закрыть). Ни то
+        /// ни другое — обычный выбор (ChooseThicketAction): ближе — подходит под лапу.
         /// </summary>
         private ThicketMasterAction ThicketIntroOpener(int id)
         {
             if (ThicketPawReady(id)) return ThicketMasterAction.Paw;
-            if (Tick >= ThicketReadyAt(id, ThicketMasterAction.Dive)) return ThicketMasterAction.Dive;
+            if (Tick >= ThicketReadyAt(id, ThicketMasterAction.Dive) && ThicketHeroBand(id) == ThicketBand.Far)
+                return ThicketMasterAction.Dive;
             return ChooseThicketAction(id);
         }
 

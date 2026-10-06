@@ -1,6 +1,7 @@
 using Game.View;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 /// <summary>Меши и префабы форм Вихря (сборка — PelagWhirlwindFoamVfxSetup.Forms.cs, версия там же).</summary>
 public static partial class PelagWhirlwindFoamVfxSetup
@@ -40,54 +41,6 @@ public static partial class PelagWhirlwindFoamVfxSetup
         }
         PelagWhirlwindVfxSetup.Fill(mesh, vertices, uv, triangles);
         return mesh;
-    }
-
-    /// <summary>
-    /// Рукава Водоворота в плоскости XY (корень X90 — плоско на земле): <paramref name="arms"/>
-    /// спиралей от внешнего края (r = 1, хвост u = 0) к центру (r = <paramref name="inner"/>,
-    /// голова u = 1), закрученных на <paramref name="sweepDegrees"/>. Ширина — от тупого
-    /// хвоста к острию у центра; v = 1 — выпуклая наружная кромка, там пена.
-    /// </summary>
-    private static Mesh MaelstromArmsMesh(string name, int arms, float sweepDegrees, float inner, float width)
-    {
-        Mesh mesh = PelagWhirlwindVfxSetup.LoadOrCreateMesh(GeometryFolder + "/" + name + ".asset", name);
-        const int segments = 48;
-        int perArm = (segments + 1) * 2;
-        var vertices = new Vector3[perArm * arms];
-        var uv = new Vector2[vertices.Length];
-        var triangles = new int[segments * 6 * arms];
-        for (int k = 0; k < arms; k++)
-        {
-            float baseAngle = k * 360f / arms;
-            for (int i = 0; i <= segments; i++)
-            {
-                float s = i / (float)segments;
-                Vector2 c = ArmPoint(s, baseAngle, sweepDegrees, inner);
-                Vector2 tangent = ArmPoint(Mathf.Min(1f, s + .01f), baseAngle, sweepDegrees, inner)
-                                  - ArmPoint(Mathf.Max(0f, s - .01f), baseAngle, sweepDegrees, inner);
-                var normal = new Vector2(-tangent.y, tangent.x).normalized;
-                if (Vector2.Dot(normal, c) < 0f) normal = -normal;
-                float w = width * Mathf.Pow(Mathf.Max(0f, Mathf.Sin(Mathf.PI * Mathf.Lerp(.08f, 1f, s))), .75f);
-                int v = k * perArm + 2 * i;
-                vertices[v] = c - normal * (w * .5f);
-                vertices[v + 1] = c + normal * (w * .5f);
-                uv[v] = new Vector2(s, 0f);
-                uv[v + 1] = new Vector2(s, 1f);
-                if (i == segments) continue;
-                int at = (k * segments + i) * 6;
-                triangles[at] = v; triangles[at + 1] = v + 2; triangles[at + 2] = v + 1;
-                triangles[at + 3] = v + 1; triangles[at + 4] = v + 2; triangles[at + 5] = v + 3;
-            }
-        }
-        PelagWhirlwindVfxSetup.Fill(mesh, vertices, uv, triangles);
-        return mesh;
-    }
-
-    private static Vector2 ArmPoint(float s, float baseAngle, float sweepDegrees, float inner)
-    {
-        float r = Mathf.Lerp(1f, inner, Mathf.Pow(s, .9f));
-        float a = (baseAngle + sweepDegrees * s) * Mathf.Deg2Rad;
-        return new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * r;
     }
 
     /// <summary>
@@ -211,81 +164,80 @@ public static partial class PelagWhirlwindFoamVfxSetup
     }
 
     /// <summary>
-    /// Водоворот (vortex-1). Корень в центре на земле, X90, масштаб — радиус тяги с
-    /// запасом. Шесть рукавов одной мешевой частицей: дорастают к центру, крутятся,
-    /// сжимаются внутрь, пока Sim тянет, и рассыпаются от края. Струи пены бегут к
-    /// центру, комья пены — по рукавам.
+    /// Водоворот v3 (vortex-1; владелец 02.10, вечер). Корень — центр на земле,
+    /// без поворота и масштаба. «Arms» — меш живой воды: его каждый кадр пишет
+    /// вид (PelagMaelstromWater) на радиусе удара Вихря — рукава плавно
+    /// наматываются внутрь и после контакта рвутся на капли. «Strands» (v4) —
+    /// изогнутые струи воды тяги с края 4 м внутрь (меш пишет вид,
+    /// PelagMaelstromStrands; рисуются поверх рукавов). «TipDrops» (v4) —
+    /// капли, слетающие с внешних концов рукавов. «Foam» — комья пены по
+    /// рукавам в контакт. Своих выбросов у частиц нет — их задаёт вид.
     /// </summary>
-    private static void SaveMaelstrom(Mesh arms, Material armMat, Material dropMat, Material bitMat)
+    private static void SaveMaelstrom(Material armMat, Material strandMat, Material dropMat, Material bitMat)
     {
         var root = new GameObject(MaelstromName);
         try
         {
-            FormElement(root, PelagVfxId.WhirlwindMaelstrom, .9f);
-            ParticleSystem layer = MeshLayer(root, "Arms", arms, armMat, MaelstromLife, 0f, 1f, 1f);
-            var size = layer.sizeOverLifetime; size.enabled = true;
-            size.separateAxes = false;
-            size.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
-                new Keyframe(0f, 1.10f), new Keyframe(.45f, .96f), new Keyframe(1f, .90f)));
-            var main = layer.main;
-            main.startRotation3D = true;
-            main.startRotationX = new ParticleSystem.MinMaxCurve(0f);
-            main.startRotationY = new ParticleSystem.MinMaxCurve(0f);
-            main.startRotationZ = new ParticleSystem.MinMaxCurve(0f);
-            var rotation = layer.rotationOverLifetime; rotation.enabled = true;
-            rotation.separateAxes = true;
-            rotation.x = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Constant(0f, 1f, 0f));
-            rotation.y = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Constant(0f, 1f, 0f));
-            rotation.z = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
-                new Keyframe(0f, MaelstromSpin), new Keyframe(.45f, MaelstromSpin * .35f), new Keyframe(1f, MaelstromSpin * .1f)));
-
-            ParticleSystem streaks = Drops(root, "Streaks", dropMat, 26, .30f, .40f, -9f, -6f, .06f, .10f, 0f, 0f);
-            CircleShape(streaks, .92f);
-            var streakShape = streaks.shape; streakShape.randomDirectionAmount = 0f;
-            var streakEmission = streaks.emission;
-            streakEmission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)14), new ParticleSystem.Burst(.10f, (short)12) });
-            var streakRenderer = streaks.GetComponent<ParticleSystemRenderer>();
-            streakRenderer.lengthScale = 2.5f;
-            streakRenderer.velocityScale = .03f;
-            ParticleSystem foam = FoamBits(root, "Foam", bitMat, 16, .40f, .60f, .3f, 1.0f, .20f, .34f, .25f);
-            CircleShape(foam, .55f);
-            var foamEmission = foam.emission;
-            foamEmission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)10), new ParticleSystem.Burst(.12f, (short)6) });
+            FormElement(root, PelagVfxId.WhirlwindMaelstrom, MaelstromLife);
+            WaterLayer(root, "Arms", armMat);
+            WaterLayer(root, "Strands", strandMat).sortingOrder = 1;
+            ParticleSystem tips = Drops(root, "TipDrops", dropMat, 60, .30f, .45f, 0f, 0f, .10f, .16f, 1.6f, 0f);
+            ByView(tips, MaelstromLife);
+            ParticleSystem foam = FoamBits(root, "Foam", bitMat, 24, .35f, .50f, 0f, 0f, .18f, .30f, .3f);
+            ByView(foam, MaelstromLife);
             PrefabUtility.SaveAsPrefabAsset(root, FormPrefabPath(MaelstromName));
         }
         finally { Object.DestroyImmediate(root); }
     }
 
     /// <summary>
-    /// Вращение рукавов Водоворота, рад/с вокруг местной Z (корень X90: +Z вниз).
-    /// Рукав закручен против часовой к центру (θ растёт внутрь), значит, чтобы
-    /// узор бежал к центру, он крутится по часовой сверху — тот же знак, что у
-    /// колец пены (−14: голова впереди по ходу сабли). Пробой не проверено.
+    /// Кольцо Пенных волн v3 (waves-2; владелец 02.10, вечер). Корень — центр колец
+    /// на земле, без поворота и масштаба. «Ring» — меш живой воды, его каждый кадр
+    /// пишет вид (PelagFoamRingWater): волнистый гребень бежит по числам Sim с
+    /// замедлением и рвётся на капли. «Spray» и «Foam» — брызги и комья с гребня,
+    /// их пускает вид, пока гребень бежит, и выбросом при разрыве.
     /// </summary>
-    private const float MaelstromSpin = -5.5f;
-
-    /// <summary>
-    /// Кольцо Пенных волн (waves-2). Корень в центре колец на земле, X90; масштаб —
-    /// фронт кольца, его каждый кадр ставит вид по числам Sim. Жизнь частицы кольца
-    /// тоже ставит вид (ход кольца + рассыпание); брызги и комья по фронту идут,
-    /// пока кольцо бежит.
-    /// </summary>
-    private static void SaveFoamWave(Mesh ring, Material waveMat, Material dropMat, Material bitMat)
+    private static void SaveFoamWave(Material waveMat, Material dropMat, Material bitMat)
     {
         var root = new GameObject(FoamWaveName);
         try
         {
-            FormElement(root, PelagVfxId.WhirlwindFoamWave, .9f);
-            MeshLayer(root, "Ring", ring, waveMat, .5f, 0f, 1f, 1f);
-            ParticleSystem spray = Drops(root, "Spray", dropMat, 60, .25f, .40f, 1.5f, 3.0f, .06f, .11f, 1.6f, 1.4f);
-            CircleShape(spray, 1f);
-            Looping(spray, 70f, 0, 60);
-            ParticleSystem foam = FoamBits(root, "Foam", bitMat, 30, .30f, .45f, .2f, .6f, .16f, .26f, .3f);
-            CircleShape(foam, .97f);
-            Looping(foam, 36f, 0, 30);
+            FormElement(root, PelagVfxId.WhirlwindFoamWave, 1.2f);
+            WaterLayer(root, "Ring", waveMat);
+            // v4: капли и клочья крупнее и реже — на waves-2 крупные капли, а не крошка.
+            ParticleSystem spray = Drops(root, "Spray", dropMat, 100, .30f, .45f, 0f, 0f, .09f, .16f, 1.6f, 0f);
+            ByView(spray, 1.6f);
+            ParticleSystem foam = FoamBits(root, "Foam", bitMat, 50, .30f, .45f, 0f, 0f, .22f, .36f, .3f);
+            ByView(foam, 1.6f);
             PrefabUtility.SaveAsPrefabAsset(root, FormPrefabPath(FoamWaveName));
         }
         finally { Object.DestroyImmediate(root); }
+    }
+
+    /// <summary>
+    /// След тяги Водоворота: копия префаба следа рывка (полоса «Wake», занос
+    /// SkidFoam/SkidDrops, капли хвоста TailDrops) со своим материалом в цветах
+    /// Водоворота. Полосу и выбросы ведёт вид кодом следа рывка (PelagDashWake)
+    /// по настоящему пути притянутого тела. Префаб рывка только читается.
+    /// </summary>
+    private static void SaveMaelstromDrag(Material dragMat)
+    {
+        GameObject root = PrefabUtility.LoadPrefabContents(DashWakePrefab);
+        try
+        {
+            root.name = MaelstromDragName;
+            var element = root.GetComponent<PelagVfxElement>();
+            if (element == null) element = root.AddComponent<PelagVfxElement>();
+            element.Id = PelagVfxId.WhirlwindMaelstromDrag;
+            element.DefaultLifetime = PelagDashWake.MaxLife;
+            Transform strip = root.transform.Find("Wake");
+            if (strip != null && strip.TryGetComponent(out MeshRenderer renderer)) renderer.sharedMaterial = dragMat;
+            // v4: борозда за телом врага, а не метровая полоса рывка у ног героя («фиолетовые плиты»).
+            if (strip != null) strip.localScale = new Vector3(.55f, 1f, 1f);
+            if (strip != null && strip.TryGetComponent(out MeshFilter filter)) filter.sharedMesh = null;
+            PrefabUtility.SaveAsPrefabAsset(root, FormPrefabPath(MaelstromDragName));
+        }
+        finally { PrefabUtility.UnloadPrefabContents(root); }
     }
 
     /// <summary>
@@ -348,7 +300,103 @@ public static partial class PelagWhirlwindFoamVfxSetup
         finally { Object.DestroyImmediate(root); }
     }
 
+    /// <summary>
+    /// Удар кольца Пенных волн по врагу (v4, waves-2: «маленькие короны у ног, их
+    /// съедают вспышка удара и трава»): большой веер брызг выше пояса. Корень — у ног
+    /// врага, вид сдвигает его к камере вдоль луча (на экране там же, рисуется перед
+    /// телом); местная +Z — наружу от центра колец, веер наклонён туда. Лужа воды
+    /// формы у ног, белые языки воды веером вверх-наружу, комья пены в теле веера,
+    /// крупные капли дугой, клочья пены по земле. Корона у ног осталась Водовороту.
+    /// </summary>
+    private static void SaveWaveSplash(Material splatMat, Material dropMat, Material bitMat)
+    {
+        var root = new GameObject(WaveSplashName);
+        try
+        {
+            FormElement(root, PelagVfxId.WhirlwindWaveSplash, .8f);
+            ParticleSystem puddle = PelagWhirlwindVfxSetup.NewParticles(root, "Puddle", 1, .40f, .40f, 0f, 0f, 1.15f, 1.15f);
+            var puddleMain = puddle.main;
+            puddleMain.startColor = DropAqua;
+            puddleMain.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            var puddleShape = puddle.shape; puddleShape.enabled = false;
+            var puddleSize = puddle.sizeOverLifetime; puddleSize.enabled = true;
+            puddleSize.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
+                new Keyframe(0f, .5f), new Keyframe(.15f, 1f), new Keyframe(1f, 1.1f)));
+            BlobRenderer(puddle, splatMat, ParticleSystemRenderMode.HorizontalBillboard);
+            puddle.GetComponent<ParticleSystemRenderer>().sortingFudge = 4f;
+
+            // Языки: вытянутые белые капли веером вверх и наружу, тормозят и зависают выше пояса.
+            // Проба v4a: языки 0,10–0,15 со скоростью 7–9,5 читались тонкими голубыми нитками у колен.
+            ParticleSystem fan = PelagWhirlwindVfxSetup.NewParticles(root, "Fan", 22, .32f, .46f, 9.5f, 12.5f, .16f, .24f);
+            var fanMain = fan.main;
+            fanMain.gravityModifier = 1.0f;
+            fanMain.startColor = new ParticleSystem.MinMaxGradient(DropWhite, FoamWhite);
+            UpCone(fan, 34f, .30f, -64f);
+            Brake(fan, 6f);
+            var fanSize = fan.sizeOverLifetime; fanSize.enabled = true;
+            fanSize.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
+                new Keyframe(0f, .55f), new Keyframe(.18f, 1f), new Keyframe(1f, .6f)));
+            SoftEllipse(fan);
+            BlobRenderer(fan, dropMat, ParticleSystemRenderMode.Stretch);
+            var fanRenderer = fan.GetComponent<ParticleSystemRenderer>();
+            fanRenderer.lengthScale = 4.5f;
+            fanRenderer.velocityScale = 0f;
+            fanRenderer.sortingFudge = -2f;
+
+            // Тело веера: крупные комья пены поднимаются по нему.
+            ParticleSystem sheet = FoamBits(root, "Sheet", bitMat, 10, .32f, .46f, 4.2f, 6.5f, .30f, .46f, .5f);
+            UpCone(sheet, 28f, .25f, -66f);
+            Brake(sheet, 5f);
+            sheet.GetComponent<ParticleSystemRenderer>().sortingFudge = -1f;
+
+            // Крупные капли дугой наружу (на waves-2 — капли-«слёзы» до полуметра от тела).
+            ParticleSystem drops = Drops(root, "Drops", dropMat, 16, .45f, .65f, 5.5f, 8.0f, .11f, .18f, 2.0f, 0f);
+            UpCone(drops, 50f, .25f, -60f);
+            Brake(drops, 1.0f);
+            drops.GetComponent<ParticleSystemRenderer>().sortingFudge = -4f;
+
+            ParticleSystem foam = FoamBits(root, "Foam", bitMat, 8, .32f, .46f, .5f, 1.2f, .22f, .34f, .4f);
+            var foamShape = foam.shape;
+            foamShape.enabled = true;
+            foamShape.shapeType = ParticleSystemShapeType.Circle;
+            foamShape.radius = .3f;
+            foamShape.radiusThickness = 0f;
+            foamShape.rotation = new Vector3(90f, 0f, 0f);
+            foam.GetComponent<ParticleSystemRenderer>().sortingFudge = -1f;
+            PrefabUtility.SaveAsPrefabAsset(root, FormPrefabPath(WaveSplashName));
+        }
+        finally { Object.DestroyImmediate(root); }
+    }
+
     // ----------------------------------------------------------------- layers
+
+    /// <summary>Меш живой воды: MeshFilter без меша (его создаёт и пишет вид) и рендерер без теней.</summary>
+    private static MeshRenderer WaterLayer(GameObject root, string name, Material material)
+    {
+        var host = new GameObject(name);
+        host.transform.SetParent(root.transform, false);
+        host.AddComponent<MeshFilter>();
+        var renderer = host.AddComponent<MeshRenderer>();
+        renderer.sharedMaterial = material;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+        renderer.lightProbeUsage = LightProbeUsage.Off;
+        renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        renderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
+        return renderer;
+    }
+
+    /// <summary>Частицы без своих выбросов: их пускает вид (Emit) всё время жизни объекта.</summary>
+    private static void ByView(ParticleSystem particles, float seconds)
+    {
+        var main = particles.main;
+        main.loop = false;
+        main.duration = Mathf.Max(.2f, seconds);
+        var emission = particles.emission;
+        emission.rateOverTime = 0f;
+        emission.SetBursts(new ParticleSystem.Burst[0]);
+        var shape = particles.shape; shape.enabled = false;
+    }
 
     /// <summary>Петля, пока её не остановит вид: rate в секунду, стартовая вспышка burst, потолок частиц.</summary>
     private static void Looping(ParticleSystem particles, float rate, int burst, int max)

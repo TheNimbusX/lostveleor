@@ -3,7 +3,8 @@ namespace Game.Sim
     public sealed partial class GameSession
     {
         int _campPotionCooldownTicksLeft;
-        int _runSteel, _runCore;
+        // Счётчики забега для итогов: сами ресурсы уже в лагере (GameSession.RunHaul).
+        int _runSteel, _runHearts;
         bool _runBossDefeated, _runProgressRecorded;
         int _materialDepth;
         readonly bool[] _materialEncounterClaimed = new bool[512];
@@ -27,6 +28,8 @@ namespace Game.Sim
             return true;
         }
         public bool SetPreparedGift(CampGift gift) => Mode != GameMode.Rift && Camp.SelectGift(gift);
+        /// <summary>Ячейка «с собой» у стола сборов: дар или открытый артефакт (T3). В Разломе не меняется.</summary>
+        public bool SetPreparedCarry(in CarryChoice c) => Mode != GameMode.Rift && Camp.SelectCarry(in c);
         public bool SetPreparedPotion(int slot, PotionKind kind)
             => Mode != GameMode.Rift && Camp.SelectPotionForSlot(slot, kind);
         bool CanDrinkNow
@@ -61,15 +64,19 @@ namespace Game.Sim
                 else
                 {
                     Run.PotionWasUsed(); Camp.RecordRealPotionUsed(kind);
-                    _alchemyLevelWithoutPotion = false; _runStats?.CountPotion(kind);
+                    _runStats?.CountPotion(kind);
                 }
                 // Оба нажатия в одном тике имеют фиксированный приоритет первого полезного слота.
                 break;
             }
         }
         void ResetRunProgressTracking()
-        { _runSteel = _runCore = _materialDepth = 0; _runBossDefeated = _runProgressRecorded = false;
-            System.Array.Clear(_materialEncounterClaimed, 0, _materialEncounterClaimed.Length); }
+        { _runSteel = _runHearts = _materialDepth = 0; _runBossDefeated = _runProgressRecorded = false;
+            System.Array.Clear(_materialEncounterClaimed, 0, _materialEncounterClaimed.Length); ResetRunHaul(); }
+        /// <summary>
+        /// Пепел, сталь и сердце — в лагерь в момент находки (06.10, решение M1), как опыт:
+        /// смерть их не отнимает, выход из игры посреди забега тоже. Тестовый забег не даёт ничего.
+        /// </summary>
         void RecordMaterialDeaths()
         {
             if (IsDeveloperRun) return;
@@ -77,7 +84,14 @@ namespace Game.Sim
             for (int i = 0; i < events.Count; i++)
             {
                 var e = events[i]; if (e.Type != SimEventType.Death || e.Target <= 0) continue;
-                if (e.Target == Run.BossId && !_runBossDefeated) { _runCore++; _runBossDefeated = true; }
+                CreditAsh(e.Target);
+                // Победа засчитывается в тик смерти босса, даже если герой пал в тот же тик:
+                // проход событий идёт до FinishRun. Сталь с босса начисляет сам лагерь.
+                if (e.Target == Run.BossId && !_runBossDefeated)
+                {
+                    _runBossDefeated = true; _runHearts++; _runSteel += RunEconomy.BossSteel;
+                    Camp.RecordBossDefeat(RunBossKeys.Of(Run.Sim.Entities.Kind[e.Target]));
+                }
             }
             var plan = Run.Encounters; if (plan == null) return;
             if (_materialDepth != Run.Depth)
@@ -90,7 +104,7 @@ namespace Game.Sim
                 bool elite = false;
                 for (int id = 1; id < Run.Sim.Entities.Count; id++)
                 { if (Run.Sim.Entities.Alive[id] && Run.Sim.Entities.Side[id] != Faction.Wole) return; elite |= plan.IsElite(id) && id != Run.BossId; }
-                if (elite) { _materialEncounterClaimed[0] = true; _runSteel++; }
+                if (elite) { _materialEncounterClaimed[0] = true; CreditEliteEncounterSteel(); }
                 return;
             }
             for (int index = 0; index < plan.Count && index < _materialEncounterClaimed.Length; index++)
@@ -105,24 +119,27 @@ namespace Game.Sim
                     if (Run.Sim.Entities.Alive[id] && parent >= encounter.FirstEntity
                         && parent < encounter.FirstEntity + encounter.EnemyCount) splitting = true;
                 }
-                if (elite && !splitting) { _materialEncounterClaimed[index] = true; _runSteel++; }
+                if (elite && !splitting) { _materialEncounterClaimed[index] = true; CreditEliteEncounterSteel(); }
             }
         }
-        void CompleteRealAttempt(int keptItems, bool keeps)
+        /// <summary>Элитная встреча зачищена целиком (с детьми Расщепеня): сталь — в лагерь сразу.</summary>
+        void CreditEliteEncounterSteel()
+        {
+            _runSteel += RunEconomy.EliteEncounterSteel;
+            Camp.Earn(CurrencyType.Steel, RunEconomy.EliteEncounterSteel);
+        }
+        void CompleteRealAttempt(int keptItems)
         {
             if (IsDeveloperRun || _runProgressRecorded) return;
             _runProgressRecorded = true;
-            if (keeps)
-            {
-                Camp.EarnForgeMaterial(ForgeMaterial.Steel, _runSteel);
-                Camp.EarnForgeMaterial(ForgeMaterial.Core, _runCore);
-            }
             Camp.RecordRealAttemptEnded(Run.Depth, keptItems, _runBossDefeated);
         }
         void HashSessionPreparation(ref ulong hash)
         {
-            if (_runSteel == 0 && _runCore == 0 && !_runBossDefeated && _campPotionCooldownTicksLeft == 0 && !PreparationRequested) return;
-            Hashing.Mix(ref hash, 0x43505250); Hashing.Mix(ref hash, _runSteel); Hashing.Mix(ref hash, _runCore);
+            if (_runSteel == 0 && _runHearts == 0 && _runAsh == 0 && !_runBossDefeated && _campPotionCooldownTicksLeft == 0
+                && !PreparationRequested) return;
+            Hashing.Mix(ref hash, 0x43505250); Hashing.Mix(ref hash, _runSteel); Hashing.Mix(ref hash, _runHearts);
+            Hashing.Mix(ref hash, _runAsh);
             Hashing.Mix(ref hash, _runBossDefeated ? 1 : 0); Hashing.Mix(ref hash, _campPotionCooldownTicksLeft);
             Hashing.Mix(ref hash, PreparationRequested ? 1 : 0);
             Hashing.Mix(ref hash, _materialDepth);

@@ -14,7 +14,8 @@ namespace Game.Sim
             IsDeveloperRun = true;
             BeginRunStats();
             var sim = new Simulation(seed, _simCapacity);
-            sim.ApplyHeroBaseline();
+            // Стенд мобов — тестовый забег: эталонный герой 270/54 при любом профиле.
+            sim.ApplyHeroBaseline(Camp.HeroBaselineFor(true));
             Camp.Worn.Bind(sim.Entities.Stats[Simulation.PlayerId]);
             var run = new RiftRun(sim, Simulation.EnemySandboxModules(), Camp.Items, _itemBaseIds);
             run.PlayerEquipment = Camp.Worn;
@@ -23,7 +24,6 @@ namespace Game.Sim
             sim.PlayerInvulnerable = immortal;
             Run = run;
             Mode = GameMode.Rift;
-            _alchemyLevelWithoutPotion = false;
             Generation++;
         }
     }

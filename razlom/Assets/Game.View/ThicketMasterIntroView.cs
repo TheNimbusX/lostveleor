@@ -17,9 +17,14 @@ namespace Game.View
     ///    (обычное слежение не тронуто, ReleaseCinematic возвращает размер);
     ///  • чёрные полосы сверху и снизу с дымной кромкой — свой холст поверх HUD (порядок
     ///    <see cref="CanvasOrder"/>), без лучей;
-    ///  • HUD гаснет и возвращается: на корневой холст боевого HUD, экранов забега, меток мира и меток у
-    ///    края на время окна ставится своя CanvasGroup (прозрачность умножается на их собственную — логику
-    ///    PlayerHud и RunHud это не трогает), по возвращении она снимается;
+    ///  • HUD гаснет и возвращается — все экземпляры боевого HUD (с миникартой), экранов забега, меток мира и
+    ///    меток у края. Ревью 02.10 (вечер, «в кат-сцене виден HUD и миникарта»): CanvasGroup на объекте
+    ///    одна (DisallowMultipleComponent), а на корне боевого HUD уже стоит группа PlayerHud — вторая не
+    ///    добавлялась (ошибка AddComponent в логе), и HUD с миникартой стояли поверх кат-сцены. Теперь: холст
+    ///    без своей группы гаснет нашей группой и выключается, когда погас; холст с чужой группой (её ведёт
+    ///    PlayerHud — пауза, окна) не трогаем, а выключаем сам холст на середине затухания
+    ///    (<see cref="ThicketMasterIntroRules.HudCanvasOn"/>). По возвращении — включаем только выключенное
+    ///    нами, свои группы снимаем;
     ///  • титр «ХОЗЯИН ЧАЩИ» и строка под ним — шрифты и материалы полосы босса (RunHudView.BossName,
     ///    BossSubtitle; без неё — шрифты темы), размеры — шкала темы;
     ///  • тряска на контакте рёва — CombatCameraJuice.AddImpulse (сила — из настроек игрока).
@@ -61,7 +66,13 @@ namespace Game.View
         private Texture2D _feather;
         private float _barsShown = -1f, _settleShown = -1f;
 
+        /// <summary>Свои группы прозрачности на холстах HUD без чужой группы — снимаются по возвращении.</summary>
         private readonly List<CanvasGroup> _veils = new List<CanvasGroup>(4);
+        /// <summary>Холсты HUD этой кат-сцены и ведёт ли их прозрачность своя группа (иначе — только выключение).</summary>
+        private readonly List<Canvas> _hudCanvases = new List<Canvas>(8);
+        private readonly List<bool> _hudFades = new List<bool>(8);
+        /// <summary>Холсты, выключенные кат-сценой: включает обратно она только их.</summary>
+        private readonly List<Canvas> _hudOff = new List<Canvas>(8);
         private bool _veilsCollected;
 
         public static ThicketMasterIntroView EnsureOn(GameObject host)
@@ -249,40 +260,76 @@ namespace Game.View
 
         // ------------------------------------------------------------ HUD
 
-        /// <summary>Прозрачность HUD на время окна; 1 — свои группы сняты, HUD ровно как был.</summary>
+        /// <summary>
+        /// Прозрачность HUD на время окна (1 — как обычно). Холсты собираются с первым затуханием и держатся
+        /// до конца кат-сцены (<see cref="Stop"/> возвращает всё): свои группы ведут затухание, а погасший
+        /// холст выключается целиком — и миникарта, и всё, что рисуется мимо прозрачности группы.
+        /// </summary>
         private void SetHud(float alpha)
         {
-            if (alpha >= .999f) { RestoreHud(); return; }
-            if (!_veilsCollected) CollectVeils();
+            if (!_veilsCollected)
+            {
+                if (alpha >= .999f) return;
+                CollectVeils();
+            }
             for (int i = 0; i < _veils.Count; i++)
                 if (_veils[i] != null) _veils[i].alpha = alpha;
+            for (int i = 0; i < _hudCanvases.Count; i++)
+            {
+                Canvas canvas = _hudCanvases[i];
+                if (canvas == null) continue;
+                bool on = ThicketMasterIntroRules.HudCanvasOn(alpha, _hudFades[i]);
+                if (!on && canvas.enabled)
+                {
+                    canvas.enabled = false;
+                    _hudOff.Add(canvas);
+                }
+                else if (on && !canvas.enabled && _hudOff.Remove(canvas)) canvas.enabled = true;
+            }
         }
 
+        /// <summary>Все экземпляры частей HUD: боевой HUD с миникартой, экраны забега, метки мира, метки у края.</summary>
         private void CollectVeils()
         {
             _veilsCollected = true;
-            AddVeil(FindAnyObjectByType<CombatHudView>(FindObjectsInactive.Include));
-            AddVeil(FindAnyObjectByType<RunHudView>(FindObjectsInactive.Include));
-            AddVeil(FindAnyObjectByType<RunWorldView>(FindObjectsInactive.Include));
-            AddVeil(FindAnyObjectByType<WorldEdgeMarks>(FindObjectsInactive.Include));
+            AddVeils(FindObjectsByType<CombatHudView>(FindObjectsInactive.Include));
+            AddVeils(FindObjectsByType<RunHudView>(FindObjectsInactive.Include));
+            AddVeils(FindObjectsByType<RunWorldView>(FindObjectsInactive.Include));
+            AddVeils(FindObjectsByType<WorldEdgeMarks>(FindObjectsInactive.Include));
+        }
+
+        private void AddVeils<T>(T[] parts) where T : Component
+        {
+            for (int i = 0; i < parts.Length; i++) AddVeil(parts[i]);
         }
 
         /// <summary>
-        /// Своя группа на холсте части HUD. У боевого HUD на корне уже есть группа PlayerHud (его уход под
-        /// паузой и окнами) — наша вторая, прозрачности перемножаются, его группу мы не трогаем.
+        /// Внешний холст части HUD. Своя группа — только на холсте без группы: CanvasGroup на объекте одна, а
+        /// группу боевого HUD ведёт PlayerHud (пауза, окна) — её не трогаем, такой холст только выключается.
         /// </summary>
         private void AddVeil(Component part)
         {
             if (part == null) return;
-            Canvas canvas = part.GetComponentInParent<Canvas>(true);
-            GameObject host = canvas != null ? canvas.gameObject : part.gameObject;
-            for (int i = 0; i < _veils.Count; i++)
-                if (_veils[i] != null && _veils[i].gameObject == host) return;
-            _veils.Add(host.AddComponent<CanvasGroup>());
+            Canvas[] chain = part.GetComponentsInParent<Canvas>(true);
+            Canvas canvas = chain.Length > 0 ? chain[chain.Length - 1] : null;
+            if (canvas == null || canvas == _canvas || _hudCanvases.Contains(canvas)) return;
+            bool fades = !canvas.TryGetComponent(out CanvasGroup _);
+            if (fades)
+            {
+                var veil = canvas.gameObject.AddComponent<CanvasGroup>();
+                if (veil != null) _veils.Add(veil);
+                else fades = false;
+            }
+            _hudCanvases.Add(canvas);
+            _hudFades.Add(fades);
         }
 
+        /// <summary>HUD ровно как был: включить выключенные нами холсты, снять свои группы.</summary>
         private void RestoreHud()
         {
+            for (int i = 0; i < _hudOff.Count; i++)
+                if (_hudOff[i] != null) _hudOff[i].enabled = true;
+            _hudOff.Clear();
             for (int i = 0; i < _veils.Count; i++)
             {
                 if (_veils[i] == null) continue;
@@ -290,6 +337,8 @@ namespace Game.View
                 Destroy(_veils[i]);
             }
             _veils.Clear();
+            _hudCanvases.Clear();
+            _hudFades.Clear();
             _veilsCollected = false;
         }
 

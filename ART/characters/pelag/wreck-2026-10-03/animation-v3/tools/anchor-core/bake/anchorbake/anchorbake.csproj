@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Anchor bake (DESIGN 3.1 step B): the head path is computed by the SAME AnchorRigCore.StepLive + AnchorRigBody the
+       game's rig runs (the draft files below are what apply.py copies into razlom/Assets/Game.View), on AnchorHeadDynamics.
+       Build only with your own artifacts path:
+       dotnet build anchorbake.csproj -artifacts-path ../../obj-bake   (i.e. artifacts/anchor-core/obj-bake) -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>AnchorBake</RootNamespace>
+    <!-- cost numbers (check 16) must come from optimised code, not tier-0 JIT -->
+    <TieredCompilation>false</TieredCompilation>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../../razlom/Assets/Game.View/AnchorHeadDynamics.cs" Link="View/AnchorHeadDynamics.cs" />
+    <Compile Include="../../../../razlom/Assets/Game.View/AnchorChainSolver.cs" Link="View/AnchorChainSolver.cs" />
+    <Compile Include="../../drafts/razlom/Assets/Game.View/AnchorRigBlend.cs" Link="Rig/AnchorRigBlend.cs" />
+    <Compile Include="../../drafts/razlom/Assets/Game.View/AnchorRigCore.cs" Link="Rig/AnchorRigCore.cs" />
+    <Compile Include="../../drafts/razlom/Assets/Game.View/AnchorRigBody.cs" Link="Rig/AnchorRigBody.cs" />
+    <Compile Include="../../drafts/razlom/Assets/Game.View/AnchorBake.cs" Link="Rig/AnchorBake.cs" />
+    <Compile Include="../../drafts/razlom/Assets/Game.View/AnchorChainLine.cs" Link="Rig/AnchorChainLine.cs" />
+    <Compile Include="../../drafts/razlom/Assets/Game.View/AnchorSlackChain.cs" Link="Rig/AnchorSlackChain.cs" />
+    <None Include="../grip_socket.json" Link="grip_socket.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

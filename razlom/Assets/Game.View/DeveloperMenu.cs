@@ -100,7 +100,7 @@ namespace Game.View
             "run.location", "run.arena", "run.seed", "run.start-arena", "run.boss", "camp.hero-level", "run.to-camp",
             "combat.immortal", "combat.bud", "combat.tempo-preset", "combat.tempo", "combat.sandbox",
             "pelag.slots", "pelag.preset-capture", "pelag.preset-starter", "pelag.artifact", "pelag.talents", "pelag.talents-clear",
-            "visual.comic", "visual.mood", "visual.mood-mode", "visual.mood-status",
+            "visual.comic", "visual.mood", "visual.mood-mode", "visual.mood-status", "visual.boss-rim", "visual.boss-feet",
         };
 
         private void LoadLocations()

@@ -1,0 +1,179 @@
+{
+ "date": "2026-10-06",
+ "model": "gpt_image_2_5",
+ "credits": {
+  "before": 50.3,
+  "after": 45.3,
+  "spent": 5.0,
+  "budget": 15
+ },
+ "uploaded_refs": {
+  "r1_scene.jpg": {
+   "media_id": "523b4e73-2361-4124-a34c-70183e4efd33",
+   "local": "refs/r1_scene.jpg"
+  },
+  "r2_model.jpg": {
+   "media_id": "91cbe17d-d6be-4247-a02e-22572b2efb5a",
+   "local": "refs/r2_model.jpg"
+  },
+  "r3_anchor.jpg": {
+   "media_id": "63c0a31a-3023-47aa-b8a5-3331e12aa5b8",
+   "local": "refs/r3_anchor.jpg"
+  },
+  "r4_quake.jpg": {
+   "media_id": "3f38dfae-ff80-46fc-a646-3f6cfd3b72ad",
+   "local": "refs/r4_quake.jpg"
+  },
+  "icon_Whirlwind.jpg": {
+   "media_id": "ce803e36-43af-4a30-88e5-6f964527d442",
+   "local": "refs/icon_Whirlwind.jpg"
+  },
+  "icon_Squall.jpg": {
+   "media_id": "f3eab272-e266-4882-be87-1bfbf6797f9a",
+   "local": "refs/icon_Squall.jpg"
+  },
+  "icon_AnchorLeap_Geyser.jpg": {
+   "media_id": "b3c71385-a256-4739-bc36-2688237b273d",
+   "local": "refs/icon_AnchorLeap_Geyser.jpg"
+  }
+ },
+ "jobs": [
+  {
+   "name": "A-earth-v1",
+   "job_id": "640321e5-19d4-40bd-8717-2cd122cd7ca6",
+   "file": "frames/A-earth-v1.png",
+   "quality": "medium",
+   "resolution": "1k",
+   "aspect_ratio": "16:9",
+   "refs": [
+    "r1_scene.jpg",
+    "r2_model.jpg",
+    "r3_anchor.jpg",
+    "r4_quake.jpg"
+   ],
+   "status": "completed"
+  },
+  {
+   "name": "A-earth-v2",
+   "job_id": "5a2460a2-9b3e-4f66-bca2-20070257a176",
+   "file": "frames/A-earth-v2.png",
+   "quality": "medium",
+   "resolution": "1k",
+   "aspect_ratio": "16:9",
+   "refs": [
+    "r1_scene.jpg",
+    "r2_model.jpg",
+    "r3_anchor.jpg",
+    "r4_quake.jpg"
+   ],
+   "status": "completed"
+  },
+  {
+   "name": "B-deep-v1",
+   "job_id": "40da0344-5964-4e31-a961-3e3175949dbc",
+   "file": "frames/B-deep-v1.png",
+   "quality": "medium",
+   "resolution": "1k",
+   "aspect_ratio": "16:9",
+   "refs": [
+    "r1_scene.jpg",
+    "r2_model.jpg",
+    "r3_anchor.jpg",
+    "r4_quake.jpg"
+   ],
+   "status": "completed"
+  },
+  {
+   "name": "B-deep-v2",
+   "job_id": "3f3c98e4-86c1-46af-8c52-fca6f8a4bede",
+   "file": "frames/B-deep-v2.png",
+   "quality": "medium",
+   "resolution": "1k",
+   "aspect_ratio": "16:9",
+   "refs": [
+    "r1_scene.jpg",
+    "r2_model.jpg",
+    "r3_anchor.jpg",
+    "r4_quake.jpg"
+   ],
+   "status": "completed"
+  },
+  {
+   "name": "C-iron-v1",
+   "job_id": "e9b422be-2591-41ee-9522-a634ed0c0f9b",
+   "file": "frames/C-iron-v1.png",
+   "quality": "medium",
+   "resolution": "1k",
+   "aspect_ratio": "16:9",
+   "refs": [
+    "r1_scene.jpg",
+    "r2_model.jpg",
+    "r3_anchor.jpg",
+    "r4_quake.jpg"
+   ],
+   "status": "completed"
+  },
+  {
+   "name": "C-iron-v2",
+   "job_id": "0359844d-552d-4f34-87a9-763a2b5ffbc4",
+   "file": "frames/C-iron-v2.png",
+   "quality": "medium",
+   "resolution": "1k",
+   "aspect_ratio": "16:9",
+   "refs": [
+    "r1_scene.jpg",
+    "r2_model.jpg",
+    "r3_anchor.jpg",
+    "r4_quake.jpg"
+   ],
+   "status": "completed"
+  },
+  {
+   "name": "silhouettes-v1",
+   "job_id": "3d1eb913-6bd3-4b4f-aa57-0be23d4b1bf8",
+   "file": "icons/silhouettes-v1.png",
+   "quality": "medium",
+   "resolution": "2k",
+   "aspect_ratio": "21:9",
+   "refs": [
+    "icon_Whirlwind.jpg",
+    "icon_Squall.jpg",
+    "icon_AnchorLeap_Geyser.jpg",
+    "r3_anchor.jpg"
+   ],
+   "status": "completed"
+  },
+  {
+   "name": "silhouettes-v2",
+   "job_id": "8a1afa3f-02e3-44e8-8441-ba8906c1af9a",
+   "file": "icons/silhouettes-v2.png",
+   "quality": "medium",
+   "resolution": "2k",
+   "aspect_ratio": "21:9",
+   "refs": [
+    "icon_Whirlwind.jpg",
+    "icon_Squall.jpg",
+    "icon_AnchorLeap_Geyser.jpg",
+    "r3_anchor.jpg"
+   ],
+   "status": "completed"
+  }
+ ],
+ "notes": "C-iron-v1 and B-deep-v2 were first rejected at submission with 429 rate_limit_reached (no job, no charge) and resubmitted with the same params.",
+ "derived": [
+  "icons-current-sheet.jpg",
+  "icons/compare-v1.jpg",
+  "icons/compare-v2.jpg",
+  "icons/v1-Wreck-512.png",
+  "icons/v1-AnchorThrow-512.png",
+  "icons/v1-Abordage-512.png",
+  "icons/v2-Wreck-512.png",
+  "icons/v2-AnchorThrow-512.png",
+  "icons/v2-Abordage-512.png"
+ ],
+ "icons_current_diagnosis": [
+  "Wreck, AnchorThrow and AnchorLeap base icons are the same picture: one anchor on the same top-left to bottom-right diagonal, chain and red tie in the same place.",
+  "All three sit in the same turquoise foam diamond, the same colour family as Whirlwind/Squall, so they also merge with the sabre skills.",
+  "Nothing shows the ACTION (slam into ground / throw far / yank toward hook); forms differ only by water colour, which is why bases cannot be told apart at 64 px."
+ ]
+}

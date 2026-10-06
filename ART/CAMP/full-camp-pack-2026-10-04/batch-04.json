@@ -1,0 +1,115 @@
+{
+  "mode": "built-in image_gen",
+  "transparent_background": true,
+  "records": [
+    {
+      "id": "tree-broad",
+      "group": "07-trees",
+      "file": "01-broadleaf-wide.png",
+      "title": "Широкое лиственное дерево",
+      "dims": "высота 5,5 м, крона около 4 м",
+      "subject": "ONE broad deciduous forest tree, 5.5 m tall with a chunky warm brown trunk and a wide rounded asymmetric crown made of FIVE clearly separated large olive-green faceted leafy volumes. Low-poly-shaped hand-painted foliage masses with broad brush strokes, individual leaves suggested sparingly by LARGE painterly shapes, no leaf noise. A few sturdy visible branches, short broad root toes at trunk foot. Muted cooler dark green underside, olive sage top, no sunset lighting. Entire tree fully visible including top and bare root foot. No ground mound, grass patch, flowers, rocks or other trees.",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE broad deciduous forest tree, 5.5 m tall with a chunky warm brown trunk and a wide rounded asymmetric crown made of FIVE clearly separated large olive-green faceted leafy volumes. Low-poly-shaped hand-painted foliage masses with broad brush strokes, individual leaves suggested sparingly by LARGE painterly shapes, no leaf noise. A few sturdy visible branches, short broad root toes at trunk foot. Muted cooler dark green underside, olive sage top, no sunset lighting. Entire tree fully visible including top and bare root foot. No ground mound, grass patch, flowers, rocks or other trees.\nEntire isolated tree with no backdrop or scenery, true transparent alpha all around, no cast shadow.",
+      "references": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png",
+      "status": "generated"
+    },
+    {
+      "id": "tree-crooked",
+      "group": "07-trees",
+      "file": "02-crooked-broadleaf.png",
+      "title": "Изогнутое лиственное дерево",
+      "dims": "высота 5 м, крона около 3,5 м",
+      "subject": "ONE crooked deciduous forest tree, 5 m tall, thick warm brown trunk curves gently and forks into two sturdy unequal branches. Its off-centre crown leans to one side, made of FOUR large separated broad faceted olive-green foliage masses with clear gaps showing branch structure. Painterly broad colour planes consistent with the reference props, no individual-leaf noise or realism. Cool muted shadow-green under crown, olive sage top, entire silhouette and bare root toes fully visible. No ground base, shrubs, flowers, rocks or extra tree.",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE crooked deciduous forest tree, 5 m tall, thick warm brown trunk curves gently and forks into two sturdy unequal branches. Its off-centre crown leans to one side, made of FOUR large separated broad faceted olive-green foliage masses with clear gaps showing branch structure. Painterly broad colour planes consistent with the reference props, no individual-leaf noise or realism. Cool muted shadow-green under crown, olive sage top, entire silhouette and bare root toes fully visible. No ground base, shrubs, flowers, rocks or extra tree.\nEntire isolated tree with no backdrop or scenery, true transparent alpha all around, no cast shadow.",
+      "references": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-8c24549f-9c4c-42d7-a0e6-f909ec4c4c64.png",
+      "status": "generated"
+    },
+    {
+      "id": "tree-conifer",
+      "group": "07-trees",
+      "file": "03-narrow-conifer.png",
+      "title": "Узкое хвойное дерево",
+      "dims": "высота 6 м, ширина около 2,4 м",
+      "subject": "ONE tall narrow forest conifer, 6 m high and 2.4 m wide, chunky warm carved brown trunk visible in the lower third, crown formed by FOUR uneven layered dark sage/olive-green broad conical branch masses, stylized rather than a perfect Christmas cone. A distinctive narrow vertical silhouette with clear tier gaps and asymmetry. Foliage is painted large facets and broad edge clumps, not individual needles. Entire top and bare trunk/root foot visible. No decorations, snow, ornaments, ground plinth, rocks or grass.",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE tall narrow forest conifer, 6 m high and 2.4 m wide, chunky warm carved brown trunk visible in the lower third, crown formed by FOUR uneven layered dark sage/olive-green broad conical branch masses, stylized rather than a perfect Christmas cone. A distinctive narrow vertical silhouette with clear tier gaps and asymmetry. Foliage is painted large facets and broad edge clumps, not individual needles. Entire top and bare trunk/root foot visible. No decorations, snow, ornaments, ground plinth, rocks or grass.\nEntire isolated tree with no backdrop or scenery, true transparent alpha all around, no cast shadow.",
+      "references": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a2187fe9-f6f1-4261-86b8-41c029137523.png",
+      "status": "generated"
+    },
+    {
+      "id": "tree-sparse",
+      "group": "07-trees",
+      "file": "04-sparse-broadleaf.png",
+      "title": "Разреженное дерево",
+      "dims": "высота 5,2 м, крона около 3,2 м",
+      "subject": "ONE more sparse mature woodland tree, 5.2 m tall. A tall forked chunky brown trunk and THREE broad strong branching arms are clearly visible through open gaps, carrying just THREE unequal large olive-green hand-painted faceted foliage clusters. Calm irregular silhouette, lots of open space between crown masses, no dead spooky horror tree, no tiny leaf clutter. Entire tree including its bare root toes fully visible with generous empty margin. No ground, vines, bushes, rocks, birds or separate props.",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE more sparse mature woodland tree, 5.2 m tall. A tall forked chunky brown trunk and THREE broad strong branching arms are clearly visible through open gaps, carrying just THREE unequal large olive-green hand-painted faceted foliage clusters. Calm irregular silhouette, lots of open space between crown masses, no dead spooky horror tree, no tiny leaf clutter. Entire tree including its bare root toes fully visible with generous empty margin. No ground, vines, bushes, rocks, birds or separate props.\nEntire isolated tree with no backdrop or scenery, true transparent alpha all around, no cast shadow.",
+      "references": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-caeb23a3-636d-400a-a86b-7c4374307cde.png",
+      "status": "generated"
+    },
+    {
+      "id": "leo-rank-1",
+      "group": "06-leo",
+      "file": "01-rank-1-large-bottles.png",
+      "title": "Лео I — большие бутыли",
+      "dims": "0,8 × 0,4 м, высота 0,55 м",
+      "subject": "One low alchemist's large-bottle rack: a chunky two-level wooden holder with four thick corked faceted bottles, two muted berry-red healing bottles and two muted cool blue concentration bottles. Large opaque/semi-opaque PAINTED glass shapes with simple colour planes, each about 25 cm high, plain natural corks, one simple rope wrap on rack join. One coherent compact addon, 0.8 m wide, 0.55 m tall. No glowing liquid, transparent photoreal glass, labels, runes, skulls, lamps or floor.",
+      "prompt": "One isolated hand-painted fantasy game prop on a TRUE TRANSPARENT background: a low TWO-TIER chunky honey wooden rack containing FOUR large corked faceted bottles, two subdued berry-red and two muted blue, opaque painted glass, thick dark iron fittings, just one rope binding at a corner. Broad brush-painted facets and large bevels exactly matching attached wooden crate/herbal table. No glow, vignette, brown haze, background, ground or cast shadow. Orthographic three-quarter elevated 48-degree camera. Whole rack and corks visible, generous empty margins. PNG cutout only, empty alpha outside the silhouette. No text, labels, flags or symbols.",
+      "references": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-8aad0242-8d8e-409d-a90e-d839c2911d62.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-828a00ab-ff38-463f-883e-d1bc5ce6eb65.png"
+    },
+    {
+      "id": "main-prep-table",
+      "group": "01-main",
+      "file": "02-expedition-table.png",
+      "title": "Походный стол",
+      "dims": "1,6 × 0,85 м, высота 0,85 м",
+      "subject": "A compact expedition preparation table, 1.6 m wide and 0.85 m deep, height 0.85 m. Heavy dark honey timber trestle legs, broad plank top reinforced at corners with dull iron. One LARGE light cream map covers the central two thirds of the top: just a few thick muted coast/route lines and a simple dot, absolutely NO writing or symbols. Beside the map one simple brass compass without letters, one rolled parchment secured by a leather strap, and two small corked opaque coloured flasks in a low two-hole wooden holder near the far corner. A single empty lower shelf. Tabletop fully exposed, no roof/canopy, no tall racks, no hanging lantern. The map must be the clearest focal surface at 48-degree camp view.",
+      "prompt": "Edit this exact expedition table. Erase ONLY all printed map geography on the large central parchment sheet: remove the islands, water, mountains, forests and any route marks, leaving an entirely BLANK plain warm-cream parchment surface with the existing edges and folds. Keep the big parchment sheet lying flat on the tabletop, with clearly exposed broad central area for a separate map texture overlay. Preserve the table, compass, rolled map, bottle holder, two bottles, camera, wood/metal materials and hand-painted style exactly. Do not put a map into any other place. True transparent alpha background; no backdrop, glow, haze, cast shadow, floor, text or symbols. Whole object visible.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b2b88a3f-c012-4b28-88e4-e65c2ce8ec5f.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-c7e15314-6e19-40d0-a196-97d9de977de8.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b2b88a3f-c012-4b28-88e4-e65c2ce8ec5f.png"
+    },
+    {
+      "id": "world-map-texture",
+      "group": "12-map-texture",
+      "file": "01-world-map-topdown.png",
+      "title": "Карта мира — плоская текстура",
+      "dims": "плоская карта, ориентир пропорции 4:3",
+      "texture": true,
+      "prompt": "Create a standalone FLAT WORLD MAP TEXTURE from the attached owned world geography. This is NOT a 3D object or scene: strictly TOP-DOWN orthographic flat 2D map, ZERO perspective or foreshortening. Preserve the original coastline outlines, relative sizes and positions of the landmasses as closely as possible: huge western continent with northern snowy mountains, western forest belt, southwest broad mountains and southeast marshes; smaller eastern continent with northern mountains and volcanoes along its eastern side; southern/southeastern small Verano archipelago. Retain river routes and main terrain placement. DELETE every flag, flagpole, heraldic icon, city flag, place name, all writing and ornate outer decorations. Simplify dense town/road detail to large readable painterly terrain marks. The illustration is printed on ONE flat light warm-cream parchment sheet, approximately 4:3 rectangle with restrained slightly irregular worn edge, no rolls or curled corners. Muted olive/grey green land, dusty subdued blue water, broad painted grey mountain marks, consistent hand-painted game prop palette. Sheet opaque, outside perimeter true alpha transparency. Whole rectangular sheet visible with narrow empty transparent margin. No desk, props, border symbols, compass rose, shadow, light source, floating island relief or physical raised mountains. Image solely for a planar texture laid over a camp table.",
+      "references": [
+        "C:/Users/d.grab/Desktop/the-game/ART/world-map-lviv-inspired-v9-flags-4k.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-77428834-2eed-4376-aadb-2a63d1dc08b3.png",
+      "status": "generated"
+    }
+  ]
+}

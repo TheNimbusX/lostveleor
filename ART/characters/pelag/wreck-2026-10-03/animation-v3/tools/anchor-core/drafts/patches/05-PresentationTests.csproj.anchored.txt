@@ -1,0 +1,18 @@
+tools/Combat.Presentation.Tests: чистое ядро рига якоря в тесты представления (новые тесты кладутся файлами из drafts/tools).
+
+### PATCH tests-rig-core
+### FILE tools/Combat.Presentation.Tests/Combat.Presentation.Tests.csproj
+### OP insert-after
+### ANCHOR
+    <Compile Include="../../razlom/Assets/Game.View/AnchorChainSolver.cs" Link="AnchorChainSolver.cs" />
+### TEXT
+    <!-- Риг якоря на цепи (anchor-core 03.10): сшивка режимов, живая физика без пружин, запечка, цепь, решение по снимку Крушения. -->
+    <Compile Include="../../razlom/Assets/Game.View/AnchorRigBlend.cs" Link="AnchorRigBlend.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorRigCore.cs" Link="AnchorRigCore.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorRigBody.cs" Link="AnchorRigBody.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorRigThrowPlan.cs" Link="AnchorRigThrowPlan.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorBake.cs" Link="AnchorBake.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorChainLine.cs" Link="AnchorChainLine.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorSlackChain.cs" Link="AnchorSlackChain.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorRigWreckPlan.cs" Link="AnchorRigWreckPlan.cs" />
+### END

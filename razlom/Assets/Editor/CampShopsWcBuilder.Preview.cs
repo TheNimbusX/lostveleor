@@ -9,7 +9,8 @@ namespace Game.EditorTools
     /// <summary>Кадры окон лагеря без запуска игры, поверх кадра игры (ART/no-ui.png), с примером данных.</summary>
     public static partial class CampShopsWcBuilder
     {
-        public enum Shot { Smith, Trader, Alchemist, Hint, Recipes }
+        /// <summary>Temper — кузница вкладками (v4): закалка идёт; TemperChoice — оплаченные три варианта переплавки. Smith у префаба v4 — то же, что Temper.</summary>
+        public enum Shot { Smith, Trader, Alchemist, Hint, Recipes, Temper, TemperChoice }
 
         public static string Capture(string outPath, Shot shot)
         {
@@ -45,6 +46,19 @@ namespace Game.EditorTools
                 view.HintRole.text = "Торговец";
                 view.HintKey.text = "E";
                 view.HintNote.text = "Поговорить";
+            }
+            if ((shot == Shot.Smith || shot == Shot.Temper || shot == Shot.TemperChoice) && view.Temper != null && view.Temper.Root != null)
+            {
+                view.Trader.Group.gameObject.SetActive(false);
+                view.Alchemist.Group.gameObject.SetActive(false);
+                view.Smith.Group.gameObject.SetActive(true);
+                PreviewTemper(view, shot == Shot.TemperChoice);
+                foreach (var motion in inst.GetComponentsInChildren<UiHoverMotion>(true))
+                {
+                    if (motion.Highlight != null) motion.Highlight.canvasRenderer.SetAlpha(0f);
+                    if (motion.HighlightGroup != null) motion.HighlightGroup.alpha = 0f;
+                }
+                return;
             }
             view.Smith.Group.gameObject.SetActive(shot == Shot.Smith);
             view.Trader.Group.gameObject.SetActive(shot == Shot.Trader);
@@ -83,7 +97,7 @@ namespace Game.EditorTools
                     s.Item.Show(Item("fang_cord"), "7", 2, false);
                     s.ItemName.text = "Клык на шнурке";
                     s.ItemMeta.text = "<color=#A765FF>Эпический</color>  ·  Уровень 7";
-                    if (s.ReforgeCount != null) s.ReforgeCount.text = "1 / 3";
+                    if (s.ReforgeCount != null) s.ReforgeCount.text = "1 / 4";
                     for (int i = 0; i < s.ReforgePips.Length; i++)
                         if (s.ReforgePips[i] != null && s.ReforgePips[i].GetComponent<ThemeColor>() is ThemeColor pip)
                             pip.SetRole(i < 1 ? UiTheme.Role.Accent : UiTheme.Role.TextMuted, i < 1 ? 1f : .35f);
@@ -210,6 +224,124 @@ namespace Game.EditorTools
 
             foreach (var motion in inst.GetComponentsInChildren<UiHoverMotion>(true))
                 if (motion.Highlight != null) motion.Highlight.canvasRenderer.SetAlpha(0f);
+        }
+
+        /// <summary>
+        /// Кузница Эни вкладками (v4) на примере: офицерская сабля (эпическая) на наковальне. Без <paramref name="choice"/> —
+        /// идёт закалка «Урона» (1 удар, следующий — трещина 15%, «Ещё удар?» и «Взять»); с ним — оплаченная переплавка
+        /// «Шанса крита»: три варианта, выбран второй. «Добавить свойство» закрыта рангом 2. Числа — пример, не баланс.
+        /// </summary>
+        static void PreviewTemper(CampShopView view, bool choice)
+        {
+            CampShopScreen s = view.Smith;
+            CampTemperScreen t = view.Temper;
+            s.Title.text = "Кузница";
+            s.Speaker.text = "Эни";
+            s.Message.text = choice ? "Ну, что тебе сковать?" : "Так то лучше...!";
+            int[] wallet = { 450, 14, 3, 0 };
+            for (int i = 0; i < t.WalletValues.Length && i < wallet.Length; i++)
+            {
+                t.WalletValues[i].text = wallet[i].ToString();
+                t.WalletValues[i].transform.parent.gameObject.SetActive(i < 3 || wallet[i] > 0);
+            }
+            string[] bag = { "rusty_sword", "leather_jacket", "copper_ring", "fang_cord", "duelist_sabre", "scout_jacket", "sea_knot", "smith_ring",
+                "quilted_jacket", "woodland_talisman", "boarding_cutlass" };
+            int[] rare = { 0, 0, 0, 2, 1, 1, 0, 3, 0, 0, 1 };
+            s.GridCaption.text = "Сумка  ·  " + bag.Length + " / 48";
+            for (int i = 0; i < s.Cells.Length; i++)
+            {
+                bool has = i < bag.Length;
+                s.Cells[i].gameObject.SetActive(true);
+                s.Cells[i].Show(has ? Item(bag[i]) : null, has ? (4 + i % 5).ToString() : "", has ? rare[i] : 0, false);
+            }
+            string[] worn = { "officer_sabre", "boarding_vest", "lavidium_ring", null };
+            int[] wornRarity = { 2, 1, 1, 0 };
+            for (int i = 0; i < s.Worn.Length; i++)
+                s.Worn[i].Show(worn[i] != null ? Item(worn[i]) : null, worn[i] != null ? "12" : "", wornRarity[i], i == 0);
+
+            int tab = choice ? (int)EniTab.Remelt : (int)EniTab.Temper;
+            for (int i = 0; i < t.Tabs.Length; i++)
+            {
+                CampShopView.SetTab(t.Tabs[i], i == tab);
+                bool locked = i == (int)EniTab.Add;
+                t.TabLocks[i].SetActive(locked);
+                if (locked) t.TabLockLabels[i].text = "Эни · ранг 2";
+            }
+
+            int risk = choice ? 0 : 15;
+            t.RiskCaption.text = "Риск трещины";
+            t.RiskValue.text = risk + "%";
+            t.RiskFill.fillAmount = CampTemperRules.RiskFill(risk);
+            Sprite sabre = Item("officer_sabre");
+            bool anvil = t.Anvil.texture != null;
+            t.AnvilItem.sprite = sabre;
+            t.AnvilItem.enabled = anvil;
+            t.ItemMedal.Root.SetActive(!anvil);
+            t.ItemMedalArt.sprite = sabre;
+            t.ItemMedalArt.enabled = !anvil;
+            t.ItemName.text = "Офицерская сабля";
+            t.ItemMeta.text = "<color=#A765FF>Эпический</color>  ·  Уровень 12  ·  <color=#7FB2FF>надето</color>";
+            int used = choice ? 2 : 1;
+            for (int i = 0; i < t.Pips.Length; i++)
+            {
+                var state = CampTemperRules.Pip(i, used, 4, choice ? 1 : 0);
+                t.Pips[i].Root.SetActive(state != TemperPip.Hidden);
+                t.Pips[i].Fire.SetActive(state == TemperPip.Spent);
+                t.Pips[i].Art.enabled = state == TemperPip.Crack;
+            }
+            t.AttemptsLabel.text = "Попытки " + used + " из 4" + (choice ? "  ·  трещины 1 из 3" : "");
+
+            float numbers = T.Size(UiTheme.TextStep.Heading);
+            if (!choice)
+            {
+                t.PropsCaption.text = "Свойства предмета";
+                t.Replaced.text = "";
+                string[] names = { "Урон", "Шанс крита", "Броня", "Скорость атаки" };
+                string[] values = { "+12  <color=#FD7442>→</color>  <color=#8FE3A8>+15</color>", "3%", "+4", "6%" };
+                int[] stats = { 1, 4, 6, 2 };
+                for (int i = 0; i < t.Cards.Length; i++)
+                    PreviewCard(t, i, i < names.Length, i == 0, i < names.Length ? names[i] : "", i < values.Length ? values[i] : "", i < stats.Length ? stats[i] : 0,
+                        i == 3 ? "предел" : i > 0 ? "сначала «Взять»" : "", numbers);
+                t.PrimaryLabel.text = "Ещё удар?";
+                t.Secondary.gameObject.SetActive(true);
+                t.SecondaryLabel.text = "Взять";
+                t.PriceRow.SetActive(false);
+                t.Warning.text = "Следующий удар бесплатный · трещина 15% сожжёт рост этой закалки";
+                if (s.CloseKeyLabel != null) s.CloseKeyLabel.text = "Взять";
+            }
+            else
+            {
+                t.PropsCaption.text = "Выбери одно из трёх";
+                t.Replaced.text = "Вместо: Шанс крита 3%";
+                string[] names = { "Сила крита", "Скорость атаки", "Здоровье" };
+                string[] values = { "<color=#8FE3A8>+18%</color>", "<color=#8FE3A8>+7%</color>", "<color=#8FE3A8>+24</color>" };
+                int[] stats = { 5, 2, 0 };
+                for (int i = 0; i < t.Cards.Length; i++)
+                    PreviewCard(t, i, i < names.Length, i == 1, i < names.Length ? names[i] : "", i < values.Length ? values[i] : "", i < stats.Length ? stats[i] : 0,
+                        "", numbers);
+                t.PrimaryLabel.text = "Выбрать";
+                t.Secondary.gameObject.SetActive(false);
+                t.PriceRow.SetActive(false);
+                t.Warning.text = "Оплачено · выбор обязателен и ждёт после закрытия окна";
+                if (s.CloseKeyLabel != null) s.CloseKeyLabel.text = "Закрыть";
+            }
+            t.HeartsLine.text = choice ? "" : "Сердце Чащи · Корни";
+            if (t.Warning.GetComponent<ThemeColor>() is ThemeColor tone) tone.SetRole(UiTheme.Role.Accent);
+        }
+
+        static void PreviewCard(CampTemperScreen t, int index, bool shown, bool chosen, string name, string value, int stat, string note, float size)
+        {
+            CampTemperCard card = t.Cards[index];
+            card.Button.gameObject.SetActive(shown);
+            if (!shown) return;
+            card.Chosen.SetActive(chosen);
+            card.Icon.Fire.SetActive(chosen);
+            card.Icon.Art.texture = stat < t.StatIcons.Length ? t.StatIcons[stat] : null;
+            card.Icon.Art.enabled = card.Icon.Art.texture != null;
+            card.Name.text = name;
+            card.Value.text = value;
+            card.Value.fontSize = size;
+            card.Note.text = note;
         }
     }
 }

@@ -908,7 +908,7 @@ namespace Game.View
 
         private void RequestReturnToCamp()
         {
-            if (!_driver.CanReturnToCamp) return;
+            if (!_driver.CanReturnToCampFromPause) return;
             if (_driver.Session != null && _driver.Session.Mode == GameMode.Rift)
                 _page = Page.ConfirmCamp;
             else
@@ -959,7 +959,7 @@ namespace Game.View
             PauseMenuView.Window window = WindowFor(_page, fromMainMenu);
 
             v.Present(window, TabFor(_settingsTab), confirming, fromMainMenu);
-            PauseMenuView.Show(v.Camp, _driver.CanReturnToCamp);
+            PauseMenuView.Show(v.Camp, _driver.CanReturnToCampFromPause);
 
             if (window == PauseMenuView.Window.Settings)
             {
@@ -1227,7 +1227,7 @@ namespace Game.View
             if (GUI.Button(new Rect(x, y, width, height), "НАСТРОЙКИ", _button))
                 _page = Page.Graphics;
             y += height + gap;
-            if (_driver.CanReturnToCamp &&
+            if (_driver.CanReturnToCampFromPause &&
                 GUI.Button(new Rect(x, y, width, height), "ВЕРНУТЬСЯ В ЛАГЕРЬ", _dangerButton))
             {
                 if (_driver.Session != null && _driver.Session.Mode == GameMode.Rift)

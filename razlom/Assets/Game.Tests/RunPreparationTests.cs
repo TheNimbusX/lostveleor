@@ -5,12 +5,11 @@ namespace Game.Tests
 {
     public sealed class RunPreparationTests
     {
+        /// <summary>Sandbox стоит на ранге 3 (06.10): все жители, дары, навыки и зелья открыты.</summary>
         static Camp OpenCamp()
         {
             var camp = new Camp(PrototypeContent.Items(), act: 3);
-            camp.DeveloperSetLevel(10);
-            for (int resident = 0; resident < 3; resident++) for (int rank = 0; rank < 3; rank++)
-                Assert.AreEqual(CampUpgradeResult.Success, camp.TryUpgradeResident((CampResident)resident));
+            Assert.AreEqual(3, camp.CampRank);
             return camp;
         }
         static GameSession Prepared(CampGift gift)
@@ -27,39 +26,211 @@ namespace Game.Tests
         static void DisableFoes(Simulation sim)
         { for (int i = 1; i < sim.Entities.Count; i++) sim.Entities.Alive[i] = false; }
 
+        static int[] SkillOffers(Camp camp)
+        { var offers = new int[3]; for (int i = 0; i < 3; i++) offers[i] = camp.SkillOfferAt(i); return offers; }
+        static CarryChoice[] CarryOffers(Camp camp)
+        { var offers = new CarryChoice[3]; for (int i = 0; i < 3; i++) offers[i] = camp.CarryOfferAt(i); return offers; }
+        static bool Among(int[] offers, int pool) => System.Array.IndexOf(offers, pool) >= 0;
+
+        /// <summary>
+        /// Навык стола (06.10): 1 из 3 случайных среди когда-либо взятых, меньше трёх — все по
+        /// порядку пула. Ранги Эни навыков не открывают; снятые из наград не предлагаются.
+        /// Набор попытки не перебрасывается, пока она не закончилась.
+        /// </summary>
+        [Test] public void SkillOffersComeFromEverTakenAndShowAllWhenFewerThanThree()
+        {
+            int whirlwind = PelagKit.PoolIndexOf(AbilityDefinition.WhirlwindId);
+            var camp = new Camp(PrototypeContent.Items(), progressive: true); camp.DeveloperSetLevel(18);
+            for (int boss = 0; boss < RunBossKeys.Count; boss++) camp.DeveloperCreditBoss(boss);
+            Assert.AreEqual(0, camp.SkillOfferCount, "без стола предложений нет");
+            Assert.AreEqual(AbilityDefinition.WhirlwindId, camp.PreparedStarterId);
+            camp.RecordRealAttemptEnded(1, 0); Assert.AreEqual(3, camp.Rank(CampResident.Smith));
+            Assert.AreEqual(1, camp.SkillOfferCount, "взятых нет — один Вихрь, ранг навыков не даёт");
+            Assert.AreEqual(whirlwind, camp.SkillOfferAt(0)); Assert.AreEqual(-1, camp.SkillOfferAt(1));
+            Assert.False(camp.SelectStarterSkill(1));
+
+            camp.RecordSkillTaken(PelagKit.PoolDefinition(3).Id); camp.RecordSkillTaken(PelagKit.PoolDefinition(1).Id);
+            Assert.False(PelagKit.InRewardPool(10)); camp.RecordSkillTaken(PelagKit.PoolDefinition(10).Id);
+            Assert.AreEqual(1, camp.SkillOfferCount, "набор попытки не перебрасывается");
+            camp.RecordRealAttemptEnded(1, 0);
+            CollectionAssert.AreEqual(new[] { 1, 3, -1 }, SkillOffers(camp), "меньше трёх — все, по порядку пула");
+            Assert.AreEqual(PelagKit.PoolDefinition(1).Id, camp.PreparedStarterId, "Вихря нет среди новых — первое предложение");
+            Assert.False(camp.SelectStarterSkill(10)); Assert.False(camp.SelectStarterSkill(whirlwind)); Assert.False(camp.SelectStarterSkill(-1));
+            Assert.True(camp.SelectStarterSkill(3)); Assert.AreEqual(PelagKit.PoolDefinition(3).Id, camp.CreateRunPreparation().StarterId);
+
+            int[] taken = { 0, 1, 3, 5, 7 };
+            foreach (int pool in taken) camp.RecordSkillTaken(PelagKit.PoolDefinition(pool).Id);
+            var seen = new bool[PelagKit.PoolSize];
+            for (int attempt = 0; attempt < 40; attempt++)
+            {
+                int previous = camp.PreparedStarterPoolIndex;
+                camp.RecordRealAttemptEnded(1, 0);
+                var offers = SkillOffers(camp);
+                for (int i = 0; i < 3; i++)
+                {
+                    Assert.True(Among(taken, offers[i]), "только когда-либо взятые и идущие в награды");
+                    for (int j = 0; j < i; j++) Assert.AreNotEqual(offers[j], offers[i]);
+                    seen[offers[i]] = true;
+                }
+                Assert.True(Among(offers, camp.PreparedStarterPoolIndex));
+                if (Among(offers, previous)) Assert.AreEqual(previous, camp.PreparedStarterPoolIndex, "прежний выбор остаётся, если предложен");
+                Assert.True(camp.SelectStarterSkill(offers[2]));
+            }
+            foreach (int pool in taken) Assert.True(seen[pool], "за попытки встречается каждый взятый");
+
+            var sandbox = new Camp(PrototypeContent.Items());
+            Assert.AreEqual(3, sandbox.SkillOfferCount, "Sandbox открывает весь пул наград");
+            for (int i = 0; i < 3; i++) Assert.True(PelagKit.InRewardPool(sandbox.SkillOfferAt(i)));
+        }
+
         [Test] public void OffersAreDistinctAndSurviveCancelSaveAndReloadWithoutFreeReroll()
         {
-            var s = Prepared(CampGift.SeaKnot); var camp = s.Camp; Assert.True(s.SetPreparedStarter(3));
-            var offers = new[] { camp.GiftOfferAt(0), camp.GiftOfferAt(1), camp.GiftOfferAt(2) };
-            Assert.AreNotEqual(offers[0], offers[1]); Assert.AreNotEqual(offers[1], offers[2]); Assert.AreNotEqual(offers[0], offers[2]);
+            var camp = PrototypeContent.NewCamp();
+            foreach (int pool in new[] { 0, 1, 2, 3, 5 }) camp.RecordSkillTaken(PelagKit.PoolDefinition(pool).Id);
+            camp.RecordRealAttemptEnded(1, 0); camp.DeveloperCreditBoss(0);
+            camp.OpenArtifact(RunArtifacts.At(1)); camp.OpenArtifact(RunArtifacts.At(4));
+            camp.RecordRealAttemptEnded(1, 0);
+            var s = new GameSession(1701, camp, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
+            var skills = SkillOffers(camp); var carry = CarryOffers(camp);
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < i; j++) { Assert.AreNotEqual(skills[j], skills[i]); Assert.False(carry[j].SameAs(carry[i])); }
+            Assert.True(s.SetPreparedStarter(skills[2])); Assert.True(s.SetPreparedCarry(carry[1]));
+
+            s.RequestRiftEntry(); Assert.True(s.PreparationRequested); s.CancelRiftEntryRequest();
+            CollectionAssert.AreEqual(skills, SkillOffers(camp), "отмена не перебрасывает");
             var bytes = CampSaveCodec.Encode(camp); var restored = CampSaveCodec.Decode(bytes, camp.Items);
+            // Другой сид сессии: сид стола уже лежит в файле, набор тот же.
             var loaded = new GameSession(9999, restored, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
-            Assert.AreEqual(3, loaded.CampLoadout.PoolIndexAt(0));
-            for (int i = 0; i < 3; i++) Assert.AreEqual(offers[i], restored.GiftOfferAt(i));
-            Assert.AreEqual(camp.PreparedGift, restored.PreparedGift);
+            Assert.AreEqual(skills[2], loaded.CampLoadout.PoolIndexAt(0));
+            CollectionAssert.AreEqual(skills, SkillOffers(restored));
+            for (int i = 0; i < 3; i++) Assert.True(carry[i].SameAs(restored.CarryOfferAt(i)));
+            Assert.True(camp.PreparedCarry.SameAs(restored.PreparedCarry)); Assert.AreEqual(camp.PreparedStarterId, restored.PreparedStarterId);
             CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(restored));
+            ulong a = 0, b = 0; camp.HashInto(ref a); restored.HashInto(ref b); Assert.AreEqual(a, b);
+
+            // Сохранение посреди забега: навык и артефакт уже взяты, попытка ещё не кончилась.
+            restored.RecordSkillTaken(PelagKit.PoolDefinition(7).Id); restored.OpenArtifact(RunArtifacts.At(6));
+            var midRun = CampSaveCodec.Decode(CampSaveCodec.Encode(restored), camp.Items);
+            CollectionAssert.AreEqual(skills, SkillOffers(midRun));
+            for (int i = 0; i < 3; i++) Assert.True(carry[i].SameAs(midRun.CarryOfferAt(i)));
+
+            // Файл дня 1 (секция 8 без хвоста T3): до босса дары выходят те же — тот же поток.
+            var early = PrototypeContent.NewCamp(); early.RecordRealAttemptEnded(1, 0); early.RecordRealAttemptEnded(1, 0);
+            new GameSession(1703, early, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
+            Assert.True(early.SelectCarry(early.CarryOfferAt(1)));
+            var earlyBytes = CampSaveCodec.Encode(early);
+            var section = CampSaveFile.Payload(earlyBytes, CampSaveFile.PreparationTag);
+            var head = new byte[4 + 1 + 8 + 1 + 4 + 3]; System.Array.Copy(section, head, head.Length);
+            var dayOne = CampSaveCodec.Decode(CampSaveFile.Replace(earlyBytes, CampSaveFile.PreparationTag, head), early.Items);
+            for (int i = 0; i < 3; i++) Assert.True(early.CarryOfferAt(i).SameAs(dayOne.CarryOfferAt(i)));
+            Assert.True(dayOne.PreparedCarry.SameAs(dayOne.CarryOfferAt(0)), "выбор дня 1 переносится на первое предложение");
         }
         [Test] public void ChosenStarterIsAloneHasNoTalentsAndIsFrozenDuringAttempt()
         {
-            var s = Prepared(CampGift.DryRation); Assert.True(s.SetPreparedStarter(3)); s.EnterRift();
-            Assert.AreEqual(3, s.Run.Loadout.PoolIndexAt(0)); Assert.AreEqual(0, s.Run.Loadout.TalentCount(3));
+            var s = Prepared(CampGift.DryRation); int pool = s.Camp.SkillOfferAt(1);
+            Assert.True(s.SetPreparedStarter(pool)); s.EnterRift();
+            Assert.AreEqual(pool, s.Run.Loadout.PoolIndexAt(0)); Assert.AreEqual(0, s.Run.Loadout.TalentCount(pool));
             for (int i = 1; i < RunLoadout.Slots; i++) Assert.True(s.Run.Loadout.IsEmpty(i));
             Assert.AreEqual(AbilityDefinition.DashId, s.ActiveSim.GetAbility(PelagKit.DashSlot).DefinitionId);
-            Assert.False(s.SetPreparedStarter(2)); Assert.False(s.SetPreparedGift(CampGift.LightPack));
+            Assert.False(s.SetPreparedStarter(s.Camp.SkillOfferAt(0))); Assert.False(s.SetPreparedGift(CampGift.LightPack));
+            Assert.False(s.SetPreparedCarry(s.Camp.CarryOfferAt(0)));
             Assert.False(s.SetPreparedPotion(0, PotionKind.LargeHealth));
         }
-        [Test] public void StarterUnlocksFollowSmithRanksAndNewProfileHasNoLevelStatGrowth()
+        /// <summary>
+        /// Ячейка «с собой» (06.10): до первого босса — 1 из 3 даров, даже если тайник уже открыл
+        /// артефакт; после — 1 из 3 среди даров и открытых артефактов. Победа посреди попытки
+        /// набор не перебрасывает. В снимке забега — либо дар, либо артефакт.
+        /// </summary>
+        [Test] public void CarryIsGiftBeforeFirstBossThenGiftsOrArtifacts()
         {
-            var camp = new Camp(PrototypeContent.Items(), progressive: true); camp.DeveloperSetLevel(10);
-            camp.RecordRealAttemptEnded(1, 0); camp.RecordRealAttemptEnded(1, 0);
-            Assert.False(camp.StarterSkillUnlocked(1)); camp.TryUpgradeResident(CampResident.Smith);
-            Assert.True(camp.StarterSkillUnlocked(1)); Assert.False(camp.StarterSkillUnlocked(3));
-            camp.TryUpgradeResident(CampResident.Smith); Assert.True(camp.StarterSkillUnlocked(3)); Assert.False(camp.StarterSkillUnlocked(2));
-            camp.TryUpgradeResident(CampResident.Smith); Assert.True(camp.StarterSkillUnlocked(2));
-            var low = new GameSession(41, new Camp(PrototypeContent.Items()), PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
-            var high = new GameSession(41, camp, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
-            Assert.AreEqual(low.CampSim.Entities.MaxHealth[0], high.CampSim.Entities.MaxHealth[0]);
-            Assert.AreEqual(low.CampSim.Entities.Damage[0], high.CampSim.Entities.Damage[0]);
+            var camp = PrototypeContent.NewCamp();
+            Assert.AreEqual(0, camp.CarryOfferCount); Assert.False(camp.SelectGift(CampGift.DryRation), "до стола ячейки нет");
+            camp.OpenArtifact(RunArtifacts.At(0)); camp.OpenArtifact(RunArtifacts.At(3));
+            for (int attempt = 0; attempt < 20; attempt++)
+            {
+                camp.RecordRealAttemptEnded(1, 0);
+                Assert.AreEqual(3, camp.CarryOfferCount);
+                for (int i = 0; i < 3; i++)
+                {
+                    var offer = camp.CarryOfferAt(i);
+                    Assert.AreEqual(CarryKind.Gift, offer.Kind);
+                    Assert.True(offer.Gift == CampGift.DryRation || offer.Gift == CampGift.EniWhetstone || offer.Gift == CampGift.LightPack,
+                        "до ранга 1 — три базовых дара");
+                }
+                Assert.AreEqual(CarryKind.None, camp.PreparedCarry.Kind, "без выбора ячейка пуста");
+            }
+            Assert.False(camp.SelectCarry(CarryChoice.Of(RunArtifacts.At(0))));
+            var gift = camp.CarryOfferAt(2); Assert.True(camp.SelectCarry(gift));
+            Assert.AreEqual(gift.Gift, camp.CreateRunPreparation().Gift); Assert.AreEqual(RunArtifact.None, camp.CreateRunPreparation().Carried);
+
+            var before = CarryOffers(camp); camp.DeveloperCreditBoss(0);
+            for (int i = 0; i < 3; i++) Assert.True(before[i].SameAs(camp.CarryOfferAt(i)), "победа посреди попытки не перебрасывает");
+
+            bool artifactTaken = false;
+            for (int attempt = 0; attempt < 40; attempt++)
+            {
+                camp.RecordRealAttemptEnded(1, 0);
+                Assert.True(camp.PreparedCarry.SameAs(camp.CarryOfferAt(0)), "прежний выбор переносится на первое предложение");
+                var offers = CarryOffers(camp);
+                for (int i = 0; i < 3; i++)
+                {
+                    for (int j = 0; j < i; j++) Assert.False(offers[j].SameAs(offers[i]));
+                    if (offers[i].Kind == CarryKind.Gift) { Assert.True(camp.GiftUnlocked(offers[i].Gift)); continue; }
+                    Assert.AreEqual(CarryKind.Artifact, offers[i].Kind);
+                    Assert.True(offers[i].Artifact == RunArtifacts.At(0) || offers[i].Artifact == RunArtifacts.At(3), "только открытые");
+                    if (artifactTaken) continue;
+                    artifactTaken = true; Assert.True(camp.SelectCarry(offers[i]));
+                    var preparation = camp.CreateRunPreparation();
+                    Assert.AreEqual(offers[i].Artifact, preparation.Carried); Assert.AreEqual(CampGift.None, preparation.Gift);
+                    Assert.AreEqual(CampGift.None, camp.PreparedGift);
+                }
+            }
+            Assert.True(artifactTaken);
+            Assert.False(camp.SelectCarry(CarryChoice.Of(RunArtifacts.At(5))), "закрытый артефакт не берётся");
+        }
+        /// <summary>
+        /// Артефакт «с собой» стоит в слоте с первого тика этого забега, наградой не считается и
+        /// в лагерь не возвращается: следующий забег с даром идёт без него.
+        /// </summary>
+        [Test] public void CarriedArtifactActsThisRunOnly()
+        {
+            var camp = PrototypeContent.NewCamp(); camp.RecordRealAttemptEnded(1, 0); camp.DeveloperCreditBoss(0);
+            camp.OpenArtifact(RunArtifacts.At(2));
+            var s = new GameSession(1702, camp, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
+            CarryChoice artifact = default;
+            for (int attempt = 0; attempt < 40 && artifact.Kind == CarryKind.None; attempt++)
+            {
+                camp.RecordRealAttemptEnded(1, 0);
+                for (int i = 0; i < camp.CarryOfferCount; i++) if (camp.CarryOfferAt(i).Kind == CarryKind.Artifact) artifact = camp.CarryOfferAt(i);
+            }
+            Assert.AreEqual(RunArtifacts.At(2), artifact.Artifact);
+            Assert.True(s.SetPreparedCarry(artifact)); int opened = camp.OpenedArtifactCount;
+            s.EnterRift();
+            Assert.AreEqual(artifact.Artifact, s.Run.Artifact); Assert.AreEqual(artifact.Artifact, s.ActiveSim.Artifact);
+            Assert.AreEqual(artifact.Artifact, s.Run.Preparation.Carried); Assert.AreEqual(CampGift.None, s.Run.Preparation.Gift);
+            Assert.AreEqual(0, s.Run.TakenRewardCount, "артефакт «с собой» — не награда забега");
+            Assert.False(s.SetPreparedCarry(camp.CarryOfferAt(0)), "в Разломе ячейка не меняется");
+            s.ActiveSim.Entities.Health[0] = 0; s.ActiveSim.Entities.Alive[0] = false; s.Step(InputFrame.Empty);
+            Assert.AreEqual(GameMode.Summary, s.Mode); s.ReturnToCamp();
+            Assert.AreEqual(opened, camp.OpenedArtifactCount);
+
+            CarryChoice gift = default;
+            for (int i = 0; i < camp.CarryOfferCount; i++) if (camp.CarryOfferAt(i).Kind == CarryKind.Gift) gift = camp.CarryOfferAt(i);
+            Assert.True(s.SetPreparedCarry(gift)); s.EnterRift();
+            Assert.AreEqual(RunArtifact.None, s.Run.Artifact); Assert.AreEqual(RunArtifact.None, s.ActiveSim.Artifact);
+
+            // Уровень RiftRun: артефакт встаёт в StartRun, хеш подготовки его различает, дар и артефакт вместе — ошибка.
+            var plain = new RiftRun(new Simulation(557), PrototypeContent.Modules(), PrototypeContent.Items(), PrototypeContent.ItemBaseIds());
+            var carried = new RiftRun(new Simulation(557), PrototypeContent.Modules(), PrototypeContent.Items(), PrototypeContent.ItemBaseIds());
+            var withArtifact = new RunPreparation(AbilityDefinition.WhirlwindId, CampGift.None, PotionKind.SmallHealth, PotionKind.SmallLavidium, RunArtifacts.At(2));
+            carried.SetPreparation(in withArtifact); plain.StartRun(); carried.StartRun();
+            Assert.AreEqual(RunArtifacts.At(2), carried.Artifact); Assert.AreEqual(RunArtifact.None, plain.Artifact);
+            Assert.AreNotEqual(plain.Hash(), carried.Hash());
+            var both = new RunPreparation(AbilityDefinition.WhirlwindId, CampGift.DryRation, PotionKind.SmallHealth, PotionKind.SmallLavidium, RunArtifacts.At(2));
+            var invalid = new RunPreparation(AbilityDefinition.WhirlwindId, CampGift.None, PotionKind.SmallHealth, PotionKind.SmallLavidium, (RunArtifact)1);
+            var fresh = new RiftRun(new Simulation(558), PrototypeContent.Modules(), PrototypeContent.Items(), PrototypeContent.ItemBaseIds());
+            Assert.Throws<System.ArgumentException>(() => fresh.SetPreparation(in both));
+            Assert.Throws<System.ArgumentException>(() => fresh.SetPreparation(in invalid));
         }
         [Test] public void SpareFlaskNeedsStockAndOnlyFirstSuccessfulUseIsFree()
         {
@@ -130,7 +301,7 @@ namespace Game.Tests
             s.EnterRift(); s.ActiveSim.Entities.Health[0] = 0; s.ActiveSim.Entities.Alive[0] = false; s.Step(InputFrame.Empty);
             Assert.AreEqual(1, camp.AttemptCount); s.Step(InputFrame.Empty); Assert.AreEqual(1, camp.AttemptCount);
         }
-        [TestCase(false)] [TestCase(true)] public void RepeatedDummyDeathsNeverGiveCampExperienceOrUpgradePoints(bool legacyGround)
+        [TestCase(false)] [TestCase(true)] public void RepeatedDummyDeathsNeverGiveCampExperienceOrAsh(bool legacyGround)
         {
             var s = PrototypeContent.NewSession(847);
             if (legacyGround) s.EnterProvingGround(1);
@@ -142,7 +313,7 @@ namespace Game.Tests
                 sim.Statuses.ApplyBurn(1, Fix64.FromInt(100000), 1, 0, -1); s.Step(InputFrame.Empty);
                 Assert.True(sim.Entities.Alive[1], "Мишень должна восстановиться после настоящей смерти");
             }
-            Assert.AreEqual(1, s.Camp.Level); Assert.AreEqual(0, s.Camp.Experience); Assert.AreEqual(0, s.Camp.AvailableCampPoints);
+            Assert.AreEqual(1, s.Camp.Level); Assert.AreEqual(0, s.Camp.Experience); Assert.AreEqual(0, s.Camp.Money(CurrencyType.Ash));
         }
         [Test] public void DeveloperTrialClearsPendingEntryAndCannotSpendPotionsOrChangeCampProgress()
         {
@@ -173,16 +344,14 @@ namespace Game.Tests
             Assert.False(restored.HasResident(CampResident.Alchemist));
             Assert.AreEqual(camp.PotionCount(PotionKind.SmallHealth), restored.PotionCount(PotionKind.SmallHealth));
         }
-        [Test] public void EntryAndRepeatCommandsRequestPreparationAfterSecondEndedAttempt()
+        /// <summary>Стол сборов открывается после первого завершённого забега (06.10), и повтор ведёт к нему.</summary>
+        [Test] public void EntryAndRepeatCommandsRequestPreparationAfterFirstEndedAttempt()
         {
             var s = PrototypeContent.NewSession(845);
             s.Step(new InputFrame { Command = (byte)CampCommand.EnterRift });
-            Assert.AreEqual(GameMode.Rift, s.Mode);
+            Assert.AreEqual(GameMode.Rift, s.Mode, "Первый вход ещё без стола");
             s.ActiveSim.Entities.Alive[0] = false; s.ActiveSim.Entities.Health[0] = 0; s.Step(InputFrame.Empty);
-            s.Step(new InputFrame { Command = (byte)CampCommand.RepeatRift });
-            Assert.AreEqual(GameMode.Rift, s.Mode, "Первый повтор ещё не требует стола");
-            s.ActiveSim.Entities.Alive[0] = false; s.ActiveSim.Entities.Health[0] = 0; s.Step(InputFrame.Empty);
-            Assert.AreEqual(2, s.Camp.AttemptCount); int runs = s.RunNumber;
+            Assert.AreEqual(1, s.Camp.AttemptCount); Assert.True(s.Camp.HasTravelTable); int runs = s.RunNumber;
             s.Step(new InputFrame { Command = (byte)CampCommand.RepeatRift });
             Assert.AreEqual(GameMode.Camp, s.Mode); Assert.True(s.PreparationRequested); Assert.IsNull(s.Run);
             s.Step(new InputFrame { Command = (byte)CampCommand.EnterRift });
@@ -193,45 +362,6 @@ namespace Game.Tests
             s.RequestRiftEntry(); Assert.True(s.PreparationRequested);
             Assert.True(s.SetPreparedGift(s.Camp.GiftOfferAt(0))); s.EnterRift();
             Assert.AreEqual(GameMode.Rift, s.Mode); Assert.False(s.PreparationRequested); Assert.AreEqual(runs + 1, s.RunNumber);
-        }
-        [TestCase(0)] [TestCase(1)] [TestCase(2)] [TestCase(3)]
-        public void StaticEliteEncounterPaysOneSteelOnlyAfterAllSplitChildrenAndSuccessfulReturn(int finish)
-        {
-            var normal = new EncounterPack(1, 100, new[] { new EncounterGroup(EnemyKind.ForestGuardian, 1, 1) });
-            var elite = new EncounterPack(2, 100, new[] { new EncounterGroup(EnemyKind.ForestGuardian, 2, 2, elite: true),
-                new EncounterGroup(EnemyKind.ForestSplitter, 1, 1) });
-            var settings = new EncounterSettings(new[] { normal }, new[] { normal }, new[] { normal }, new[] { elite }, 1, 0, 100, Fix64.FromInt(5));
-            var modules = PrototypeContent.Modules();
-            var location = new LocationDefinition(StableId.Of("location.test-camp-materials"), modules,
-                new[] { new RiftLevelSettings(12, 1, 0, 0, 0, 0, 100, settings) });
-            var camp = new Camp(PrototypeContent.Items(), act: 3);
-            var s = new GameSession(846, camp, modules, PrototypeContent.ItemBaseIds(), location: location);
-            s.EnterRift(); var sim = s.ActiveSim; var plan = s.Run.Encounters;
-            EncounterPlacement encounter = default; bool found = false;
-            for (int i = 0; i < plan.Count; i++) if (plan.Get(i).Role == EncounterRole.ExitGuard) { encounter = plan.Get(i); found = true; }
-            Assert.True(found); Assert.AreEqual(3, encounter.EnemyCount);
-            int end = encounter.FirstEntity + encounter.EnemyCount;
-            for (int id = 1; id < sim.Entities.Count; id++)
-            {
-                sim.Entities.NextAttackTick[id] = int.MaxValue;
-                if (id >= encounter.FirstEntity && id < end) sim.Statuses.ApplyBurn(id, Fix64.FromInt(100000), 1, 0, -1);
-                else sim.Entities.Alive[id] = false;
-            }
-            s.Step(InputFrame.Empty); Assert.True(sim.HasPendingSplits);
-            int deadline = sim.Tick + Simulation.SplitterDeathReleaseTicks + 1;
-            while (sim.HasPendingSplits && sim.Tick <= deadline) s.Step(InputFrame.Empty);
-            Assert.False(sim.HasPendingSplits); int children = 0;
-            for (int id = end; id < sim.Entities.Count; id++) if (sim.SplitParentOf(id) >= encounter.FirstEntity && sim.Entities.Alive[id])
-            {
-                children++;
-                if (finish != 0) sim.Statuses.ApplyBurn(id, Fix64.FromInt(100000), 1, 0, -1);
-            }
-            Assert.AreEqual(2, children);
-            if (finish != 0) s.Step(InputFrame.Empty);
-            if (finish == 2) { sim.Entities.Alive[0] = false; sim.Entities.Health[0] = 0; s.Step(InputFrame.Empty); }
-            else if (finish == 3) s.ReturnToCamp();
-            else s.Step(new InputFrame { Command = (byte)RunCommand.Leave });
-            Assert.AreEqual(finish == 1 ? 1 : 0, camp.MaterialCount(ForgeMaterial.Steel));
         }
         static Simulation RollArena(CampGift gift)
         {

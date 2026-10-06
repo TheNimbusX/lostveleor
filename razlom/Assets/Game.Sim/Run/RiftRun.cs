@@ -4,10 +4,11 @@ namespace Game.Sim
     /// Петля забега: вход в Разлом → зачистка → смерть или выход →
     /// выбор одной награды из трёх → следующий Разлом глубже.
     ///
-    /// СМЕРТЬ ЗАВЕРШАЕТ ЗАБЕГ И ОТНИМАЕТ НАЙДЕННОЕ: вещи и золото доезжают до
-    /// лагеря только при выходе (GameSession.FinishRun), способности и таланты
-    /// живут в забеге всегда. Так решение «идти дальше или уйти с добычей»
-    /// становится настоящим решением.
+    /// СМЕРТЬ ЗАВЕРШАЕТ ЗАБЕГ И ОТНИМАЕТ ВЕЩИ И ПОЛОВИНУ ЗОЛОТА (06.10): вещи и всё
+    /// золото доезжают до лагеря только при выходе или прохождении
+    /// (GameSession.FinishRun), способности и таланты живут в забеге всегда. Уйти
+    /// можно только между аренами (CanLeave). Так решение «идти дальше или уйти
+    /// с добычей» становится настоящим решением.
     ///
     /// Всё, что решает игрок, приходит в InputFrame.Command. Отдельного API
     /// для выбора награды нет намеренно: реплей обязан воспроизводить забег
@@ -123,7 +124,10 @@ namespace Game.Sim
         /// <summary>Ставит набор забега в симуляцию. Зовётся после любой смены набора.</summary>
         public void ApplyLoadout() => Loadout.ApplyTo(_sim);
 
-        /// <summary>Золото, найденное в забеге. Доезжает до лагеря только при выходе или прохождении.</summary>
+        /// <summary>
+        /// Золото, найденное в забеге (RiftRun.Economy). Целиком доезжает до лагеря при выходе
+        /// или прохождении, при смерти — половина (GameSession.FinishRun).
+        /// </summary>
         public int Gold { get; private set; }
         public bool ArenaFlow => _location != null && _location.GetLevel(1).ArenaSize > 0;
 
@@ -157,10 +161,12 @@ namespace Game.Sim
         /// <summary>Способность, ждущая замены при полной панели; −1 — не ждёт.</summary>
         public int PendingAbility { get; private set; } = -1;
 
-        /// <summary>Разбор способности: 15 + 5 за уровень Разлома. Решение владельца от 15 сентября.</summary>
-        public const int SalvageBaseGold = 15;
-        public const int SalvageGoldPerDepth = 5;
-        public int SalvageGold => SalvageBaseGold + SalvageGoldPerDepth * Depth;
+        /// <summary>
+        /// Разбор способности: плоские 10 (экономика 06.10, RunEconomy). Прежние 15 + 5 за
+        /// уровень Разлома с 15 сентября давали до сотни за лес — больше зачистки арен.
+        /// Свойство, а не константа: его читают RunHud и RunWorldView.
+        /// </summary>
+        public int SalvageGold => RunEconomy.SalvageGold;
 
         // Веса карточек из пропорций владельца: способность / вещь / талант.
         private const int AbilityWeight = 35, ItemWeight = 30, TalentWeight = 35;
@@ -192,7 +198,7 @@ namespace Game.Sim
                 EntityStore e = _sim.Entities;
                 if (e.Count <= Simulation.PlayerId || !e.Alive[Simulation.PlayerId]) return 0;
                 int missing = e.MaxHealth[Simulation.PlayerId] - e.Health[Simulation.PlayerId];
-                return System.Math.Min(missing, SpringHeal(e.MaxHealth[Simulation.PlayerId], SpringHealPercent));
+                return System.Math.Min(missing, SpringHeal(e.MaxHealth[Simulation.PlayerId], SpringPercent(SpringHealPercent)));
             }
         }
 
@@ -253,13 +259,17 @@ namespace Game.Sim
             _takenCount = 0;
             Artifact = RunArtifact.None;
             _sim.SetArtifact(RunArtifact.None);
+            // Решения лагеря на этот забег: артефакт «с собой» (T3) и клятвы с гранями сердца (T2).
+            ApplyCarriedArtifact();
+            ApplyRunBoons();
             Outcome = RunOutcome.None;
             Gold = 0;
+            ResetEconomy();
             PendingAbility = -1;
             ResetPreparationUsage();
             ResetForms();
             Loadout.ResetToStarter(Preparation.StarterPoolIndex);
-            CurrentRoute = new ArenaRouteOffer(ArenaReward.Upgrade, 3, false, 0);
+            CurrentRoute = new ArenaRouteOffer(ArenaReward.Upgrade, 3, false, RunEconomy.ArenaClearGold(1, false, false));
             RollPlan();
 
             // Новый забег начинается с полным здоровьем, даже если тот же
@@ -486,11 +496,7 @@ namespace Game.Sim
 
         private void StepClearing(in InputFrame input, RunCommand command)
         {
-            if (command == RunCommand.Leave)
-            {
-                End(RunOutcome.Left);
-                return;
-            }
+            // «Уйти» в бою не действует (06.10): только с экранов награды, замены и пути (CanLeave).
 
             if (BossId >= 0 && !BossEnraged && _sim.Entities.Alive[BossId]
                 && _sim.Entities.Health[BossId] <= _sim.Entities.MaxHealth[BossId] / 2)
@@ -501,6 +507,7 @@ namespace Game.Sim
             }
             _sim.Step(in input);
             InheritSplitBranches();
+            CollectEliteGold();
 
             // Смерть проверяется ПЕРВОЙ. Если игрок и последний враг погибли
             // на одном тике, забег заканчивается смертью: иначе труп получал бы
@@ -518,7 +525,7 @@ namespace Game.Sim
             if (CountRequiredEnemies() == 0 && !_sim.EncounterWavesPending && !_sim.HasPendingSplits)
             {
                 RiftsCleared++;
-                if (ArenaFlow) Gold += CurrentRoute.BonusGold;
+                if (ArenaFlow) AddGold(CurrentRoute.BonusGold);
                 SpawnChest();
                 Phase = RunPhase.SeekingExit;
             }
@@ -531,14 +538,10 @@ namespace Game.Sim
         /// </summary>
         private void StepSeekingExit(in InputFrame input, RunCommand command)
         {
-            if (command == RunCommand.Leave)
-            {
-                End(RunOutcome.Left);
-                return;
-            }
-
+            // «Уйти» по дороге к выходу тоже не действует (06.10): дойди — и уходи с экрана награды.
             _sim.Step(in input);
             InheritSplitBranches();
+            CollectEliteGold();
 
             if (!_sim.Entities.Alive[Simulation.PlayerId])
             {
@@ -683,7 +686,7 @@ namespace Game.Sim
         /// <summary>Способности нет в наборе и её не лежит на арене.</summary>
         private bool IsDropAbilityCandidate(int pool)
         {
-            if (Loadout.Owns(pool)) return false;
+            if (!PelagKit.InRewardPool(pool) || Loadout.Owns(pool)) return false;
             for (int d = 0; d < _dropCount; d++)
                 if (!_drops[d].Claimed && _drops[d].Offer.Kind == RewardKind.Ability && _drops[d].Offer.PoolIndex == pool)
                     return false;
@@ -721,7 +724,7 @@ namespace Game.Sim
             int d = NearestAbilityDrop(DropMenuRadius);
             if (d < 0) return;
 
-            if (salvage) Gold += SalvageGold;
+            if (salvage) AddGold(SalvageGold);
             else
             {
                 if (!Loadout.Put(slot, _drops[d].Offer.PoolIndex)) return;
@@ -757,7 +760,8 @@ namespace Game.Sim
 
         private void StepChoosing(RunCommand command)
         {
-            if (command == RunCommand.RerollReward) { TryRerollReward(); return; }
+            // Бесплатный переброс «Второго взгляда» (клятвы, T2) тратится раньше дара.
+            if (command == RunCommand.RerollReward) { if (!TryFreeReroll()) TryRerollReward(); return; }
             if (command == RunCommand.Leave)
             {
                 End(RunOutcome.Left);
@@ -810,7 +814,7 @@ namespace Game.Sim
             }
 
             if (command == RunCommand.SalvageAbility)
-                Gold += SalvageGold;
+                AddGold(SalvageGold);
             else
             {
                 int slot = (int)command - (int)RunCommand.ReplaceSlot1;
@@ -837,9 +841,11 @@ namespace Game.Sim
             // Размер бросается как раньше (поток тот же), но не меньше того,
             // что нужно шаблону следующей арены.
             int minSize = MinArenaSizeFor(Depth + 1);
+            // Золото пути — всё золото уровня за зачистку (06.10): 2 × номер арены, уровень
+            // босса 30, «Сложно» ×2. Порядок бросков rng прежний.
             for (int i = 0; i < _routes.Length; i++)
                 _routes[i] = new ArenaRouteOffer(i == 1 ? ArenaReward.Shop : ArenaReward.Upgrade,
-                    boss ? 4 : System.Math.Max(minSize, rng.NextInt(2, 5)), i == 2, i == 2 ? 50 + Depth * 10 : 0);
+                    boss ? 4 : System.Math.Max(minSize, rng.NextInt(2, 5)), i == 2, RunEconomy.ArenaClearGold(Depth + 1, i == 2, boss));
             Phase = RunPhase.ChoosingRoute;
         }
 
@@ -931,8 +937,14 @@ namespace Game.Sim
             EntityStore e = _sim.Entities;
             if (e.Count <= Simulation.PlayerId || !e.Alive[Simulation.PlayerId]) return;
             int max = e.MaxHealth[Simulation.PlayerId];
-            e.Health[Simulation.PlayerId] = System.Math.Min(max, e.Health[Simulation.PlayerId] + SpringHeal(max, percent));
+            e.Health[Simulation.PlayerId] = System.Math.Min(max, e.Health[Simulation.PlayerId] + SpringHeal(max, SpringPercent(percent)));
         }
+
+        /// <summary>
+        /// Процент лечения родника с «Щедрым родником» (клятвы, пакет T2): +N% от самого
+        /// лечения, а не +N процентных пунктов — 40 → 46. Без клятвы — тот же процент.
+        /// </summary>
+        private int SpringPercent(int percent) => percent + percent * SpringHealPercentBonus / 100;
 
         /// <summary>
         /// Три разных артефакта, кроме того, что уже в руках. Если свободных меньше трёх,
@@ -1011,7 +1023,7 @@ namespace Game.Sim
         }
 
         private bool IsAbilityCandidate(int pool, int filled)
-            => !Loadout.Owns(pool) && !OfferedOnPanel(filled, RewardKind.Ability, pool);
+            => PelagKit.InRewardPool(pool) && !Loadout.Owns(pool) && !OfferedOnPanel(filled, RewardKind.Ability, pool);
 
         private bool IsTalentCandidate(int pool, int filled)
             => Loadout.CanTakeTalent(pool) && !OfferedOnPanel(filled, RewardKind.Talent, pool);
@@ -1118,6 +1130,7 @@ namespace Game.Sim
             HashRunPreparation(ref hash);
             HashForms(ref hash);
             Hashing.Mix(ref hash, Gold);
+            HashEconomy(ref hash);
             Hashing.Mix(ref hash, (int)Artifact);
             Hashing.Mix(ref hash, PendingAbility);
             Hashing.Mix(ref hash, _dropCount);

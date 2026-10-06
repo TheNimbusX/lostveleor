@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_WreckSwing_Link
+  m_Shader: {fileID: 4800000, guid: 9e0796f12f1be3348bc6d1b97eb2eb07, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3001
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoiseTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Cut: 0.1
+    - _EdgeFrom: 0.8
+    - _Fade: 1
+    - _Glow: 1.35
+    - _Ink: 0.16
+    - _MaskFrom: 0.42
+    - _MaskTo: 0.99
+    - _Mode: 1
+    - _NoiseMeters: 1.4
+    - _Opacity: 0.8
+    - _OutlineMeters: 0.055
+    - _RimFrom: 0.55
+    m_Colors:
+    - _IronColor: {r: 0.14999998, g: 0.16499996, b: 0.19999996, a: 1}
+    - _OutlineColor: {r: 0.05490196, g: 0.039215688, b: 0.078431375, a: 1}
+    - _Tint: {r: 0.30980393, g: 0.65882355, b: 1, a: 1}
+    - _TintLight: {r: 0.6117647, g: 0.84705883, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

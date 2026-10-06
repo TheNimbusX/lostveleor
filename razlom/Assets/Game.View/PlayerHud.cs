@@ -215,8 +215,12 @@ namespace Game.View
             if (!_hudShown || sim == null || _view.CampCombatHidden) return;
             _tooltipSlot = _view.HoverSlot;
             int reachSlot = _tooltipSlot >= 0 ? _tooltipSlot : _driver.AimingAbilityTarget ? _driver.AbilityTargetAimSlot : -1;
+            // Крушение v2 (SPEC 6): превью и без наведения — пока идёт серия и пока зажата клавиша слота Крушения.
+            if (reachSlot < 0 && !_driver.GameplayPaused) reachSlot = HudWreckReach.HeldSlot(sim);
             AbilityBuild reach = reachSlot >= 0 ? sim.GetAbility(reachSlot) : null;
             if (reach != null) DrawAbilityReach(sim, reach);
+            // Бросок якоря (вопрос 1 спеки, ответ по умолчанию): пока готов — тонкая линия полосы к курсору.
+            else DrawAnchorThrowAimLine(sim);
         }
 
         /// <summary>
@@ -723,7 +727,7 @@ namespace Game.View
             int damage = build.Get(AbilityStatType.Damage).ToInt();
             if (damage > 0)
                 AddTooltipValue(3, id == AbilityDefinition.WreckId ? "Урон комбо" : "Базовый урон",
-                    id == AbilityDefinition.WreckId ? damage + " / " + damage + " / " + damage * 2 : damage.ToString());
+                    id == AbilityDefinition.WreckId ? damage + " / " + damage + " / " + damage * 2 + " + вал " + damage : damage.ToString());
             float bonus = build.Get(AbilityStatType.BonusDamagePercent).ToFloat();
             if (bonus > 0f) AddTooltipValue(3, "Усиление атак", "+" + (bonus * 100f).ToString("0.#") + "%");
             float radius = build.Get(AbilityStatType.Radius).ToFloat();
@@ -736,7 +740,7 @@ namespace Game.View
                 AddTooltipValue(5, "Радиус взрыва", (build.Get(AbilityStatType.Width).ToFloat() * .5f).ToString("0.#") + " м");
             else if (id == AbilityDefinition.BackblastId)
                 AddTooltipValue(5, "Радиус взрыва", build.Get(AbilityStatType.Width).ToFloat().ToString("0.#") + " м");
-            else if (id == AbilityDefinition.AnchorSlamId || id == AbilityDefinition.SkewerId)
+            else if (id == AbilityDefinition.AnchorSlamId || id == AbilityDefinition.SkewerId || id == AbilityDefinition.AnchorThrowId)
                 AddTooltipValue(5, "Ширина удара", build.Get(AbilityStatType.Width).ToFloat().ToString("0.#") + " м");
             if (id == AbilityDefinition.BlazeId || id == AbilityDefinition.FireFlaskId)
                 AddTooltipValue(2, "Длительность", (build.Get(AbilityStatType.DurationTicks).ToFloat() / Simulation.TicksPerSecond).ToString("0.#") + " с");
@@ -821,7 +825,11 @@ namespace Game.View
             // Камера меню или студии могла быть главной на первом кадре и потом выключиться.
             if (_rangeCamera == null || !_rangeCamera.isActiveAndEnabled) _rangeCamera = Camera.main;
             if (_rangeCamera == null) return;
-            RangePreview.Begin(_rangeCamera,Availability(sim,_tooltipSlot >= 0 ? _tooltipSlot : _driver.AbilityTargetAimSlot,build).Ready);
+            // Слот, чьё превью рисуется: наведение, прицел, а у Крушения v2 ещё серия или зажатая клавиша (SPEC 6).
+            int reachSlot = _tooltipSlot >= 0 ? _tooltipSlot : _driver.AbilityTargetAimSlot;
+            if (reachSlot < 0) reachSlot = HudWreckReach.HeldSlot(sim);
+            // Серия Крушения светится как готовая: кулдаун от каста уже тикает, а удары ещё идут.
+            RangePreview.Begin(_rangeCamera,HudWreckReach.SeriesLit(sim,build) || reachSlot >= 0 && Availability(sim,reachSlot,build).Ready);
             Vector3 center = _driver.GetRenderPosition(Simulation.PlayerId) + Vector3.up * .06f;
             var position = sim.Entities.Position[Simulation.PlayerId];
             var aim = _driver.CursorWorld - position;
@@ -864,12 +872,19 @@ namespace Game.View
                     _rangePreview.Lane(center, Quaternion.Euler(0f, -30f, 0f) * forward, radius, width * .5f);
                 }
             }
+            else if (id == AbilityDefinition.AnchorThrowId)
+                // Бросок якоря (спека §6): полосы 0,9 м по Sim до стены, Невод — лист сети 3 м, Веер — три полосы.
+                HudAnchorThrowReach.DrawReach(_rangePreview, sim, _tooltipSlot >= 0 ? _tooltipSlot : _driver.AbilityTargetAimSlot,
+                    center, _driver.CursorWorld);
             else if (id == AbilityDefinition.WreckId)
             {
                 if (sim.WreckDirection.LengthSq.Raw != 0)
                     forward = new Vector3(sim.WreckDirection.X.ToFloat(), 0f, sim.WreckDirection.Y.ToFloat()).normalized;
-                float half = Mathf.Acos(Mathf.Clamp(build.Get(AbilityStatType.ArcCosine).ToFloat(), -1f, 1f));
-                _rangePreview.Sector(center, forward, radius, half);
+                // Крушение v2 (SPEC 6): махи — сектор (до каста — тонкая дуга по краю), удар оземь — круг и полоса
+                // по WreckLanePreview Sim (замирает, пока Sim держит удар), Девятый вал — ширина по заряду и контур
+                // полного, Волнорез — 8 м и диск обрушения, Панцирь — кольцо взрыва. Геометрия — только из Sim.
+                // Строки ветки выше (else if … WreckDirection) не трогаются: на них стоит якорь Броска якоря.
+                HudWreckReach.Draw(_rangePreview, sim, build, reachSlot, center, _driver.CursorWorld);
             }
             else if (id == AbilityDefinition.SkewerId)
                 _rangePreview.Capsule(center, forward, radius, width * .5f);
@@ -888,14 +903,23 @@ namespace Game.View
             else if (id == AbilityDefinition.AnchorLeapId)
             {
                 // Дальность из сборки: талант «Длинная цепь» её удлиняет. «На абордаж!» бьёт в 2 м вокруг прибытия.
-                // 2a (владелец 30.09): кольцо дальности — вокруг ГЕРОЯ, не вокруг места приземления; от героя
-                // к месту — пунктир прыжка, на диске приземления — якорь тушью.
-                Vector3 landing = center + forward * Mathf.Min(cursor, radius);
-                float land = build.Has(AbilityFlag.BoardingSweep) ? 2f : ReachMark;
-                _rangePreview.Ring(center, radius, ReachLimitStrength);
-                _rangePreview.Disc(landing, land);
-                _rangePreview.JumpArc(center, landing, land);
-                _rangePreview.Anchor(landing);
+                // 2a (владелец 30.09): кольцо дальности — вокруг ГЕРОЯ; от героя к месту — пунктир прыжка, на диске
+                // приземления — якорь тушью. С 02.10 цель — враг, как у Шквала: пунктир и диск — только к годному
+                // врагу под курсором в прицеле, в настоящую точку посадки Sim (вплотную к телу, у босса — у корпуса).
+                // Без цели — одно кольцо дальности, как у Шквала.
+                int target = _driver.HoveredEntity;
+                bool aimed = _tooltipSlot < 0 && _driver.AimingAbilityTarget && target > 0 && sim.ValidAbilityTarget(target, build);
+                if (!aimed) _rangePreview.Ring(center, radius);
+                else
+                {
+                    FixVec2 spot = sim.AbordageLandingSpot(target, position);
+                    Vector3 landing = new Vector3(spot.X.ToFloat(), center.y, spot.Y.ToFloat());
+                    float land = build.Has(AbilityFlag.BoardingSweep) ? 2f : ReachMark;
+                    _rangePreview.Ring(center, radius, ReachLimitStrength);
+                    _rangePreview.Disc(landing, land);
+                    _rangePreview.JumpArc(center, landing, land);
+                    _rangePreview.Anchor(landing);
+                }
             }
             else if (id == AbilityDefinition.FireFlaskId)
             {
@@ -930,6 +954,25 @@ namespace Game.View
             _rangePreview.End();
         }
 
+        /// <summary>Бросок якоря готов — тонкая линия по каждой полосе от руки до конца цепи (HudAnchorThrowReach).</summary>
+        private void DrawAnchorThrowAimLine(Simulation sim)
+        {
+            if (sim.AnchorThrowActive) return;
+            int slot = -1;
+            for (int s = 0; s < Simulation.AbilitySlots && slot < 0; s++)
+            {
+                AbilityBuild build = sim.GetAbility(s);
+                if (build != null && build.DefinitionId == AbilityDefinition.AnchorThrowId && Availability(sim, s, build).Ready) slot = s;
+            }
+            if (slot < 0) return;
+            if (_rangeCamera == null || !_rangeCamera.isActiveAndEnabled) _rangeCamera = Camera.main;
+            if (_rangeCamera == null) return;
+            RangePreview.Begin(_rangeCamera, true);
+            HudAnchorThrowReach.DrawAimLine(_rangePreview, sim, slot,
+                _driver.GetRenderPosition(Simulation.PlayerId) + Vector3.up * .06f, _driver.CursorWorld);
+            _rangePreview.End();
+        }
+
         /// <summary>Радиус метки приземления (отскок, абордаж), метры.</summary>
         private const float ReachMark = .45f;
         /// <summary>Сила кольца предела, когда рядом есть точка приземления.</summary>
@@ -946,9 +989,11 @@ namespace Game.View
             if (id == AbilityDefinition.BlazeId) return "Поджигает саблю и повышает уклонение. Можно применять на бегу.";
             if (id == AbilityDefinition.ChainStepId) return "Удары с переходами между врагами. Выбери первую цель.";
             if (id == AbilityDefinition.DashId) return "Рывок в выбранном направлении.";
-            if (id == AbilityDefinition.AnchorLeapId) return "Рывок к врагу на цепи с ударом кулака.";
+            if (id == AbilityDefinition.AnchorLeapId) return "Рывок к врагу на цепи с ударом кулака. Выбери цель.";
+            if (id == AbilityDefinition.AnchorThrowId) return "Якорь на цепи летит на 7 м и бьёт всех на линии. " +
+                "На возврате тянет лёгких к тебе и оглушает; тяжёлых и элиту — только оглушает.";
             if (id == AbilityDefinition.AnchorSlamId) return "Удар якорем перед собой с коротким оглушением.";
-            if (id == AbilityDefinition.WreckId) return "Три удара якорем: нажимай повторно. Последний оглушает.";
+            if (id == AbilityDefinition.WreckId) return "Три удара якорем на цепи: мах, обратный мах и удар оземь — вал бежит по полосе.";
             if (id == AbilityDefinition.FireFlaskId) return "Взрыв в выбранной точке оставляет горящую область.";
             return "Описание этой способности пока недоступно.";
         }
@@ -1015,6 +1060,7 @@ namespace Game.View
             if (definitionId == AbilityDefinition.DashId) return "РЫВОК";
             if (definitionId == AbilityDefinition.WhirlwindId) return "ВИХРЬ";
             if (definitionId == AbilityDefinition.AnchorLeapId) return "АБОРДАЖ";
+            if (definitionId == AbilityDefinition.AnchorThrowId) return "БРОСОК ЯКОРЯ";
             if (definitionId == AbilityDefinition.AnchorSlamId) return "УДАР ЯКОРЕМ";
             if (definitionId == AbilityDefinition.ChainStepId) return "ШКВАЛ";
             if (definitionId == AbilityDefinition.BlazeId) return "ЛАДНО СМАЗАЛ";

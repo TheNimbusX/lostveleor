@@ -103,13 +103,15 @@ namespace Game.Tests
 
         /// <summary>
         /// Поляна босса (владелец, 02.10.2026): ВСЕГДА ОДНА И ТА ЖЕ. Скруглённый
-        /// пол 20 × 15 м без воды, рек и тайников; вход снизу экрана (−Y), выход
-        /// сверху; комната перед выходом (там встаёт босс) — центр поляны. Ни сид,
+        /// пол 20,98 × 15,74 м (ревью 02.10, вечер: +10% площади, было 20 × 15) без
+        /// воды, рек и тайников; вход снизу экрана (−Y), выход сверху; комната перед
+        /// выходом — центр поляны (Home Хозяина Чащи); сам он встаёт в дальнем
+        /// верхнем правом углу (BossSpawnOffset) — круг корпуса + 1 м там на полу. Ни сид,
         /// ни размер арены (ArenaFlow даёт боссу 4), ни число модулей её не меняют —
         /// и лесная локация (уровень 9, сплошной лес) собирает ту же карту.
         /// </summary>
         [Test]
-        public void BossGlade_IsFixed_TwentyByFifteen_Dry_EntranceAtTheBottom()
+        public void BossGlade_IsFixed_TwentyOneBySixteen_Dry_EntranceAtTheBottom()
         {
             var modules = PrototypeContent.Modules();
             var reference = new LayoutMap(modules, 64);
@@ -137,13 +139,37 @@ namespace Game.Tests
             Assert.That(reference.ObstacleCount, Is.Zero);
             Assert.That(reference.PlacedCount, Is.EqualTo(GladeLayout.RequiredModules(20, true)));
 
-            // Пол: 20 м поперёк через центр; 15 м вдоль — в стороне от троп входа и выхода.
-            Assert.That(FloorSpan(reference, glade.Center, 1, 0), Is.EqualTo(20).Within(0.1));
+            // Пол: 25,66 м поперёк через центр; 19,24 м вдоль — в стороне от троп входа и выхода.
+            double width = 2 * GladeLayout.BossFloorHalfWidth.ToDouble(), depth = 2 * GladeLayout.BossFloorHalfDepth.ToDouble();
+            Assert.That(width, Is.EqualTo(25.66).Within(0.01));
+            Assert.That(depth, Is.EqualTo(19.24).Within(0.01));
+            Assert.That(width * depth / (20.0 * 15.0), Is.EqualTo(1.1 * 1.15 * 1.3).Within(0.006), "площадь +10% (02.10), ещё +15% (04.10), ещё +30% (07.10)");
+            // Контур — клетки 0,5 м: край пола (12,83 м) может лечь между клетками (было 10,49 — у клетки).
+            Assert.That(FloorSpan(reference, glade.Center, 1, 0), Is.EqualTo(width).Within(0.5));
+            // Скруглённый пол (x/a)⁴ + (y/b)⁴ ≤ 1: в стороне от оси чуть короче; контур — клетки 0,5 м.
             foreach (int side in new[] { -5, -3, 3, 5 })
                 Assert.That(FloorSpan(reference, glade.Center + new FixVec2(Fix64.FromInt(side), Fix64.Zero), 0, 1),
-                    Is.EqualTo(15).Within(0.6), "вдоль поляны в " + side + " м от оси");
-            Assert.That(glade.Field(glade.Center + new FixVec2(Fix64.Ratio(98, 10), Fix64.Zero)), Is.LessThanOrEqualTo(Fix64.One));
-            Assert.That(glade.Field(glade.Center + new FixVec2(Fix64.Ratio(102, 10), Fix64.Zero)), Is.GreaterThan(Fix64.One));
+                    Is.EqualTo(depth * System.Math.Pow(1 - System.Math.Pow(2.0 * side / width, 4), 0.25)).Within(0.6),
+                    "вдоль поляны в " + side + " м от оси");
+            Assert.That(glade.Field(glade.Center + new FixVec2(Fix64.Ratio(1260, 100), Fix64.Zero)), Is.LessThanOrEqualTo(Fix64.One));
+            Assert.That(glade.Field(glade.Center + new FixVec2(Fix64.Ratio(1310, 100), Fix64.Zero)), Is.GreaterThan(Fix64.One));
+            Assert.That(glade.Field(glade.Center + new FixVec2(Fix64.Zero, Fix64.Ratio(945, 100))), Is.LessThanOrEqualTo(Fix64.One));
+            Assert.That(glade.Field(glade.Center + new FixVec2(Fix64.Zero, Fix64.Ratio(985, 100))), Is.GreaterThan(Fix64.One));
+
+            // Угол Хозяина Чащи: дальний верхний правый, напротив входа; круг корпуса (3,3 м) и ещё
+            // 1 м вокруг — на полу по форме поляны; по клеткам контура (0,5 м) — не меньше 0,75 м.
+            var spawn = glade.Center + GladeLayout.BossSpawnOffset;
+            Assert.That(spawn.X > glade.Center.X && spawn.Y > glade.Center.Y, Is.True, "верхний правый");
+            var clear = Simulation.ThicketHullReach + Fix64.One;
+            var cells = Simulation.ThicketHullReach + Fix64.Ratio(3, 4);
+            for (int ring = 0; ring <= 8; ring++)
+                for (int k = 0; k < 72; k++)
+                {
+                    var around = FixVec2.FromAngle(Fix64.TwoPi * Fix64.Ratio(k, 72)) * Fix64.Ratio(ring, 8);
+                    Assert.That(glade.Field(spawn + around * clear), Is.LessThanOrEqualTo(Fix64.One), "корпус + 1 м на полу, кольцо " + ring + ", " + k);
+                    Assert.That(reference.ContainsWorld(spawn + around * cells), Is.True, "клетка пола, кольцо " + ring + ", " + k);
+                }
+            Assert.That(reference.CanTravel(glade.Center, spawn, EnemyArchetypes.ThicketMasterBodyRadius), Is.True);
 
             // Вход снизу экрана, выход сверху: оба на оси поляны, тропа ведёт вверх.
             var entry = reference.EntryPoint;
@@ -158,8 +184,8 @@ namespace Game.Tests
 
             // Вся поляна открыта: из центра телом Хозяина Чащи по прямой до любой точки пола.
             var body = EnemyArchetypes.ThicketMasterBodyRadius;
-            for (int y = -7; y <= 7; y++)
-                for (int x = -10; x <= 10; x++)
+            for (int y = -8; y <= 8; y++)
+                for (int x = -11; x <= 11; x++)
                 {
                     var point = glade.Center + new FixVec2(Fix64.FromInt(x), Fix64.FromInt(y));
                     if (!reference.IsWalkable(point, body)) continue;

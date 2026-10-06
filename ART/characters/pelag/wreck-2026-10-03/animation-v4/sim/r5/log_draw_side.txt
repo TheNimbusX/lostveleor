@@ -1,0 +1,33 @@
+00:03.031  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\clips\Pelag_Wreck4_Work.blend"
+C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\scripts\v4_render.py:37: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  mat = bpy.data.materials.new("Pelag_v6"); mat.use_nodes = True
+C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\scripts\v4_render.py:60: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  hm = bpy.data.materials.new("anchor"); hm.use_nodes = True
+00:07.000  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_000.png'
+00:07.187  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_001.png'
+00:07.359  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_002.png'
+00:07.562  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_003.png'
+00:07.765  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_004.png'
+00:07.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_005.png'
+00:08.140  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_006.png'
+00:08.296  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_007.png'
+00:08.468  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_008.png'
+00:08.656  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_009.png'
+00:08.812  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_010.png'
+00:08.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_011.png'
+00:09.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_012.png'
+00:09.250  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_013.png'
+00:09.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_014.png'
+00:09.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_015.png'
+00:09.828  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_016.png'
+00:10.031  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_017.png'
+00:10.218  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_018.png'
+00:10.375  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_019.png'
+00:10.578  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_020.png'
+00:10.781  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_021.png'
+00:11.000  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_draw_side\draw_side_022.png'
+FBX version: 7400
+render done side 23
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

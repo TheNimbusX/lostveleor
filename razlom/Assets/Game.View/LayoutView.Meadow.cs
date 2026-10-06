@@ -519,8 +519,15 @@ namespace Game.View
         /// <summary>Показанная арена: тела и эффекты берут у неё высоту пола (TickDriver.GetRenderPosition).</summary>
         public static LayoutView Shown { get; private set; }
 
+        /// <summary>То, что лежит на полу и по чему ходят (холм смерти Хозяина Чащи): (x, z, пол) → высота; null — только пол.</summary>
+        public static System.Func<float, float, float, float> FloorRaise;
+
         /// <summary>Высота пола показанной арены в точке; 0 — нет арены или уступов.</summary>
-        public static float ShownFloorLevel(float x, float z) => Shown != null ? Shown.SurfaceLevel(x, z) : 0f;
+        public static float ShownFloorLevel(float x, float z)
+        {
+            float floor = Shown != null ? Shown.SurfaceLevel(x, z) : 0f;
+            return FloorRaise != null ? FloorRaise(x, z, floor) : floor;
+        }
 
         // Сетка земли (BuildBackgroundReliefSteps): начало x, z и шаг x, z. Пустая — земли ещё нет.
         private Vector4 _reliefGrid;

@@ -81,6 +81,23 @@ namespace Game.Sim
                 .Set(AbilityStatType.DurationTicks, 27)
                 .Set(AbilityStatType.CooldownTicks, 108);
 
+        public static int AnchorThrowId => StableId.Of("ability.anchor_throw");
+
+        /// <summary>
+        /// «Бросок якоря» (03.10, artifacts/anchor-throw/plan/SPEC.md): якорь на цепи летит к курсору
+        /// на 7 м, бьёт всех на полосе 0,9 м, на возврате подтягивает лёгких (Simulation.AnchorThrow).
+        /// Свой ключ: прежний «Бросок якоря» — это Абордаж (ability.anchor_leap).
+        /// </summary>
+        public static AbilityDefinition AnchorThrow()
+            => new AbilityDefinition("ability.anchor_throw")
+                .Set(AbilityStatType.Damage, 60)
+                .Set(AbilityStatType.LavidiumCost, 20)
+                .Set(AbilityStatType.Radius, 7)
+                .Set(AbilityStatType.Width, Fix64.Ratio(9, 10))
+                .Set(AbilityStatType.StunTicks, 15)
+                .Set(AbilityStatType.WindupTicks, 2)
+                .Set(AbilityStatType.CooldownTicks, 108);         // 3,6 с
+
         public static int ChainStepId => StableId.Of("ability.chain_step");
 
         /// <summary>
@@ -246,12 +263,16 @@ namespace Game.Sim
                 .Set(AbilityStatType.CooldownTicks, 180);          // 6 с
 
         /// <summary>
-        /// «КРУШЕНИЕ»: комбо из трёх ударов якорем, каждый по своему нажатию.
+        /// «КРУШЕНИЕ»: серия из трёх ударов якорем на цепи, каждый по своему нажатию
+        /// (переделка 03.10, artifacts/wreck/plan/SPEC.md; Удар якорем влит в неё):
+        /// мах, обратный мах — сектор Radius ±ArcCosine, по Damage; третий — удар
+        /// оземь в 2,2 м перед героем: круг 1,2 м — 2 × Damage и оглушение StunTicks,
+        /// дальше вал по полосе до LaneLength шириной Width — Damage и сбивание.
         ///
         /// ТРИ НАЖАТИЯ, А НЕ ОДНО. Автоматическая серия сыграла бы сама и
         /// отобрала бы у игрока единственное решение внутри способности —
-        /// продолжать или разорвать и уйти. Ориентир диздока: около половины
-        /// секунды на этап, то есть 15 тиков.
+        /// продолжать или разорвать и уйти. Замахи этапов (7 / 6 / 9 тиков) —
+        /// константы Simulation.Wreck; WindupTicks — замах первого маха (подсказка HUD).
         ///
         /// Окно следующего нажатия шире этапа: комбо, которое рвётся от
         /// опоздания на кадр, читается как поломка ввода, а не как требование
@@ -262,15 +283,16 @@ namespace Game.Sim
         /// </summary>
         public static AbilityDefinition Wreck()
             => new AbilityDefinition("ability.wreck")
-                .Set(AbilityStatType.Damage, 70)                   // первый и второй удар
+                .Set(AbilityStatType.Damage, 70)                   // махи и вал; удар оземь ×2
                 // Цена за всё комбо: списывается на первом нажатии, продолжения бесплатны.
                 .Set(AbilityStatType.LavidiumCost, 25)
-                .Set(AbilityStatType.Radius, Fix64.Ratio(28, 10))
+                .Set(AbilityStatType.Radius, Fix64.Ratio(28, 10))  // сектор махов
                 .Set(AbilityStatType.ArcCosine, Fix64.Ratio(3, 10))
-                .Set(AbilityStatType.WindupTicks, 6)
-                .Set(AbilityStatType.DurationTicks, 15)            // этап, 0.5 с
+                .Set(AbilityStatType.WindupTicks, 7)               // первый мах; остальные — Simulation.Wreck
                 .Set(AbilityStatType.ComboWindowTicks, 24)
-                .Set(AbilityStatType.StunTicks, 9)                 // только завершающий удар
+                .Set(AbilityStatType.StunTicks, 15)                // круг удара оземь, 0,5 с
+                .Set(AbilityStatType.Width, Fix64.Ratio(3, 2))     // полоса вала
+                .Set(AbilityStatType.LaneLength, 6)                // вал до 6 м от героя
                 .Set(AbilityStatType.CooldownTicks, 96);
     }
 }

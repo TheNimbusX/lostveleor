@@ -215,7 +215,9 @@ namespace Game.Tests
                         if (!run.Map.CanTravel(e.Position[Simulation.PlayerId], e.Position[i], heroRadius)) stuck.Append(" (blocked)");
                     }
                     TestContext.WriteLine(stuck.ToString());
-                    input = new InputFrame { AttackTarget = -1, AbilityTarget = -1, Command = (byte)RunCommand.Leave };
+                    // «Уйти» в бою не действует (06.10): застрявший забег обрывается смертью героя.
+                    e.Alive[Simulation.PlayerId] = false;
+                    input = new InputFrame { AttackTarget = -1, AbilityTarget = -1 };
                 }
                 session.Step(input);
                 if (arena != null && before == RunPhase.SeekingExit && run.Phase == RunPhase.ChoosingReward)

@@ -10,8 +10,8 @@ namespace Game.View
         {
             var s=_view.Alchemist;
             if(!show){s.Group.gameObject.SetActive(false);return;}
-            _alchemyCamp=_driver.Session.Camp;_alchemyCamp.MeetAlchemist();WireAlchemist();
-            _alchemyRecipes=false;_confirmOrder=-1;Present(s.Group,s.Potions[0].Buy);s.Message.text=CampServiceText.Get("dialogue.alchemist.open");if(s.Status!=null)s.Status.text="";RefreshAlchemy();
+            _alchemyCamp=_driver.Session.Camp;WireAlchemist();
+            Present(s.Group,s.Potions[0].Buy);s.Message.text=CampServiceText.Get("dialogue.alchemist.open");if(s.Status!=null)s.Status.text="";RefreshAlchemy();
             // Открытие лавки: стекло на столе и тихое бурление котла.
             GameSound.Sequence(("alch_clink",0f,.5f),("alch_bubble",.12f,.3f));
         }
@@ -30,33 +30,12 @@ namespace Game.View
                 card.Select.onClick.AddListener(()=>{if(!_alchemyCamp.SelectPotion(kind))return;RefreshAlchemy();
                     // Пробка, переливание и под ними тихое бурление — магия только вторым слоем.
                     GameSound.Sequence(("alch_cork",0f,.65f),("alch_pour",.14f,.55f),("alch_bubble",.45f,.3f));});
-                // Закрытые зелья открывает заказ Лео: он живёт прямо в карточке своего зелья.
-                if(i>=4 && i<6 && card.OrderMain!=null)
-                {
-                    var order=i==4?AlchemistOrder.Resin:AlchemistOrder.Surge;
-                    card.OrderMain.onClick.AddListener(()=>AdvanceOrder(order));
-                    card.OrderAlt.onClick.AddListener(()=>ExchangeOrder(order));
-                }
             }
-            // Вкладка «Рецепты»: заказ Лео на каждое новое зелье.
-            for(int i=0;i<s.Recipes.Length;i++)
-            {
-                var order=i==0?AlchemistOrder.Resin:AlchemistOrder.Surge;var kind=i==0?PotionKind.LivingResin:PotionKind.LavidiumSurge;var card=s.Recipes[i];
-                card.Name.text=PotionText(kind.ToString());card.Effect.text=PotionText(kind+".effect");
-                card.OrderMain.onClick.AddListener(()=>AdvanceOrder(order));
-                card.OrderAlt.onClick.AddListener(()=>ExchangeOrder(order));
-            }
-            if(s.Tabs!=null && s.Tabs.Length==2 && s.Tabs[0]!=null)
-            {
-                s.Tabs[0].GetComponentInChildren<TMPro.TMP_Text>().text=CampServiceText.Get("alchemy.tab.potions");
-                s.Tabs[1].GetComponentInChildren<TMPro.TMP_Text>().text=CampServiceText.Get("alchemy.tab.recipes");
-                s.Tabs[0].onClick.AddListener(()=>{_alchemyRecipes=false;_confirmOrder=-1;RefreshAlchemy();});
-                s.Tabs[1].onClick.AddListener(()=>{_alchemyRecipes=true;_confirmOrder=-1;RefreshAlchemy();});
-            }
+            // Заказы Лео убраны 06.10: рецепты открывает только ранг лагеря. Кнопки заказа и вкладка
+            // «Рецепты» остаются в префабе, но не подключаются и всегда скрыты (RefreshAlchemy).
             s.Back.onClick.AddListener(Close);
             var backLabel=s.Back.GetComponentInChildren<TMPro.TMP_Text>();if(backLabel!=null)backLabel.text=CampServiceText.Get("back");
         }
-        bool _alchemyRecipes;
 
         /// <summary>Удача — реплика Лео в облачке; отказ — системная строка под карточками, облачко не меняется.</summary>
         void AlchemyResult(bool success,string dialogueKey,string failure)
@@ -69,18 +48,22 @@ namespace Game.View
             bool success=_alchemyCamp.BuyPotion(kind);RefreshAlchemy();AlchemyResult(success,"dialogue.alchemist.buy",PotionText("failed"));
             if(success)GameSound.Sequence(("alch_bottle",0f,.8f),("alch_clink",.2f,.5f),("coins",.35f,.4f));
         }
+        /// <summary>
+        /// Ранг лагеря, с которого Лео варит это зелье (решение 05.10): малые — сразу, большие — 1,
+        /// Живица и Порыв — 2, Смешанный отвар и Ясный настой — 3. Только подпись закрытой карточки,
+        /// само правило — Camp.PotionUnlocked.
+        /// </summary>
+        static int PotionRank(PotionKind kind)=>kind==PotionKind.LargeHealth || kind==PotionKind.LargeLavidium?1
+            :kind==PotionKind.LivingResin || kind==PotionKind.LavidiumSurge?2:kind==PotionKind.Mixed || kind==PotionKind.Clear?3:0;
         void RefreshAlchemy()
         {
             var s=_view.Alchemist;
             s.Gold.text=_alchemyCamp.Money(CurrencyType.Gold).ToString();
             if(s.PotionsPage!=null)
             {
-                if(!_alchemyCamp.UsesLegacyAlchemyOrders)_alchemyRecipes=false;
-                s.PotionsPage.SetActive(!_alchemyRecipes);s.RecipesPage.SetActive(_alchemyRecipes);
-                CampShopView.SetTab(s.Tabs[0],!_alchemyRecipes);CampShopView.SetTab(s.Tabs[1],_alchemyRecipes);
-                foreach(var tab in s.Tabs)if(tab!=null)tab.gameObject.SetActive(_alchemyCamp.UsesLegacyAlchemyOrders);
+                s.PotionsPage.SetActive(true);if(s.RecipesPage!=null)s.RecipesPage.SetActive(false);
+                if(s.Tabs!=null)foreach(var tab in s.Tabs)if(tab!=null)tab.gameObject.SetActive(false);
             }
-            for(int i=0;i<s.Recipes.Length;i++)RefreshRecipe(s.Recipes[i],i==0?AlchemistOrder.Resin:AlchemistOrder.Surge);
             for(int i=0;i<s.Potions.Length && i<Camp.PotionKindCount;i++)
             {
                 var kind=(PotionKind)i;var card=s.Potions[i];
@@ -93,59 +76,9 @@ namespace Game.View
                 card.SelectLabel.text=PotionText(selected?"selected":"select");card.Select.interactable=unlocked && !selected;
                 card.Chosen.SetActive(unlocked && selected);
                 card.Stock.gameObject.SetActive(unlocked);
-                if(_alchemyCamp.UsesLegacyAlchemyOrders && !unlocked && i>=4 && i<6 && card.OrderMain!=null)RefreshOrder(card,i==4?AlchemistOrder.Resin:AlchemistOrder.Surge);
-                else
-                {
-                    if(card.OrderMain!=null)card.OrderMain.gameObject.SetActive(false);if(card.OrderAlt!=null)card.OrderAlt.gameObject.SetActive(false);
-                    if(!unlocked)card.LockedLabel.text="Лео · улучшение "+(i<4?1:i<6?2:3);
-                }
+                if(card.OrderMain!=null)card.OrderMain.gameObject.SetActive(false);if(card.OrderAlt!=null)card.OrderAlt.gameObject.SetActive(false);
+                if(!unlocked)card.LockedLabel.text="Лео · ранг "+Mathf.Max(1,PotionRank(kind));
             }
-        }
-        static string OrderText(string key)=>CampServiceText.Get("order."+key);
-        void RefreshRecipe(CampPotionCard card,AlchemistOrder order)
-        {
-            var state=_alchemyCamp.AlchemyStatus(order);bool open=state==AlchemistOrderStatus.Unlocked;
-            card.Chosen.SetActive(open);
-            card.Stock.text=OrderText(open?"state.done":state==AlchemistOrderStatus.Ready?"state.ready":state==AlchemistOrderStatus.Accepted?"state.inwork":"state.available");
-            if(open){card.LockedLabel.text=OrderText("done");card.OrderMain.gameObject.SetActive(false);card.OrderAlt.gameObject.SetActive(false);return;}
-            RefreshOrder(card,order);
-        }
-        int _confirmOrder=-1;
-        void RefreshOrder(CampPotionCard card,AlchemistOrder order)
-        {
-            var state=_alchemyCamp.AlchemyStatus(order);bool resin=order==AlchemistOrder.Resin;
-            string goal=OrderText(resin?"resin.goal":"surge.goal");
-            card.LockedLabel.text=state==AlchemistOrderStatus.Ready?OrderText("ready"):state==AlchemistOrderStatus.Accepted?OrderText("inwork")+" "+goal:goal;
-            card.OrderMain.gameObject.SetActive(state==AlchemistOrderStatus.Available || state==AlchemistOrderStatus.Ready);
-            card.OrderMainLabel.text=OrderText(state==AlchemistOrderStatus.Ready?"turnin":"accept");
-            card.OrderAlt.gameObject.SetActive(state==AlchemistOrderStatus.Accepted);
-            bool confirm=_confirmOrder==(int)order;
-            card.OrderAltLabel.text=confirm?OrderText("confirm"):OrderText(resin?"resin.exchange":"surge.exchange");
-            card.OrderAlt.interactable=resin?ExchangeableRare()>=0:_alchemyCamp.Money(CurrencyType.Shards)>=Camp.SurgeUnlockShards;
-            if(state==AlchemistOrderStatus.Accepted && resin && ExchangeableRare()<0)card.LockedLabel.text+="\n<size=85%>"+OrderText("norare")+"</size>";
-        }
-        int ExchangeableRare()
-        {
-            var bag=_alchemyCamp.Bag;
-            for(int i=0;i<bag.Capacity;i++)if(!bag.IsEmpty(i) && !bag.IsKept(i) && bag.At(i).Rarity==ItemRarity.Magic)return i;
-            return -1;
-        }
-        void AdvanceOrder(AlchemistOrder order)
-        {
-            bool ready=_alchemyCamp.AlchemyStatus(order)==AlchemistOrderStatus.Ready;
-            var result=ready?_alchemyCamp.TurnInAlchemyOrder(order):_alchemyCamp.AcceptAlchemyOrder(order);
-            _confirmOrder=-1;RefreshAlchemy();
-            AlchemyResult(result==AlchemistActionResult.Success,ready?"dialogue.alchemist.order.complete":"dialogue.alchemist.order.accept",OrderText("failed"));
-            if(result==AlchemistActionResult.Success)GameSound.Sequence(("alch_clink",0f,.5f),("alch_bubble",.15f,.35f));
-        }
-        void ExchangeOrder(AlchemistOrder order)
-        {
-            // Обмен забирает вещь или осколки: сначала подтверждение тем же нажатием.
-            if(_confirmOrder!=(int)order){_confirmOrder=(int)order;RefreshAlchemy();return;}
-            var result=order==AlchemistOrder.Resin?_alchemyCamp.ExchangeRareForResin(ExchangeableRare()):_alchemyCamp.ExchangeShardsForSurge();
-            _confirmOrder=-1;RefreshAlchemy();
-            AlchemyResult(result==AlchemistActionResult.Success,"dialogue.alchemist.recipe.unlock",OrderText("failed"));
-            if(result==AlchemistActionResult.Success)GameSound.Sequence(("alch_cork",0f,.65f),("alch_pour",.14f,.55f),("alch_bubble",.45f,.3f));
         }
         internal bool ProbeAlchemyTransactions()
         {

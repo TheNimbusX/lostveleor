@@ -32,8 +32,9 @@ namespace Game.Sim
     ///   герой идёт медленнее — доля шага стат сборки StartMoveMultiplier (узел
     ///   формы кладёт 45%, талант Бури поднимет). Концентрация: обычная цена каста
     ///   плюс расход в секунду; кончилась — Буря встала.
-    /// * ВОДОВОРОТ — в каст тянет врагов в 4 м к герою (волок ForcedMotion, к
-    ///   контакту доезжают), в контакт — обычный удар Вихря и оглушение 0,5 с всем
+    /// * ВОДОВОРОТ — в каст тянет врагов в 4 м к герою (волок ForcedMotion, 0,53 с
+    ///   с разгоном — MaelstromPullTicks; контакт Вихря в этой форме позже, тиком
+    ///   после тяги), в контакт — обычный удар Вихря и оглушение 0,5 с всем
     ///   в 4 м. Тяжёлых (правило веса ForcedMotion), элиты и босса не тянет — им
     ///   только оглушение; Хозяин Чащи не оглушается (StunByTalent).
     /// * ПЕННЫЕ ВОЛНЫ — обычный оборот и два кольца от места контакта: первое
@@ -135,6 +136,111 @@ namespace Game.Sim
         /// <summary>Зазор между телами, где тяга останавливает врага (как у «Затягивает»).</summary>
         private static readonly Fix64 MaelstromStopGap = Fix64.Ratio(1, 2);
 
+        /// <summary>
+        /// Тяга Водоворота, тиков до темпа: 16 (0,53 с). Владелец 02.10: прежние 9
+        /// тиков (0,3 с) не читались — «давай да» на 0,5–0,6 с. Идёт с разгоном
+        /// (MaelstromPullProgress): враг трогается с первого тика, плавно разгоняется и влетает к герою.
+        /// </summary>
+        public const int MaelstromPullTicks = 16;
+
+        /// <summary>
+        /// Контакт Водоворота от каста, тиков до темпа: тиком после конца тяги — то же
+        /// правило, что у прежней тяги (контакт Вихря на 10-м, тяга 9). Удар, оглушение
+        /// и часы действия героя (ContactTick) сдвигаются вместе с ним.
+        /// </summary>
+        public const int MaelstromContactDelayTicks = MaelstromPullTicks + 1;
+
+        /// <summary>Задержка контакта Вихря в этом слоте, тиков до темпа: у Водоворота — после тяги, иначе прежняя.</summary>
+        private int WhirlwindContactDelayFor(int slot)
+            => FormIs(slot, PelagForm.WhirlwindMaelstrom) ? MaelstromContactDelayTicks : WhirlwindContactDelayTicks;
+
+        /// <summary>
+        /// Вес разгона в кривой тяги (MaelstromPullProgress): b в (x + b·x²)/(1 + b).
+        /// 2 — первый шаг 3/8 ровного, к середине тяги треть пути, последний — 1,6 ровного.
+        /// Проверка 03.10: при 4 первый шаг (2,5 см из 160) начала тяги не читался.
+        /// </summary>
+        private const int MaelstromPullBend = 2;
+
+        /// <summary>Отставание от плана тяги, которое ещё не считается упором, м: округление Fix64 и толчки тел.</summary>
+        private static readonly Fix64 MaelstromPullLagSlack = Fix64.Ratio(1, 1000);
+
+        /// <summary>
+        /// Догон отставшего тела: шаг тяги не больше плана тика × 1,35 (MaelstromPullStep).
+        /// Проверка 03.10: без догона тела, которых держали соседи, вставали в ~2 м от
+        /// героя вместо ~1,45 — Водоворот не собирал толпу; полный догон прежнего волока
+        /// давал последний шаг до 1,6 плана — рывок в конце.
+        /// </summary>
+        public static readonly Fix64 MaelstromPullCatchUp = Fix64.Ratio(135, 100);
+
+        /// <summary>
+        /// Доля пути тяги, пройденная за step тиков из ticks: (x + 2x²)/3, x = step/ticks.
+        /// Проверка 02.10: чистый разгон x² вёз 10 см из 160 за первые шесть тиков —
+        /// «стоит 0,2 с, потом влетает». Теперь тело трогается с первого тика (3,75 см
+        /// из 160), разгоняется ровно (шаг растёт на 0,83 см за тик), к середине — треть
+        /// пути, к концу тяги влетает. 0 до начала, 1 к концу.
+        /// </summary>
+        public static Fix64 MaelstromPullProgress(int step, int ticks)
+        {
+            if (step <= 0 || ticks <= 0) return Fix64.Zero;
+            if (step >= ticks) return Fix64.One;
+            return Fix64.Ratio(step * (ticks + MaelstromPullBend * step), (MaelstromPullBend + 1) * ticks * ticks);
+        }
+
+        // Тяга с разгоном: тик каста и длина; тела, которые она ведёт, и длина
+        // пути каждого по плану. Живёт [каст, каст + тяга] — вне окна ничего не
+        // значит и в хеш не идёт.
+        private int _maelstromPullTick = -1;
+        private int _maelstromPullTicks;
+        private bool[] _maelstromPulled;
+        private Fix64[] _maelstromPullLength;
+
+        /// <summary>
+        /// ResolveForcedMotion: шаг тела, которое тянет Водоворот, на каждом тике тяги,
+        /// последнем тоже (проверка 03.10: на последнем тике остаток уходил целиком мимо
+        /// догона — тело, отпущенное на нём, прыгало к герою на 52 см). По плану — доля (P(e+1) − P(e)) / (1 − P(e)) остатка пути по
+        /// MaelstromPullProgress. Отставшее тело (держали соседи, корни, камни)
+        /// догоняет план постепенно: шаг — план тика плюс отставание, но не больше
+        /// MaelstromPullCatchUp × план тика. Отставание сверх того, что так можно
+        /// догнать до конца тяги (CatchUp × остаток плана), снимается — точка конца
+        /// подходит к телу, и последний шаг тоже не больше CatchUp × план, без рывка
+        /// (прежний волок делил весь остаток: тело стояло 8 тиков, а потом дёргалось).
+        /// Упёртое тело стоит, пока упёрто, и, освободившись, догоняет тем же правилом.
+        /// Обогнавшее план (толкнули соседи) идёт долей остатка — медленнее плана.
+        /// False — тело тянет не эта тяга (её сменил другой волок или толчок).
+        /// </summary>
+        private bool MaelstromPullStep(int id, int left, FixVec2 delta, out FixVec2 step)
+        {
+            step = delta;
+            if (_maelstromPullTick < 0 || _maelstromPulled == null || !_maelstromPulled[id]) return false;
+            int elapsed = Tick - _maelstromPullTick - 1;
+            int ticks = _maelstromPullTicks;
+            if (elapsed < 0 || left != ticks - elapsed
+                || Entities.ForcedKind[id] != (byte)ForcedMotionKind.Dragged) return false;
+            Fix64 length = _maelstromPullLength[id];
+            Fix64 planned = length * (Fix64.One - MaelstromPullProgress(elapsed, ticks));
+            Fix64 plannedStep = length * (MaelstromPullProgress(elapsed + 1, ticks) - MaelstromPullProgress(elapsed, ticks));
+            Fix64 room = planned * MaelstromPullCatchUp;
+            Fix64 remaining = delta.Length;
+            if (remaining > room + MaelstromPullLagSlack)
+            {
+                delta = delta * (room / remaining);
+                Entities.ForcedTarget[id] = Entities.Position[id] + delta;
+                remaining = delta.Length;
+            }
+            int whole = (MaelstromPullBend + 1) * ticks * ticks;
+            Fix64 share = Fix64.Ratio(ticks + MaelstromPullBend * (2 * elapsed + 1),
+                whole - elapsed * ticks - MaelstromPullBend * elapsed * elapsed);
+            step = delta * share;
+            // Отстало от плана — догоняет: план тика плюс отставание, не больше CatchUp × план тика.
+            Fix64 back = remaining - planned + plannedStep;
+            if (back > remaining * share + MaelstromPullLagSlack)
+            {
+                Fix64 most = plannedStep * MaelstromPullCatchUp;
+                step = delta * ((back < most ? back : most) / remaining);
+            }
+            return true;
+        }
+
         /// <summary>Каст Вихря (зовётся из ResolveAbilityCasts после WhirlwindUpgradesAtCast).</summary>
         private void WhirlwindFormAtCast(int slot)
         {
@@ -149,15 +255,20 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Тяга к герою; доезжают к контакту. Тяжёлых не тянет правило веса
-        /// ForcedMotion.Begin (Dragged), элиты и босс стоят сами.
+        /// Тяга к герою с разгоном (MaelstromPullStep); доезжают к контакту. Тяжёлых
+        /// не тянет правило веса ForcedMotion.Begin (Dragged), элиты и босс стоят сами.
         /// </summary>
         private void MaelstromPull()
         {
             FixVec2 center = Entities.Position[PlayerId];
             Fix64 near = Entities.BodyRadius[PlayerId] + MaelstromStopGap;
-            int contact = AbilityExecutionTicks(WhirlwindContactDelayTicks);
+            int contact = AbilityExecutionTicks(MaelstromContactDelayTicks);
             int ticks = contact > ForcedMotion.MinTicks ? contact - 1 : ForcedMotion.MinTicks;
+            if (_maelstromPulled == null) _maelstromPulled = new bool[Entities.Capacity];
+            if (_maelstromPullLength == null) _maelstromPullLength = new Fix64[Entities.Capacity];
+            System.Array.Clear(_maelstromPulled, 0, _maelstromPulled.Length);
+            _maelstromPullTick = Tick;
+            _maelstromPullTicks = ticks;
             int pulled = 0;
             for (int i = 1; i < Entities.Count; i++)
             {
@@ -169,7 +280,11 @@ namespace Game.Sim
                 if (distance <= stop || distance.Raw == 0) continue;
                 if (IsElite(i) || Entities.Kind[i] == EnemyKind.ForestThicketMaster) continue;
                 if (ForcedMotion.Begin(Entities, i, center + delta / distance * stop, ticks, ForcedMotionKind.Dragged))
+                {
+                    _maelstromPulled[i] = true;
+                    _maelstromPullLength[i] = distance - stop;
                     pulled++;
+                }
             }
             _events.Add(new SimEvent(SimEventType.WhirlwindMaelstromPull, PlayerId, -1, pulled, false, center,
                 actionVariant: ticks));
@@ -316,11 +431,26 @@ namespace Game.Sim
                 FoamRingPushTicks, ForcedMotionKind.Shoved);
         }
 
-        private void ResetWhirlwindForms() => _foamSlot = -1;
+        private void ResetWhirlwindForms()
+        {
+            _foamSlot = -1;
+            _maelstromPullTick = -1;
+        }
 
-        /// <summary>Только живые кольца: без них хеш прежний бит в бит.</summary>
+        /// <summary>Только живые кольца и тяга Водоворота в своём окне: без них хеш прежний бит в бит.</summary>
         private void HashWhirlwindForms(ref ulong hash)
         {
+            if (_maelstromPullTick >= 0 && Tick <= _maelstromPullTick + _maelstromPullTicks)
+            {
+                Hashing.Mix(ref hash, 0x4D41454C);   // "MAEL"
+                Hashing.Mix(ref hash, _maelstromPullTick);
+                Hashing.Mix(ref hash, _maelstromPullTicks);
+                for (int i = 0; i < Entities.Count; i++)
+                {
+                    Hashing.Mix(ref hash, _maelstromPulled[i] ? 1 : 0);
+                    if (_maelstromPulled[i]) Hashing.Mix(ref hash, _maelstromPullLength[i]);
+                }
+            }
             if (_foamSlot < 0) return;
             Hashing.Mix(ref hash, 0x464F414D);   // "FOAM"
             Hashing.Mix(ref hash, _foamSlot);

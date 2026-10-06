@@ -7,8 +7,9 @@ namespace Game.Tests
     /// <summary>
     /// Карточки после арены и судьба добычи. Решения владельца от 15 сентября:
     /// способность 35 / вещь 30 / талант 35, при полной панели 15 / 30 / 55;
-    /// новая способность при полной панели — замена или разбор на 15 + 5 × глубина;
-    /// смерть отнимает всё найденное.
+    /// новая способность при полной панели — замена или разбор. Экономика 06.10:
+    /// разбор — плоские 10, смерть отнимает вещи и половину золота, уйти можно
+    /// только с экранов награды, замены и пути.
     /// </summary>
     public class RunCardTests
     {
@@ -131,14 +132,16 @@ namespace Game.Tests
         }
 
         [Test]
-        public void SalvagingGivesFifteenPlusFivePerDepth()
+        public void SalvagingGivesFlatTen()
         {
             int card = FindCard(RewardKind.Ability, FillSabre, out RiftRun run);
             run.Step(Choice(card));
 
             run.Step(Command(RunCommand.SalvageAbility));
 
-            Assert.AreEqual(15 + 5 * 1, run.Gold);
+            // Экономика 06.10: плоские 10 вместо 15 + 5 × глубина (прототип — без золота зачистки).
+            Assert.AreEqual(RunEconomy.SalvageGold, run.SalvageGold);
+            Assert.AreEqual(10, run.Gold);
             Assert.IsFalse(run.Loadout.Owns(run.PendingAbility));
             Assert.AreEqual(-1, run.PendingAbility);
             Assert.AreEqual(2, run.Depth);
@@ -175,22 +178,51 @@ namespace Game.Tests
             Assert.AreEqual(GameMode.Summary, session.Mode);
         }
 
+        /// <summary>
+        /// Экономика 06.10: при смерти доезжает половина найденного золота (вниз от суммы),
+        /// при уходе — всё. Ожидание — от Run.Gold перед концом: на экране могла уже лежать
+        /// плата за элиту.
+        /// </summary>
         [Test]
-        public void DeathLeavesRunGoldAndLeavingKeepsIt()
+        public void DeathKeepsHalfRunGoldAndLeavingKeepsAll()
         {
             var died = SessionAtReward(1, RewardKind.Ability, true, out int card);
+            int walletBefore = died.Camp.Money(CurrencyType.Gold);
             died.Step(Choice(card));
             died.Step(Command(RunCommand.SalvageAbility));
+            int found = died.Run.Gold;
+            Assert.AreEqual(RunEconomy.SalvageGold, found);
             Die(died);
-            Assert.AreEqual(0, died.Camp.Money(CurrencyType.Gold));
-            Assert.AreEqual(20, died.LastRun.GoldLeftBehind);
+            Assert.AreEqual(walletBefore + found / 2, died.Camp.Money(CurrencyType.Gold));
+            Assert.AreEqual(found / 2, died.LastRun.GoldKept);
+            Assert.AreEqual(found - found / 2, died.LastRun.GoldLeftBehind);
 
             var left = SessionAtReward(1, RewardKind.Ability, true, out card);
+            walletBefore = left.Camp.Money(CurrencyType.Gold);
             left.Step(Choice(card));
             left.Step(Command(RunCommand.SalvageAbility));
+            // После разбора начался следующий Разлом: в бою «Уйти» не действует.
             left.Step(Command(RunCommand.Leave));
-            Assert.AreEqual(20, left.Camp.Money(CurrencyType.Gold));
-            Assert.AreEqual(20, left.LastRun.GoldKept);
+            Assert.AreEqual(GameMode.Rift, left.Mode);
+            Assert.AreEqual(RunOutcome.None, left.Run.Outcome);
+            ReachRewardInSession(left);
+            found = left.Run.Gold;
+            left.Step(Command(RunCommand.Leave));
+            Assert.AreEqual(GameMode.Summary, left.Mode);
+            Assert.AreEqual(walletBefore + found, left.Camp.Money(CurrencyType.Gold));
+            Assert.AreEqual(found, left.LastRun.GoldKept);
+            Assert.AreEqual(0, left.LastRun.GoldLeftBehind);
+        }
+
+        private static void ReachRewardInSession(GameSession session)
+        {
+            RiftRun run = session.Run;
+            for (int i = 0; i < run.Sim.Entities.Count; i++)
+                if (run.Sim.Entities.Side[i] != Faction.Wole) run.Sim.Entities.Alive[i] = false;
+            session.Step(InputFrame.Empty);
+            run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.ExitPoint(0);
+            session.Step(InputFrame.Empty);
+            Assert.AreEqual(RunPhase.ChoosingReward, run.Phase);
         }
     }
 }

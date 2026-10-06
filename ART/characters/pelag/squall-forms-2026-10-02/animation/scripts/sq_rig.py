@@ -116,6 +116,10 @@ class Rig:
         r, t = blade(d)
         B["blade"] = (t - r).normalized()
         B["twist_fore"] = {s: self.forearm_twist(s) for s in SIDES}
+        # левая кисть от левого плеча в осях груди (f — куда смотрит грудь): так её задают ключи
+        rel = self.P("LeftHand") - self.P("LeftArm"); f, l, cy = -rel.y, rel.x, math.radians(B["cyaw"])
+        B["hand_relL"] = (f * math.cos(cy) + l * math.sin(cy), -f * math.sin(cy) + l * math.cos(cy), rel.z)
+        B["chest_rot"] = bone_world_rot(d, d.pose.bones[M("Spine2")]).to_quaternion()
         return B
 
     def snapshot(self):

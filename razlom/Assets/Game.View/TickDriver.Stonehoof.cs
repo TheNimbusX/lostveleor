@@ -106,6 +106,10 @@ namespace Game.View
                     break;
                 // Обход рывка (02.10, только съёмка): TickDriver.DashCapture.cs.
                 case "dash": CaptureDashTour(tick); break;
+                // Стенд Шквала (02.10, только съёмка): TickDriver.SquallCapture.cs.
+                case "squall": CaptureSquallTour(tick); break;
+                // Стенд Абордажа v2 (02.10, только съёмка): TickDriver.AbordageCapture.cs.
+                case "abordage": CaptureAbordageTour(tick); break;
                 // tank и wall: герой стоит, удары доходят как есть.
             }
         }

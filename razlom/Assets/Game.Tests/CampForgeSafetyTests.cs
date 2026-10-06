@@ -9,42 +9,36 @@ namespace Game.Tests
     {
         static Camp Ready(ItemDatabase db = null, int materials = 5)
         {
-            var camp = new Camp(db ?? PrototypeContent.Items()); camp.DeveloperSetLevel(10);
-            for (int rank = 0; rank < 3; rank++) camp.TryUpgradeResident(CampResident.Smith);
-            camp.Earn(CurrencyType.Gold, 5000); camp.Earn(CurrencyType.Shards, 1000);
-            camp.EarnForgeMaterial(ForgeMaterial.Steel, materials); camp.EarnForgeMaterial(ForgeMaterial.Core, materials); return camp;
+            // Sandbox стоит на ранге 3: переплавка, добавление и сердце открыты без боссов.
+            var camp = new Camp(db ?? PrototypeContent.Items());
+            camp.Earn(CurrencyType.Gold, 5000); camp.Earn(CurrencyType.Shards, 1000); camp.Earn(CurrencyType.Steel, materials); return camp;
         }
-        [Test] public void WornLegacyPipsRemainThroughReplacementLastRefineSaveAndStatReapply()
+        /// <summary>
+        /// Без денег ни одно действие Эни не меняет ничего: ни вещь, ни кошелёк, ни сердца,
+        /// ни сессию. Цена проверяется до первого изменения (Quote), списание не частичное.
+        /// </summary>
+        [Test] public void FailedPaymentChangesNothingForEveryAction()
         {
-            var camp = Ready(); var original = new ItemInstance(StableId.Of("base.rusty_sword"), 31, ItemRarity.Rare, 123, 0x21);
-            var sheet = new StatSheet(); for (int i = 0; i < (int)StatType.Count; i++) sheet.SetBase((StatType)i, Fix64.FromInt(10));
-            camp.Worn.Bind(sheet); camp.Worn.Equip(original, out _);
-            var before = new GeneratedItem(); var replacement = new GeneratedItem(); ItemGenerator.Generate(original, camp.Items, before);
-            var preview = camp.PreviewForge(ForgeTarget.Worn(EquipSlot.Weapon), ForgeOperation.Replace, 0);
-            Assert.AreEqual(SmithResult.Success, camp.CommitForge(preview));
-            var next = camp.Worn.Worn(EquipSlot.Weapon); Assert.AreEqual(31, next.ItemLevel); Assert.AreEqual(25, next.OriginalLevel);
-            Assert.AreEqual(2, next.ReforgeCount); Assert.AreEqual(0x21, next.ForgeRecipe); Assert.AreEqual(1, next.Crafting.Count);
-            ItemGenerator.Generate(next, camp.Items, replacement);
-            for (int i = 1; i < before.AffixCount; i++) { Assert.AreEqual(before.GetAffix(i).AffixId, replacement.GetAffix(i).AffixId); Assert.AreEqual(before.GetAffix(i).Value, replacement.GetAffix(i).Value); }
-            preview = camp.PreviewForge(ForgeTarget.Worn(EquipSlot.Weapon), ForgeOperation.Refine, 0);
-            Assert.AreEqual(90, preview.Gold); Assert.AreEqual(9, preview.Shards); Assert.AreEqual(SmithResult.Success, camp.CommitForge(preview));
-            next = camp.Worn.Worn(EquipSlot.Weapon); Assert.AreEqual(34, next.ItemLevel); Assert.AreEqual(25, next.OriginalLevel); Assert.AreEqual(3, next.ReforgeCount);
-            var bytes = CampSaveCodec.Encode(camp); Assert.AreEqual(SmithResult.StalePreview, camp.CommitForge(preview)); CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(camp));
-            Assert.AreEqual(SmithResult.Exhausted, camp.Reforge(EquipSlot.Weapon, 0));
-            var restored = CampSaveCodec.Decode(bytes, camp.Items); Assert.True(next.SameRecipe(restored.Worn.Worn(EquipSlot.Weapon)));
-            var afterSheet = new StatSheet(); for (int i = 0; i < (int)StatType.Count; i++) afterSheet.SetBase((StatType)i, Fix64.FromInt(10)); restored.Worn.Bind(afterSheet);
-            for (int i = 0; i < (int)StatType.Count; i++) Assert.AreEqual(sheet.Get((StatType)i), afterSheet.Get((StatType)i));
-        }
-        [Test] public void InvalidOrForeignPreviewsAreNotAffordableAndChangingFundsCannotPartiallyCommit()
-        {
-            var camp = Ready(); camp.Bag.Put(0, new ItemInstance(StableId.Of("base.rusty_sword"), 25, ItemRarity.Rare, 123), true);
-            Assert.False(camp.CanAffordForge(camp.PreviewForge(ForgeTarget.Bag(47), ForgeOperation.Replace)));
-            var preview = camp.PreviewForge(ForgeTarget.Bag(0), ForgeOperation.Replace); var foreign = Ready();
-            Assert.False(foreign.CanAffordForge(preview)); Assert.AreEqual(SmithResult.StalePreview, foreign.CommitForge(preview));
-            camp.Spend(CurrencyType.Gold, 5000); var bytes = CampSaveCodec.Encode(camp);
-            Assert.AreEqual(SmithResult.InsufficientFunds, camp.CommitForge(preview)); CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(camp));
-            camp.Earn(CurrencyType.Gold, 60); Assert.AreEqual(SmithResult.Success, camp.CommitForge(preview)); Assert.True(camp.Bag.IsKept(0));
-            bytes = CampSaveCodec.Encode(camp); Assert.AreEqual(SmithResult.StalePreview, camp.CommitForge(preview)); CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(camp));
+            var camp = new Camp(PrototypeContent.Items()); camp.Earn(CurrencyType.Steel, 5); camp.DeveloperAddHeart(0);
+            camp.Bag.Put(0, new ItemInstance(StableId.Of("base.rusty_sword"), 25, ItemRarity.Rare, 123), true);
+            // Обычная вещь с двумя трещинами: попытки кончились — остаётся рискованный удар.
+            var crack = new CraftStep(ForgeOperation.Crack, CraftingRecipe.BaseSlot, 0, Fix64.Zero);
+            camp.Bag.Put(1, new ItemInstance(StableId.Of("base.rusty_sword"), 5, ItemRarity.Normal, 11, crafting: new CraftingRecipe(new[] { crack, crack })), false);
+            var bytes = CampSaveCodec.Encode(camp); var bag = ForgeTarget.Bag(0); int property = SmithTests.Temperable(camp, bag);
+            Assert.False(camp.Quote(EniAction.Temper, bag, property).Affordable);
+            Assert.AreEqual(SmithResult.InsufficientFunds, camp.Strike(bag, property, out _));
+            Assert.AreEqual(SmithResult.InsufficientFunds, camp.BeginRemelt(bag, 0));
+            Assert.AreEqual(SmithResult.InsufficientFunds, camp.BeginAdd(bag, out bool cracked)); Assert.False(cracked);
+            Assert.AreEqual(SmithResult.InsufficientFunds, camp.InlayHeart(bag, RunBossKeys.ThicketMaster, HeartFacet.ThicketRoots));
+            Assert.True(camp.Quote(EniAction.Temper, ForgeTarget.Bag(1), -1).Risky);
+            Assert.AreEqual(SmithResult.InsufficientFunds, camp.RiskyStrike(ForgeTarget.Bag(1), out bool masterpiece, out int shards));
+            Assert.False(masterpiece); Assert.AreEqual(0, shards);
+            Assert.False(camp.Session.IsOpen); Assert.AreEqual(1, camp.HeartCount(RunBossKeys.ThicketMaster));
+            CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(camp));
+            camp.Earn(CurrencyType.Gold, 79); camp.Earn(CurrencyType.Shards, 5);
+            Assert.AreEqual(SmithResult.InsufficientFunds, camp.Strike(bag, property, out _), "79 из 80 — тоже нет");
+            camp.Earn(CurrencyType.Gold, 1); Assert.AreEqual(SmithResult.Success, camp.Strike(bag, property, out _));
+            Assert.AreEqual(0, camp.Money(CurrencyType.Gold)); Assert.AreEqual(0, camp.Money(CurrencyType.Shards)); Assert.True(camp.Bag.IsKept(0));
         }
         static ItemDatabase Restrictions()
         {
@@ -65,61 +59,75 @@ namespace Game.Tests
             }
             throw new InvalidOperationException("Нет контрольного сида");
         }
-        [Test] public void TransferChecksDonorLevelCategoryAndRemainingTargetGroups()
-        {
-            var db = Restrictions(); var camp = Ready(db); var high = Single(db, 100, 20, 1003);
-            camp.Bag.Put(1, high, false); camp.Bag.Put(0, Single(db, 100, 1, 1001), false);
-            Assert.AreEqual(SmithResult.Incompatible, camp.PreviewForge(ForgeTarget.Bag(0), ForgeOperation.Transfer, 0, donorSlot: 1).Status);
-            camp.Bag.Put(0, Single(db, 200, 20, 1002), false);
-            Assert.AreEqual(SmithResult.Incompatible, camp.PreviewForge(ForgeTarget.Bag(0), ForgeOperation.Transfer, 0, donorSlot: 1).Status);
-            var rare = new ItemInstance(100, 20, ItemRarity.Rare, 321); var generated = new GeneratedItem(); ItemGenerator.Generate(rare, db, generated);
-            int damage = -1; for (int i = 0; i < generated.AffixCount; i++) if (generated.GetAffix(i).AffixId == 1001) damage = i;
-            camp.Bag.Put(0, rare, false); camp.Bag.Put(1, Single(db, 100, 20, 1002), false);
-            Assert.AreEqual(SmithResult.Incompatible, camp.PreviewForge(ForgeTarget.Bag(0), ForgeOperation.Transfer, damage, donorSlot: 1).Status);
-            camp.EquipFromBag(1); Assert.AreEqual(SmithResult.InvalidDonor, camp.PreviewForge(ForgeTarget.Bag(0), ForgeOperation.Transfer, damage, donorSlot: 1).Status);
-            camp.Bag.Put(1, new ItemInstance(300, 20, ItemRarity.Rare, 22), false);
-            Assert.AreEqual(SmithResult.InvalidDonor, camp.PreviewForge(ForgeTarget.Bag(0), ForgeOperation.Transfer, damage, donorSlot: 1).Status);
-        }
-        [Test] public void ChangedOrMovedDonorMakesTransferTokenStaleWithoutSpending()
-        {
-            var db = Restrictions(); var camp = Ready(db); camp.Bag.Put(0, Single(db, 100, 20, 1001), false); camp.Bag.Put(1, Single(db, 100, 20, 1002), false);
-            var preview = camp.PreviewForge(ForgeTarget.Bag(0), ForgeOperation.Transfer, donorSlot: 1); Assert.AreEqual(SmithResult.Success, preview.Status);
-            camp.Bag.Swap(1, 3); var bytes = CampSaveCodec.Encode(camp);
-            Assert.AreEqual(SmithResult.StalePreview, camp.CommitForge(preview)); CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(camp));
-            camp.Bag.Swap(1, 3); camp.Bag.SetKeep(1, true); bytes = CampSaveCodec.Encode(camp);
-            Assert.AreEqual(SmithResult.Protected, camp.CommitForge(preview)); CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(camp));
-        }
-        [Test] public void MissingMaterialsKeepTargetDonorAndWalletUntouched()
+        /// <summary>Без стали переплавка, без сердца вплавление не проходят и ничего не трогают.</summary>
+        [Test] public void MissingSteelOrHeartKeepsItemAndWallet()
         {
             var db = Restrictions(); var camp = Ready(db, materials: 0);
-            camp.Bag.Put(0, Single(db, 100, 20, 1001), false); camp.Bag.Put(1, Single(db, 100, 20, 1002), false);
-            var bytes = CampSaveCodec.Encode(camp);
-            var replace = camp.PreviewForge(ForgeTarget.Bag(0), ForgeOperation.Replace);
-            Assert.AreEqual(SmithResult.Success, replace.Status); Assert.False(camp.CanAffordForge(replace));
-            Assert.AreEqual(SmithResult.InsufficientFunds, camp.CommitForge(replace)); CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(camp));
-            var transfer = camp.PreviewForge(ForgeTarget.Bag(0), ForgeOperation.Transfer, donorSlot: 1);
-            Assert.AreEqual(SmithResult.Success, transfer.Status); Assert.False(camp.CanAffordForge(transfer));
-            Assert.AreEqual(SmithResult.InsufficientFunds, camp.CommitForge(transfer)); CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(camp));
+            camp.Bag.Put(0, Single(db, 100, 20, 1001), false);
+            var bytes = CampSaveCodec.Encode(camp); var bag = ForgeTarget.Bag(0);
+            var remelt = camp.Quote(EniAction.Remelt, bag, 0);
+            Assert.AreEqual(SmithResult.Success, remelt.Status); Assert.AreEqual(1, remelt.Steel); Assert.False(remelt.Affordable);
+            Assert.AreEqual(SmithResult.InsufficientFunds, camp.BeginRemelt(bag, 0)); CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(camp));
+            var heart = camp.Quote(EniAction.Heart, bag, 0, RunBossKeys.ThicketMaster, HeartFacet.ThicketBloom);
+            Assert.AreEqual(1, heart.Hearts); Assert.False(heart.Affordable);
+            Assert.AreEqual(SmithResult.NoHeart, camp.InlayHeart(bag, RunBossKeys.ThicketMaster, HeartFacet.ThicketBloom));
+            Assert.AreEqual(SmithResult.NoHeart, camp.Quote(EniAction.Heart, bag, 0, RunBossKeys.Second).Status, "у второго босса граней пока нет");
+            CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(camp));
+            camp.Earn(CurrencyType.Steel, 1); Assert.AreEqual(SmithResult.Success, camp.BeginRemelt(bag, 0));
+            Assert.AreEqual(0, camp.Money(CurrencyType.Steel)); Assert.AreEqual(4880, camp.Money(CurrencyType.Gold));
         }
-        [TestCase(0)] [TestCase(1)] [TestCase(2)] [TestCase(3)] [TestCase(4)] [TestCase(5)] [TestCase(6)]
-        public void CraftedDecoderRejectsInvalidHistoryRatherThanLoadingCorruptedStats(int fault)
+        static Camp WithStep(ItemDatabase db, ItemInstance source, CraftStep step)
         {
-            var db = Restrictions(); var camp = Ready(db); var source = Single(db, 100, 20, 1001);
-            CraftStep step = new CraftStep(ForgeOperation.Replace, 0, 1002, Fix64.Half);
-            if (fault == 0) step = new CraftStep((ForgeOperation)255, 0, 1002, Fix64.Half);
-            if (fault == 1) step = new CraftStep(ForgeOperation.Replace, 6, 1002, Fix64.Half);
-            if (fault == 2) step = new CraftStep(ForgeOperation.Replace, 0, 1002, Fix64.FromInt(2));
-            if (fault == 3) { source = Single(db, 200, 20, 1002); step = new CraftStep(ForgeOperation.Replace, 0, 1003, Fix64.Half); }
-            if (fault == 4) { source = Single(db, 100, 1, 1001); step = new CraftStep(ForgeOperation.Replace, 0, 1003, Fix64.Half); }
-            if (fault == 5) step = new CraftStep(ForgeOperation.Add, 1, 1001, Fix64.Half);
-            if (fault == 6) source = new ItemInstance(source.BaseId, source.ItemLevel, ItemRarity.Unique, source.Seed);
+            var camp = Ready(db);
             camp.Bag.Put(0, new ItemInstance(source.BaseId, source.ItemLevel, source.Rarity, source.Seed, crafting: new CraftingRecipe(new[] { step })), false);
+            return camp;
+        }
+        /// <summary>Шаг, который не мог записать ни один кузнец, — это порча файла, а не смена правил.</summary>
+        [TestCase(0)] [TestCase(1)] [TestCase(2)] [TestCase(3)] [TestCase(4)]
+        public void CraftedDecoderRejectsStructurallyBrokenSteps(int fault)
+        {
+            var db = Restrictions(); var source = Single(db, 100, 20, 1001);
+            // Перенос (3) удалён 06.10 и не принимается никогда.
+            CraftStep step = new CraftStep((ForgeOperation)3, 0, 1002, Fix64.Half);
+            if (fault == 1) step = new CraftStep(ForgeOperation.Remelt, 6, 1002, Fix64.Half);
+            if (fault == 2) step = new CraftStep(ForgeOperation.Remelt, 0, 1002, -Fix64.Half);
+            if (fault == 3) step = new CraftStep(ForgeOperation.Remelt, 0, 1002, Fix64.FromInt(2));
+            if (fault == 4) step = new CraftStep((ForgeOperation)7, CraftingRecipe.BaseSlot, 0, Fix64.Zero);
+            var camp = WithStep(db, source, step);
             Assert.Throws<InvalidDataException>(() => CampSaveCodec.Decode(CampSaveCodec.Encode(camp), db));
+        }
+        /// <summary>
+        /// Шаг устроен правильно, но нынешние правила или справочник его не разворачивают:
+        /// рецепт срезается целиком, вещь остаётся исходным роллом, профиль грузится.
+        /// </summary>
+        [TestCase(0)] [TestCase(1)] [TestCase(2)] [TestCase(3)] [TestCase(4)] [TestCase(5)] [TestCase(6)] [TestCase(7)] [TestCase(8)]
+        public void CraftedDecoderCutsRecipesTheRulesNoLongerAllow(int fault)
+        {
+            var db = Restrictions(); var source = Single(db, 100, 20, 1001);
+            CraftStep step = new CraftStep(ForgeOperation.Remelt, CraftingRecipe.BaseSlot, 1002, Fix64.Half);
+            if (fault == 1) step = new CraftStep(ForgeOperation.Remelt, 0, 9999, Fix64.Half);
+            if (fault == 2) { source = Single(db, 200, 20, 1002); step = new CraftStep(ForgeOperation.Remelt, 0, 1003, Fix64.Half); }
+            if (fault == 3) { source = Single(db, 100, 1, 1001); step = new CraftStep(ForgeOperation.Remelt, 0, 1003, Fix64.Half); }
+            if (fault == 4) step = new CraftStep(ForgeOperation.Add, 1, 1001, Fix64.Half);
+            if (fault == 5) { source = new ItemInstance(source.BaseId, source.ItemLevel, ItemRarity.Unique, source.Seed); step = new CraftStep(ForgeOperation.Remelt, 0, 1002, Fix64.Half); }
+            // Базовое свойство закаляет только обычная вещь.
+            if (fault == 6) step = new CraftStep(ForgeOperation.Temper, CraftingRecipe.BaseSlot, 0, Fix64.Half);
+            // Сердце снятого босса.
+            if (fault == 7) step = new CraftStep(ForgeOperation.Heart, (byte)HeartFacet.ThicketRoots, StableId.Of("boss.removed"), Fix64.Zero);
+            // Закалка без роста.
+            if (fault == 8) step = new CraftStep(ForgeOperation.Temper, 0, 0, Fix64.Zero);
+            var camp = WithStep(db, source, step);
+            var loaded = CampSaveCodec.Decode(CampSaveCodec.Encode(camp), db).Bag.At(0);
+            Assert.IsNull(loaded.Crafting); Assert.AreEqual(source.BaseId, loaded.BaseId);
+            Assert.AreEqual(source.Seed, loaded.Seed); Assert.AreEqual(source.Rarity, loaded.Rarity);
         }
         [Test] public void CraftedDecoderRejectsExcessiveLengthBeforeAllocatingHistory()
         {
             var camp = Ready(); var bytes = CampSaveCodec.Encode(camp);
-            int recipeCount = 16 + (int)CurrencyType.Count * 4 + 17;
+            // Заголовок файла, секция ядра (флаги, акт, сумка, уровень, опыт, кошелёк из пяти
+            // валют), заголовок секции сумки — и поля первой вещи до числа шагов рецепта.
+            int bag = 8 + 6 + (1 + 1 + 4 + 4 + 4 + 1 + 4 * (int)CurrencyType.Count) + 6;
+            int recipeCount = bag + 4 + 2 + 1 + 8;
             bytes[recipeCount] = 1; bytes[recipeCount + 1] = 4;
             uint hash = 2166136261; for (int i = 0; i < bytes.Length - 4; i++) { hash ^= bytes[i]; hash = unchecked(hash * 16777619); }
             Array.Copy(BitConverter.GetBytes(hash), 0, bytes, bytes.Length - 4, 4);

@@ -154,6 +154,33 @@ public sealed class ThicketMasterPhaseRulesTests
         Assert.AreEqual(1f, ThicketMasterPhaseRules.EyeAppear(306f, 300));
     }
 
+    // ------------------------------------------------------------ лунная кромка (ревью 02.10 вечер, находка 9)
+
+    [Test]
+    public void Rim_SameInEveryPhase_FadesWithDeath()
+    {
+        float alive = ThicketMasterPhaseRules.Rim(1234.5f, ThicketMasterPhaseRules.None);
+        Assert.AreEqual(ThicketMasterPhaseRules.RimStrength, alive);
+        Assert.Greater(alive, 0f, "кромка есть и во сне, и в Ф1");
+        const int death = 2000;
+        Assert.AreEqual(alive, ThicketMasterPhaseRules.Rim(death, death));
+        float half = ThicketMasterPhaseRules.Rim(death + ThicketMasterPhaseRules.DeathFadeTicks / 2f, death);
+        Assert.That(half, Is.EqualTo(alive * .5f).Within(1e-4));
+        Assert.AreEqual(0f, ThicketMasterPhaseRules.Rim(death + ThicketMasterPhaseRules.DeathFadeTicks, death));
+        Assert.AreEqual(0f, ThicketMasterPhaseRules.Rim(death + 600, death));
+    }
+
+    [Test]
+    public void Rim_IsACoolSubtleEdge_NotAWhitening()
+    {
+        // Голубой: синий канал сильнее красного и зелёного — луна, а не белая подсветка.
+        Assert.Greater(ThicketMasterPhaseRules.RimBlue, ThicketMasterPhaseRules.RimGreen);
+        Assert.Greater(ThicketMasterPhaseRules.RimGreen, ThicketMasterPhaseRules.RimRed);
+        // На самом краю в полной тени — не ярче ~0,15 линейной яркости (sRGB ≈ 0,42): край, а не свет на теле.
+        float peak = ThicketMasterPhaseRules.RimPeakLuminance(ThicketMasterPhaseRules.RimStrength);
+        Assert.That(peak, Is.InRange(.08f, .15f));
+    }
+
     // ------------------------------------------------------------ живая симуляция
 
     [Test]

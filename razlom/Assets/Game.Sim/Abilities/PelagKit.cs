@@ -26,7 +26,7 @@ namespace Game.Sim
         /// </summary>
         public const int DashSlot = Simulation.AbilitySlots - 1;
 
-        public const int PoolSize = 10;
+        public const int PoolSize = 11;
 
         /// <summary>Вихрь — с него начинается каждый забег.</summary>
         public const int StarterPoolIndex = 0;
@@ -70,9 +70,23 @@ namespace Game.Sim
                 case 7: return AbilityDefinition.FireFlask();
                 case 8: return AbilityDefinition.Skewer();
                 case 9: return AbilityDefinition.Backblast();
+                // Бросок якоря (03.10): новый навык, свой ключ ability.anchor_throw.
+                case 10: return AbilityDefinition.AnchorThrow();
                 default: return null;
             }
         }
+
+        /// <summary>
+        /// Способность пула ещё предлагается наградой (броски RiftRun: карточки и дропы).
+        /// УБРАННЫЙ индекс номер держит навсегда (не переиспользуется, PoolDefinition
+        /// его ещё отдаёт — старый код живёт до приёмки замены), но в броски не идёт:
+        /// * 4 — Удар якорем: влит в Крушение (владелец 02.10, спека 03.10 «Крушение» 2.5);
+        /// * 8 — «На вылет»: убран из набора владельцем 03.10, идея уйдёт в талант рывка.
+        /// * 10 — Бросок якоря: пока только через F8, в награды — по слову владельца (тогда
+        ///   пересъёмка FormPinTests с записью причины).
+        /// Остальные индексы проход талантов уберёт этим же признаком.
+        /// </summary>
+        public static bool InRewardPool(int index) => (uint)index < PoolSize && index != 4 && index != 8 && index != 10;
 
         /// <summary>Индекс способности в пуле по её идентификатору. −1 — вне пула.</summary>
         public static int PoolIndexOf(int definitionId)
@@ -96,6 +110,7 @@ namespace Game.Sim
                 case 7: return AbilityDefinition.FireFlaskId;
                 case 8: return AbilityDefinition.SkewerId;
                 case 9: return AbilityDefinition.BackblastId;
+                case 10: return AbilityDefinition.AnchorThrowId;
                 default: return 0;
             }
         }

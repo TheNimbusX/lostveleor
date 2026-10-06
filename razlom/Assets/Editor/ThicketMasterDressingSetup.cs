@@ -17,15 +17,18 @@ using Object = UnityEngine.Object;
 /// • VFX_ThicketPhase_Berries (bush) — 24 набухающие ягоды: сначала поверх нарисованных красных
 ///   (UV вершины красный в T_ThicketMaster_Color), добор — «самая дальняя точка» по кусту;
 ///   всплеск рёва 66 — ягоды-капли, листья, зелёная пыльца.
-/// • VFX_ThicketPhase_BushBloom (bush) — 10 цветков Hovl Flower из куста (6 красных, 4 белых);
-///   всплеск рёва 33 — лепестки и листья.
+/// • VFX_ThicketPhase_BushBloom (bush) — 10 цветков Hovl Flower из куста (6 розовых, 4 белых;
+///   красных нет с 02.10 вечер — Ф3 розово-белая); всплеск рёва 33 — лепестки и листья.
 /// • VFX_ThicketPhase_CrownBloom_L/R (crown_L/R) — по 22 цветка на верхней стороне кроны
 ///   (60 % белые, 40 % розовые) и 6 плодов; петля падающих лепестков (Ф3); всплеск рёва 33.
+///   Цветы (ревью 02.10 вечер: «цветы — тёмно-синие пятна»): меш — копия Flower.fbx с нормалями
+///   к раскрытию чашки (у пака они смотрят вниз, цветок освещался снизу), материал светится мягко
+///   своим цветом по текстуре лепестков — розовое и белое читаются и в синей тени арены.
 /// • VFX_ThicketPhase_EyeGlow (head) — ореол на каждом глазу (UV-семена глаз из
 ///   production/dressing/work/eyes.json); всплеск рёва 50 — янтарные искры рун и листья.
-/// • VFX_ThicketPhase_Embers (chest) — аура Ф2 (ревью 02.10 «фаза 2 не отличается»): угли
-///   поднимаются со спины и кроны (то, что видит камера 48°); всплеск рёва 66 — листопад
-///   осенних листьев и сноп углей.
+/// • VFX_ThicketPhase_Embers (chest) — аура Ф2 (ревью 02.10 «фаза 2 не отличается»; вечер — «угли,
+///   лавовый, а не лесной»): с кроны и спины падают осенние листья (петля «Leaf Fall», 4/с), углей —
+///   редкие 5/с (было 14); всплеск рёва 66 — листопад осенних листьев и негустой сноп углей.
 /// • VFX_ThicketPhase_BloomAura (chest) — аура Ф3: розовый свет плывёт над кроной; всплеск рёва 33 —
 ///   светящиеся лепестки и розовые искры.
 /// Ягоды крупнее (с камеры игры ≈ 120 пикс. на метр при 1080p — ягода в 13 см была точкой) и тлеют красным (эмиссия ягоды,
@@ -48,7 +51,9 @@ using Object = UnityEngine.Object;
 /// </summary>
 public static class ThicketMasterDressingSetup
 {
-    private const string Revision = "ThicketPhaseV2";
+    // V3 (02.10 вечер, ревью владельца): цветы — меш с нормалями вверх и мягкое свечение, листопад Ф2,
+    // углей меньше, без багрянца в листьях.
+    private const string Revision = "ThicketPhaseV3";
     private const string Root = "Assets/Resources/VFX/ThicketMaster/Phases";
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
@@ -99,6 +104,18 @@ public static class ThicketMasterDressingSetup
 
     /// <summary>Ягоды тлеют красным: эмиссия ягоды = её цвет × это (тело не трогается).</summary>
     private const float BerryEmission = .75f;
+
+    /// <summary>
+    /// Цветы светятся мягко своим цветом по текстуре лепестков (гамма; белый ≈ .22 линейной яркости):
+    /// в синей тени розовый и белый иначе синеют. На солнце лепесток с подсветкой чуть цепляет блум.
+    /// </summary>
+    private const float FlowerGlow = .5f;
+
+    /// <summary>Нормали цветка наклоняются к оси чашки на столько (лепестки ловят свет сверху ровно).</summary>
+    private const float FlowerNormalLift = .6f;
+
+    /// <summary>Петли Ф2: листопад с кроны и редкие угли, в секунду (ярость ×1,4 — вид).</summary>
+    private const float LeafFallRate = 4f, EmberRate = 5f;
 
     private sealed class Kit
     {
@@ -243,7 +260,7 @@ public static class ThicketMasterDressingSetup
             importer.userData = Stamp();
             importer.SaveAndReimport();
         }
-        Debug.Log("[thicket-phase] Одежда фаз собрана: ягоды, цветы куста и кроны, лепестки, глаза, угли Ф2, розовый свет Ф3, всплески рёвов; ревизия " + Revision + ".");
+        Debug.Log("[thicket-phase] Одежда фаз собрана: ягоды, цветы куста и кроны, лепестки, глаза, листопад и угли Ф2, розовый свет Ф3, всплески рёвов; ревизия " + Revision + ".");
     }
 
     // ------------------------------------------------------------ тело в позе привязки
@@ -449,18 +466,19 @@ public static class ThicketMasterDressingSetup
         kit.GlowPetal.renderQueue = 3006; kit.Ember.renderQueue = 3009; kit.BloomLight.renderQueue = 3009;
         foreach (var m in new[] { kit.Petal, kit.Leaf, kit.Glow, kit.Haze, kit.Ember, kit.BloomLight, kit.GlowPetal }) EditorUtility.SetDirty(m);
         kit.Sphere = Icosphere();
-        kit.Flower = LoadMesh(HovlFlower);
+        var packFlower = LoadMesh(HovlFlower);
         kit.LeafMesh = LoadMesh(CfxrLeafMesh);
-        if (kit.Flower != null)
+        if (packFlower != null)
         {
             // Ось чашки Flower.fbx — +Y (основание у нуля, разведка 02.10). Если импорт положил её
             // на ±Z (основание у нуля по Z) — разворот к +Y; ширина цветка — поперёк оси.
-            var b = kit.Flower.bounds;
+            var b = packFlower.bounds;
             bool zUp = Mathf.Abs(b.min.y) > .2f * b.size.y && Mathf.Abs(b.min.z) < .1f * b.size.z;
             bool zDown = Mathf.Abs(b.min.y) > .2f * b.size.y && Mathf.Abs(b.max.z) < .1f * b.size.z;
             kit.FlowerBase = zUp ? Quaternion.FromToRotation(Vector3.forward, Vector3.up)
                 : zDown ? Quaternion.FromToRotation(Vector3.back, Vector3.up) : Quaternion.identity;
             kit.FlowerSpan = Mathf.Max(.01f, zUp || zDown ? Mathf.Max(b.size.x, b.size.y) : Mathf.Max(b.size.x, b.size.z));
+            kit.Flower = UprightFlower(packFlower, zUp ? Vector3.forward : zDown ? Vector3.back : Vector3.up);
             Debug.Log($"[thicket-phase] Flower.fbx: рамка {b.size}, основание {b.min}, ось чашки {(zUp ? "+Z" : zDown ? "−Z" : "+Y")}.");
         }
         AssetDatabase.SaveAssets();
@@ -503,26 +521,94 @@ public static class ThicketMasterDressingSetup
         return material;
     }
 
-    /// <summary>Цветок Hovl: Simple Lit, текстура лепестков Flower2 с отсечкой .35, двусторонний, без бликов.</summary>
+    /// <summary>
+    /// Цветок Hovl: Simple Lit, текстура лепестков Flower2 с отсечкой .35, двусторонний, бликов не видно.
+    /// Блик — как в материалах, восстановленных вручную 02.10 (не откатывать): ключ _SPECULAR_COLOR,
+    /// цвет блика чёрный, _SpecColor.a = гладкость .5. _SpecularHighlights = 1, а не 0: проверка
+    /// материала URP (SimpleLitGUI) при выключенных бликах снимает _SPECULAR_COLOR, при включённых —
+    /// держит его и пишет .a = _Smoothness; чёрный цвет блика = блика нет.
+    /// Свечение (ревью 02.10 вечер): эмиссия = цвет × FlowerGlow по той же текстуре лепестков.
+    /// </summary>
     private static Material FlowerMaterial(string name, Shader shader, Color color)
     {
         var material = PelagWhirlwindVfxSetup.LoadOrCreateMaterial(MaterialFolder + "/" + name + ".mat", shader);
-        material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(HovlFlowerTexture));
+        var petals = AssetDatabase.LoadAssetAtPath<Texture2D>(HovlFlowerTexture);
+        material.SetTexture("_BaseMap", petals);
         material.SetColor("_BaseColor", color);
         material.SetFloat("_Surface", 0f);
         material.SetFloat("_AlphaClip", 1f);
         material.SetFloat("_Cutoff", .35f);
         material.EnableKeyword("_ALPHATEST_ON");
         material.SetFloat("_Cull", 0f);
-        if (material.HasProperty("_SpecColor")) material.SetColor("_SpecColor", Color.black);
-        if (material.HasProperty("_SpecularHighlights")) material.SetFloat("_SpecularHighlights", 0f);
-        material.DisableKeyword("_SPECULAR_COLOR");
-        material.DisableKeyword("_EMISSION");
+        if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", .5f);
+        if (material.HasProperty("_SpecularHighlights")) material.SetFloat("_SpecularHighlights", 1f);
+        if (material.HasProperty("_SpecColor")) material.SetColor("_SpecColor", new Color(0f, 0f, 0f, .5f));
+        material.EnableKeyword("_SPECULAR_COLOR");
+        if (material.HasProperty("_EmissionColor"))
+        {
+            material.SetTexture("_EmissionMap", petals);
+            material.SetColor("_EmissionColor", new Color(color.r * FlowerGlow, color.g * FlowerGlow, color.b * FlowerGlow, 1f));
+            material.EnableKeyword("_EMISSION");
+            // RealtimeEmissive держит _EMISSION при проверке материала URP (как у ягод).
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+        }
         material.renderQueue = (int)RenderQueue.AlphaTest;
         material.SetOverrideTag("RenderType", "TransparentCutout");
         material.enableInstancing = true;
         EditorUtility.SetDirty(material);
         return material;
+    }
+
+    /// <summary>
+    /// Цветок Hovl с нормалями к раскрытию чашки (ревью 02.10 вечер): у Flower.fbx нормали смотрят
+    /// вниз, против оси чашки (средняя по углам −0,38 по оси; замер в Blender — 294 из 396 вниз), и
+    /// цветок, поставленный чашкой наружу из кроны, освещался снизу — тёмно-синие пятна. Копия меша в
+    /// Geometry: нормаль против оси разворачивается, все наклоняются к оси на FlowerNormalLift.
+    /// Остальное (вершины, UV, треугольники) — как в паке; сам пак не трогается.
+    /// </summary>
+    private static Mesh UprightFlower(Mesh source, Vector3 axis)
+    {
+        var mesh = UprightFlowerMesh(source, axis, GeometryFolder + "/ThicketPhaseFlower.asset", "ThicketPhaseFlower", out int flipped);
+        Debug.Log($"[thicket-phase] Цветок: нормалей развёрнуто к чашке {flipped} из {source.vertexCount}.");
+        return mesh;
+    }
+
+    /// <summary>
+    /// Копия цветка Hovl с нормалями к раскрытию чашки (см. <see cref="UprightFlower"/>) в ассет path. Общая с холмом
+    /// смерти (ThicketMasterVfxSetup, V11: цветы холма со светом, как цветы куста Ф3); flipped — сколько нормалей
+    /// развёрнуто к оси.
+    /// </summary>
+    internal static Mesh UprightFlowerMesh(Mesh source, Vector3 axis, string path, string name, out int flipped)
+    {
+        var mesh = PelagWhirlwindVfxSetup.LoadOrCreateMesh(path, name);
+        int count = source.vertexCount;
+        mesh.indexFormat = source.indexFormat;
+        mesh.SetVertices(source.vertices);
+        var uv = new List<Vector4>();
+        for (int channel = 0; channel < 8; channel++)
+        {
+            uv.Clear();
+            source.GetUVs(channel, uv);
+            if (uv.Count == count) mesh.SetUVs(channel, uv);
+        }
+        var colors = source.colors32;
+        if (colors.Length == count) mesh.colors32 = colors;
+        mesh.subMeshCount = source.subMeshCount;
+        for (int s = 0; s < source.subMeshCount; s++) mesh.SetTriangles(source.GetTriangles(s), s);
+        var normals = source.normals;
+        if (normals.Length != count) normals = new Vector3[count];
+        flipped = 0;
+        for (int i = 0; i < count; i++)
+        {
+            var n = normals[i].sqrMagnitude > 1e-8f ? normals[i].normalized : axis;
+            if (Vector3.Dot(n, axis) < 0f) { n = -n; flipped++; }
+            normals[i] = (n + axis * FlowerNormalLift).normalized;
+        }
+        mesh.SetNormals(normals);
+        mesh.RecalculateBounds();
+        mesh.RecalculateTangents();
+        EditorUtility.SetDirty(mesh);
+        return mesh;
     }
 
     private static Material PackCopy(string name, string sourcePath)
@@ -943,7 +1029,10 @@ public static class ThicketMasterDressingSetup
         return places;
     }
 
-    /// <summary>Цветы из куста (Ф3): 10 мест «самой дальней точкой», в стороне от ягод; 6 красных, 4 белых.</summary>
+    /// <summary>
+    /// Цветы из куста (Ф3): 10 мест «самой дальней точкой», в стороне от ягод; 6 розовых, 4 белых
+    /// (материал красных цветов собирается, но не ставится: Ф3 — розово-белая).
+    /// </summary>
     private static void SaveBushBloom(Kit kit, Body body, List<Vector3> berries)
     {
         var bush = BoneOf(body, ThicketMasterPhaseDressing.BoneBush);
@@ -956,7 +1045,7 @@ public static class ThicketMasterDressingSetup
         {
             int i = picked[k];
             float size = Mathf.Lerp(BushFlowerMin, BushFlowerMax, Hash01(k, 21));
-            Flower(root, kit, body, bush, i, "Flower " + k.ToString("00"), (int)(Hash01(k, 22) * 300f), k < 6 ? kit.FlowerRed : kit.FlowerWhite,
+            Flower(root, kit, body, bush, i, "Flower " + k.ToString("00"), (int)(Hash01(k, 22) * 300f), k < 6 ? kit.FlowerPink : kit.FlowerWhite,
                 size, Hash01(k, 23));
             localPoints.Add(Local(body, bush, body.P[i]));
             localDirections.Add(LocalDir(bush, body.N[i]));
@@ -1070,6 +1159,7 @@ public static class ThicketMasterDressingSetup
 
         var glow = PelagWhirlwindVfxSetup.NewParticles(root, ThicketMasterPhaseDressing.GlowName, 4, 1000f, 1000f, 0f, 0f, EyeGlowSize, EyeGlowSize);
         glow.useAutoRandomSeed = false;
+        glow.randomSeed = Seed(ThicketMasterPhaseDressing.EyeGlowName + "/" + ThicketMasterPhaseDressing.GlowName);
         var main = glow.main;
         main.simulationSpace = ParticleSystemSimulationSpace.Local;
         main.scalingMode = ParticleSystemScalingMode.Hierarchy;
@@ -1130,13 +1220,16 @@ public static class ThicketMasterDressingSetup
         return Points(name, positions, directions);
     }
 
-    /// <summary>Осенние листья всплеска: багрянец, рыжий, золото (как листва карты F2) — случайный цвет.</summary>
+    /// <summary>
+    /// Осенние листья (всплеск и листопад): рыжий, янтарь и золото, как листва карты F2 (ревью 02.10
+    /// вечер — багрянца мало, 10 %: он читался обугленным). Случайный цвет.
+    /// </summary>
     private static ParticleSystem.MinMaxGradient AutumnColors()
     {
         var gradient = new Gradient();
         gradient.mode = GradientMode.Fixed;
         gradient.SetKeys(
-            new[] { new GradientColorKey(AutumnRed, .35f), new GradientColorKey(AutumnOrange, .80f), new GradientColorKey(AutumnGold, 1f) },
+            new[] { new GradientColorKey(AutumnRed, .10f), new GradientColorKey(AutumnOrange, .60f), new GradientColorKey(AutumnGold, 1f) },
             new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) });
         return new ParticleSystem.MinMaxGradient(gradient) { mode = ParticleSystemGradientMode.RandomColor };
     }
@@ -1167,30 +1260,54 @@ public static class ThicketMasterDressingSetup
     }
 
     /// <summary>
-    /// Аура Ф2 — угли (ревью 02.10 «фаза 2 не отличается»: руны на груди камера видит мельком,
-    /// а спину и крону — всегда). Петля «Aura»: 14/с (ярость ×1,6 — вид), поднимаются на 2–3 м,
-    /// мир — тянутся следом за идущим боссом. Всплеск рёва 66 — листопад осенних листьев и сноп
-    /// углей вверх (вместе с ягодами куста — смена фазы видна разом).
+    /// Аура Ф2 (ревью 02.10 «фаза 2 не отличается»: руны на груди камера видит мельком, а спину и
+    /// крону — всегда; вечер — «угли, лавовый, а не лесной»): петля «Leaf Fall» — осенние листья
+    /// падают с кроны и спины и ложатся на землю (LeafFallRate/с), петля «Aura» — редкие угли
+    /// (EmberRate/с, было 14), оба ×1,4 в ярости (вид). Мир — тянутся следом за идущим боссом.
+    /// Всплеск рёва 66 — листопад осенних листьев и негустой сноп углей (вместе с ягодами куста —
+    /// смена фазы видна разом).
     /// </summary>
     private static void SaveEmbers(Kit kit, Mesh points)
     {
         var root = new GameObject(ThicketMasterPhaseDressing.EmbersName);
-        var loop = Particles(root, ThicketMasterPhaseDressing.AuraName, 70, 1.2f, 2.0f, .35f, .90f, .09f, .16f, 0f);
+        var loop = Particles(root, ThicketMasterPhaseDressing.AuraName, 30, 1.2f, 2.0f, .35f, .90f, .09f, .16f, 0f);
         FromPoints(loop, points, .35f, false);
         var main = loop.main;
         main.loop = true;
         main.duration = 5f;
-        main.maxParticles = 70;
+        main.maxParticles = 30;
         main.gravityModifier = -.10f;
         main.startColor = new ParticleSystem.MinMaxGradient(Ember, EmberDeep);
         var emission = loop.emission;
         emission.SetBursts(new ParticleSystem.Burst[0]);
-        emission.rateOverTime = 14f;
+        emission.rateOverTime = EmberRate;
         EmberMotion(loop, 1.3f);
         Glowing(loop, kit.Ember);
 
+        // Листопад: лист CFXR планирует с кроны 2,6–3,4 с и ложится на землю (плоскость — корень тела, вид).
+        var fall = Leaves(root, kit, ThicketMasterPhaseDressing.LeafLoopName, 24, points, .05f, .30f, 0f);
+        var fallMain = fall.main;
+        fallMain.loop = true;
+        fallMain.duration = 5f;
+        fallMain.maxParticles = 24;
+        fallMain.startLifetime = new ParticleSystem.MinMaxCurve(2.6f, 3.4f);
+        fallMain.startSize = new ParticleSystem.MinMaxCurve(.16f, .26f);
+        fallMain.gravityModifier = .16f;
+        fallMain.startColor = AutumnColors();
+        var fallEmission = fall.emission;
+        fallEmission.SetBursts(new ParticleSystem.Burst[0]);
+        fallEmission.rateOverTime = LeafFallRate;
+        var fallNoise = fall.noise; fallNoise.enabled = true;
+        fallNoise.strength = .35f; fallNoise.frequency = .5f; fallNoise.scrollSpeed = .25f;
+        fallNoise.quality = ParticleSystemNoiseQuality.Medium;
+        var landing = fall.collision; landing.enabled = true;
+        landing.type = ParticleSystemCollisionType.Planes;
+        landing.mode = ParticleSystemCollisionMode.Collision3D;
+        landing.SetPlane(0, root.transform); // вид ставит плоскость на корень тела (земля)
+        landing.bounce = 0f; landing.dampen = .95f; landing.lifetimeLoss = 0f; landing.radiusScale = .3f;
+
         var bursts = Container(root, ThicketMasterPhaseDressing.BurstsName);
-        var sparks = Particles(bursts, "Burst Embers", 60, .9f, 1.7f, 2.5f, 5.5f, .10f, .18f, 0f);
+        var sparks = Particles(bursts, "Burst Embers", 24, .9f, 1.7f, 2.5f, 5.5f, .10f, .18f, 0f);
         FromPoints(sparks, points, .45f, false);
         var sparkMain = sparks.main;
         sparkMain.gravityModifier = -.18f;

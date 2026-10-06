@@ -1,21 +1,25 @@
-"""Шквал v2: рука одним решением — локоть шарниром (как в стойке), пронация предплечья и изгиб кисти под клинок.
+"""Шквал v2: рука одним решением — локоть шарниром (как в стойке), пронация предплечья и кисть под клинок.
 
-Вместо IK «от прошлой позы» (у рывка) кости руки строятся прямо в мире:
+Кости руки строятся прямо в мире:
   * плечо и предплечье: ось кости вдоль сегмента, ось шарнира локтя = нормаль плоскости плечо–локоть–кисть,
-    привязанная к кости так же, как в стойке серии сабли — крутки «сами собой» нет;
-  * правая кисть: перебор поворота плоскости локтя (s) и пронации предплечья (t, от стойки), остаток —
-    изгиб кисти ≤ WRIST_MAX; соседние кадры тянутся к прошлому решению (сабля не перескакивает).
-  * левая кисть держит угол к предплечью стойки (кисть прямая, как в стойке).
+    привязанная к кости так же, как в стойке серии сабли — крутки «сами собой» нет; пронация tv — от стойки;
+  * кисть (правка 02.10): кисть стойки + отклонение wd вокруг оси ладони (локальная Z кисти: + локтевое,
+    к мизинцу) и сгибание wf вокруг оси «мизинец→указательный» (локальная X). Клинок лежит в плоскости
+    предплечье–указательный: в стойке кисть отведена к большому пальцу на 32° от покоя, клинок к предплечью 105°;
+    локтевое отклонение подводит клинок к линии предплечья (до ~37° при 40° от покоя) — так рука, вытянутая
+    вперёд, держит клинок на цель без крутки предплечья. Пределы от покоя: отклонение −34…+40°, сгибание ±40°.
+  * ключ решается перебором (tv в окне, wd, wf) под направление клинка; кадры между ключами берут tv/wd/wf
+    интерполяцией — кисть и сабля не перескакивают между решениями.
 """
-import math
+import math, os
 from mathutils import Vector, Quaternion, Matrix
 from b_common import blade
 from sq_rig import M
 
-WRIST_MAX = 45.0
-import os
-PRON = (-80, 58) if not os.environ.get("SQ_WIDE") else (-120, 120)   # от стойки (R +12° от покоя): итого −68…+70° от покоя
-SWIVEL_MAX = 45 if not os.environ.get("SQ_WIDE") else 120
+PRON = (-80, 58)        # от стойки (R +12° от покоя): итого −68…+70° от покоя
+STANCE_DEV = -32.4      # отклонение кисти стойки от покоя (к большому пальцу), замер probe_wrist
+WD = (-2.0, 72.0)       # отклонение от стойки: итого −34…+40° от покоя
+WF = (-40.0, 40.0)
 LAST = {}
 
 
@@ -40,7 +44,7 @@ def prepare(rig):
         a = dict(L1=(E - S).length, L2=(H - E).length,
                  yu=Ru.transposed() @ (E - S).normalized(), nu=Ru.transposed() @ n0,
                  yf=Rf.transposed() @ (H - E).normalized(), nf=Rf.transposed() @ n0,
-                 Qh=Rf.transposed() @ Rh, pole0=(E - S) - (E - S).dot((H - S).normalized()) * (H - S).normalized())
+                 Qh=Rf.transposed() @ Rh, ax0=(H - S).normalized(), pole0=(E - S) - (E - S).dot((H - S).normalized()) * (H - S).normalized())
         if s == "Right":
             r, t = blade(rig.dst)
             a["bl"] = Rh.transposed() @ (t - r).normalized()
@@ -67,45 +71,50 @@ def set_world(rig, n, head, R):
     bpy.context.view_layer.update()
 
 
-def solve(rig, s, H, pole, D=None, fixed=None):
-    """H — кисть (мир), pole — куда локоть, D — направление клинка (только правая). Возвращает замер."""
+def wrist(Qh, wd, wf):
+    return Qh @ Matrix.Rotation(math.radians(wd), 3, 'Z') @ Matrix.Rotation(math.radians(wf), 3, 'X')
+
+
+def arm_frame(rig, s, H, pole):
     a = rig.ARM[s]
     S = rig.P(s + "Arm")
-    best = None
-    sw_range = range(-SWIVEL_MAX, SWIVEL_MAX + 1, 5) if D is not None else (0,)
-    tw_range = range(PRON[0], PRON[1] + 1, 5) if D is not None else (0,)
-    last = LAST.get(s)
-    if fixed is not None:                       # кадр между ключами: s, t интерполированы — без перебора
-        sw_range, tw_range, last = (fixed[0],), (fixed[1],), None
     axis = (H - S).normalized()
-    for sv in sw_range:
-        pl = Quaternion(axis, math.radians(sv)) @ pole
-        E, H2 = elbow(S, H, pl, a["L1"], a["L2"])
-        pp = pl - pl.dot(axis) * axis
-        n = pp.cross(axis).normalized()          # нормаль плоскости локтя — от подсказки, без переворота у прямой руки
-        Ru = frame_rot(a["yu"], a["nu"], (E - S).normalized(), n)
-        Rf0 = frame_rot(a["yf"], a["nf"], (H2 - E).normalized(), n)
-        for tv in tw_range:
-            Rf = Quaternion((H2 - E).normalized(), math.radians(tv)).to_matrix() @ Rf0
-            Rh = Rf @ a["Qh"]
-            bend = 0.0
-            if D is not None:
-                bend = math.degrees((Rh @ a["bl"]).angle(D))
-            cost = 1.0 * max(0.0, bend - WRIST_MAX) + .15 * bend + .01 * abs(sv) + .01 * abs(tv)
-            if last is not None and D is not None:
-                cost += .25 * abs(sv - last[0]) + .2 * abs(tv - last[1])
-            if best is None or cost < best[0]:
-                best = (cost, sv, tv, E, H2, Ru, Rf, Rh, bend)
-    _, sv, tv, E, H2, Ru, Rf, Rh, bend = best
+    E, H2 = elbow(S, H, pole, a["L1"], a["L2"])
+    pp = pole - pole.dot(axis) * axis
+    n = pp.cross(axis).normalized()          # нормаль плоскости локтя — от подсказки, без переворота у прямой руки
+    Ru = frame_rot(a["yu"], a["nu"], (E - S).normalized(), n)
+    Rf0 = frame_rot(a["yf"], a["nf"], (H2 - E).normalized(), n)
+    return S, E, H2, Ru, Rf0, (H2 - E).normalized()
+
+
+def solve(rig, s, H, pole, D=None, tv=0.0, wd=0.0, wf=0.0, sw=0.0, opt=False, win=0, hint=None, win_sw=0):
+    """H — кисть (мир), pole — куда локоть, sw — поворот локтя вокруг оси плечо–кисть (°), tv — пронация от стойки (°),
+    wd/wf — кисть от стойки (°). opt: ключ — перебор sw (±win_sw), tv (±win), wd, wf под направление клинка D
+    (hint = (sw, tv, wd, wf) — тянуться к нему)."""
+    a = rig.ARM[s]
+    ax = (H - rig.P(s + "Arm")).normalized()
     miss = 0.0
-    if D is not None:
-        LAST[s] = (sv, tv)
-        dc = Rh @ a["bl"]
-        ax = dc.cross(D)
-        if ax.length > 1e-8:
-            Rh = Quaternion(ax.normalized(), math.radians(min(bend, WRIST_MAX))).to_matrix() @ Rh
-        miss = max(0.0, bend - WRIST_MAX)
+    if opt and D is not None and s == "Right":
+        h_sw, h_tv, h_wd, h_wf = hint if hint is not None else (sw, tv, wd, wf)
+        best = None
+        for sv in range(int(round(sw)) - win_sw, int(round(sw)) + win_sw + 1, 15):
+            S, E, H2, Ru, Rf0, fa = arm_frame(rig, s, H, Quaternion(ax, math.radians(sv)) @ pole)
+            for c in range(int(round(tv)) - win, int(round(tv)) + win + 1, 5):
+                if not PRON[0] <= c <= PRON[1]: continue
+                Rf = Quaternion(fa, math.radians(c)).to_matrix() @ Rf0
+                for dv in range(int(WD[0]), int(WD[1]) + 1, 3):
+                    for fx in range(int(WF[0]), int(WF[1]) + 1, 8):
+                        dc = Rf @ wrist(a["Qh"], dv, fx) @ a["bl"]
+                        ang = math.degrees(dc.angle(D))
+                        cost = ang + .10 * abs(c - h_tv) + .03 * abs(dv - h_wd) + .03 * abs(fx - h_wf) + .05 * abs(sv - h_sw)
+                        if best is None or cost < best[0]: best = (cost, sv, c, dv, fx, ang)
+        _, sw, tv, wd, wf, miss = best
+    S, E, H2, Ru, Rf0, fa = arm_frame(rig, s, H, Quaternion(ax, math.radians(sw)) @ pole)
+    Rf = Quaternion(fa, math.radians(tv)).to_matrix() @ Rf0
+    Rh = Rf @ wrist(a["Qh"], wd, wf)
+    if D is not None and s == "Right":
+        miss = math.degrees((Rh @ a["bl"]).angle(D))
     set_world(rig, s + "Arm", S, Ru)
     set_world(rig, s + "ForeArm", E, Rf)
     set_world(rig, s + "Hand", H2, Rh)
-    return dict(swivel=sv, pron=tv, wrist=round(min(bend, WRIST_MAX), 1), miss=round(miss, 1))
+    return dict(swivel=float(sw), pron=float(tv), wd=float(wd), wf=float(wf), miss=round(miss, 1))

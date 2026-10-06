@@ -14,6 +14,10 @@ namespace Game.Sim
             if (preparation.StarterPoolIndex < 0 || preparation.Potion1 == preparation.Potion2
                 || (uint)preparation.Potion1 >= Camp.PotionKindCount || (uint)preparation.Potion2 >= Camp.PotionKindCount)
                 throw new System.ArgumentException("Некорректная подготовка похода.");
+            // Ячейка «с собой» одна: дар и артефакт вместе — ошибка вызывающего, а не выбор игрока.
+            if (preparation.Carried != RunArtifact.None
+                && (!RunArtifacts.IsValid(preparation.Carried) || preparation.Gift != CampGift.None))
+                throw new System.ArgumentException("Некорректная ячейка «с собой».");
             Preparation = preparation;
         }
         public bool TryRerollReward()
@@ -31,10 +35,22 @@ namespace Game.Sim
         { if (PotionCooldownTicksLeft > 0) PotionCooldownTicksLeft--; }
         void ResetPreparationUsage()
         { PotionCooldownTicksLeft = 0; GiftRerollUsed = SpareFlaskUsed = false; }
+        /// <summary>
+        /// Артефакт из ячейки «с собой» встаёт в слот артефакта на этот забег (StartRun, сразу
+        /// после сброса слота). В список взятого он не пишется: это не награда забега, итоги
+        /// не должны показывать его находкой, а в атласе он уже открыт.
+        /// </summary>
+        void ApplyCarriedArtifact()
+        {
+            if (RunArtifacts.IsValid(Preparation.Carried)) TakeArtifact(Preparation.Carried);
+        }
         void HashRunPreparation(ref ulong hash)
         {
+            // Carried в условии: забег с артефактом «с собой» и без него не должны совпасть по хешу
+            // подготовки; без артефакта условие прежнее и хеш тот же бит в бит.
             if (Preparation.StarterId != AbilityDefinition.WhirlwindId || Preparation.Gift != CampGift.None
-                || Preparation.Potion1 != PotionKind.SmallHealth || Preparation.Potion2 != PotionKind.SmallLavidium)
+                || Preparation.Potion1 != PotionKind.SmallHealth || Preparation.Potion2 != PotionKind.SmallLavidium
+                || Preparation.Carried != RunArtifact.None)
             { Hashing.Mix(ref hash, 0x50524550); Preparation.HashInto(ref hash); }
             if (PotionCooldownTicksLeft != 0 || GiftRerollUsed || SpareFlaskUsed)
             {

@@ -248,7 +248,8 @@ namespace Game.View
             Vector3 forward = new Vector3(facing.X.ToFloat(), 0f, facing.Y.ToFloat());
 
             Transform t = _arc.transform;
-            t.position = new Vector3(at.x, 0.015f, at.z);
+            // На полу под героем (уступ, холм смерти), а не на нуле мира — иначе сектор прячется под землёй.
+            t.position = new Vector3(at.x, at.y + 0.015f, at.z);
             t.localScale = Vector3.one * diameter;
 
             // Спрайт нарисован сектором вокруг своего +Y. LookRotation ставит
@@ -274,8 +275,11 @@ namespace Game.View
 
             EntityStore e = sim.Entities;
             int player = Simulation.PlayerId;
+            // Тяга Абордажа v2 — тоже Lunge, но посадку у тела цели игрок уже видел кремовым диском
+            // прицела (PlayerHud), а тяга длится 0,1–0,3 с; оранжевый — цвет вражеских знаков.
             bool flying = e.ForcedTicksLeft[player] > 0
-                          && e.ForcedKind[player] == (byte)ForcedMotionKind.Lunge;
+                          && e.ForcedKind[player] == (byte)ForcedMotionKind.Lunge
+                          && !sim.AbordageActive;
 
             if (!flying)
             {
@@ -472,7 +476,10 @@ namespace Game.View
             var camp = CampPlayerView.Instance;
             if (camp != null && camp.Active) return camp.SurfaceHeight(x, z);
             if (_layout == null) _layout = FindAnyObjectByType<LayoutView>();
-            return _layout != null ? _layout.WeaponGroundHeight(x, z) : 0f;
+            float ground = _layout != null ? _layout.WeaponGroundHeight(x, z) : 0f;
+            // Холм смерти Хозяина Чащи лежит поверх пола (по нему ходят): метка приказа — на его мху, не под ним.
+            var raise = LayoutView.FloorRaise;
+            return raise != null ? raise(x, z, ground) : ground;
         }
 
         private LineRenderer MakeOrderLine(string objectName, bool loop, int points, float width)

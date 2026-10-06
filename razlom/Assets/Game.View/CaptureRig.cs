@@ -131,6 +131,10 @@ namespace Game.View
         /// -capture-whirlwind с формой в слоте Вихря. TickDriver ставит её набору забега через
         /// RunLoadout.DebugSetForm — как F8 «Вихрь: форма». Нажатий два (FormCastTicks), у Бури
         /// клавиша зажата все StormHoldTicks от нажатия. Без ключа — None, стенд прежний.
+        /// squall:hunt|foam|elusive (Шквал, шаг 2 02.10) — для стенда -capture-enemy-case squall: форму ставит
+        /// набору сам стенд, тем же путём (TickDriver.SquallCapture.cs). С -capture-whirlwind не сочетать.
+        /// abordage:quake|geyser|breach (Абордаж v2 02.10) — для стенда -capture-enemy-case abordage: форму ставит
+        /// набору сам стенд, тем же путём (TickDriver.AbordageCapture.cs). С -capture-whirlwind не сочетать.
         /// </summary>
         public static PelagForm SkillForm { get; private set; }
         /// <summary>
@@ -1072,6 +1076,12 @@ namespace Game.View
                 case "whirlwind:storm": return PelagForm.WhirlwindStorm;
                 case "whirlwind:maelstrom": return PelagForm.WhirlwindMaelstrom;
                 case "whirlwind:waves": return PelagForm.WhirlwindFoamWaves;
+                case "squall:hunt": return PelagForm.SquallHunt;
+                case "squall:foam": return PelagForm.SquallFoamTrail;
+                case "squall:elusive": return PelagForm.SquallElusive;
+                case "abordage:quake": return PelagForm.AbordageQuake;
+                case "abordage:geyser": return PelagForm.AbordageGeyser;
+                case "abordage:breach": return PelagForm.AbordageBreach;
                 default: return PelagForm.None;
             }
         }

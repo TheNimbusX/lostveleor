@@ -1,0 +1,21 @@
+{
+  "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\smithy-2026-10-04\\04-eni-smithy-ven-gabled.png",
+  "size": [
+    1254,
+    1254
+  ],
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    255
+  ],
+  "visible_bbox_alpha_gt_8": [
+    41,
+    31,
+    1241,
+    1235
+  ],
+  "sha256": "3a5843b002274aac178a9a91edfadaf16b9087a255af22149512fa3b6647344a",
+  "master_reference": "merchant-stall-2026-10-04-v2/04-rear-gabled-canopy.png",
+  "provenance": "Direct concept conversion with built-in image_gen; source PNG copied unchanged."
+}

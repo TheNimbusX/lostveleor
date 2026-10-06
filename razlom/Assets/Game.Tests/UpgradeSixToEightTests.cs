@@ -312,8 +312,9 @@ namespace Game.Tests
                 var sim = Wreck(6, with, out int foe);
                 sim.Step(Press(0));
                 Idle(sim, 10);
+                // Второй мах — замах 5 (сабельный ритм v4 06.10): удар в 16, смотрим через 3 тика (оглушение 9).
                 sim.Step(Press(0));
-                Idle(sim, 8);
+                Idle(sim, 7);
                 return sim.Statuses.IsStunned(foe, sim.Tick);
             }
 

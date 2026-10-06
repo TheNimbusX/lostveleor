@@ -1,0 +1,15 @@
+{
+  "pack": "Pelag Anchor Throw (Бросок якоря) motion reference, Higgsfield",
+  "date": "2026-10-03",
+  "refs_in_order": ["artifacts/hf/r2_model.jpg (Image 1)", "artifacts/hf/r7_ingame.jpg (Image 2, in-game colours)", "artifacts/hf/r3_anchor.jpg (Image 3)", "artifacts/hf/r5_wreckB.jpg (Image 4, render/proportions)", "artifacts/hf/r6_abordageB.jpg (Image 5, layout only)"],
+  "poses": {"1": "ready: grip in both hands, anchor hanging on ~1 m of chain at the right side", "2": "wind-up: anchor swung back on the chain behind the right shoulder", "3": "throw release: right arm whips forward, chain pays out straight", "4": "full reach: chain taut, body braced", "5": "yank back: both hands pull hard, leaning back on the back foot", "6": "catch/recover: anchor swings back to his side, chain sagging"},
+  "B-key-poses-higgsfield.png": "= v2 (picked)",
+  "B-key-poses-higgsfield-v1.png": {"job_id": "fe133e77-eadf-4cba-8049-9e4dbd68a000", "model": "gpt_image_2_5 medium 2k", "flaw": "pose 2 has no anchor: he swings the leather grip with the tassel back instead"},
+  "B-key-poses-higgsfield-v2.png": {"job_id": "6617269f-5c5c-432d-bd4a-49185479f72a", "model": "gpt_image_2_5 medium 2k", "note": "pose 2 fixed (the anchor is behind the right shoulder), but the chain there is very short, the fist almost at the ring; poses 3-5 show the anchor ~2 m out, not 7 m (sheet format)"},
+  "video": {
+    "video/start-frame-studio.png": {"job_id": "68336a3b-2d51-4466-81b0-d129ed629125", "model": "gpt_image_2_5 medium 1k", "refs": ["r2", "r7", "r3", "r6"]},
+    "video/anchor-throw-kling.mp4": "= v2 (picked)",
+    "video/anchor-throw-kling-v1.mp4": {"job_id": "03639fb3-42af-4ca5-a777-3bfcd6fcc547", "model": "kling3_0_turbo 5 s 720p, start_image = start-frame-studio.png", "result": "throw and taut chain good; the return fails: a second anchor appears behind him, no yank/catch"},
+    "video/anchor-throw-kling-v2.mp4": {"job_id": "e50d7d64-783f-465c-8a4b-672364a42502", "model": "kling3_0_turbo 5 s 720p, same start frame, prompt with one anchor and a ~4 m throw that stays in frame", "result": "wind-up, throw, chain taut, he pulls and the single anchor slides back over the floor on a sagging chain; the catch itself is not reached by 5 s"}
+  }
+}

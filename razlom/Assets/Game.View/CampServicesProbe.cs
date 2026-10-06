@@ -71,8 +71,12 @@ namespace Game.View
                 Check(kind==CampServiceKind.Tent?player.InventoryOpen:services.IsOpen && services.Current==target,"arrival opens "+kind+" at "+player.Position);
                 Check((!services.IsOpen && !player.InventoryOpen) || player.InputBlocked,"world blocked during conversation");
                 if(kind==CampServiceKind.Trader && services.IsOpen)Check(services.ProbeTraderTransactions(),"trader one page: goods and bag side by side, purchase, sold-out slot, protected item, sale confirmation, refresh confirmation and charges; isolated inventory");
-                if(kind==CampServiceKind.Smith && services.IsOpen)Check(services.ProbeSmithTransactions(),"smith one page: both buttons idle without a choice, three reforges, costs, limit, dismantle beside reforge with confirmation and Esc cancel; isolated inventory");
-                if(kind==CampServiceKind.Smith && services.IsOpen)Check(services.ProbeWornTransactions(),"worn row: smith reforges worn weapon in place, dismantle button stays off for it; trader shows worn without price or sale");
+                if(kind==CampServiceKind.Smith && services.IsOpen)Check(services.ProbeSmithTransactions(),services.TemperTabs
+                    ?"temper tabs: idle without an item, paid first strike, strike lock, Esc takes without a second charge, rank lock on Remelt, dismantle with confirmation and Esc cancel; isolated inventory"
+                    :"smith one page: both buttons idle without a choice, three reforges, costs, limit, dismantle beside reforge with confirmation and Esc cancel; isolated inventory");
+                // Кузница вкладками (CampShopsWc v4): надетое закаляется на месте, разбор для него спит; до v4 — прежняя проба одной страницы.
+                if(kind==CampServiceKind.Smith && services.IsOpen)Check(services.TemperTabs?services.ProbeTemperWorn():services.ProbeWornTransactions(),
+                    services.TemperTabs?"temper tabs worn: worn weapon tempered in place, dismantle tab idle for it":"worn row: smith reforges worn weapon in place, dismantle button stays off for it; trader shows worn without price or sale");
                 if(kind==CampServiceKind.Alchemist && services.IsOpen)Check(services.ProbeAlchemyTransactions(),"alchemist: four purchases, prices, selection, consumption, HUD counts and empty icons; isolated inventory");
                 services.Close();GetComponent<CampInventoryView>().Close();yield return null;Check(!player.InputBlocked,"input restored after closing "+kind);
 #if ENABLE_INPUT_SYSTEM

@@ -46,7 +46,7 @@ namespace Game.View
             if(_npcs==null || _driver.Session==null)return;
             foreach(var npc in _npcs)
             {
-                if(npc==null || npc.Kind==CampServiceKind.Tent)continue;
+                if(npc==null || npc.Kind==CampServiceKind.Tent || npc.Kind==CampServiceKind.OathBoard)continue;
                 bool visible=_player.Active && ServiceAvailable(npc.Kind);
                 if(npc.gameObject.activeSelf!=visible)npc.gameObject.SetActive(visible);
             }
@@ -56,7 +56,8 @@ namespace Game.View
             var prefab=Resources.Load<GameObject>("UI/Prefabs/CampResidentProgress");
             if(prefab==null || _view==null)return;
             _residentPanel=Instantiate(prefab,transform).GetComponent<CampResidentPanel>();
-            _residentPanel.Improve.onClick.AddListener(()=>{_driver.Session.Camp.TryUpgradeResident(_resident);RefreshResidentProgress();RefreshResidentShop();});
+            // Очков лагеря больше нет (06.10): ранг открывают босс и уровень сами, кнопка «Улучшить» не нужна.
+            _residentPanel.Improve.interactable=false;_residentPanel.Improve.gameObject.SetActive(false);
             _residentPanel.TurnIn.onClick.AddListener(()=>{_driver.Session.Camp.TurnInChapter(_resident);RefreshResidentProgress();RefreshResidentShop();});
             _residentPanel.Back.onClick.AddListener(CloseResidentProgress);_residentPanel.gameObject.SetActive(false);
             AddResidentButton(_view.Smith.Group,CampResident.Smith);
@@ -72,8 +73,17 @@ namespace Game.View
             rect.anchorMin=rect.anchorMax=rect.pivot=new Vector2(0,1);
             rect.anchoredPosition=new Vector2(40,-124);
             rect.sizeDelta=new Vector2(280,48);
-            button.onClick.AddListener(()=>{_residentPreviousSelection=UnityEngine.EventSystems.EventSystem.current?.currentSelectedGameObject;_resident=resident;RefreshResidentProgress();_residentPanel.gameObject.SetActive(true);SetShopModal(true);_residentPanel.Group.interactable=false;_residentOpenedFrame=Time.frameCount;_driver.ClearCapturedInput();if(TickDriver.GamepadLastUsed)(_residentPanel.Improve.interactable?_residentPanel.Improve:_residentPanel.TurnIn.interactable?_residentPanel.TurnIn:_residentPanel.Back).Select();});
+            button.onClick.AddListener(()=>
+            {
+                _residentPreviousSelection=UnityEngine.EventSystems.EventSystem.current?.currentSelectedGameObject;_resident=resident;RefreshResidentProgress();
+                // Новый ранг увиден в окне: значок «Новый ранг · загляни» над жителями гаснет (CampGuideView).
+                _driver.Session.Camp.AcknowledgeUnlocks(RankUnlocks);
+                _residentPanel.gameObject.SetActive(true);SetShopModal(true);_residentPanel.Group.interactable=false;_residentOpenedFrame=Time.frameCount;_driver.ClearCapturedInput();
+                if(TickDriver.GamepadLastUsed)ResidentFirstControl().Select();
+            });
         }
+        internal const CampUnlock RankUnlocks=CampUnlock.Rank1|CampUnlock.Rank2|CampUnlock.Rank3;
+        Selectable ResidentFirstControl()=>_residentPanel.TurnIn.interactable && _residentPanel.TurnIn.gameObject.activeSelf?_residentPanel.TurnIn:_residentPanel.Back;
         void SetShopModalContent(bool open,bool keepPortrait=true)
         {
             if(open)
@@ -128,17 +138,30 @@ namespace Game.View
         {
             Camp camp=_driver.Session.Camp;int rank=camp.Rank(_resident),next=rank+1;
             _residentPanel.Title.text=CampServiceText.Get("npc."+(_resident==CampResident.Smith?"smith":_resident==CampResident.Trader?"trader":"alchemist"));
-            _residentPanel.Upgrade.text="Рабочее место · "+rank+" / 3\n"+(rank==3?"Все улучшения открыты":UpgradeDescription(_resident,next)+"\nЦена: 1 очко лагеря · уровень "+Camp.RankMinimumLevel(next));
-            var result=camp.CanUpgradeResident(_resident);_residentPanel.Improve.interactable=result==CampUpgradeResult.Success;
-            _residentPanel.Status.text="Доступно очков лагеря: "+camp.AvailableCampPoints+(result==CampUpgradeResult.LevelRequired?" · нужен уровень "+Camp.RankMinimumLevel(next):result==CampUpgradeResult.InsufficientPoints?" · следующее очко за уровень":"");
+            // Ранг один на весь лагерь: показываем, что даст следующий у этого жителя и чем он открывается.
+            _residentPanel.Upgrade.text="Ранг "+rank+" / 3\n"+(rank>=3?"Все улучшения открыты":UpgradeDescription(_resident,next)+"\n"+RankRequirementText(next));
+            _residentPanel.Status.text=rank>=3?"":RankProgressText(camp,next);
             var status=camp.ChapterStatus(_resident);_residentPanel.TurnIn.interactable=status==CampChapterStatus.Ready;
             _residentPanel.TurnIn.gameObject.SetActive(status==CampChapterStatus.Active || status==CampChapterStatus.Ready);
             _residentPanel.Chapter.text=status==CampChapterStatus.Hidden?"Следующая часть главы откроется после разговора с предыдущим жителем.":status==CampChapterStatus.Completed?"Эта часть главы «Наладить жизнь» завершена.":
-                "Наладить жизнь\n"+(_resident==CampResident.Smith?"Вернуться с найденной вещью и обсудить её в кузнице.\nНаграда: 1 закалочная сталь":_resident==CampResident.Trader?"Добраться до третьей арены. Поражение после этого учитывается.\nНаграда: 1 сталь и 50 золота":"Применить два разных вида зелий в настоящих походах.\nНаграда: по две бутылки выбранных открытых видов")+(status==CampChapterStatus.Ready?"\nМожно завершить разговором":"");
+                "Наладить жизнь\n"+(_resident==CampResident.Smith?"Вернуться с найденной вещью и обсудить её в кузнице.\nНаграда: 1 сталь":_resident==CampResident.Trader?"Добраться до третьей арены. Поражение после этого учитывается.\nНаграда: 1 сталь и 50 золота":"Применить два разных вида зелий в настоящих походах.\nНаграда: по две бутылки выбранных открытых видов")+(status==CampChapterStatus.Ready?"\nМожно завершить разговором":"");
+        }
+        static string RankRequirementText(int rank)
+        {
+            var need=Camp.RankRequirement(rank);
+            return "Нужно: босс "+(need.BossIndex+1)+" и уровень "+need.Level;
+        }
+        /// <summary>Где игрок сейчас относительно следующего ранга: уровень и победа над нужным боссом.</summary>
+        static string RankProgressText(Camp camp,int rank)
+        {
+            var need=Camp.RankRequirement(rank);
+            bool defeated=need.BossIndex>=0 && need.BossIndex<RunBossKeys.Count && camp.BossDefeated(RunBossKeys.At(need.BossIndex));
+            return "Сейчас: уровень "+camp.Level+" · босс "+(need.BossIndex+1)+(defeated?" побеждён":" ещё не побеждён");
         }
         static string UpgradeDescription(CampResident resident,int rank)
         {
-            if(resident==CampResident.Smith)return rank==1?"Замена свойства · старт с Рассекающим · Морской узел":rank==2?"Добавление свойства · старт со Шквалом":"Перенос свойства с донора · старт с «Ладно смазал»";
+            // Ранги Эни больше не дают стартовых навыков, перенос свойства убран (06.10); сердце босса — с закалкой T1.
+            if(resident==CampResident.Smith)return rank==1?"Переплавка свойства · сердце босса в вещь · дар Морской узел":rank==2?"Добавление свойства":"Второе сердце в ту же вещь";
             if(resident==CampResident.Trader)return rank==1?"Шесть товаров · дар Резервный план":rank==2?"Сохранение одного товара при обновлении":"Выбор категории одного следующего товара";
             // Ресурс способностей игроку — «концентрация», зелье «Порыв» (владелец 01.10).
             return rank==1?"Большие зелья здоровья и концентрации · Запасная фляга":rank==2?"Живица и Порыв":"Смешанный отвар и Ясный настой";
@@ -154,7 +177,7 @@ namespace Game.View
             if(!ResidentProgressOpen)return;
             if(_driver.GameplayPaused || !_player.Active){CloseResidentProgress();return;}
             if(Time.frameCount<=_residentOpenedFrame)return;_residentPanel.Group.interactable=true;
-            CampUiFocus.Ensure(_residentPanel.Group,_residentPanel.Improve.interactable?_residentPanel.Improve:_residentPanel.TurnIn.interactable?_residentPanel.TurnIn:_residentPanel.Back);
+            CampUiFocus.Ensure(_residentPanel.Group,ResidentFirstControl());
 #if ENABLE_INPUT_SYSTEM
             bool cancel=Keyboard.current?.escapeKey.wasPressedThisFrame==true || Gamepad.current?.buttonEast.wasPressedThisFrame==true;
 #else

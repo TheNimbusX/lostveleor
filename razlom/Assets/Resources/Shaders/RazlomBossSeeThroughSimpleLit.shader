@@ -1,8 +1,9 @@
 // Shader targeted for low end devices. Single Pass Forward Rendering.
 // ХОЗЯИН ЧАЩИ — URP Simple Lit с сетчатой прозрачностью перед героем (цветы одежды фаз).
 // Копия Universal Render Pipeline/Simple Lit пакета URP 17.5 слово в слово; отличия — только
-// обёртки фрагмента ForwardLit, GBuffer, DepthOnly и DepthNormals (RazlomSeeThrough.hlsl).
-// ShadowCaster не выбивается. Без блока свойств вида прозрачности нет.
+// обёртки фрагмента ForwardLit, GBuffer, DepthOnly и DepthNormals (RazlomSeeThrough.hlsl); в ForwardLit —
+// ещё лунная кромка RazlomBossRim (как у тела; цветам её никто не пишет — ноль).
+// ShadowCaster не выбивается. Без блока свойств вида прозрачности и кромки нет.
 // Собран скриптом artifacts/tools/thicket-seethrough/gen.py (локальный, вне git). Обновился URP —
 // заново скопировать шейдер пакета и повторить обёртки (поиск «RazlomSeeThrough» в этом файле).
 Shader "Razlom/Boss See-Through Simple Lit"
@@ -158,7 +159,7 @@ Shader "Razlom/Boss See-Through Simple Lit"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/SimpleLitForwardPass.hlsl"
 
-            // Сетчатая прозрачность босса перед героем (RazlomSeeThrough.hlsl).
+            // Сетчатая прозрачность босса перед героем и лунная кромка силуэта (RazlomSeeThrough.hlsl).
             #include "RazlomSeeThrough.hlsl"
             void RazlomSeeThroughSimpleLitFragment(
                 Varyings input
@@ -174,6 +175,7 @@ Shader "Razlom/Boss See-Through Simple Lit"
                     , outRenderingLayers
             #endif
                 );
+                outColor.rgb += RazlomBossRim(input.positionCS, input.normalWS.xyz, outColor.rgb);
             }
             ENDHLSL
         }

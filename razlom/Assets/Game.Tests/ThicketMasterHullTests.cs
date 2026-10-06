@@ -39,7 +39,7 @@ namespace Game.Tests
             return sim;
         }
 
-        /// <summary>Нырок, касты и буря — на перезарядке до конца теста (кроме allowed).</summary>
+        /// <summary>Нырок (сближение и «под героя», 03.10), касты и буря — на перезарядке до конца теста (кроме allowed).</summary>
         private static void Only(Simulation sim, params ThicketMasterAction[] allowed)
         {
             var specials = new[]
@@ -49,6 +49,7 @@ namespace Game.Tests
             };
             foreach (var action in specials)
                 if (Array.IndexOf(allowed, action) < 0) sim.SetThicketReadyTick(Boss, action, int.MaxValue / 2);
+            if (Array.IndexOf(allowed, ThicketMasterAction.Dive) < 0) sim.SetThicketDiveDueTick(Boss, int.MaxValue / 2);
         }
 
         private static void Until(Simulation sim, int tick)
@@ -59,6 +60,23 @@ namespace Game.Tests
         /// <summary>Зазор между телом id и корпусом (меньше нуля — внутри).</summary>
         private static double Gap(Simulation sim, int id)
             => (sim.ThicketHullGap(Boss, sim.Entities.Position[id]) - sim.Entities.BodyRadius[id]).ToDouble();
+
+        /// <summary>
+        /// Зазор тела id до кругов, которые сейчас держат: в замахе лапы передние лапы подняты
+        /// (Simulation.ThicketPawsLifted, баланс 02.10, ночь) — под ними стоять можно.
+        /// </summary>
+        private static double HoldingGap(Simulation sim, int id)
+        {
+            double gap = double.MaxValue;
+            bool lifted = sim.ThicketPawsLifted(Boss);
+            for (int k = 0; k < Simulation.ThicketHullCircleCount; k++)
+            {
+                if (lifted && (k == 1 || k == 2)) continue;
+                if (!sim.TryGetThicketHullCircle(Boss, k, out var center, out var radius)) continue;
+                gap = Math.Min(gap, (FixVec2.Distance(sim.Entities.Position[id], center) - radius - sim.Entities.BodyRadius[id]).ToDouble());
+            }
+            return gap;
+        }
 
         private static FixVec2 Forward(Simulation sim) => sim.Entities.Facing[Boss].Normalized();
 
@@ -144,12 +162,16 @@ namespace Game.Tests
                 double angle = 2 * Math.PI * d / 16;
                 e.Position[0] = e.Position[Boss] + At(7 * Math.Cos(angle), 7 * Math.Sin(angle));
                 double nearest = double.MaxValue;
+                int sinceLifted = int.MaxValue;
                 for (int k = 0; k < 120; k++)
                 {
                     sim.Step(Walk(e.Position[Boss]));
-                    double gap = Gap(sim, 0);
-                    Assert.That(gap, Is.GreaterThanOrEqualTo(-Tolerance), "направление " + d + ", тик " + k);
-                    nearest = Math.Min(nearest, gap);
+                    // В замахе лапы передние лапы подняты — держат грудь, талия, бёдра, хвост (баланс 02.10, ночь);
+                    // опустилась лапа на героя под ней — выдавливает не быстрее 0,4 м за тик (до 4 тиков).
+                    sinceLifted = sim.ThicketPawsLifted(Boss) ? 0 : sinceLifted == int.MaxValue ? int.MaxValue : sinceLifted + 1;
+                    double gap = HoldingGap(sim, 0);
+                    if (sinceLifted > 4) Assert.That(gap, Is.GreaterThanOrEqualTo(-Tolerance), "направление " + d + ", тик " + k);
+                    nearest = Math.Min(nearest, Gap(sim, 0));
                 }
                 Assert.That(nearest, Is.LessThan(0.2), "направление " + d + ": дошёл до корпуса");
             }
@@ -222,8 +244,9 @@ namespace Game.Tests
         {
             var sim = Arena(distance: 9, walks: true);
             Only(sim);
-            // Без топота: его отброс двигает героя законно.
+            // Без топота (и в жребии рядом с лапой, 03.10): его отброс двигает героя законно.
             sim.SetThicketReadyTick(Boss, ThicketMasterAction.Stomp, int.MaxValue / 2);
+            sim.SetThicketStompPickReadyTick(Boss, int.MaxValue / 2);
             var e = sim.Entities;
             var hero = e.Position[0];
             int paws = 0;
@@ -251,6 +274,7 @@ namespace Game.Tests
             var sim = Arena(walks: true);
             Only(sim);
             sim.SetThicketReadyTick(Boss, ThicketMasterAction.Stomp, int.MaxValue / 2);
+            sim.SetThicketStompPickReadyTick(Boss, int.MaxValue / 2);
             Until(sim, IntroDone);
             var e = sim.Entities;
             var hero = Local(sim, 2.737 + e.BodyRadius[0].ToDouble() + 0.2, 0);
@@ -340,6 +364,8 @@ namespace Game.Tests
             Only(sim, ThicketMasterAction.Dive);
             Until(sim, IntroDone);
             var e = sim.Entities;
+            // Нырок — по герою в дальней полосе (ревью 02.10, ночь): 10 м перед мордой.
+            e.Position[0] = e.Position[Boss] + At(-10, 0);
             bool diving = false;
             for (int k = 0; k < 400 && !diving; k++)
             {
@@ -489,7 +515,7 @@ namespace Game.Tests
             Only(sim, ThicketMasterAction.Dive);
             Until(sim, IntroDone);
             var e = sim.Entities;
-            e.Position[0] = e.Position[Boss] + At(-9, 0);
+            e.Position[0] = e.Position[Boss] + At(-10, 0);
             bool diving = false;
             for (int k = 0; k < 400 && !diving; k++)
             {
@@ -519,6 +545,8 @@ namespace Game.Tests
         {
             // Тяга якоря целит в 0,9 м от центра, последний её тик берёт весь остаток пути. Из
             // глубины тела ближайшая точка снаружи — выемка у бока: был телепорт на 1,55 м вбок.
+            // Абордаж (сессия Пелага, 03.10): тяга 20 м/с (~0,67 м за тик), посадка с зазором 0,1 м
+            // от тела — порог шага 0,85, «долетел» до 0,15. Посадку вплотную проверяет AbordageTests.
             var sim = HitArena();
             sim.SetAbility(0, AbilityDefinition.AnchorLeap(), new AbilityNode[0], 0);
             var e = sim.Entities;
@@ -535,11 +563,11 @@ namespace Game.Tests
             {
                 sim.Step(InputFrame.Empty);
                 AssertInFrontOfTheChest(sim, "тик " + k);
-                Assert.That(FixVec2.Distance(previous, e.Position[0]).ToDouble(), Is.LessThan(0.6), "без скачка, тик " + k);
+                Assert.That(FixVec2.Distance(previous, e.Position[0]).ToDouble(), Is.LessThan(0.85), "без скачка, тик " + k);
                 previous = e.Position[0];
                 nearest = Math.Min(nearest, Gap(sim, 0));
             }
-            Assert.That(nearest, Is.LessThan(0.05), "долетел до груди");
+            Assert.That(nearest, Is.LessThan(0.15), "долетел до груди");
         }
 
         [TestCase(3.6)]

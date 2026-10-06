@@ -1,0 +1,4437 @@
+{
+ "skill": "Шквал v2 (Squall rework 02.10, правка по проверке)",
+ "fps": 30,
+ "frame_is_tick": true,
+ "root_motion": "нет: таз по XY постоянен, по Z присед/дуга прыжка; корень везёт Sim, поворот корня делает вид",
+ "rig": "Pelag_v6_MixamoRig (пропорции v6, как Roll/Skewer/Dash), привязка Pelag_AN_Squall2Bind — покой v6 стоя, объект +90° по X",
+ "base_stance": "стойка серии сабли = кадр 2 Pelag_MX_SaberCombo, перенесённый на v6 как в Unity, таз опущен на 4 см, стопы на земле (в ней же кончается рывок). С кадром 0 Pelag_AN_Sabre1, как его переносит Unity, не совпадает: левое колено 30°, таз 4 см (там левая стопа висит на 11 см)",
+ "lead_leg": "ведущая нога всегда левая (как в стойке): левая стоит на месте стойки в замахе, в опоре и на контакте; правая толкает, уходит назад в выпад и подтягивается обратно в опоре",
+ "chain": "Load → Forehand → Backhand → Forehand … → последний: полёт Forehand/Backhand до кадра 6, затем FinishFore/FinishBack с кадра 0; Неуловимый: последний удар целиком (до кадра 8), затем ReturnFore/ReturnBack",
+ "flight_retime": {
+  "2": [
+   0,
+   3,
+   6
+  ],
+  "3": [
+   0,
+   1.0,
+   3.5,
+   6.0
+  ],
+  "4": [
+   0,
+   1.0,
+   2.667,
+   4.333,
+   6.0
+  ],
+  "5": [
+   0,
+   1.0,
+   2.25,
+   3.5,
+   4.75,
+   6.0
+  ],
+  "6": [
+   0,
+   1.0,
+   2.0,
+   3.0,
+   4.0,
+   5.0,
+   6.0
+  ]
+ },
+ "flight_retime_rule": "тик полёта k (0..F) → кадр клипа; F = clamp(round(d / 0,66 м), 2, 6); тик 1 = толчок (кадр 1), дальше равномерно до контакта (кадр 6); при F = 2 — кадры 0, 3, 6",
+ "view_turn": "поворот корня к следующей цели — в опоре (кадры 7–8) + 1-й тик полёта, S-кривая; левая стопа в кадрах 6–8 стоит — крутить корень вокруг лодыжки левой стопы (её смещение от корня — rows[*][кадр].Left.ankle, x = влево, y = −вперёд)",
+ "view_requirements": [
+  "RazlomPelagV5AnimatorBuilder: клипы Pelag_AN_Squall2_* собирать с явным пределом таза 0,5, как рывок: RazlomPelagAuthoredClips.Build(name, false, \"Pelag_AN_Squall2Bind\", .5f). По умолчанию 0,4, а клипы дают 0,48 — без явного 0,5 сборка упадёт с «hip offset exceeds authored crouch envelope»",
+  "Pelag_AN_Squall2Bind.fbx положить рядом с клипами (Assets/Resources/Characters/Pelag_v5/Mixamo/)"
+ ],
+ "sheet_pose_map": {
+  "1": {
+   "clip": "Pelag_AN_Squall2_Load",
+   "frame": 2,
+   "what": "замах-присед, кисть у правого бедра, клинок назад-вправо (F0)"
+  },
+  "2": {
+   "clip": "Pelag_AN_Squall2_Forehand",
+   "frame": 1,
+   "what": "толчок правой, левое колено вперёд, корпус 30°"
+  },
+  "3": {
+   "clip": "Pelag_AN_Squall2_Forehand",
+   "frame": 3,
+   "what": "низкий полёт, обе стопы над землёй"
+  },
+  "4": {
+   "clip": "Pelag_AN_Squall2_Forehand",
+   "frame": 6,
+   "what": "глубокий выпад, рука вытянута вперёд, клинок на цель"
+  },
+  "5": {
+   "clip": "Pelag_AN_Squall2_Backhand",
+   "frame": 6,
+   "what": "глубокий выпад, рука вперёд поперёк корпуса, клинок на цель"
+  },
+  "6": {
+   "clip": "Pelag_AN_Squall2_FinishFore",
+   "frame": 5,
+   "what": "широкая стойка, клинок горизонтально перед собой"
+  }
+ },
+ "clips": {
+  "Pelag_AN_Squall2_Load": {
+   "frames": 3,
+   "ticks": 2,
+   "segments": {
+    "anticipation": [
+     0,
+     2
+    ]
+   },
+   "note": "стойка серии сабли → присед-замах; правая шагом (кадр 1 в воздухе) встаёт под таз; кадр 2 = кадр 0 Forehand",
+   "frame_marks": {
+    "0": "стойка",
+    "1": "шаг",
+    "2": "замах"
+   }
+  },
+  "Pelag_AN_Squall2_Forehand": {
+   "frames": 9,
+   "ticks": 8,
+   "segments": {
+    "launch": [
+     0,
+     1
+    ],
+    "flight": [
+     0,
+     6
+    ],
+    "contact": 6,
+    "support": [
+     6,
+     8
+    ]
+   },
+   "retime": "только полёт [0..6] → F тиков (2–6) по flight_retime; опора [6..8] — 2 тика как есть",
+   "plant_foot": "Left",
+   "push_foot": "Right",
+   "slash": "прямой справа налево: клинок сзади-справа через правый бок к цели",
+   "feet": "кадр 0: левая на месте стойки, правая плашмя под тазом чуть сзади; 1–5: обе в воздухе ≥ 6,5 см по сетке; 6: левая ставится на то же место, правая далеко сзади на носке (выпад); 7: правая в воздухе; 8: правая плашмя",
+   "frame_marks": {
+    "0": "замах",
+    "1": "толчок",
+    "3": "полёт",
+    "5": "к земле",
+    "6": "КОНТАКТ",
+    "7": "проводка",
+    "8": "замах"
+   },
+   "note": "кадр 0 = конец Backhand/Load (F0), кадр 8 = кадр 0 Backhand (B0)"
+  },
+  "Pelag_AN_Squall2_Backhand": {
+   "frames": 9,
+   "ticks": 8,
+   "segments": {
+    "launch": [
+     0,
+     1
+    ],
+    "flight": [
+     0,
+     6
+    ],
+    "contact": 6,
+    "support": [
+     6,
+     8
+    ]
+   },
+   "retime": "только полёт [0..6] → F тиков (2–6) по flight_retime; опора [6..8] — 2 тика как есть",
+   "plant_foot": "Left",
+   "push_foot": "Right",
+   "slash": "обратный слева направо: клинок сзади через левый бок к цели",
+   "feet": "кадр 0: левая на месте стойки, правая плашмя под тазом чуть сзади; 1–5: обе в воздухе ≥ 6,5 см по сетке; 6: левая ставится на то же место, правая далеко сзади на носке (выпад); 7: правая в воздухе; 8: правая плашмя",
+   "frame_marks": {
+    "0": "замах",
+    "1": "толчок",
+    "3": "полёт",
+    "5": "к земле",
+    "6": "КОНТАКТ",
+    "7": "проводка",
+    "8": "замах"
+   },
+   "note": "кадр 0 = конец Forehand (B0), кадр 8 = кадр 0 Forehand (F0)"
+  },
+  "Pelag_AN_Squall2_FinishFore": {
+   "frames": 10,
+   "ticks": 9,
+   "segments": {
+    "contact": 0,
+    "follow_through": [
+     0,
+     2
+    ],
+    "step": [
+     2,
+     4
+    ],
+    "sheet6": 5,
+    "exit": [
+     5,
+     9
+    ]
+   },
+   "note": "последний прыжок был Forehand: кадр 0 = кадр 6 Forehand (контакт); правая подшагивает в опорную точку стойки, кадр 5 — стойка листа 6 (клинок горизонтально перед собой), кадр 9 = стойка серии сабли",
+   "frame_marks": {
+    "0": "контакт",
+    "2": "проводка",
+    "4": "подшаг",
+    "5": "лист 6",
+    "9": "стойка"
+   }
+  },
+  "Pelag_AN_Squall2_FinishBack": {
+   "frames": 10,
+   "ticks": 9,
+   "segments": {
+    "contact": 0,
+    "follow_through": [
+     0,
+     2
+    ],
+    "step": [
+     2,
+     4
+    ],
+    "sheet6": 5,
+    "exit": [
+     5,
+     9
+    ]
+   },
+   "note": "последний прыжок был Backhand: кадр 0 = кадр 6 Backhand; дальше как FinishFore",
+   "frame_marks": {
+    "0": "контакт",
+    "2": "проводка",
+    "4": "подшаг",
+    "5": "лист 6",
+    "9": "стойка"
+   }
+  },
+  "Pelag_AN_Squall2_ReturnFore": {
+   "frames": 11,
+   "ticks": 10,
+   "segments": {
+    "launch": [
+     0,
+     1
+    ],
+    "flight": [
+     0,
+     6
+    ],
+    "land": 6,
+    "recovery": [
+     6,
+     10
+    ]
+   },
+   "retime": "полёт [0..6] → F тиков (2–6), как у ударов",
+   "note": "Неуловимый (= «Возврат»): после Forehand, кадр 0 = B0 (кадр 8 Forehand); лицом по пути — разворот корня делает вид; посадка на обе стопы в опорные точки стойки (6), сабля слева переходит к правому боку дугой перед корпусом (6–10)",
+   "frame_marks": {
+    "0": "B0",
+    "1": "толчок",
+    "3": "полёт",
+    "6": "посадка",
+    "10": "стойка"
+   }
+  },
+  "Pelag_AN_Squall2_ReturnBack": {
+   "frames": 11,
+   "ticks": 10,
+   "segments": {
+    "launch": [
+     0,
+     1
+    ],
+    "flight": [
+     0,
+     6
+    ],
+    "land": 6,
+    "recovery": [
+     6,
+     10
+    ]
+   },
+   "retime": "полёт [0..6] → F тиков (2–6), как у ударов",
+   "note": "Неуловимый: после Backhand, кадр 0 = F0 (кадр 8 Backhand); посадка в опорные точки стойки (6), кадр 10 = стойка",
+   "frame_marks": {
+    "0": "F0",
+    "1": "толчок",
+    "3": "полёт",
+    "6": "посадка",
+    "10": "стойка"
+   }
+  }
+ },
+ "limits": {
+  "source": "sq_check.py при сборке; то же — по выгруженным FBX методом независимой проверки (artifacts/tools/squall-rework/clips-fix/indep)",
+  "violations": 0,
+  "seam_max_bone_deg": {
+   "limit": 5.0,
+   "value": 0.0,
+   "seams": [
+    {
+     "from_clip": "stance",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_Squall2_Load",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_Squall2_Load",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_Squall2_Forehand",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_Squall2_Forehand",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_Squall2_Backhand",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_Squall2_Backhand",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_Squall2_Forehand",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_Squall2_Forehand",
+     "from_frame": 6,
+     "to_clip": "Pelag_AN_Squall2_FinishFore",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_Squall2_Backhand",
+     "from_frame": 6,
+     "to_clip": "Pelag_AN_Squall2_FinishBack",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_Squall2_Forehand",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_Squall2_ReturnFore",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_Squall2_Backhand",
+     "from_frame": "last",
+     "to_clip": "Pelag_AN_Squall2_ReturnBack",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_Squall2_FinishFore",
+     "from_frame": "last",
+     "to_clip": "stance",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_Squall2_FinishBack",
+     "from_frame": "last",
+     "to_clip": "stance",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_Squall2_ReturnFore",
+     "from_frame": "last",
+     "to_clip": "stance",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    },
+    {
+     "from_clip": "Pelag_AN_Squall2_ReturnBack",
+     "from_frame": "last",
+     "to_clip": "stance",
+     "max_bone_deg": 0.0,
+     "bone": ""
+    }
+   ]
+  },
+  "per_tick": {
+   "rule": "кость ≤ 35° за тик во всех раскладках полёта F = 2–6 и в опоре; рука с саблей (RightArm/ForeArm/Hand) в тик удара (последний тик полёта и 6→7, у Finish 0→1 и 1→2) ≤ 70°",
+   "worst": {
+    "Load": {
+     "body": [
+      32.4,
+      "0→1",
+      "LeftForeArm",
+      false
+     ],
+     "sabre": [
+      31.2,
+      "0→1",
+      "RightHand",
+      false
+     ]
+    },
+    "Forehand": {
+     "body": [
+      32.4,
+      "F2 t2",
+      "RightUpLeg",
+      true
+     ],
+     "sabre": [
+      69.6,
+      "опора 6→7",
+      "RightForeArm",
+      true
+     ]
+    },
+    "Backhand": {
+     "body": [
+      33.1,
+      "F2 t1",
+      "LeftLeg",
+      false
+     ],
+     "sabre": [
+      57.3,
+      "F2 t2",
+      "RightArm",
+      true
+     ]
+    },
+    "FinishFore": {
+     "body": [
+      30.4,
+      "1→2",
+      "RightLeg",
+      true
+     ],
+     "sabre": [
+      45.4,
+      "0→1",
+      "RightArm",
+      true
+     ]
+    },
+    "FinishBack": {
+     "body": [
+      28.8,
+      "1→2",
+      "RightLeg",
+      true
+     ],
+     "sabre": [
+      42.8,
+      "0→1",
+      "RightForeArm",
+      true
+     ]
+    },
+    "ReturnFore": {
+     "body": [
+      32.4,
+      "F6 t1",
+      "LeftLeg",
+      false
+     ],
+     "sabre": [
+      34.7,
+      "F2 t1",
+      "RightArm",
+      false
+     ]
+    },
+    "ReturnBack": {
+     "body": [
+      27.7,
+      "F6 t1",
+      "LeftLeg",
+      false
+     ],
+     "sabre": [
+      27.2,
+      "F2 t2",
+      "RightForeArm",
+      false
+     ]
+    }
+   }
+  },
+  "chest_to_pelvis_twist_deg": {
+   "limit": 45.0,
+   "value": 44.7,
+   "at": [
+    "Pelag_AN_Squall2_FinishFore",
+    2
+   ]
+  },
+  "forward_lean_deg": {
+   "rule": "вперёд всегда",
+   "min_any": 6.5,
+   "flight": [
+    25.9,
+    31.9
+   ]
+  },
+  "forearm_twist_from_rest_deg": {
+   "limit": 70.0,
+   "value": 51.7,
+   "at": [
+    "Pelag_AN_Squall2_Load",
+    2
+   ]
+  },
+  "head_follows_chest": {
+   "max_relP_over_stance": 0.0
+  },
+  "feet": {
+   "rule": "кадры 1–5 полёта (и дробные кадры раскладок): обе стопы по сетке ≥ 3 % роста (5,4 см)",
+   "flight_min_m": {
+    "Forehand": 0.074,
+    "Backhand": 0.0745,
+    "ReturnFore": 0.0745,
+    "ReturnBack": 0.0745
+   }
+  },
+  "planted_foot_slide_m": {
+   "Load": [
+    0.0005,
+    "Left f1→2"
+   ],
+   "Forehand": [
+    0.0004,
+    "Left f6→7"
+   ],
+   "Backhand": [
+    0.0017,
+    "Left f7→8"
+   ],
+   "FinishFore": [
+    0.0014,
+    "Left f3→4"
+   ],
+   "FinishBack": [
+    0.0013,
+    "Right f0→1"
+   ],
+   "ReturnFore": [
+    0.001,
+    "Right f9→10"
+   ],
+   "ReturnBack": [
+    0.0011,
+    "Right f9→10"
+   ]
+  },
+  "contact_blade": {
+   "Forehand": {
+    "yaw": -0.0,
+    "dir": [
+     -0.0,
+     -1.0,
+     -0.09
+    ]
+   },
+   "Backhand": {
+    "yaw": -4.8,
+    "dir": [
+     -0.08,
+     -1.0,
+     -0.03
+    ]
+   }
+  },
+  "hips_drop_m": {
+   "Pelag_AN_Squall2_Load": 0.09,
+   "Pelag_AN_Squall2_Forehand": 0.095,
+   "Pelag_AN_Squall2_Backhand": 0.095,
+   "Pelag_AN_Squall2_FinishFore": 0.125,
+   "Pelag_AN_Squall2_FinishBack": 0.125,
+   "Pelag_AN_Squall2_ReturnFore": 0.125,
+   "Pelag_AN_Squall2_ReturnBack": 0.125
+  },
+  "unity_transfer": {
+   "max_hip_offset_ratio": 0.48,
+   "dash_limit": 0.5,
+   "unity_default": 0.4
+  }
+ },
+ "rows": {
+  "Pelag_AN_Squall2_Load": [
+   {
+    "lean": 6.5,
+    "pelvis_yaw": -52.1,
+    "chest_yaw": -30.0,
+    "twist": 22.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -33.18,
+    "face_yaw": -0.41,
+    "hips_z": 0.845,
+    "forearm_twist": {
+     "Left": -18.9,
+     "Right": 11.9
+    },
+    "blade_dir": [
+     -0.2,
+     -0.69,
+     0.69
+    ],
+    "blade_tip": [
+     -0.7,
+     -0.699,
+     1.376
+    ],
+    "hand_R": [
+     -0.454,
+     0.033,
+     0.823
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -15.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 0,
+    "W": 0.0
+   },
+   {
+    "lean": 14.5,
+    "pelvis_yaw": -47.0,
+    "chest_yaw": -43.0,
+    "twist": 4.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -49.53,
+    "face_yaw": -0.2,
+    "hips_z": 0.798,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 32.5
+    },
+    "blade_dir": [
+     -0.66,
+     -0.24,
+     0.72
+    ],
+    "blade_tip": [
+     -1.16,
+     -0.381,
+     1.416
+    ],
+    "hand_R": [
+     -0.478,
+     -0.073,
+     0.832
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -70.1,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.095,
+      0.26,
+      0.2
+     ],
+     "toe_z": 0.048
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -42.3,
+    "chest_yaw": -53.4,
+    "twist": -11.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -63.18,
+    "face_yaw": -1.77,
+    "hips_z": 0.755,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 51.7
+    },
+    "blade_dir": [
+     -0.92,
+     0.07,
+     0.38
+    ],
+    "blade_tip": [
+     -1.401,
+     -0.223,
+     1.135
+    ],
+    "hand_R": [
+     -0.5,
+     -0.17,
+     0.84
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -94.5,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.1,
+      0.28,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 2,
+    "W": 1.0
+   }
+  ],
+  "Pelag_AN_Squall2_Forehand": [
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -42.3,
+    "chest_yaw": -53.4,
+    "twist": -11.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -63.18,
+    "face_yaw": -1.77,
+    "hips_z": 0.755,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 51.7
+    },
+    "blade_dir": [
+     -0.92,
+     0.07,
+     0.38
+    ],
+    "blade_tip": [
+     -1.401,
+     -0.223,
+     1.135
+    ],
+    "hand_R": [
+     -0.5,
+     -0.17,
+     0.84
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -94.5,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.1,
+      0.28,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 0,
+    "W": 1.0
+   },
+   {
+    "lean": 29.9,
+    "pelvis_yaw": -38.5,
+    "chest_yaw": -46.6,
+    "twist": -8.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -60.66,
+    "face_yaw": 0.04,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 47.7
+    },
+    "blade_dir": [
+     -0.92,
+     0.24,
+     0.32
+    ],
+    "blade_tip": [
+     -1.465,
+     -0.057,
+     1.078
+    ],
+    "hand_R": [
+     -0.55,
+     -0.17,
+     0.85
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -104.5,
+    "Left": {
+     "ankle": [
+      0.15,
+      -0.36,
+      0.21
+     ],
+     "toe_z": 0.092
+    },
+    "Right": {
+     "ankle": [
+      -0.11,
+      0.36,
+      0.3
+     ],
+     "toe_z": 0.0952
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": 31.4,
+    "pelvis_yaw": -34.7,
+    "chest_yaw": -41.9,
+    "twist": -7.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -55.51,
+    "face_yaw": -0.02,
+    "hips_z": 0.8,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 39.8
+    },
+    "blade_dir": [
+     -0.94,
+     0.11,
+     0.31
+    ],
+    "blade_tip": [
+     -1.512,
+     -0.183,
+     1.057
+    ],
+    "hand_R": [
+     -0.584,
+     -0.19,
+     0.859
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -96.7,
+    "Left": {
+     "ankle": [
+      0.143,
+      -0.366,
+      0.245
+     ],
+     "toe_z": 0.1198
+    },
+    "Right": {
+     "ankle": [
+      -0.115,
+      0.436,
+      0.306
+     ],
+     "toe_z": 0.098
+    },
+    "frame": 2,
+    "W": 1.0
+   },
+   {
+    "lean": 31.9,
+    "pelvis_yaw": -30.6,
+    "chest_yaw": -36.3,
+    "twist": -5.7,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -48.79,
+    "face_yaw": -0.01,
+    "hips_z": 0.815,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 29.9
+    },
+    "blade_dir": [
+     -0.94,
+     -0.09,
+     0.34
+    ],
+    "blade_tip": [
+     -1.51,
+     -0.41,
+     1.08
+    ],
+    "hand_R": [
+     -0.6,
+     -0.24,
+     0.87
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -84.4,
+    "Left": {
+     "ankle": [
+      0.14,
+      -0.38,
+      0.26
+     ],
+     "toe_z": 0.128
+    },
+    "Right": {
+     "ankle": [
+      -0.12,
+      0.5,
+      0.31
+     ],
+     "toe_z": 0.0992
+    },
+    "frame": 3,
+    "W": 1.0
+   },
+   {
+    "lean": 29.9,
+    "pelvis_yaw": -24.9,
+    "chest_yaw": -27.4,
+    "twist": -2.5,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -38.22,
+    "face_yaw": 0.0,
+    "hips_z": 0.793,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 21.5
+    },
+    "blade_dir": [
+     -0.81,
+     -0.3,
+     0.51
+    ],
+    "blade_tip": [
+     -1.32,
+     -0.823,
+     1.289
+    ],
+    "hand_R": [
+     -0.547,
+     -0.435,
+     0.899
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -69.9,
+    "Left": {
+     "ankle": [
+      0.149,
+      -0.427,
+      0.245
+     ],
+     "toe_z": 0.124
+    },
+    "Right": {
+     "ankle": [
+      -0.125,
+      0.546,
+      0.316
+     ],
+     "toe_z": 0.1003
+    },
+    "frame": 4,
+    "W": 1.0
+   },
+   {
+    "lean": 25.9,
+    "pelvis_yaw": -18.6,
+    "chest_yaw": -14.3,
+    "twist": 4.3,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -22.78,
+    "face_yaw": 0.03,
+    "hips_z": 0.755,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 11.8
+    },
+    "blade_dir": [
+     -0.68,
+     -0.45,
+     0.58
+    ],
+    "blade_tip": [
+     -1.015,
+     -1.14,
+     1.401
+    ],
+    "hand_R": [
+     -0.4,
+     -0.6,
+     0.92
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -56.9,
+    "Left": {
+     "ankle": [
+      0.16,
+      -0.47,
+      0.21
+     ],
+     "toe_z": 0.1009
+    },
+    "Right": {
+     "ankle": [
+      -0.13,
+      0.58,
+      0.32
+     ],
+     "toe_z": 0.1008
+    },
+    "frame": 5,
+    "W": 1.0
+   },
+   {
+    "lean": 19.9,
+    "pelvis_yaw": -12.5,
+    "chest_yaw": 10.1,
+    "twist": 22.6,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 6.7,
+    "hips_z": 0.72,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": -2.8
+    },
+    "blade_dir": [
+     -0.0,
+     -1.0,
+     -0.09
+    ],
+    "blade_tip": [
+     0.327,
+     -1.528,
+     0.868
+    ],
+    "hand_R": [
+     0.189,
+     -0.59,
+     0.924
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -0.0,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.14,
+      0.6,
+      0.223
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 6,
+    "W": 1.0
+   },
+   {
+    "lean": 20.9,
+    "pelvis_yaw": -10.5,
+    "chest_yaw": 25.3,
+    "twist": 35.8,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 23.05,
+    "hips_z": 0.725,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 39.8
+    },
+    "blade_dir": [
+     0.22,
+     -0.11,
+     -0.97
+    ],
+    "blade_tip": [
+     0.59,
+     -0.616,
+     0.102
+    ],
+    "hand_R": [
+     0.3,
+     -0.4,
+     0.98
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 63.3,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.12,
+      0.47,
+      0.21
+     ],
+     "toe_z": 0.0319
+    },
+    "frame": 7,
+    "W": 1.0
+   },
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -12.5,
+    "chest_yaw": 31.9,
+    "twist": 44.5,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 31.4,
+    "hips_z": 0.755,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 51.7
+    },
+    "blade_dir": [
+     0.2,
+     0.6,
+     -0.77
+    ],
+    "blade_tip": [
+     0.591,
+     0.211,
+     0.201
+    ],
+    "hand_R": [
+     0.32,
+     -0.26,
+     0.98
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 162.0,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.1,
+      0.28,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 8,
+    "W": 1.0
+   }
+  ],
+  "Pelag_AN_Squall2_Backhand": [
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -12.5,
+    "chest_yaw": 31.9,
+    "twist": 44.5,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 31.4,
+    "hips_z": 0.755,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 51.7
+    },
+    "blade_dir": [
+     0.2,
+     0.6,
+     -0.77
+    ],
+    "blade_tip": [
+     0.591,
+     0.211,
+     0.201
+    ],
+    "hand_R": [
+     0.32,
+     -0.26,
+     0.98
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 162.0,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.1,
+      0.28,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 0,
+    "W": 1.0
+   },
+   {
+    "lean": 29.9,
+    "pelvis_yaw": -14.7,
+    "chest_yaw": 27.1,
+    "twist": 41.8,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 31.78,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 49.7
+    },
+    "blade_dir": [
+     0.19,
+     0.68,
+     -0.71
+    ],
+    "blade_tip": [
+     0.597,
+     0.29,
+     0.247
+    ],
+    "hand_R": [
+     0.32,
+     -0.26,
+     0.97
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 164.0,
+    "Left": {
+     "ankle": [
+      0.15,
+      -0.36,
+      0.21
+     ],
+     "toe_z": 0.092
+    },
+    "Right": {
+     "ankle": [
+      -0.11,
+      0.36,
+      0.3
+     ],
+     "toe_z": 0.0953
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": 31.4,
+    "pelvis_yaw": -16.1,
+    "chest_yaw": 26.0,
+    "twist": 42.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 31.34,
+    "hips_z": 0.8,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 44.4
+    },
+    "blade_dir": [
+     0.2,
+     0.51,
+     -0.84
+    ],
+    "blade_tip": [
+     0.609,
+     0.091,
+     0.145
+    ],
+    "hand_R": [
+     0.325,
+     -0.296,
+     0.965
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 158.9,
+    "Left": {
+     "ankle": [
+      0.143,
+      -0.366,
+      0.245
+     ],
+     "toe_z": 0.1198
+    },
+    "Right": {
+     "ankle": [
+      -0.115,
+      0.436,
+      0.306
+     ],
+     "toe_z": 0.098
+    },
+    "frame": 2,
+    "W": 1.0
+   },
+   {
+    "lean": 31.9,
+    "pelvis_yaw": -16.8,
+    "chest_yaw": 25.7,
+    "twist": 42.5,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 30.47,
+    "hips_z": 0.815,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 36.8
+    },
+    "blade_dir": [
+     0.2,
+     0.19,
+     -0.96
+    ],
+    "blade_tip": [
+     0.618,
+     -0.275,
+     0.059
+    ],
+    "hand_R": [
+     0.33,
+     -0.36,
+     0.96
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 134.3,
+    "Left": {
+     "ankle": [
+      0.14,
+      -0.38,
+      0.26
+     ],
+     "toe_z": 0.1279
+    },
+    "Right": {
+     "ankle": [
+      -0.12,
+      0.5,
+      0.31
+     ],
+     "toe_z": 0.0993
+    },
+    "frame": 3,
+    "W": 1.0
+   },
+   {
+    "lean": 29.9,
+    "pelvis_yaw": -16.7,
+    "chest_yaw": 25.4,
+    "twist": 42.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 27.84,
+    "hips_z": 0.793,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 30.1
+    },
+    "blade_dir": [
+     0.15,
+     -0.13,
+     -0.98
+    ],
+    "blade_tip": [
+     0.566,
+     -0.629,
+     0.059
+    ],
+    "hand_R": [
+     0.322,
+     -0.413,
+     0.952
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 48.0,
+    "Left": {
+     "ankle": [
+      0.149,
+      -0.427,
+      0.245
+     ],
+     "toe_z": 0.124
+    },
+    "Right": {
+     "ankle": [
+      -0.125,
+      0.546,
+      0.316
+     ],
+     "toe_z": 0.1003
+    },
+    "frame": 4,
+    "W": 1.0
+   },
+   {
+    "lean": 25.9,
+    "pelvis_yaw": -16.6,
+    "chest_yaw": 24.8,
+    "twist": 41.4,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 24.08,
+    "hips_z": 0.755,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 19.9
+    },
+    "blade_dir": [
+     0.02,
+     -0.57,
+     -0.82
+    ],
+    "blade_tip": [
+     0.434,
+     -1.082,
+     0.218
+    ],
+    "hand_R": [
+     0.3,
+     -0.48,
+     0.94
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 2.2,
+    "Left": {
+     "ankle": [
+      0.16,
+      -0.47,
+      0.21
+     ],
+     "toe_z": 0.1009
+    },
+    "Right": {
+     "ankle": [
+      -0.13,
+      0.58,
+      0.32
+     ],
+     "toe_z": 0.1008
+    },
+    "frame": 5,
+    "W": 1.0
+   },
+   {
+    "lean": 19.9,
+    "pelvis_yaw": -12.5,
+    "chest_yaw": 22.7,
+    "twist": 35.2,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 18.85,
+    "hips_z": 0.72,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": -13.1
+    },
+    "blade_dir": [
+     -0.08,
+     -1.0,
+     -0.03
+    ],
+    "blade_tip": [
+     0.26,
+     -1.547,
+     0.869
+    ],
+    "hand_R": [
+     0.2,
+     -0.6,
+     0.92
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -4.8,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.14,
+      0.6,
+      0.223
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 6,
+    "W": 1.0
+   },
+   {
+    "lean": 20.9,
+    "pelvis_yaw": -26.4,
+    "chest_yaw": -18.6,
+    "twist": 7.8,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -27.1,
+    "face_yaw": 0.0,
+    "hips_z": 0.725,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 23.7
+    },
+    "blade_dir": [
+     -0.83,
+     -0.4,
+     0.39
+    ],
+    "blade_tip": [
+     -1.021,
+     -1.082,
+     1.29
+    ],
+    "hand_R": [
+     -0.3,
+     -0.58,
+     0.93
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -64.3,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.12,
+      0.47,
+      0.21
+     ],
+     "toe_z": 0.0319
+    },
+    "frame": 7,
+    "W": 1.0
+   },
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -42.3,
+    "chest_yaw": -53.4,
+    "twist": -11.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -63.18,
+    "face_yaw": -1.77,
+    "hips_z": 0.755,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 51.7
+    },
+    "blade_dir": [
+     -0.92,
+     0.07,
+     0.38
+    ],
+    "blade_tip": [
+     -1.401,
+     -0.223,
+     1.135
+    ],
+    "hand_R": [
+     -0.5,
+     -0.17,
+     0.84
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -94.5,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.1,
+      0.28,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 8,
+    "W": 1.0
+   }
+  ],
+  "Pelag_AN_Squall2_FinishFore": [
+   {
+    "lean": 19.9,
+    "pelvis_yaw": -12.5,
+    "chest_yaw": 10.1,
+    "twist": 22.6,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 6.7,
+    "hips_z": 0.72,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": -2.8
+    },
+    "blade_dir": [
+     -0.0,
+     -1.0,
+     -0.09
+    ],
+    "blade_tip": [
+     0.327,
+     -1.528,
+     0.868
+    ],
+    "hand_R": [
+     0.189,
+     -0.59,
+     0.924
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -0.0,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.14,
+      0.6,
+      0.223
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 0,
+    "W": 1.0
+   },
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -8.5,
+    "chest_yaw": 32.1,
+    "twist": 40.7,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 29.34,
+    "hips_z": 0.72,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 21.9
+    },
+    "blade_dir": [
+     0.21,
+     -0.57,
+     -0.8
+    ],
+    "blade_tip": [
+     0.638,
+     -1.095,
+     0.283
+    ],
+    "hand_R": [
+     0.34,
+     -0.5,
+     0.96
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 20.0,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.14,
+      0.6,
+      0.223
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -8.5,
+    "chest_yaw": 36.2,
+    "twist": 44.7,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 33.43,
+    "hips_z": 0.72,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 31.7
+    },
+    "blade_dir": [
+     0.0,
+     -0.34,
+     -0.94
+    ],
+    "blade_tip": [
+     0.39,
+     -0.882,
+     0.114
+    ],
+    "hand_R": [
+     0.3,
+     -0.46,
+     0.96
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 0.4,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.12,
+      0.47,
+      0.21
+     ],
+     "toe_z": 0.0319
+    },
+    "frame": 2,
+    "W": 1.0
+   },
+   {
+    "lean": 19.9,
+    "pelvis_yaw": -16.4,
+    "chest_yaw": 20.5,
+    "twist": 37.0,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 16.81,
+    "hips_z": 0.725,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 23.6
+    },
+    "blade_dir": [
+     -0.61,
+     -0.61,
+     -0.51
+    ],
+    "blade_tip": [
+     -0.367,
+     -1.202,
+     0.492
+    ],
+    "hand_R": [
+     0.12,
+     -0.52,
+     0.94
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -44.8,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.1,
+      0.36,
+      0.22
+     ],
+     "toe_z": 0.0565
+    },
+    "frame": 3,
+    "W": 1.0
+   },
+   {
+    "lean": 16.9,
+    "pelvis_yaw": -26.3,
+    "chest_yaw": 8.7,
+    "twist": 35.0,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 4.44,
+    "hips_z": 0.73,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 13.4
+    },
+    "blade_dir": [
+     -0.89,
+     -0.36,
+     0.29
+    ],
+    "blade_tip": [
+     -0.859,
+     -0.99,
+     1.203
+    ],
+    "hand_R": [
+     -0.08,
+     -0.52,
+     0.93
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -67.8,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 4,
+    "W": 1.0
+   },
+   {
+    "lean": 13.9,
+    "pelvis_yaw": -36.2,
+    "chest_yaw": -7.5,
+    "twist": 28.7,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -15.02,
+    "face_yaw": 0.0,
+    "hips_z": 0.735,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 6.6
+    },
+    "blade_dir": [
+     -0.66,
+     -0.26,
+     0.7
+    ],
+    "blade_tip": [
+     -0.814,
+     -0.883,
+     1.555
+    ],
+    "hand_R": [
+     -0.22,
+     -0.5,
+     0.92
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -68.3,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 5,
+    "W": 1.0
+   },
+   {
+    "lean": 12.0,
+    "pelvis_yaw": -40.2,
+    "chest_yaw": -13.2,
+    "twist": 27.0,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -19.55,
+    "face_yaw": -0.1,
+    "hips_z": 0.762,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 7.7
+    },
+    "blade_dir": [
+     -0.49,
+     -0.14,
+     0.86
+    ],
+    "blade_tip": [
+     -0.752,
+     -0.638,
+     1.673
+    ],
+    "hand_R": [
+     -0.278,
+     -0.367,
+     0.896
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -73.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 6,
+    "W": 1.0
+   },
+   {
+    "lean": 10.1,
+    "pelvis_yaw": -44.2,
+    "chest_yaw": -19.1,
+    "twist": 25.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -24.08,
+    "face_yaw": -0.2,
+    "hips_z": 0.79,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 8.9
+    },
+    "blade_dir": [
+     -0.3,
+     -0.25,
+     0.92
+    ],
+    "blade_tip": [
+     -0.652,
+     -0.592,
+     1.692
+    ],
+    "hand_R": [
+     -0.337,
+     -0.233,
+     0.871
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -50.3,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 7,
+    "W": 1.0
+   },
+   {
+    "lean": 8.3,
+    "pelvis_yaw": -48.1,
+    "chest_yaw": -24.7,
+    "twist": 23.4,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -28.63,
+    "face_yaw": -0.3,
+    "hips_z": 0.817,
+    "forearm_twist": {
+     "Left": -19.0,
+     "Right": 10.3
+    },
+    "blade_dir": [
+     -0.18,
+     -0.46,
+     0.87
+    ],
+    "blade_tip": [
+     -0.619,
+     -0.641,
+     1.595
+    ],
+    "hand_R": [
+     -0.395,
+     -0.1,
+     0.847
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -21.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 8,
+    "W": 1.0
+   },
+   {
+    "lean": 6.5,
+    "pelvis_yaw": -52.1,
+    "chest_yaw": -30.0,
+    "twist": 22.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -33.18,
+    "face_yaw": -0.41,
+    "hips_z": 0.845,
+    "forearm_twist": {
+     "Left": -18.9,
+     "Right": 11.9
+    },
+    "blade_dir": [
+     -0.2,
+     -0.69,
+     0.69
+    ],
+    "blade_tip": [
+     -0.7,
+     -0.699,
+     1.376
+    ],
+    "hand_R": [
+     -0.454,
+     0.033,
+     0.823
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -15.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 9,
+    "W": 0.0
+   }
+  ],
+  "Pelag_AN_Squall2_FinishBack": [
+   {
+    "lean": 19.9,
+    "pelvis_yaw": -12.5,
+    "chest_yaw": 22.7,
+    "twist": 35.2,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 18.85,
+    "hips_z": 0.72,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": -13.1
+    },
+    "blade_dir": [
+     -0.08,
+     -1.0,
+     -0.03
+    ],
+    "blade_tip": [
+     0.26,
+     -1.547,
+     0.869
+    ],
+    "hand_R": [
+     0.2,
+     -0.6,
+     0.92
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -4.8,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.14,
+      0.6,
+      0.223
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 0,
+    "W": 1.0
+   },
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -22.5,
+    "chest_yaw": -12.7,
+    "twist": 9.8,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -20.88,
+    "face_yaw": -0.0,
+    "hips_z": 0.72,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 11.7
+    },
+    "blade_dir": [
+     -0.69,
+     -0.39,
+     0.61
+    ],
+    "blade_tip": [
+     -0.91,
+     -1.074,
+     1.465
+    ],
+    "hand_R": [
+     -0.3,
+     -0.58,
+     0.93
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -60.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.14,
+      0.6,
+      0.223
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -28.4,
+    "chest_yaw": -22.1,
+    "twist": 6.3,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -31.17,
+    "face_yaw": -0.04,
+    "hips_z": 0.72,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 26.7
+    },
+    "blade_dir": [
+     -0.8,
+     -0.22,
+     0.55
+    ],
+    "blade_tip": [
+     -1.157,
+     -0.843,
+     1.401
+    ],
+    "hand_R": [
+     -0.42,
+     -0.5,
+     0.91
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -74.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.12,
+      0.47,
+      0.21
+     ],
+     "toe_z": 0.0319
+    },
+    "frame": 2,
+    "W": 1.0
+   },
+   {
+    "lean": 19.9,
+    "pelvis_yaw": -30.4,
+    "chest_yaw": -18.5,
+    "twist": 11.9,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -27.12,
+    "face_yaw": -0.03,
+    "hips_z": 0.725,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 16.7
+    },
+    "blade_dir": [
+     -0.74,
+     -0.32,
+     0.6
+    ],
+    "blade_tip": [
+     -1.0,
+     -0.971,
+     1.449
+    ],
+    "hand_R": [
+     -0.34,
+     -0.54,
+     0.92
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -66.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.1,
+      0.36,
+      0.22
+     ],
+     "toe_z": 0.0565
+    },
+    "frame": 3,
+    "W": 1.0
+   },
+   {
+    "lean": 16.8,
+    "pelvis_yaw": -33.0,
+    "chest_yaw": -11.8,
+    "twist": 21.2,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -19.88,
+    "face_yaw": 0.0,
+    "hips_z": 0.73,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 9.9
+    },
+    "blade_dir": [
+     -0.7,
+     -0.32,
+     0.64
+    ],
+    "blade_tip": [
+     -0.886,
+     -0.961,
+     1.492
+    ],
+    "hand_R": [
+     -0.263,
+     -0.529,
+     0.92
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -65.5,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.09,
+      0.274,
+      0.178
+     ],
+     "toe_z": 0.0338
+    },
+    "frame": 4,
+    "W": 1.0
+   },
+   {
+    "lean": 13.9,
+    "pelvis_yaw": -36.2,
+    "chest_yaw": -7.5,
+    "twist": 28.7,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -15.02,
+    "face_yaw": 0.0,
+    "hips_z": 0.735,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 6.6
+    },
+    "blade_dir": [
+     -0.66,
+     -0.26,
+     0.7
+    ],
+    "blade_tip": [
+     -0.814,
+     -0.883,
+     1.555
+    ],
+    "hand_R": [
+     -0.22,
+     -0.5,
+     0.92
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -68.3,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 5,
+    "W": 1.0
+   },
+   {
+    "lean": 12.0,
+    "pelvis_yaw": -40.2,
+    "chest_yaw": -13.2,
+    "twist": 27.0,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -19.55,
+    "face_yaw": -0.1,
+    "hips_z": 0.762,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 7.7
+    },
+    "blade_dir": [
+     -0.49,
+     -0.14,
+     0.86
+    ],
+    "blade_tip": [
+     -0.752,
+     -0.638,
+     1.673
+    ],
+    "hand_R": [
+     -0.278,
+     -0.367,
+     0.896
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -73.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 6,
+    "W": 1.0
+   },
+   {
+    "lean": 10.1,
+    "pelvis_yaw": -44.2,
+    "chest_yaw": -19.1,
+    "twist": 25.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -24.08,
+    "face_yaw": -0.2,
+    "hips_z": 0.79,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 8.9
+    },
+    "blade_dir": [
+     -0.3,
+     -0.25,
+     0.92
+    ],
+    "blade_tip": [
+     -0.652,
+     -0.592,
+     1.692
+    ],
+    "hand_R": [
+     -0.337,
+     -0.233,
+     0.871
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -50.3,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 7,
+    "W": 1.0
+   },
+   {
+    "lean": 8.3,
+    "pelvis_yaw": -48.1,
+    "chest_yaw": -24.7,
+    "twist": 23.4,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -28.63,
+    "face_yaw": -0.3,
+    "hips_z": 0.817,
+    "forearm_twist": {
+     "Left": -19.0,
+     "Right": 10.3
+    },
+    "blade_dir": [
+     -0.18,
+     -0.46,
+     0.87
+    ],
+    "blade_tip": [
+     -0.619,
+     -0.641,
+     1.595
+    ],
+    "hand_R": [
+     -0.395,
+     -0.1,
+     0.847
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -21.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 8,
+    "W": 1.0
+   },
+   {
+    "lean": 6.5,
+    "pelvis_yaw": -52.1,
+    "chest_yaw": -30.0,
+    "twist": 22.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -33.18,
+    "face_yaw": -0.41,
+    "hips_z": 0.845,
+    "forearm_twist": {
+     "Left": -18.9,
+     "Right": 11.9
+    },
+    "blade_dir": [
+     -0.2,
+     -0.69,
+     0.69
+    ],
+    "blade_tip": [
+     -0.7,
+     -0.699,
+     1.376
+    ],
+    "hand_R": [
+     -0.454,
+     0.033,
+     0.823
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -15.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 9,
+    "W": 0.0
+   }
+  ],
+  "Pelag_AN_Squall2_ReturnFore": [
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -12.5,
+    "chest_yaw": 31.9,
+    "twist": 44.5,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 31.4,
+    "hips_z": 0.755,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 51.7
+    },
+    "blade_dir": [
+     0.2,
+     0.6,
+     -0.77
+    ],
+    "blade_tip": [
+     0.591,
+     0.211,
+     0.201
+    ],
+    "hand_R": [
+     0.32,
+     -0.26,
+     0.98
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 162.0,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.1,
+      0.28,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 0,
+    "W": 1.0
+   },
+   {
+    "lean": 29.9,
+    "pelvis_yaw": -12.8,
+    "chest_yaw": 30.1,
+    "twist": 42.9,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 33.93,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 51.7
+    },
+    "blade_dir": [
+     0.29,
+     0.53,
+     -0.8
+    ],
+    "blade_tip": [
+     0.699,
+     0.073,
+     0.203
+    ],
+    "hand_R": [
+     0.34,
+     -0.32,
+     0.99
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 151.4,
+    "Left": {
+     "ankle": [
+      0.15,
+      -0.36,
+      0.21
+     ],
+     "toe_z": 0.092
+    },
+    "Right": {
+     "ankle": [
+      -0.11,
+      0.36,
+      0.3
+     ],
+     "toe_z": 0.0953
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": 29.9,
+    "pelvis_yaw": -12.8,
+    "chest_yaw": 30.0,
+    "twist": 42.8,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 33.21,
+    "hips_z": 0.8,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 50.4
+    },
+    "blade_dir": [
+     0.21,
+     0.35,
+     -0.91
+    ],
+    "blade_tip": [
+     0.607,
+     -0.143,
+     0.105
+    ],
+    "hand_R": [
+     0.327,
+     -0.362,
+     0.986
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 149.1,
+    "Left": {
+     "ankle": [
+      0.143,
+      -0.366,
+      0.245
+     ],
+     "toe_z": 0.1198
+    },
+    "Right": {
+     "ankle": [
+      -0.11,
+      0.426,
+      0.3
+     ],
+     "toe_z": 0.1009
+    },
+    "frame": 2,
+    "W": 1.0
+   },
+   {
+    "lean": 29.9,
+    "pelvis_yaw": -12.8,
+    "chest_yaw": 29.1,
+    "twist": 41.9,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 31.76,
+    "hips_z": 0.815,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 47.7
+    },
+    "blade_dir": [
+     0.08,
+     0.17,
+     -0.98
+    ],
+    "blade_tip": [
+     0.45,
+     -0.354,
+     0.043
+    ],
+    "hand_R": [
+     0.3,
+     -0.4,
+     0.98
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": 155.9,
+    "Left": {
+     "ankle": [
+      0.14,
+      -0.38,
+      0.26
+     ],
+     "toe_z": 0.1279
+    },
+    "Right": {
+     "ankle": [
+      -0.11,
+      0.46,
+      0.3
+     ],
+     "toe_z": 0.1115
+    },
+    "frame": 3,
+    "W": 1.0
+   },
+   {
+    "lean": 26.9,
+    "pelvis_yaw": -13.2,
+    "chest_yaw": 29.0,
+    "twist": 42.2,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 29.13,
+    "hips_z": 0.794,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 44.0
+    },
+    "blade_dir": [
+     -0.09,
+     -0.07,
+     -0.99
+    ],
+    "blade_tip": [
+     0.246,
+     -0.625,
+     0.044
+    ],
+    "hand_R": [
+     0.26,
+     -0.44,
+     0.975
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -53.2,
+    "Left": {
+     "ankle": [
+      0.149,
+      -0.427,
+      0.245
+     ],
+     "toe_z": 0.124
+    },
+    "Right": {
+     "ankle": [
+      -0.102,
+      0.379,
+      0.282
+     ],
+     "toe_z": 0.1041
+    },
+    "frame": 4,
+    "W": 1.0
+   },
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -14.5,
+    "chest_yaw": 28.1,
+    "twist": 42.6,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 25.26,
+    "hips_z": 0.755,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 38.6
+    },
+    "blade_dir": [
+     -0.35,
+     -0.34,
+     -0.87
+    ],
+    "blade_tip": [
+     -0.068,
+     -0.924,
+     0.174
+    ],
+    "hand_R": [
+     0.2,
+     -0.48,
+     0.97
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -45.9,
+    "Left": {
+     "ankle": [
+      0.16,
+      -0.47,
+      0.21
+     ],
+     "toe_z": 0.1009
+    },
+    "Right": {
+     "ankle": [
+      -0.09,
+      0.27,
+      0.24
+     ],
+     "toe_z": 0.0765
+    },
+    "frame": 5,
+    "W": 1.0
+   },
+   {
+    "lean": 17.9,
+    "pelvis_yaw": -22.4,
+    "chest_yaw": 20.9,
+    "twist": 43.2,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 16.59,
+    "hips_z": 0.72,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 29.5
+    },
+    "blade_dir": [
+     -0.7,
+     -0.52,
+     -0.48
+    ],
+    "blade_tip": [
+     -0.498,
+     -1.129,
+     0.543
+    ],
+    "hand_R": [
+     0.1,
+     -0.52,
+     0.96
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -53.5,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 6,
+    "W": 1.0
+   },
+   {
+    "lean": 15.1,
+    "pelvis_yaw": -29.8,
+    "chest_yaw": 8.7,
+    "twist": 38.5,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -3.18,
+    "face_yaw": 4.87,
+    "hips_z": 0.747,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 24.9
+    },
+    "blade_dir": [
+     -0.97,
+     -0.15,
+     0.18
+    ],
+    "blade_tip": [
+     -0.965,
+     -0.756,
+     1.103
+    ],
+    "hand_R": [
+     -0.075,
+     -0.475,
+     0.925
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -81.1,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 7,
+    "W": 1.0
+   },
+   {
+    "lean": 12.2,
+    "pelvis_yaw": -37.2,
+    "chest_yaw": -3.8,
+    "twist": 33.5,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -9.76,
+    "face_yaw": -0.2,
+    "hips_z": 0.78,
+    "forearm_twist": {
+     "Left": -19.0,
+     "Right": 20.5
+    },
+    "blade_dir": [
+     -0.68,
+     -0.02,
+     0.73
+    ],
+    "blade_tip": [
+     -0.899,
+     -0.587,
+     1.565
+    ],
+    "hand_R": [
+     -0.25,
+     -0.43,
+     0.89
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -88.5,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 8,
+    "W": 1.0
+   },
+   {
+    "lean": 9.5,
+    "pelvis_yaw": -44.7,
+    "chest_yaw": -17.3,
+    "twist": 27.4,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -21.43,
+    "face_yaw": -0.3,
+    "hips_z": 0.812,
+    "forearm_twist": {
+     "Left": -19.0,
+     "Right": 15.2
+    },
+    "blade_dir": [
+     -0.23,
+     -0.26,
+     0.94
+    ],
+    "blade_tip": [
+     -0.645,
+     -0.562,
+     1.683
+    ],
+    "hand_R": [
+     -0.38,
+     -0.19,
+     0.85
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -41.5,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 9,
+    "W": 1.0
+   },
+   {
+    "lean": 6.5,
+    "pelvis_yaw": -52.1,
+    "chest_yaw": -30.0,
+    "twist": 22.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -33.18,
+    "face_yaw": -0.41,
+    "hips_z": 0.845,
+    "forearm_twist": {
+     "Left": -18.9,
+     "Right": 11.9
+    },
+    "blade_dir": [
+     -0.2,
+     -0.69,
+     0.69
+    ],
+    "blade_tip": [
+     -0.7,
+     -0.699,
+     1.376
+    ],
+    "hand_R": [
+     -0.454,
+     0.033,
+     0.823
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -15.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 10,
+    "W": 0.0
+   }
+  ],
+  "Pelag_AN_Squall2_ReturnBack": [
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -42.3,
+    "chest_yaw": -53.4,
+    "twist": -11.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -63.18,
+    "face_yaw": -1.77,
+    "hips_z": 0.755,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 51.7
+    },
+    "blade_dir": [
+     -0.92,
+     0.07,
+     0.38
+    ],
+    "blade_tip": [
+     -1.401,
+     -0.223,
+     1.135
+    ],
+    "hand_R": [
+     -0.5,
+     -0.17,
+     0.84
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -94.5,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.1,
+      0.28,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 0,
+    "W": 1.0
+   },
+   {
+    "lean": 29.9,
+    "pelvis_yaw": -42.4,
+    "chest_yaw": -44.5,
+    "twist": -2.0,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -58.48,
+    "face_yaw": -0.01,
+    "hips_z": 0.775,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 47.7
+    },
+    "blade_dir": [
+     -0.88,
+     0.23,
+     0.41
+    ],
+    "blade_tip": [
+     -1.44,
+     -0.064,
+     1.166
+    ],
+    "hand_R": [
+     -0.55,
+     -0.17,
+     0.85
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -104.3,
+    "Left": {
+     "ankle": [
+      0.15,
+      -0.36,
+      0.21
+     ],
+     "toe_z": 0.092
+    },
+    "Right": {
+     "ankle": [
+      -0.11,
+      0.36,
+      0.3
+     ],
+     "toe_z": 0.0952
+    },
+    "frame": 1,
+    "W": 1.0
+   },
+   {
+    "lean": 29.9,
+    "pelvis_yaw": -42.4,
+    "chest_yaw": -40.8,
+    "twist": 1.6,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -53.82,
+    "face_yaw": -0.01,
+    "hips_z": 0.8,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 44.6
+    },
+    "blade_dir": [
+     -0.88,
+     0.19,
+     0.43
+    ],
+    "blade_tip": [
+     -1.426,
+     -0.095,
+     1.184
+    ],
+    "hand_R": [
+     -0.538,
+     -0.175,
+     0.857
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -102.3,
+    "Left": {
+     "ankle": [
+      0.143,
+      -0.366,
+      0.245
+     ],
+     "toe_z": 0.1198
+    },
+    "Right": {
+     "ankle": [
+      -0.11,
+      0.426,
+      0.3
+     ],
+     "toe_z": 0.1008
+    },
+    "frame": 2,
+    "W": 1.0
+   },
+   {
+    "lean": 29.9,
+    "pelvis_yaw": -42.4,
+    "chest_yaw": -37.8,
+    "twist": 4.6,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -49.97,
+    "face_yaw": -0.02,
+    "hips_z": 0.815,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 41.7
+    },
+    "blade_dir": [
+     -0.86,
+     0.15,
+     0.49
+    ],
+    "blade_tip": [
+     -1.391,
+     -0.133,
+     1.237
+    ],
+    "hand_R": [
+     -0.52,
+     -0.18,
+     0.86
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -100.1,
+    "Left": {
+     "ankle": [
+      0.14,
+      -0.38,
+      0.26
+     ],
+     "toe_z": 0.128
+    },
+    "Right": {
+     "ankle": [
+      -0.11,
+      0.46,
+      0.3
+     ],
+     "toe_z": 0.1113
+    },
+    "frame": 3,
+    "W": 1.0
+   },
+   {
+    "lean": 26.9,
+    "pelvis_yaw": -43.0,
+    "chest_yaw": -35.7,
+    "twist": 7.3,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -45.98,
+    "face_yaw": 0.02,
+    "hips_z": 0.794,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 38.9
+    },
+    "blade_dir": [
+     -0.79,
+     0.11,
+     0.6
+    ],
+    "blade_tip": [
+     -1.327,
+     -0.16,
+     1.345
+    ],
+    "hand_R": [
+     -0.51,
+     -0.17,
+     0.86
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -98.0,
+    "Left": {
+     "ankle": [
+      0.149,
+      -0.427,
+      0.245
+     ],
+     "toe_z": 0.124
+    },
+    "Right": {
+     "ankle": [
+      -0.102,
+      0.379,
+      0.282
+     ],
+     "toe_z": 0.104
+    },
+    "frame": 4,
+    "W": 1.0
+   },
+   {
+    "lean": 21.9,
+    "pelvis_yaw": -44.3,
+    "chest_yaw": -35.3,
+    "twist": 9.0,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -43.77,
+    "face_yaw": -0.02,
+    "hips_z": 0.755,
+    "forearm_twist": {
+     "Left": -19.2,
+     "Right": 35.6
+    },
+    "blade_dir": [
+     -0.68,
+     0.07,
+     0.73
+    ],
+    "blade_tip": [
+     -1.216,
+     -0.197,
+     1.483
+    ],
+    "hand_R": [
+     -0.5,
+     -0.16,
+     0.86
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -95.5,
+    "Left": {
+     "ankle": [
+      0.16,
+      -0.47,
+      0.21
+     ],
+     "toe_z": 0.1009
+    },
+    "Right": {
+     "ankle": [
+      -0.09,
+      0.27,
+      0.24
+     ],
+     "toe_z": 0.0764
+    },
+    "frame": 5,
+    "W": 1.0
+   },
+   {
+    "lean": 17.9,
+    "pelvis_yaw": -46.2,
+    "chest_yaw": -36.1,
+    "twist": 10.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -43.84,
+    "face_yaw": -0.0,
+    "hips_z": 0.72,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 29.5
+    },
+    "blade_dir": [
+     -0.52,
+     -0.03,
+     0.85
+    ],
+    "blade_tip": [
+     -1.047,
+     -0.29,
+     1.6
+    ],
+    "hand_R": [
+     -0.48,
+     -0.16,
+     0.85
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -87.1,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 6,
+    "W": 1.0
+   },
+   {
+    "lean": 15.0,
+    "pelvis_yaw": -47.7,
+    "chest_yaw": -34.9,
+    "twist": 12.8,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -41.14,
+    "face_yaw": -0.13,
+    "hips_z": 0.747,
+    "forearm_twist": {
+     "Left": -19.1,
+     "Right": 25.0
+    },
+    "blade_dir": [
+     -0.44,
+     -0.19,
+     0.88
+    ],
+    "blade_tip": [
+     -0.964,
+     -0.391,
+     1.607
+    ],
+    "hand_R": [
+     -0.473,
+     -0.112,
+     0.843
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -66.0,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 7,
+    "W": 1.0
+   },
+   {
+    "lean": 12.2,
+    "pelvis_yaw": -49.2,
+    "chest_yaw": -33.5,
+    "twist": 15.7,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -38.49,
+    "face_yaw": -0.21,
+    "hips_z": 0.78,
+    "forearm_twist": {
+     "Left": -19.0,
+     "Right": 20.6
+    },
+    "blade_dir": [
+     -0.36,
+     -0.37,
+     0.85
+    ],
+    "blade_tip": [
+     -0.886,
+     -0.504,
+     1.566
+    ],
+    "hand_R": [
+     -0.467,
+     -0.063,
+     0.836
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -44.1,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 8,
+    "W": 1.0
+   },
+   {
+    "lean": 9.3,
+    "pelvis_yaw": -50.7,
+    "chest_yaw": -31.9,
+    "twist": 18.8,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -35.84,
+    "face_yaw": -0.31,
+    "hips_z": 0.812,
+    "forearm_twist": {
+     "Left": -19.0,
+     "Right": 16.2
+    },
+    "blade_dir": [
+     -0.28,
+     -0.54,
+     0.79
+    ],
+    "blade_tip": [
+     -0.797,
+     -0.61,
+     1.489
+    ],
+    "hand_R": [
+     -0.46,
+     -0.015,
+     0.83
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -27.3,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.004
+    },
+    "frame": 9,
+    "W": 1.0
+   },
+   {
+    "lean": 6.5,
+    "pelvis_yaw": -52.1,
+    "chest_yaw": -30.0,
+    "twist": 22.1,
+    "relP": 9.75,
+    "relP_over_stance": 0.0,
+    "head_relY": -33.18,
+    "face_yaw": -0.41,
+    "hips_z": 0.845,
+    "forearm_twist": {
+     "Left": -18.9,
+     "Right": 11.9
+    },
+    "blade_dir": [
+     -0.2,
+     -0.69,
+     0.69
+    ],
+    "blade_tip": [
+     -0.7,
+     -0.699,
+     1.376
+    ],
+    "hand_R": [
+     -0.454,
+     0.033,
+     0.823
+    ],
+    "arm_in_thigh": {
+     "Left": [
+      0,
+      0,
+      0.0
+     ],
+     "Right": [
+      0,
+      0,
+      0.0
+     ]
+    },
+    "blade_yaw": -15.7,
+    "Left": {
+     "ankle": [
+      0.163,
+      -0.476,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "Right": {
+     "ankle": [
+      -0.085,
+      0.23,
+      0.136
+     ],
+     "toe_z": 0.0039
+    },
+    "frame": 10,
+    "W": 0.0
+   }
+  ]
+ }
+}

@@ -11,7 +11,12 @@ namespace Game.Sim
         public int AbilityExecutionTicks(int ticks, int minimum = 2)
             => TempoTicks(ticks, StatType.AbilitySpeed, minimum);
         public int AbilityCooldownTicks(AbilityBuild build)
-            => build == null ? 0 : TempoTicks(build.CooldownTicks, StatType.CooldownRecovery, 6);
+        {
+            if (build == null) return 0;
+            int ticks = TempoTicks(build.CooldownTicks, StatType.CooldownRecovery, 6);
+            // «Быстрый кувырок» (клятвы, Simulation.Oaths) режет только перезарядку рывка; без клятв — те же тики.
+            return build.DefinitionId == AbilityDefinition.DashId ? OathCooldownTicks(ticks) : ticks;
+        }
         private int TempoTicks(int ticks, StatType stat, int minimum)
         {
             Fix64 bonus = Fix64.Max(Fix64.Zero, Fix64.Min(Fix64.One, Entities.Stats[PlayerId].Get(stat)));
@@ -53,9 +58,9 @@ namespace Game.Sim
             // цепи. Нажатие не проходит и не сбивает начатый удар. Удары и
             // касты на месте — как обычно; начатое до корней доезжает.
             if (AbilityHeldByRoots(slot)) return false;
-            if (build.DefinitionId == AbilityDefinition.WreckId && _wreckSlot == slot && WreckComboOpen) return true;
+            if (build.DefinitionId == AbilityDefinition.WreckId && _wreck.Slot == slot && WreckComboOpen) return true;
             return Tick >= _abilityReadyTick[slot] && CanAffordAbility(build)
-                && (build.DefinitionId != AbilityDefinition.ChainStepId || ValidAbilityTarget(input.AbilityTarget, build));
+                && (!NeedsEnemyTarget(build.DefinitionId) || ValidAbilityTarget(input.AbilityTarget, build));
         }
 
         private InputFrame PrepareCombatInput(in InputFrame raw)
@@ -119,8 +124,9 @@ namespace Game.Sim
             else if (id == AbilityDefinition.CleaveId) { contact = _cleaveImpactTick; end = _cleaveEndTick; }
             else if (id == AbilityDefinition.BlazeId) { contact = _blazeIgniteTick; end = _blazeEndTick; }
             else if (id == AbilityDefinition.WhirlwindId) { contact = _whirlwindImpactTick; end = contact + AbilityExecutionTicks(12, 1); }
-            else if (id == AbilityDefinition.WreckId) { contact = _wreckImpactTick; end = Tick + AbilityExecutionTicks(b.Get(AbilityStatType.DurationTicks).ToInt()); }
-            else if (id == AbilityDefinition.AnchorLeapId) { contact = _leapLaunchTick + AnchorKit.LeapTicks; end = contact + AbilityExecutionTicks(6, 1); }
+            else if (id == AbilityDefinition.WreckId) WreckClockAtCast(out contact, out end);
+            else if (id == AbilityDefinition.AnchorLeapId) AbordageClockAtCast(out contact, out end);
+            else if (id == AbilityDefinition.AnchorThrowId) AnchorThrowClockAtCast(out contact, out end);
             else if (id == AbilityDefinition.ChainStepId) SquallClockAtCast(out contact, out end);
             else if (id == AbilityDefinition.FireFlaskId) { contact = _flaskLandTick; end = contact + AbilityExecutionTicks(6, 1); }
             else if (id == AbilityDefinition.DashId) { contact = Tick + Entities.ForcedTicksLeft[PlayerId]; end = contact; }
@@ -142,8 +148,9 @@ namespace Game.Sim
             PreparedGiftActionCancelled();
             StopAnchorSlam(); StopWreck(); StopCleave(); StopFlask();
             CancelBlazeGesture(); StopWhirlwindChannel();
-            _leapLaunchTick = _leapPunchTick = -1;
             _whirlwindImpactTick = _whirlwindImpactSlot = -1;
+            StopAbordage();
+            StopAnchorThrow();
             StopSquall();
             _mobilitySlot = _backblastTick = -1;
             // Рывок, сорванный новым уходом, кончается здесь же: тело встаёт, неуязвимость снята.

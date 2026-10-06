@@ -1,0 +1,28 @@
+{
+  "anchor_retime_Pelag_AN_WreckA_w6": {
+    "clip": "Pelag_AN_WreckA",
+    "shiftFrames": 1.5,
+    "contactFrame": 6,
+    "ticksToSourceFrames": [
+      0,
+      1.75,
+      3.299,
+      4.5,
+      5.299,
+      5.75,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "contactErrorBefore": 1.98,
+    "contactErrorAfter": 1.615,
+    "note": "tick k plays source frame map[k]; rebuild the clip with it, then re-export the grip and re-bake (DESIGN 3.3)"
+  }
+}

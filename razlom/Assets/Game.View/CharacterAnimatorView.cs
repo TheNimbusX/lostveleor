@@ -310,6 +310,10 @@ namespace Game.View
             _basicComboActive = false;
             ResetSabre();
             ResetDash();
+            ResetSquall();
+            ResetAbordage();
+            ResetAnchorThrow();
+            ResetWreck2();
             _contactPose?.Clear();
             _attackVariant = 0;
             _orvillAttackCount = 0;
@@ -476,6 +480,10 @@ namespace Game.View
             UpdateCleaveAnimation();
             UpdateAnchorSlamAnimation();
             UpdateDashAnimation();
+            UpdateSquallAnimation();
+            UpdateAbordageAnimation();
+            UpdateAnchorThrowAnimation();
+            UpdateWreck2Animation();
             if (_cycloneDriver == null) _cycloneDriver = FindAnyObjectByType<TickDriver>();
             // Старый кувырок (контроллер без Dash_v5): показ кончается вместе с толчком Sim.
             if (RollActive && !_dashDriven && _cycloneDriver != null && _cycloneDriver.Sim != null
@@ -1119,6 +1127,15 @@ namespace Game.View
         {
             if (TryPlayTempoAbility(definitionId)) return;
             if (definitionId != AbilityDefinition.AnchorSlamId) GetComponent<PelagAnchorSlamView>()?.Release();
+            // Шквал v2 (CharacterAnimatorView.Squall): клипы по тикам Sim. Контроллер без
+            // Squall2_* — прежний показ по ChainStepHop ниже.
+            if (definitionId == AbilityDefinition.ChainStepId && TryBeginSquall()) return;
+            // Абордаж v2 (CharacterAnimatorView.Abordage): клипы по тикам Sim. Контроллер без
+            // Abordage2_* — прежний AnchorLeap_v5 ниже.
+            if (definitionId == AbilityDefinition.AnchorLeapId && TryBeginAbordage()) return;
+            // Бросок якоря (CharacterAnimatorView.AnchorThrow): клипы по тикам Sim. Контроллер без
+            // AnchorThrow_* — тело не трогаем (как до навыка).
+            if (definitionId == AbilityDefinition.AnchorThrowId && TryBeginAnchorThrow()) return;
             if (definitionId == AbilityDefinition.CleaveId)
             {
                 if (IsDead || _animator == null) return;
@@ -1321,6 +1338,8 @@ namespace Game.View
         public void PlayChainStepHop(int index, int remaining)
         {
             if (IsDead || _faction != Faction.Wole || _animator == null) return;
+            // Шквал v2 ведёт тело сам (CharacterAnimatorView.Squall); ChainStepHop — для старого контроллера.
+            if (_squallDriven) return;
             SetCombatReady(true);
             _abilityDefinitionId = AbilityDefinition.ChainStepId;
             _leapLocomotion = false;
@@ -1334,6 +1353,7 @@ namespace Game.View
 
         public void FinishChainStep()
         {
+            if (_squallDriven) return;
             if (IsDead || _animator == null || _abilityDefinitionId != AbilityDefinition.ChainStepId
                 || !_abilityPresentationActive || _chainFinishing) return;
             // Если цели закончились раньше, доигрываем выход текущего удара.
@@ -1713,6 +1733,9 @@ namespace Game.View
             _swingReleasing = false;
             _dashDriven = false;
             _dashLegsHoldUntil = 0f;
+            _squallDriven = false;
+            _abordageDriven = false;
+            _wreck2Driven = false;
             if (_animator != null && _lowerBodyLayer >= 0)
                 _animator.SetLayerWeight(_lowerBodyLayer, 0f);
             if (_animator != null && _upperBodyLayer >= 0)

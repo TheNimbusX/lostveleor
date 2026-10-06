@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_WreckLunge_CrestEcho
+  m_Shader: {fileID: 4800000, guid: 244c5d03c632b4d49b976756e391afd1, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _FacetTex:
+        m_Texture: {fileID: 2800000, guid: 895a907c47b33e445a620c6c353da305, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CameraPush: 0.1
+    - _EdgeRag: 0.22
+    - _EdgeTeeth: 0.16
+    - _ErodeBias: 0.02
+    - _ErodeFrom: 0.1
+    - _ErodeGain: 1.6
+    - _ErodeTo: 0.32
+    - _FadeFrom: 0.26
+    - _FadeTo: 0.38
+    - _FlowSpeed: 1.4
+    - _FrontHot: 0.1
+    - _FrontHotSeconds: 0.1
+    - _Glow: 0.12
+    - _Opacity: 1
+    - _OutlinePx: 2.4
+    - _Sheen: 0
+    - _SheenRate: 4.5
+    - _SheenRepeat: 1.6
+    - _SheenWidth: 0.045
+    - _Streaks: 0.45
+    - _TeethCount: 15
+    m_Colors:
+    - _Bands: {r: 0.3, g: 0.68, b: 0.86, a: 0.12}
+    - _Deep: {r: 0.039215688, g: 0.12156863, b: 0.2901961, a: 1}
+    - _FacetScale: {r: 1.4, g: 2.2, b: 0.9, a: 0.8}
+    - _Hot: {r: 0.92, g: 1.06, b: 1.4, a: 1}
+    - _HotShade: {r: 0.5, g: 0.72, b: 1.05, a: 1}
+    - _Light: {r: 0.56078434, g: 0.76862746, b: 1, a: 1}
+    - _Mid: {r: 0.18039216, g: 0.43529412, b: 0.8784314, a: 1}
+    - _Outline: {r: 0.024, g: 0.043, b: 0.133, a: 0.94}
+    - _SliverScale: {r: 0.55, g: 4.5, b: 0.8, a: 1.6}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

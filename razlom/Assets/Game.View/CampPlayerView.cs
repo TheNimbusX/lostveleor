@@ -115,6 +115,7 @@ namespace Game.View
                 var interaction=Tent.GetComponent<CampServiceNpc>()??Tent.gameObject.AddComponent<CampServiceNpc>();
                 interaction.Kind=CampServiceKind.Tent;interaction.Reach=TentReach;interaction.Entrance=_tentEntrance;
             }
+            InstallOathBoard(root);
             gameObject.AddComponent<CampServicesView>().Initialize(this,_driver);
             CampNpcLife.Install(root);
             if (GetComponent<CampGuideView>() == null) gameObject.AddComponent<CampGuideView>();
@@ -399,6 +400,27 @@ namespace Game.View
         }
         internal void StopForService()=>Stop();
         internal void OpenTent(){Stop();_inventory.Open();}
+
+        /// <summary>
+        /// Доска клятв у палатки (06.10): стойка «Доска клятв …» (или узел с «Картой владельца») получает своё взаимодействие —
+        /// открывает палатку на «Клятвах». Сцена и префаб стойки не правятся. Подходить — к лицу карты: у стандартного
+        /// квадрата лицо смотрит в −forward; свой «Подход к доске» под стойкой важнее.
+        /// </summary>
+        static void InstallOathBoard(Transform root)
+        {
+            Transform board = null;
+            foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
+            {
+                bool named = t.name.StartsWith("Доска клятв", System.StringComparison.Ordinal);
+                if (named || (board == null && t.Find("Карта владельца") != null)) { board = t; if (named) break; }
+            }
+            if (board == null) return;
+            if (!board.TryGetComponent(out CampServiceNpc stand)) stand = board.gameObject.AddComponent<CampServiceNpc>();
+            stand.Kind = CampServiceKind.OathBoard; stand.Reach = 1.8f;
+            Transform approach = board.Find("Подход к доске"), map = board.Find("Карта владельца");
+            Vector3 face = map != null ? -map.forward : board.right; face.y = 0f;
+            stand.ApproachOffset = approach != null ? approach.position - board.position : (face.sqrMagnitude > .0001f ? face.normalized : Vector3.back) * 1.1f;
+        }
         public bool ApproachTent()
         {
             if (Tent == null) return false;

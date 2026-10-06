@@ -50,6 +50,10 @@ namespace Game.View
         private Quaternion _cleaveLeftFromRotation, _cleaveRightFromRotation;
         private Quaternion _cleaveLeftToRotation, _cleaveRightToRotation;
         private bool _cleaveSnapshot, _cleaveLeftFirst;
+        // Вход Шквала: поза кадра каста (CharacterAnimatorView.Squall, PelagSquallClipRules.EntryPoseSeconds).
+        private Quaternion[] _squallEntryRotations;
+        private Vector3 _squallEntryHips;
+        private bool _squallEntrySnapshot;
         private static readonly int AttackA = Animator.StringToHash("LowerBody Combat.Lower_Saber_A_v5");
         private static readonly int AttackB = Animator.StringToHash("LowerBody Combat.Lower_Saber_B_v5");
         private static readonly int Run = Animator.StringToHash("Base Layer.Run_v5");
@@ -101,6 +105,37 @@ namespace Game.View
             _cleaveLeftFirst = (_cleaveLeftTo - _cleaveLeftFrom).sqrMagnitude >= (_cleaveRightTo - _cleaveRightFrom).sqrMagnitude;
             _cleaveSnapshot = true;
             _attackPlantWeight = 0f;
+        }
+
+        /// <summary>
+        /// Каст Шквала из стойки покоя: снимок позы, которую сейчас видно (стойка сабли со
+        /// слоями), — до того, как аниматор оценит Load уже без них. Как BeginCleave.
+        /// false — снимать нечего (вид выключен).
+        /// </summary>
+        public bool BeginSquallEntry()
+        {
+            _squallEntrySnapshot = false;
+            if (!enabled || _hips == null) return false;
+            if (_squallEntryRotations == null || _squallEntryRotations.Length != _cleaveBones.Length)
+                _squallEntryRotations = new Quaternion[_cleaveBones.Length];
+            for (int i = 0; i < _cleaveBones.Length; i++)
+                _squallEntryRotations[i] = _cleaveBones[i].localRotation;
+            _squallEntryHips = _hips.localPosition;
+            return _squallEntrySnapshot = true;
+        }
+
+        /// <summary>
+        /// Поза этого кадра входа Шквала: от снимка стойки к позе аниматора, weight 0…1
+        /// (PelagSquallClipRules.EntryPoseWeight). Зовётся из ArenaView (TryGetSquallBody) до
+        /// замера левой лодыжки — корень держит стопу по итоговой позе того же кадра.
+        /// </summary>
+        public void BlendSquallEntry(float weight)
+        {
+            if (!_squallEntrySnapshot) return;
+            if (weight >= 1f) { _squallEntrySnapshot = false; return; }
+            for (int i = 0; i < _cleaveBones.Length; i++)
+                _cleaveBones[i].localRotation = Quaternion.Slerp(_squallEntryRotations[i], _cleaveBones[i].localRotation, weight);
+            _hips.localPosition = Vector3.Lerp(_squallEntryHips, _hips.localPosition, weight);
         }
 
         private Quaternion FootFacing(Leg leg, float angle)
@@ -168,6 +203,8 @@ namespace Game.View
             if (PlantWhirlwind()) return;
             if (_wasWhirlwind) { Release(); _wasWhirlwind = false; }
             if (PlantAttack()) return;
+            if (StepSquallExit()) return;
+            if (PlantDashRun()) return;
             AnimatorStateInfo state = _animator.GetCurrentAnimatorStateInfo(0);
             bool running = state.fullPathHash == Run;
             bool turning = state.fullPathHash == TurnLeft || state.fullPathHash == TurnRight;
@@ -212,6 +249,23 @@ namespace Game.View
             if (_wasTurning) { Release(); _wasTurning = false; }
             Plant(_left, scale, fade, true);
             Plant(_right, scale, fade, true);
+        }
+
+        /// <summary>
+        /// Стык рывок → бег (CharacterAnimatorView.Dash, DashRunLegsWeight): ноги бегут слоем
+        /// восстановления или базовый слой уходит из рывка в бег, а таз ещё у клипа рывка —
+        /// стопы держит та же постановка, что в беге, с весом слоя ног. Без шагов: пыль и звук
+        /// постановки у рывка свои. Дальше, когда бег стал текущим, постановку ведёт ветка бега.
+        /// </summary>
+        private bool PlantDashRun()
+        {
+            float weight = _presentation != null ? _presentation.DashRunLegsWeight : 0f;
+            if (weight <= 0f || (_lowerLayer >= 0 && _animator.GetLayerWeight(_lowerLayer) > 0.05f)) return false;
+            if (_wasTurning) { Release(); _wasTurning = false; }
+            float scale = transform.lossyScale.y / 1.82f;
+            Plant(_left, scale, weight);
+            Plant(_right, scale, weight);
+            return true;
         }
 
         private void AnimateIdle()
@@ -342,6 +396,29 @@ namespace Game.View
             _hips.position += Vector3.ClampMagnitude(correction, 0.65f * scale) * _attackPlantWeight;
             PoseAttackLeg(_left, _attackLeft, _attackLeftRotation, -1f);
             PoseAttackLeg(_right, _attackRight, _attackRightRotation, 1f);
+            return true;
+        }
+
+        /// <summary>
+        /// Конец Шквала в стойку покоя (CharacterAnimatorView.TryGetSquallExitStep): левая стопа
+        /// из стойки серии уходит назад на 0,23 м, правую потом доводит слой стойки сабли.
+        /// Смешивание везло их по земле — здесь они переступают дугой по очереди, как шаги
+        /// Saber Footwork: левая, затем правая (PelagSquallClipRules.ExitSteps), от точки, где
+        /// стояли, к позе смешивания. Пока шагает левая, правая стоит там, где стояла.
+        /// </summary>
+        private bool StepSquallExit()
+        {
+            if (_presentation == null || !_presentation.TryGetSquallExitStep(out float progress,
+                    out Vector3 leftFrom, out bool left, out Vector3 rightFrom, out bool right))
+                return false;
+            PelagSquallClipRules.ExitSteps(progress, out float leftTravel, out float leftLift,
+                out float rightTravel, out float rightLift);
+            float lift = PelagSquallClipRules.ExitStepLift * transform.lossyScale.y / 1.82f;
+            // Шаг кончился — стопа уже в позе смешивания (travel 1), IK не нужен.
+            if (left && leftTravel < 1f)
+                Solve(_left, Vector3.Lerp(leftFrom, _left.Ankle.position, leftTravel) + Vector3.up * (leftLift * lift));
+            if (right && rightTravel < 1f)
+                Solve(_right, Vector3.Lerp(rightFrom, _right.Ankle.position, rightTravel) + Vector3.up * (rightLift * lift));
             return true;
         }
 

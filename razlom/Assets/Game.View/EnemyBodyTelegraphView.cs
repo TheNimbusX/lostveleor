@@ -25,10 +25,11 @@ namespace Game.View
     ///   • Вендиго, круг когтей (EnemyActionKind.WendigoSweep) — угли на обеих
     ///     лапах за замах; сам круг рисует вид Вендиго (поток G);
     ///   • Хозяин Чащи, лапа (EnemyActionKind.ThicketPaw) — уголь на когтях бьющей
-    ///     лапы (leg_front_R_toe / leg_front_L_toe; Amount события — номер лапы:
-    ///     0 правая, 1 левая второй двойной фазы 3); полос когтей нет — след по дуге
-    ///     удара рисует ThicketMasterCombatView (дуга CFXR), в масштабе тела 4,14 м
-    ///     (серия П/Л/П темпа 02.10: Amount — номер удара, чётный — правая).
+    ///     лапы (leg_front_R_toe / leg_front_L_toe; Amount события — номер удара
+    ///     серии П/Л/П: чётный — правая), свой на каждый удар; полос когтей нет —
+    ///     ленты когтей рисует ThicketMasterCombatView, в масштабе тела 4,14 м. С
+    ///     02.10 (вечер) у лапы есть и метка на земле: сектор от бьющего плеча
+    ///     (SharedView) — его рисует GroundTelegraphView, уголь — поверх.
     ///
     /// Секторы Хранителя и Расщепеня в Sim остаются (попадание считается по
     /// ним), но на земле не рисуются: замах открывает их без
@@ -397,8 +398,9 @@ namespace Game.View
             for (int i = 0; i < _signs.Length; i++)
             {
                 Ember known = _signs[i];
+                // Лапа Хозяина Чащи: свой уголь на каждый удар серии (П/Л/П — третий удар той же правой).
                 if (known.Entity == id && known.Sign == sign && known.Serial == serial
-                    && ((sign != Sign.Sweep && sign != Sign.Paw) || known.Hand == hand)) return;
+                    && (sign == Sign.Paw ? known.Stage == stage : sign != Sign.Sweep || known.Hand == hand)) return;
             }
             Ember e = FreeSign();
             e.Entity = id; e.Kind = kind; e.Sign = sign; e.Serial = serial;
@@ -843,7 +845,10 @@ namespace Game.View
                 case Sign.Tusk: ember = 1.1f; slash = 1f; return;
                 case Sign.Sweep: ember = 1.05f; slash = 1f; return;
                 // Хозяин Чащи 4,14 м (×1,15, 02.10) — вдвое выше Хранителя, сектор лапы 4,14 м против его удара.
-                case Sign.Paw: ember = 2.07f; slash = 2.19f; return;
+                // Ревью 02.10 (вечер): «обозначить, чтоб лапа была видимее и читаемее» — уголь на когтях
+                // крупнее роста (×2,6 против ×2,07); главный знак удара — красный сектор на земле от плеча
+                // (метка Sim SharedView, рисует GroundTelegraphView).
+                case Sign.Paw: ember = 2.6f; slash = 2.19f; return;
                 default: ember = 1f; slash = 1f; return;
             }
         }

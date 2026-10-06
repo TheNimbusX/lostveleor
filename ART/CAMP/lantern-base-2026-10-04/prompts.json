@@ -1,0 +1,55 @@
+{
+  "created": "2026-10-04",
+  "mode": "built-in image_gen",
+  "use_case": "precise-object-edit",
+  "transparent_background": true,
+  "original_lantern": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\standing-lantern-2026-10-04-v2\\01-camp-lantern-post-tall.png",
+  "design": "Compact L-shaped low guard with three wooden posts and two rail sections, plus four-stone stabilizing collar. Open front and empty socket for the existing post shoe. No floor or terrain.",
+  "suggested_model_scale": {
+    "overall_footprint_m": [
+      0.85,
+      0.85
+    ],
+    "guard_height_m": [
+      0.45,
+      0.5
+    ],
+    "stone_collar_outer_width_m": [
+      0.5,
+      0.55
+    ],
+    "stone_collar_height_m": 0.15,
+    "socket_width_m": [
+      0.32,
+      0.35
+    ]
+  },
+  "proportion_invariant": "Tall slender lamp post around3.2m; existing tiny hanging lantern unchanged, approximately9:1 upright/lantern total height.",
+  "usage": "Full view shows assembly and scale relationship. Base-only view can be used for separate 3D reconstruction and attachment to the owner's existing lantern. Model scale and fit must be applied after reconstruction.",
+  "assets": [
+    {
+      "id": "01-lantern-with-base",
+      "title": "Фонарь с основанием",
+      "file": "01-lantern-with-base.png",
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-df30e7b0-d6a4-46dd-93ed-0311e8a51656.png",
+      "path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\lantern-base-2026-10-04\\01-lantern-with-base.png",
+      "image_inputs": [
+        "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\standing-lantern-2026-10-04-v2\\01-camp-lantern-post-tall.png",
+        "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\concepts\\ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\concepts\\c556ed5b-2b5d-4c44-a7d6-9d7765c2b070.png"
+      ],
+      "prompt": "Use case: precise-object-edit.\nEdit target: Image 1, the CORRECTED tall slender lantern post. Images 2 and 3 are supporting original painterly fantasy STYLE references for chunky bevelled timber, iron joints and broad brush-painted material planes.\nPrimary request: Add a small believable base and a SHORT LOW WOODEN GUARD FENCE at the BOTTOM of this existing tall lantern post. Keep the corrected tall-post / small-lamp proportions exactly. This is an edit of the bottom area only.\nINVARIANTS: preserve the tall slender 3.2-metre post, its thickness, existing upper arm, brace, short hook, small amber hanging lamp, and their relative scale. The whole post remains at least nine times taller than the complete small lantern. Do NOT shorten the post, thicken it, enlarge the lamp, lengthen the hook, move the light down, change its top architecture, or redesign the whole prop. Preserve the original hand-painted style and transparent background.\nNEW BOTTOM DESIGN:\n- A compact base arrangement occupies only approximately 85 by 85 centimetres overall. It must read as a small local guard around this post, not a large yard or fenced enclosure.\n- Exactly TWO short wooden fence sections meet at a right angle on the FAR BACK and FAR SIDE of the post relative to the camera, forming a simple L-shaped low guard. The front remains fully OPEN so the foot of the tall post is visible.\n- Exactly THREE little square timber fence posts, only 45 to 50 centimetres tall, with chunky bevelled tops. Each short fence section has TWO sturdy horizontal timber rails with broad open gaps. Rails terminate cleanly at the little posts, no long protruding ends, no diagonal X fill, no spikes, ropes, flags, ornament or picket wall. Simple plain dark-iron corner straps and just a few large rivets if needed.\n- Place the tall lamp upright just inside the L's corner, grounded at the same level as the small fence posts. The low guard visibly belongs to its base but never hides the lamp post behind a solid wooden panel.\n- Around the existing small metal foot add a low stabilizing collar made from FOUR broad roughly squared grey-brown stone blocks. This collar is only about 15 centimetres tall and 50 centimetres across, hugging the metal foot, with the upright still visible down to its metal shoe. The collar is structural, not a pile of loose rocks or ground patch.\n- No continuous floor, no wooden deck, no slab beneath everything, no dirt, grass or plants. The bottom assembly consists only of the low local timber guard, low stone collar and original post foot. Flat bottom contacts are legible for game placement.\nSTYLE: exactly the painterly stylized fantasy game-prop language of the references: broad visible colour brush strokes, hand-carved large facets, thick bevels, warm honey-brown timber, plain dull dark iron, stone formed from a few big muted grey-brown painted planes. No photographic wood grain, cloth weave, PBR, microtexture, realistic stone noise or glass glare.\nCAMERA/COMPOSITION: preserve the original high orthographic-like front three-quarter game view. Show ONE complete assembled tall lamp WITH the new compact bottom guard, entire post and every base edge inside the canvas. Keep the lamp SMALL and HIGH and the pole LONG and SLENDER. Roomy transparent margins. No alternate view, inset, diagram, split panel, caption or dimensions. Do not zoom only onto the base.\nPRESENTATION: neutral even visibility and broad painted form shading, no directional sunset or ground shadow. The little hanging lamp alone has warm amber light inside, no external glow or light pool.\nBACKGROUND: true transparent alpha around the entire object and through all fence gaps. No opaque black/white/coloured backdrop, no checkerboard, environment, terrain, horizon or floor.\nHard exclusions: second lamp, large fence, massive pedestal, giant light, squat post, flags, banners, heraldry, symbols, labels, logos, text, watermark, people, animals, weapons, plants, floor patches, smoke and sparks."
+    },
+    {
+      "id": "02-base-and-guard-only",
+      "title": "Основание с оградкой отдельно",
+      "file": "02-base-and-guard-only.png",
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-855c5040-1994-497e-a7b1-16e492ad1add.png",
+      "path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\lantern-base-2026-10-04\\02-base-and-guard-only.png",
+      "image_inputs": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-df30e7b0-d6a4-46dd-93ed-0311e8a51656.png"
+      ],
+      "prompt": "Use case: precise-object-edit.\nEdit target: the supplied corrected tall lamp WITH its small low guard and stone collar.\nPrimary request: Create a standalone transparent reference of ONLY the BOTTOM BASE ASSEMBLY so the owner can generate it separately in Tripo and attach their already-generated lantern post.\nKEEP EXACTLY: the three short bevelled wooden guard posts and their two short perpendicular fence sections, two chunky horizontal rails per section, warm honey-brown hand-painted timber, simple dull iron bands and large plain rivets, and the low compact collar of four broad squared grey-brown stones. Preserve the same relative proportions, L-shaped arrangement, material colours, broad brush strokes, carved facets and simple metal construction from the supplied edit target. Do not redesign the low fence.\nREMOVE: the entire tall lantern upright, its metal foot/shoe, all its upper iron collars, crossarm, diagonal brace, hook, hanging light, candle and glow. Do not leave any tall wooden stump, miniature post or lamp behind.\nThe low stone collar now has a CLEAR EMPTY SQUARE SOCKET at its centre, roughly 32 to 35 centimetres wide, so the separate lantern post's existing metal foot can be placed into it later. Show the empty centre from above. The stone ring is about 50 to 55 centimetres across and 15 centimetres tall. The low guard remains on the far back and far side of this socket with its front edge open. Overall footprint about 85 by 85 centimetres; guard posts about 45 to 50 centimetres tall. Socket and guard stand on the same bottom plane.\nThis is ONE compact foundation-and-low-fence prop assembly. Exactly three low timber posts, exactly two perpendicular short fence sections, and one simple low stone collar. No additional fences, walls, isolated spare components, floor slab or pedestal. No tiny loose rocks.\nStyle: exactly the source's HAND-PAINTED stylized fantasy game prop rendering: broad visible painted colour planes, large thick bevels, chunky slightly uneven timber, a few big wood-grain brush strokes, plain dark iron and broad muted stone facets. NO photorealism, PBR, realistic wood pores, microtexture, scratch noise, polished reflections or heavy black comic outline.\nCamera/framing: same high front three-quarter angle around 45 to 48 degrees above horizontal, now framed CLOSELY around the complete bottom assembly so it fills most of the square image. All three short posts, every rail and every stone edge visible, generous transparent margins, no crop. One view only, no collage, diagram, text, measurements or labels.\nPresentation: neutral even visibility with simplified painted form shading only. No light sources, warm glow, external bloom, cast shadow or lighting effect.\nBackground: true transparent alpha around and through every fence gap and the empty socket. No opaque black/white/coloured backdrop, checkerboard, floor, ground patch, dirt, grass, plants, horizon, scene, platform or environment.\nHard exclusions: tall lantern post, lamp, flame, hooks above the guard, placeholder pole, decorative plants, flags, banners, heraldry, signs, symbols, runes, logos, labels, text, watermark, characters, animals, weapons, extra stones scattered outside the collar and any extra views."
+    }
+  ]
+}

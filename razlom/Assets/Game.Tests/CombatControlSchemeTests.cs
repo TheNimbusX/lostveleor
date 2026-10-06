@@ -87,13 +87,14 @@ namespace Game.Tests
         }
 
         /// <summary>
-        /// «Отошёл — ударил» (серия сабли, 01.10): удар уходит туда, куда
+        /// «Отошёл — ударил» (серия сабли, 01.10): первый удар уходит туда, куда
         /// показывает курсор, а не на ближайшего. Враг за спиной, курсор от
-        /// него — зажатая атака бьёт пустоту и его не задевает; курсор на нём —
-        /// корпус встаёт к нему сразу, без доворота по 20° за тик.
+        /// него — первый удар бьёт пустоту и его не задевает; курсор на нём —
+        /// корпус встаёт к нему сразу, без доворота по 20° за тик. Следующие
+        /// удары зажатой ЛКМ цепляются к ближайшему (владелец 02.10) и достают его.
         /// </summary>
         [Test]
-        public void HeldAttackSwingsWhereTheCursorPoints_NotAtTheNearestBehind()
+        public void HeldAttack_FirstSwingGoesWhereTheCursorPoints_ThenClingsToTheNearestBehind()
         {
             Simulation sim = ArenaWithDummy(
                 new FixVec2(Fix64.FromInt(2), Fix64.Zero), out int enemy);
@@ -107,10 +108,16 @@ namespace Game.Tests
             };
 
             int before = sim.Entities.Health[enemy];
-            for (int i = 0; i < 60; i++) sim.Step(in away);
+            for (int i = 0; i < Simulation.SabreBaseCycleTicks(0); i++) sim.Step(in away);
 
             Assert.AreEqual(before, sim.Entities.Health[enemy],
-                "курсор от врага: серия бьёт туда, куда показали, и цель под курсором не подменяет направление");
+                "курсор от врага: первый удар бьёт туда, куда показали, и цель под курсором не подменяет направление");
+            Assert.AreEqual(-1, sim.SabreStickTarget);
+
+            for (int i = Simulation.SabreBaseCycleTicks(0); i < 60; i++) sim.Step(in away);
+
+            Assert.AreEqual(enemy, sim.SabreStickTarget, "удержание прицепилось к врагу за спиной");
+            Assert.Less(sim.Entities.Health[enemy], before, "следующие удары зажатой ЛКМ достают его");
         }
 
         /// <summary>
@@ -147,11 +154,13 @@ namespace Game.Tests
         }
 
         /// <summary>
-        /// Прямое управление (стик): удержание атаки бьёт по прицелу, а враг за
-        /// спиной не перехватывает взмах. Это другой режим, чем доворот ЛКМ выше.
+        /// Прямое управление (WASD, стик): удержание атаки бьёт по прицелу и без
+        /// цели, а враг за спиной не перехватывает первый взмах. Следующие удары
+        /// удержания цепляются к ближайшему — как и при ходьбе приказом ПКМ
+        /// (владелец 02.10: «при зажатой лкм … чтоб цеплялся к ближайшему»).
         /// </summary>
         [Test]
-        public void DirectAimDoesNotSilenceAttackForEnemyBehindCursor()
+        public void DirectAim_FirstHeldSwingFollowsTheAim_ThenClingsToTheEnemyBehind()
         {
             Simulation sim = ArenaWithDummy(
                 new FixVec2(Fix64.FromInt(-2), Fix64.Zero), out int enemy);
@@ -160,7 +169,7 @@ namespace Game.Tests
             input.Flags = (byte)(InputFlags.DirectMovement | InputFlags.Attack);
             input.Aim = new FixVec2(Fix64.FromInt(8), Fix64.Zero);
             int emptySwings = 0;
-            for (int tick = 0; tick < 45; tick++)
+            for (int tick = 0; tick < Simulation.SabreBaseCycleTicks(0); tick++)
             {
                 sim.Step(in input);
                 foreach (SimEvent e in sim.Events)
@@ -168,7 +177,11 @@ namespace Game.Tests
                         emptySwings++;
             }
             Assert.Greater(emptySwings, 0, "Удержание атаки отвечает взмахом даже без цели по направлению прицела.");
-            Assert.AreEqual(5000, sim.Entities.Health[enemy], "Враг за спиной не перехватывает прямое прицеливание.");
+            Assert.AreEqual(5000, sim.Entities.Health[enemy], "Враг за спиной не перехватывает первый взмах по прицелу.");
+
+            for (int tick = Simulation.SabreBaseCycleTicks(0); tick < 45; tick++) sim.Step(in input);
+            Assert.AreEqual(enemy, sim.SabreStickTarget, "удержание прицепилось к врагу за спиной");
+            Assert.Less(sim.Entities.Health[enemy], 5000, "Следующие удары удержания достают его.");
         }
     }
 }

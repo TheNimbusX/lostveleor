@@ -46,6 +46,7 @@ namespace Game.View
             if (definitionId == AbilityDefinition.DashId) return "Icon_Dash";
             if (definitionId == AbilityDefinition.WhirlwindId) return "Icon_Whirlwind";
             if (definitionId == AbilityDefinition.AnchorLeapId) return "Icon_AnchorLeap";
+            if (definitionId == AbilityDefinition.AnchorThrowId) return "Icon_AnchorThrow";
             if (definitionId == AbilityDefinition.ChainStepId) return "Icon_Squall";
             if (definitionId == AbilityDefinition.BlazeId) return "Icon_Blaze";
             return null;
@@ -60,6 +61,18 @@ namespace Game.View
                 case PelagForm.WhirlwindMaelstrom: return "Maelstrom";
                 case PelagForm.WhirlwindFoamWaves: return "FoamWaves";
                 case PelagForm.WhirlwindOnTheMove: return "OnTheMove";
+                case PelagForm.SquallHunt: return "Hunt";
+                case PelagForm.SquallFoamTrail: return "FoamTrail";
+                case PelagForm.SquallElusive: return "Elusive";
+                case PelagForm.AbordageQuake: return "Quake";
+                case PelagForm.AbordageGeyser: return "Geyser";
+                case PelagForm.AbordageBreach: return "Breach";
+                case PelagForm.WreckBreakwater: return "Breakwater";
+                case PelagForm.WreckNinthWave: return "NinthWave";
+                case PelagForm.WreckGhostAnchor: return "Shell";   // файл иконки пока прежний (Icon_Wreck_Shell): «Якорная броня» → Призрачный якорь 06.10
+                case PelagForm.AnchorThrowNet: return "Net";
+                case PelagForm.AnchorThrowFan: return "Fan";
+                case PelagForm.AnchorThrowHarpoon: return "Harpoon";
                 case PelagForm.None: return null;
                 // Номер формы без своей строки — всё равно отдельный файл: две формы не делят одну картинку.
                 default: return "Form" + ((int)form).ToString(System.Globalization.CultureInfo.InvariantCulture);

@@ -16,6 +16,10 @@ namespace Game.Sim
     /// новый удар начался не позже SabreChainResetTicks после конца прошлого
     /// удара или действия, которое его прервало; иначе — снова первый.
     ///
+    /// Клик (и первый удар удержания) бьёт в курсор. Каждый следующий удар
+    /// зажатой ЛКМ цепляется к ближайшему врагу (владелец 02.10, SabreStickRadius):
+    /// захваченный держится, пока жив и рядом; нет никого — снова курсор.
+    ///
     /// Урон идёт обычным путём автоатаки (ApplyAttack): крит, «Верный удар»,
     /// «Раскол брони», масло, артефакты, дары лагеря и огонь «Ладно смазал»
     /// работают как работали. Убийство серией — basicAttackKill, как раньше.
@@ -69,6 +73,20 @@ namespace Game.Sim
         /// <summary>Серия живёт столько тиков после конца удара или прервавшего действия (0,33 с).</summary>
         public const int SabreChainResetTicks = 10;
 
+        /// <summary>
+        /// Владелец 02.10: «при зажатой лкм бьет в сторону ближайшего врага
+        /// обычной атакой… чтоб цеплялся к ближайшему». Удар удержания (не
+        /// первый — тот бьёт в курсор) ищет ближайшего живого врага в этом
+        /// радиусе от центра героя; Хозяин Чащи — по корпусу.
+        /// </summary>
+        public static readonly Fix64 SabreStickRadius = Fix64.FromInt(5);
+
+        /// <summary>Захваченный враг держится до SabreStickRadius + 1 м: на краю захват не дрожит.</summary>
+        public static readonly Fix64 SabreStickKeepSlack = Fix64.One;
+
+        /// <summary>Другой враг перехватывает захват, только если ближе захваченного больше чем на 0,75 м.</summary>
+        public static readonly Fix64 SabreStickSwitchMargin = Fix64.Ratio(3, 4);
+
         // Урон от стата урона: на эталонном герое (54) 45 / 45 / 90 — Хранитель
         // первой арены (270) умирает от пятого удара, «5–6 обычных» владельца.
         private static readonly Fix64 SabreLightScale = Fix64.Ratio(5, 6);
@@ -86,6 +104,11 @@ namespace Game.Sim
         private int _sabreChainUntil = -1;
         private int _sabrePressUntil = -1;
         private FixVec2 _sabrePressAim;
+        // Зажатая ЛКМ: удар этого удержания уже был (следующие цепляются к
+        // врагу) и захваченный враг (−1 — никого). Отпущенная ЛКМ, новый клик,
+        // оглушение, смерть и ResetSabre сбрасывают оба.
+        private bool _sabreHoldSwung;
+        private int _sabreStickTarget = -1;
         private readonly int[] _sabreTargets;
 
         /// <summary>Текущий или последний удар серии. Для представления и тестов.</summary>
@@ -93,6 +116,9 @@ namespace Game.Sim
 
         /// <summary>Каким будет следующий удар, если начать его сейчас: 0, 1 или 2.</summary>
         public int SabreNextHit => Tick <= _sabreChainUntil ? _sabreNextHit : 0;
+
+        /// <summary>Враг, к которому прицепилась зажатая ЛКМ, или −1. Для представления и тестов.</summary>
+        public int SabreStickTarget => _sabreStickTarget;
 
         private bool SabreOn => !_pelagBasicComboEnabled;
 
@@ -112,8 +138,8 @@ namespace Game.Sim
 
         // Удержание ЛКМ — не намерение оборвать Вихрь или Крушение: удар
         // начинается после них, а не вместо их хвоста.
-        // Шквал держит саблю, пока держит героя (Simulation.Squall): до хвоста выхода.
-        private bool SabreBlockedByAbility => WhirlwindChanneling || _wreckSlot >= 0 || SquallHoldsHero
+        // Шквал держит саблю, пока держит героя (Simulation.Squall): до хвоста выхода. Абордаж — так же.
+        private bool SabreBlockedByAbility => WhirlwindChanneling || _wreckSlot >= 0 || SquallHoldsHero || AbordageHoldsHero || AnchorThrowHoldsHero
             || _playerAction.ActiveAt(Tick) && _playerAction.DefinitionId == AbilityDefinition.WhirlwindId;
 
         /// <summary>Каждый тик до разбора ввода: оглушение и смерть сбрасывают серию, старое нажатие гаснет.</summary>
@@ -136,6 +162,9 @@ namespace Game.Sim
         private void PrimeSabreSwing(in InputFrame input)
         {
             if (!SabreOn || !Entities.Alive[PlayerId] || Statuses.IsStunned(PlayerId, Tick)) return;
+            bool held = input.Has(InputFlags.Attack);
+            // Отпущенная ЛКМ или новый клик — удержание кончилось: захват отпускается.
+            if (!held || input.Has(InputFlags.AttackPressed)) ClearSabreStick();
             if (input.Has(InputFlags.AttackPressed))
             {
                 _sabrePressAim = input.Aim;
@@ -144,7 +173,7 @@ namespace Game.Sim
                 _sabrePressUntil = until;
             }
             bool pressed = _sabrePressUntil >= Tick;
-            if (!pressed && !input.Has(InputFlags.Attack)) return;
+            if (!pressed && !held) return;
 
             // Явно нажатая способность сильнее серии в этот же тик; Лик Пустоты — тоже.
             if (input.AbilityMask != 0) return;
@@ -153,7 +182,12 @@ namespace Game.Sim
             if (_sabre.ActiveAt(Tick) || !_playerAction.CanChainAt(Tick)
                 || Entities.ForcedTicksLeft[PlayerId] > 0 || SabreBlockedByAbility || VoidPhased) return;
 
-            FixVec2 aim = pressed ? _sabrePressAim : input.Aim;
+            // Клик бьёт туда, куда показал игрок, первый удар удержания — тоже;
+            // следующие удары удержания цепляются к ближайшему врагу.
+            FixVec2 aim = pressed ? _sabrePressAim
+                : _sabreHoldSwung ? SabreStickAim(input.Aim)
+                : input.Aim;
+            _sabreHoldSwung = held;
             ClearSabrePress();
             FixVec2 position = Entities.Position[PlayerId];
             FixVec2 direction = aim - position;
@@ -193,6 +227,59 @@ namespace Game.Sim
             Entities.Facing[PlayerId] = direction;
             PreparedGiftOrdinaryAttackStarted();
             _events.Add(SimEvent.Attack(PlayerId, -1, position, hit));
+        }
+
+        /// <summary>
+        /// Прицел удара удержания: захваченный враг, пока он жив, враждебен и
+        /// не дальше SabreStickRadius + SabreStickKeepSlack, — если никто другой
+        /// не ближе его больше чем на SabreStickSwitchMargin; иначе ближайший в
+        /// SabreStickRadius (ничья — младший индекс); никого — курсор.
+        /// Цель — как у Шквала (SquallTargetValid): живой враг, не Хозяин Чащи
+        /// в нырке; учебные мишени лагеря — обычные цели.
+        /// </summary>
+        private FixVec2 SabreStickAim(FixVec2 cursor)
+        {
+            FixVec2 hero = Entities.Position[PlayerId];
+            int nearest = -1;
+            Fix64 nearestDistance = Fix64.Zero;
+            for (int id = PlayerId + 1; id < Entities.Count; id++)
+            {
+                if (!SquallTargetValid(id)) continue;
+                Fix64 distance = SabreStickDistance(id, hero);
+                if (distance > SabreStickRadius) continue;
+                if (nearest < 0 || distance < nearestDistance)
+                {
+                    nearest = id;
+                    nearestDistance = distance;
+                }
+            }
+
+            int locked = _sabreStickTarget;
+            if (locked >= 0 && locked != nearest && SquallTargetValid(locked))
+            {
+                Fix64 lockedDistance = SabreStickDistance(locked, hero);
+                if (lockedDistance <= SabreStickRadius + SabreStickKeepSlack
+                    && (nearest < 0 || nearestDistance + SabreStickSwitchMargin >= lockedDistance))
+                    nearest = locked;
+            }
+            _sabreStickTarget = nearest;
+            return nearest >= 0 ? Entities.Position[nearest] : cursor;
+        }
+
+        /// <summary>
+        /// Дальность захвата: от центра героя до центра врага. Хозяин Чащи — по
+        /// корпусу, как цель способности (ThicketHullWithin): зазор до корпуса
+        /// плюс его тело 0,95, если так ближе.
+        /// </summary>
+        private Fix64 SabreStickDistance(int id, FixVec2 hero)
+        {
+            Fix64 distance = FixVec2.Distance(hero, Entities.Position[id]);
+            if (_thicketMemory != null && ThicketHullActive(id))
+            {
+                Fix64 hull = ThicketHullGap(id, hero) + EnemyArchetypes.ThicketMasterBodyRadius;
+                if (hull < distance) distance = hull;
+            }
+            return distance;
         }
 
         /// <summary>Фаза удара при нынешней скорости атаки: база × 3 / скорость, не короче двух тиков.</summary>
@@ -341,6 +428,12 @@ namespace Game.Sim
             _sabrePressAim = FixVec2.Zero;
         }
 
+        private void ClearSabreStick()
+        {
+            _sabreHoldSwung = false;
+            _sabreStickTarget = -1;
+        }
+
         /// <summary>Сброс серии: смерть, оглушение, новая расстановка. Номер удара в сцене не переиспользуется.</summary>
         private void ResetSabre(bool preserveSerial = false)
         {
@@ -349,6 +442,7 @@ namespace Game.Sim
             _sabreNextHit = 0;
             _sabreChainUntil = -1;
             ClearSabrePress();
+            ClearSabreStick();
         }
 
         private void HashSabreCombo(ref ulong hash)
@@ -362,6 +456,13 @@ namespace Game.Sim
             Hashing.Mix(ref hash, _sabrePressUntil);
             Hashing.Mix(ref hash, _sabrePressAim.X);
             Hashing.Mix(ref hash, _sabrePressAim.Y);
+            // Захват удержания — только пока он есть: без зажатой ЛКМ хеш прежний.
+            if (_sabreHoldSwung || _sabreStickTarget >= 0)
+            {
+                Hashing.Mix(ref hash, 0x5354434B);   // "STCK"
+                Hashing.Mix(ref hash, _sabreHoldSwung ? 1 : 0);
+                Hashing.Mix(ref hash, _sabreStickTarget);
+            }
         }
     }
 }

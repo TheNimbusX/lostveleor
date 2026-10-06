@@ -1,0 +1,81 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!319 &31900000
+AvatarMask:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ThicketMaster_PawTurnLegs_R
+  m_Mask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+  m_Elements:
+  - m_Path: 
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/FacingGuide
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/leg_hind_L_upper
+    m_Weight: 1
+  - m_Path: ARM_ThicketMaster/root/hips/leg_hind_L_upper/leg_hind_L_lower
+    m_Weight: 1
+  - m_Path: ARM_ThicketMaster/root/hips/leg_hind_L_upper/leg_hind_L_lower/leg_hind_L_foot
+    m_Weight: 1
+  - m_Path: ARM_ThicketMaster/root/hips/leg_hind_R_upper
+    m_Weight: 1
+  - m_Path: ARM_ThicketMaster/root/hips/leg_hind_R_upper/leg_hind_R_lower
+    m_Weight: 1
+  - m_Path: ARM_ThicketMaster/root/hips/leg_hind_R_upper/leg_hind_R_lower/leg_hind_R_foot
+    m_Weight: 1
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/bush
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/leg_front_L_upper
+    m_Weight: 1
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/leg_front_L_upper/leg_front_L_lower
+    m_Weight: 1
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/leg_front_L_upper/leg_front_L_lower/leg_front_L_paw
+    m_Weight: 1
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/leg_front_L_upper/leg_front_L_lower/leg_front_L_paw/leg_front_L_toe
+    m_Weight: 1
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/leg_front_R_upper
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/leg_front_R_upper/leg_front_R_lower
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/leg_front_R_upper/leg_front_R_lower/leg_front_R_paw
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/leg_front_R_upper/leg_front_R_lower/leg_front_R_paw/leg_front_R_toe
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/neck_01
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/neck_01/neck_02
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/neck_01/neck_02/head
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/neck_01/neck_02/head/crown_L
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/spine_01/spine_02/spine_03/chest/neck_01/neck_02/head/crown_R
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/tail_01
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/tail_01/tail_02
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/tail_01/tail_02/tail_03
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/tail_01/tail_02/tail_03/tail_04
+    m_Weight: 0
+  - m_Path: ARM_ThicketMaster/root/hips/tail_01/tail_02/tail_03/tail_04/tail_05
+    m_Weight: 0
+  - m_Path: SM_ThicketMaster_LOD0
+    m_Weight: 0

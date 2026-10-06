@@ -13,8 +13,12 @@ namespace Game.View
         CampTentView _tent;
         readonly CampTentCell[] _tentBag=new CampTentCell[48];
         CampAtlasEntry[] _atlas;
+        // «Атлас ли сейчас»: его читает CampWalkCapture отражением; источник правды — _page (CampInventoryView.Oaths).
         bool _atlasPage;
         int _hoverIndex=-1; bool _hoverWorn;
+        // Атлас 3×4 (06.10): карточка справа показывает наведённое место, без наведения — выбранное кликом.
+        int _atlasPicked, _atlasHover=-1;
+        bool RoundAtlas=>_tent!=null&&_tent.AtlasSeals!=null&&_tent.AtlasSeals.Length>0&&_tent.AtlasSeals[0]!=null;
 
         /// <summary>Порядок строк листа героя; совпадает с подписями в CampTentBuilder.</summary>
         static readonly StatType[] StatRows=
@@ -40,8 +44,9 @@ namespace Game.View
                 int tab=f,filter=f-1;
                 if(_tent.Filters[f]!=null)_tent.Filters[f].onClick.AddListener(()=>{_filter=filter;UiSound.Play(UiSoundEvent.Tab);_tent.ShowFilter(tab);Refresh();});
             }
-            if(_tent.BagTab!=null)_tent.BagTab.onClick.AddListener(()=>ShowAtlas(false));
-            if(_tent.AtlasTab!=null)_tent.AtlasTab.onClick.AddListener(()=>ShowAtlas(true));
+            if(_tent.BagTab!=null)_tent.BagTab.onClick.AddListener(()=>ShowPage(TentPage.Bag));
+            if(_tent.AtlasTab!=null)_tent.AtlasTab.onClick.AddListener(()=>ShowPage(TentPage.Atlas));
+            BuildOaths();
             for(int i=0;i<_tent.Worn.Length&&i<4;i++)
             {
                 var cell=_tent.Worn[i];if(cell==null)continue;
@@ -74,13 +79,22 @@ namespace Game.View
                 if(tex!=null)_potionSprites[i]=Sprite.Create(tex,new Rect(0,0,tex.width,tex.height),new Vector2(.5f,.5f),100);
                 if(_tent.PotionIcons[i]!=null)_tent.PotionIcons[i].sprite=_potionSprites[i];
             }
-            int entries=System.Math.Min(16,ItemTexts.Count);
+            // Атлас (06.10) — только артефакты набора акта I; основ в нём больше нет.
+            int entries=RunArtifacts.Count;
             _atlas=new CampAtlasEntry[entries];
-            if(_tent.AtlasTemplate!=null&&_tent.AtlasGrid!=null)
+            // Атлас 3×4 (v103): места собраны в префабе, клонов нет — только подписка. Иначе — прежние клоны ячеек.
+            if(RoundAtlas)
+                foreach(var seal in _tent.AtlasSeals)
+                {
+                    if(seal==null)continue;
+                    seal.Hovered=(s,on)=>HoverAtlas(s.Index,on);
+                    seal.Clicked=(s,right)=>{if(!right){_atlasPicked=s.Index;RefreshAtlas();}};
+                }
+            else if(_tent.AtlasTemplate!=null&&_tent.AtlasGrid!=null)
                 for(int i=0;i<entries;i++)
                 {
                     var entry=Instantiate(_tent.AtlasTemplate,_tent.AtlasGrid);
-                    entry.name="Atlas "+ItemTexts.KeyAt(i);entry.gameObject.SetActive(true);_atlas[i]=entry;
+                    entry.name="Atlas "+RunArtifacts.At(i);entry.gameObject.SetActive(true);_atlas[i]=entry;
                     int index=i;var relay=entry.gameObject.AddComponent<CampHoverRelay>();
                     relay.Hover=on=>{if(on)ShowAtlasTooltip(index);else _tent.ShowTooltip(false);};
                 }
@@ -89,19 +103,14 @@ namespace Game.View
             foreach(var group in _root.GetComponentsInChildren<UiInkGroup>(true))group.Collect();
             if(System.Array.IndexOf(System.Environment.GetCommandLineArgs(),"-capture-tent-rarities")>=0)AddRaritySample();
             _tent.ShowFilter(0);
-            _tent.ShowPage(false);
+            _page=TentPage.Bag;_atlasPage=false;
+            _tent.ShowPage((int)TentPage.Bag);
             Refresh();
             return true;
         }
 
-        internal void ShowAtlas(bool atlas)
-        {
-            if(_atlasPage==atlas)return;
-            _atlasPage=atlas;_hoverIndex=-1;
-            UiSound.Play(UiSoundEvent.Tab);
-            _tent.ShowPage(atlas);
-            Refresh();
-        }
+        /// <summary>Сумка или атлас — прежний вызов (CampWalkCapture); страницы теперь три, см. ShowPage(TentPage).</summary>
+        internal void ShowAtlas(bool atlas)=>ShowPage(atlas?TentPage.Atlas:TentPage.Bag);
 
         System.Collections.IEnumerator RevealTent()
         {
@@ -195,22 +204,34 @@ namespace Game.View
                 else if(_tent.PotionSelected[i]!=null)_tent.PotionSelected[i].SetActive(quick);
             }
 
-            if(_atlas!=null)
+            RefreshAsh();
+            RefreshOaths();
+            if(RoundAtlas)RefreshAtlas();
+            else if(_atlas!=null)
             {
-                int open=0;
                 for(int i=0;i<_atlas.Length;i++)
                 {
                     if(_atlas[i]==null)continue;
-                    int id=StableId.Of("base."+ItemTexts.KeyAt(i));bool found=camp.Discovered(id);if(found)open++;
-                    int rarity=IsRareBase(id)?1:0;
-                    _atlas[i].Show(_tent.FrameFor(rarity),BaseSprite(id),ItemName(id),found,rarity);
+                    var artifact=RunArtifacts.At(i);
+                    _atlas[i].Show(_tent.FrameFor(ArtifactRarity),ArtifactSprite(i),RunArtifactTexts.Name(artifact),camp.ArtifactOpened(artifact),ArtifactRarity);
                 }
-                if(_tent.AtlasCount!=null)_tent.AtlasCount.text="Найдено "+open+" из "+_atlas.Length;
+                if(_tent.AtlasCount!=null)_tent.AtlasCount.text="Открыто "+camp.OpenedArtifactCount+" из "+RunArtifacts.Count;
             }
             RefreshTooltip();
         }
 
-        bool IsRareBase(int id){var items=_driver.Session.Camp.Items;int b=items.IndexOfBase(id);return b>=0&&items.GetBase(b).Rare;}
+        /// <summary>Артефакт — вещь одного забега вне лестницы редкостей; плитка берёт цвет уникальной.</summary>
+        const int ArtifactRarity=(int)ItemRarity.Unique;
+        readonly Sprite[] _artifactSprites=new Sprite[RunArtifacts.Count];
+
+        /// <summary>Картинка артефакта (текстура из Resources/UI/Artifacts) как спрайт плитки; грузится раз.</summary>
+        Sprite ArtifactSprite(int index)
+        {
+            if(_artifactSprites[index]!=null)return _artifactSprites[index];
+            var tex=RunArtifactTexts.Icon(RunArtifacts.At(index));
+            if(tex!=null)_artifactSprites[index]=Sprite.Create(tex,new Rect(0,0,tex.width,tex.height),new Vector2(.5f,.5f),100);
+            return _artifactSprites[index];
+        }
 
         /// <summary>Копия листа статов без модификаторов, которые выбрасывает drop.</summary>
         static StatSheet CloneSheet(StatSheet stats,System.Predicate<StatModifier> drop)
@@ -244,7 +265,10 @@ namespace Game.View
             if(item.IsEmpty){_tent.ShowTooltip(false);return;}
             int kind=Category(item);
             int rarity=(int)item.Rarity;
-            string kindText=(kind>=0?Names[kind]:"Предмет")+"  ·  ур. "+item.ItemLevel+"  ·  "+CampServiceText.Get("smith.attempts")+" "+item.ReforgeCount+"/3";
+            // Попытки закалки — по редкости (06.10, API кузницы), трещины — только если есть.
+            int cracks=camp.CrackCount(item);
+            string kindText=(kind>=0?Names[kind]:"Предмет")+"  ·  ур. "+item.ItemLevel+"  ·  "+CampServiceText.Get("smith.attempts")+" "
+                +camp.AttemptsUsed(item)+"/"+Camp.TemperAttempts(item.Rarity)+(cracks>0?"  ·  трещин "+cracks:"");
             string text;
             var stats=_driver.Session.CampSim.Entities.Stats[0];
             string properties=ItemProperties(item);
@@ -347,23 +371,105 @@ namespace Game.View
 
         internal void ShowAtlasTooltip(int index)
         {
-            var camp=_driver.Session.Camp;int id=StableId.Of("base."+ItemTexts.KeyAt(index));
-            bool found=camp.Discovered(id),rare=IsRareBase(id);
-            int b=camp.Items.IndexOfBase(id);
-            string property="";
-            if(b>=0)
-            {
-                var definition=camp.Items.GetBase(b);
-                // Increased — прибавка в процентах к стату, а не число.
-                if(definition.HasImplicit)property=StatText.Name(definition.ImplicitStat)+"  "+StatText.Modifier(definition.ImplicitStat,definition.ImplicitValue,definition.ImplicitOp);
-            }
-            string where=rare?"Разлом — редкая находка\nЛавка торговца — редко":"Разлом — любая находка\nЛавка торговца";
+            // Атлас 3×4: всплывающей карточки нет — карточка справа постоянная, место выбирается.
+            if(RoundAtlas){if((uint)index<(uint)_tent.AtlasSeals.Length){_atlasPicked=index;RefreshAtlas();}return;}
+            if(_atlas==null||(uint)index>=(uint)_atlas.Length)return;
+            var camp=_driver.Session.Camp;var artifact=RunArtifacts.At(index);
+            bool open=camp.ArtifactOpened(artifact);
+            // Открытый — что делает; закрытый — только где искать: действие узнаётся, когда взят.
+            string body=(open?RunArtifactTexts.Effect(artifact)+"\n\n":"")
+                +"<color=#9DB6CB>Где искать:</color>\nНаграда босса\nТайник в Разломе — редко";
             _hoverIndex=-1;
-            FillTooltip(found?ItemName(id):"Не найдено",_tent.NameFor(rare?1:0),_tent.ColourFor(rare?1:0),
-                found?property:"","<color=#9DB6CB>Где искать:</color>\n"+where,
-                rare?1:0,found?BaseSprite(id):null);
+            FillTooltip(open?RunArtifactTexts.Name(artifact):"Не открыто","Артефакт",_tent.ColourFor(ArtifactRarity),
+                open?RunArtifactTexts.Use(artifact):"",body,ArtifactRarity,open?ArtifactSprite(index):null);
             if(_atlas[index]!=null)_tent.PlaceTooltip((RectTransform)_atlas[index].transform);
             _tent.ShowTooltip(true);
+        }
+
+        // ---------------------------------------------------------------- атлас 3×4 (06.10, концепт atlas-a)
+
+        void HoverAtlas(int place,bool on)
+        {
+            if(on)_atlasHover=place;
+            else if(_atlasHover==place)_atlasHover=-1;
+            else return;
+            RefreshAtlas();
+        }
+
+        void RefreshAtlas()
+        {
+            if(!RoundAtlas||_driver?.Session==null)return;
+            PaintAtlas(_tent,_driver.Session.Camp,_atlasHover>=0?_atlasHover:_atlasPicked,_atlasPicked);
+        }
+
+        /// <summary>
+        /// Атлас по лагерю: восемь мест акта I (найденный — расписная картинка в огне, неизвестный — силуэт и «?»), четыре
+        /// тёмных места акта II, «Открыто N из 8» и карточка справа. Статический — его же зовёт кадр сборщика без Play.
+        /// </summary>
+        public static void PaintAtlas(CampTentView tent,Camp camp,int card,int picked)
+        {
+            if(tent.AtlasCount!=null)tent.AtlasCount.text=CampWindowText.Format("tent.atlas.count","Открыто {0} из {1}",camp.OpenedArtifactCount,RunArtifacts.Count);
+            if(tent.AtlasAct!=null)tent.AtlasAct.text=CampWindowText.Get("tent.atlas.act","Акт I · Чаща");
+            for(int i=0;i<tent.AtlasSeals.Length;i++)
+            {
+                var seal=tent.AtlasSeals[i];if(seal==null)continue;
+                if(CampOathRules.AtlasPlaceIsFuture(i))
+                {
+                    seal.SetArt(null);
+                    seal.SetHoverCaption(CampWindowText.Get("tent.atlas.act2","Акт II"));
+                    seal.Show(CampOathSeal.Look.Empty,i==picked);
+                    continue;
+                }
+                var artifact=RunArtifacts.At(i);bool open=camp.ArtifactOpened(artifact);
+                seal.SetArt(ArtifactArt(i));
+                seal.SetHoverCaption("");
+                seal.Show(open?CampOathSeal.Look.Active:CampOathSeal.Look.Unknown,i==picked);
+            }
+            PaintAtlasCard(tent,camp,card);
+        }
+
+        static void PaintAtlasCard(CampTentView tent,Camp camp,int place)
+        {
+            bool future=CampOathRules.AtlasPlaceIsFuture(place);
+            var artifact=future?RunArtifact.None:RunArtifacts.At(place);
+            bool open=!future&&camp.ArtifactOpened(artifact);
+            if(tent.AtlasCardSeal!=null)
+            {
+                tent.AtlasCardSeal.SetArt(future?null:ArtifactArt(place));
+                tent.AtlasCardSeal.Show(future?CampOathSeal.Look.Empty:open?CampOathSeal.Look.Active:CampOathSeal.Look.Unknown,false);
+            }
+            if(tent.AtlasCardName!=null)tent.AtlasCardName.text=future?CampWindowText.Get("tent.atlas.act2","Акт II")
+                :open?RunArtifactTexts.Name(artifact):CampWindowText.Get("tent.atlas.unknown","Не открыто");
+            // Открытый — что делает и как включается; неизвестный — только где искать: действие узнаётся, когда взят.
+            string effect=future?CampWindowText.Get("tent.atlas.act2-note","Эти места откроются во втором акте."):open?RunArtifactTexts.Effect(artifact):"";
+            Line(tent.AtlasCardEffect,effect);
+            Line(tent.AtlasCardUse,open?RunArtifactTexts.Use(artifact):"");
+            if(tent.AtlasCardSourceRow!=null)tent.AtlasCardSourceRow.SetActive(!future);
+            if(tent.AtlasCardSource!=null)tent.AtlasCardSource.text=CampWindowText.Get("tent.atlas.source","Источник: награда босса · редко — тайник в Разломе");
+            if(tent.AtlasCardCarryRow!=null)tent.AtlasCardCarryRow.SetActive(open);
+            if(tent.AtlasCardCarry!=null)tent.AtlasCardCarry.text=CampOathRules.ArtifactsCarryUnlocked(camp)
+                ?CampWindowText.Get("tent.atlas.carry","Можно взять с собой на столе сборов")
+                :CampWindowText.Get("tent.atlas.carry-later","После первого босса — можно взять с собой на столе сборов");
+            // Нити между строками — по числу видимых строк: у неизвестного под именем одна нить, у акта II — одна.
+            if(tent.AtlasCardLines!=null)
+                for(int i=0;i<tent.AtlasCardLines.Length;i++)
+                    if(tent.AtlasCardLines[i]!=null)tent.AtlasCardLines[i].SetActive(i==0||(i==1&&!future)||(i==2&&open));
+        }
+
+        // Расписные картинки артефактов (Resources/UI/Artifacts): грузятся раз на запуск, а не на каждое обновление окна.
+        static readonly Texture2D[] AtlasArt=new Texture2D[RunArtifacts.Count];
+        static Texture2D ArtifactArt(int index)
+        {
+            if((uint)index>=(uint)AtlasArt.Length)return null;
+            if(AtlasArt[index]==null)AtlasArt[index]=RunArtifactTexts.Icon(RunArtifacts.At(index));
+            return AtlasArt[index];
+        }
+
+        static void Line(TMPro.TMP_Text label,string text)
+        {
+            if(label==null)return;
+            label.text=text;
+            label.gameObject.SetActive(text.Length>0);
         }
     }
 }

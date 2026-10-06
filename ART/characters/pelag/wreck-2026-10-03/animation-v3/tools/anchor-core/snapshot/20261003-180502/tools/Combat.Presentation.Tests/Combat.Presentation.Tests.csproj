@@ -1,0 +1,95 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Update="Fixtures/AnchorSlamPath.csv" CopyToOutputDirectory="PreserveNewest" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
+    <Compile Include="../../razlom/Assets/Game.View/CombatVoiceBudget.cs" Link="CombatVoiceBudget.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/HudAbilityAvailability.cs" Link="HudAbilityAvailability.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorHeadDynamics.cs" Link="AnchorHeadDynamics.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorChainSolver.cs" Link="AnchorChainSolver.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagBasicAttackTiming.cs" Link="PelagBasicAttackTiming.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/EliteBarLayout.cs" Link="EliteBarLayout.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/MobSoundBank.cs" Link="MobSoundBank.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/CombatMusicDirector.cs" Link="CombatMusicDirector.cs" />
+    <!-- Живой портрет боевого HUD и подпись опыта (ревью HUD 29.09). -->
+    <Compile Include="../../razlom/Assets/Game.View/HudPortraitCurves.cs" Link="HudPortraitCurves.cs" />
+    <!-- Кузнец и торговец на одной странице: цена, выход и запреты до нажатия, раскладка в холст (29.09). -->
+    <Compile Include="../../razlom/Assets/Game.View/CampShopDeals.cs" Link="CampShopDeals.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/CampNavigationRules.cs" Link="CampNavigationRules.cs" />
+    <!-- Окно «Настройки Б» (30.09): новые настройки, умолчания, сохранение, описания опций. -->
+    <Compile Include="../../razlom/Assets/Game.View/SettingsModel.cs" Link="SettingsModel.cs" />
+    <!-- Строка добычи под панелью забега (выбор владельца 30.09, кадр b1): что уносится, окно ряда, «+K», сумка, счёт золота. -->
+    <Compile Include="../../razlom/Assets/Game.View/RunLootLedger.cs" Link="RunLootLedger.cs" />
+    <!-- Карта тушью на закрытой дымной завесе (выбор владельца 30.09, кадры a5/a6): места узлов, мазок, «впереди», расписание. -->
+    <Compile Include="../../razlom/Assets/Game.View/SmokeRouteMapLayout.cs" Link="SmokeRouteMapLayout.cs" />
+    <!-- Ключевые слова описаний (этап 4, п. 6): словарь, разметка {kw:…}, автопометка; тексты усилений — живые строки для проверки. -->
+    <Compile Include="../../razlom/Assets/Game.View/UiKeywords.cs" Link="UiKeywords.cs" />
+    <!-- Единый набор (этап 4, лист 5): шкала текста 56/32/24/18/14, кейкап, кнопки, цвета темы по умолчанию; формат «[Esc] Закрыть». -->
+    <Compile Include="../../razlom/Assets/Game.View/UiTheme.Tokens.cs" Link="UiTheme.Tokens.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/UiKeyHint.cs" Link="UiKeyHint.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/SabreTalentTexts.cs" Link="SabreTalentTexts.cs" />
+    <!-- Урон и отклик удара (этап 4, кадр 1a): кромка со стороны удара, виньетка, микростоп, след урона полосок, слияние и лесенка цифр. -->
+    <Compile Include="../../razlom/Assets/Game.View/HeroHitFeedbackRules.cs" Link="HeroHitFeedbackRules.cs" />
+    <!-- Лечение Корнехвата (ревью 01.10): зелёный отрезок на полоске врага, вспышка, «+N». -->
+    <Compile Include="../../razlom/Assets/Game.View/HealFeedbackRules.cs" Link="HealFeedbackRules.cs" />
+    <!-- Экраны забега (этап 4, кадры 1a/3a/4): засечки босса, монеты в строку добычи, блок ввода, сравнение «было → станет», итоги. -->
+    <Compile Include="../../razlom/Assets/Game.View/RunHudBossMarks.cs" Link="RunHudBossMarks.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/RunHudCoins.cs" Link="RunHudCoins.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/RunHudChoiceLock.cs" Link="RunHudChoiceLock.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/RunHudCompare.cs" Link="RunHudCompare.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/RunHudSummary.cs" Link="RunHudSummary.cs" />
+    <!-- Строка эффектов над портретом (этап 4, кадр 1a): порядок, секунды, стаки, «+N», движение строки. -->
+    <Compile Include="../../razlom/Assets/Game.View/HudEffectList.cs" Link="HudEffectList.cs" />
+    <!-- Тлеющие метки у края экрана и пунктир дуги превью (этап 4, кадр 2a): проекция на край, панели HUD, слияние, подпись. -->
+    <Compile Include="../../razlom/Assets/Game.View/WorldEdgeMarksLayout.cs" Link="WorldEdgeMarksLayout.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/HudRangePreviewArc.cs" Link="HudRangePreviewArc.cs" />
+    <!-- Комикс-рисовка мира (проба 01.10): пределы настроек, ступени тона, толщина туши, вес диорамы. -->
+    <Compile Include="../../razlom/Assets/Game.View/ComicStyleRules.cs" Link="ComicStyleRules.cs" />
+    <!-- Свет арены по глубине (световая арка акта I, 01.10): ось по аренам, веса пресетов, ключ съёмки, пятно поляны. -->
+    <Compile Include="../../razlom/Assets/Game.View/ArenaMoodRules.cs" Link="ArenaMoodRules.cs" />
+    <!-- Жизнь в кадре света арены (01.10): кольца дымки, лучи в верхней трети, пыльца и светлячки у кромки, фонари. -->
+    <Compile Include="../../razlom/Assets/Game.View/ArenaMoodFxRules.cs" Link="ArenaMoodFxRules.cs" />
+    <!-- «Лунная походка» мобов (ревью 01.10): тело по ходу, в действии — по взгляду Sim; сцена толпы CrowdStepHashPinTests. -->
+    <Compile Include="../../razlom/Assets/Game.View/EnemyBodyFacingRules.cs" Link="EnemyBodyFacingRules.cs" />
+    <!-- Хозяин Чащи (02.10): действие Sim → клип и кадр, контакт клипа в тик удара. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterClipRules.cs" Link="ThicketMasterClipRules.cs" />
+    <!-- Хозяин Чащи (02.10): внешность по фазам — смена на ударе рёва 66/33, яркость рун, рост накладок. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterPhaseRules.cs" Link="ThicketMasterPhaseRules.cs" />
+    <!-- Хозяин Чащи (02.10): сквозь босса видно героя — когда тело закрывает героя, появление сетки, плотность. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterSeeThroughRules.cs" Link="ThicketMasterSeeThroughRules.cs" />
+    <!-- Хозяин Чащи (02.10, п. 12): буря цветения — весь пол опасность, круги света вырезаны; время волн и пол поляны. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketStormDangerRules.cs" Link="ThicketStormDangerRules.cs" />
+    <!-- Хозяин Чащи (02.10): кат-сцена вступления — камера, полосы, HUD, титр, тряска рёва, полоса босса по тикам окна Sim. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterIntroRules.cs" Link="ThicketMasterIntroRules.cs" />
+    <!-- Хозяин Чащи (02.10, вечер): смерть «цветущий холм» — наезд камеры, холм, тело под ним, цветение по секундам от Death. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterDeathRules.cs" Link="ThicketMasterDeathRules.cs" />
+    <!-- Формы навыков (план форм 02.10, шаг 3): правило иконки (способность, форма) → файл и метка формы, тексты и экран «Выбери форму». -->
+    <Compile Include="../../razlom/Assets/Game.View/AbilityIconRules.cs" Link="AbilityIconRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagFormTexts.cs" Link="PelagFormTexts.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/RunHudFormChoice.cs" Link="RunHudFormChoice.cs" />
+    <!-- Меню разработчика (F8): масштаб, колонки, подтверждения, подписи — правила без Unity. -->
+    <Compile Include="../../razlom/Assets/Game.View/DevMenuRules.cs" Link="DevMenuRules.cs" />
+    <!-- Вид форм Вихря (02.10): фронт кольца Пенных волн по Sim, оглушение Водоворота, ритм Бури. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWhirlwindFormRules.cs" Link="PelagWhirlwindFormRules.cs" />
+    <!-- Вид Абордажа v2 (02.10): якорь к укусу, натяг цепи, кто бит, фронт Обвала/Пробоины по Sim, подъём Гейзера — без Unity. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagAbordageVfxRules.cs" Link="PelagAbordageVfxRules.cs" />
+    <!-- Вид Шквала v2 (02.10): распад полосы Пенного следа, ход воды, последний удар, кольцо пены — без Unity. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagSquallFoamRules.cs" Link="PelagSquallFoamRules.cs" />
+    <!-- Шквал v2 (02.10): кадр клипа по тикам полёта, лента каста из событий Sim, поворот вокруг лодыжки. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagSquallClipRules.cs" Link="PelagSquallClipRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagSquallTimeline.cs" Link="PelagSquallTimeline.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagSquallFeed.cs" Link="PelagSquallFeed.cs" />
+    <!-- Абордаж v2 (02.10): кадр клипа по тикам Sim (throw/pull_retime), лента каста из снимка и событий Sim. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagAbordageClipRules.cs" Link="PelagAbordageClipRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagAbordageTimeline.cs" Link="PelagAbordageTimeline.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagAbordageFeed.cs" Link="PelagAbordageFeed.cs" />
+    <!-- Топот роя (SwarmScuttleClock в MobSoundBank.cs) считает бегущих по EntityStore. -->
+    <Compile Include="../../razlom/Assets/Game.Sim/**/*.cs" Link="Game.Sim/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Game.Sim;
 using Game.View;
 using NUnit.Framework;
@@ -43,7 +44,7 @@ public sealed class ThicketStormDangerRulesTests
     {
         var wave = Pending();
         Assert.AreEqual(0f, ThicketStormDangerRules.LookOf(wave, Start).Progress, 1e-6f);
-        Assert.AreEqual(.5f, ThicketStormDangerRules.LookOf(wave, Start + 30).Progress, 1e-6f);
+        Assert.AreEqual(.5f, ThicketStormDangerRules.LookOf(wave, Start + Simulation.ThicketStormFirstWaveTicks / 2).Progress, 1e-6f);
         Assert.AreEqual(1f, ThicketStormDangerRules.LookOf(wave, FirstImpact).Progress, 1e-6f);
         Assert.AreEqual(1f, ThicketStormDangerRules.LookOf(wave, FirstImpact + 7).Progress, 1e-6f, "дальше не растёт");
         Assert.AreEqual(0f, ThicketStormDangerRules.LookOf(wave, Start - 3).Progress, 1e-6f, "до начала — пусто");
@@ -243,11 +244,136 @@ public sealed class ThicketStormDangerRulesTests
                 mask[i] = ThicketStormDangerRules.FloorMask(glade, xs[i], zs[i]);
             }
         float centre = ThicketStormDangerRules.FillReach(40f, 30f, xs, zs, mask, count, 12f);
-        // Скруглённый пол 20 × 15: дальше всего — скругление угла, ~10,5–11 м от середины.
-        Assert.That(centre, Is.GreaterThan(10f).And.LessThan(12.5f));
+        // Скруглённый пол: дальше всего — скругление угла; дальше полуоси пола, ближе угла прямоугольника
+        // (размер — GladeLayout.BossFloorHalf*, поляна растёт по ревью владельца: 07.10 — 25,66 × 19,24, ~13,8 м).
+        double hw = GladeLayout.BossFloorHalfWidth.ToDouble(), hd = GladeLayout.BossFloorHalfDepth.ToDouble();
+        Assert.That(centre, Is.GreaterThan((float)hw).And.LessThan((float)System.Math.Sqrt(hw * hw + hd * hd)));
         float corner = ThicketStormDangerRules.FillReach(34f, 26f, xs, zs, mask, count, 12f);
         Assert.Greater(corner, centre, "босс у края — фронту дальше идти до противоположного");
         Assert.AreEqual(12f, ThicketStormDangerRules.FillReach(0f, 0f, null, null, null, 0, 12f), 1e-6f, "пола нет — запасная длина");
         Assert.AreEqual(1f, ThicketStormDangerRules.FillReach(0f, 0f, new float[0], new float[0], new float[0], 0, 0f), 1e-6f);
+    }
+
+    // ------------------------------------------------------------ пульс перед ударом (ревью 02.10, вечер)
+
+    [Test]
+    public void Pulse_QuietUntilTheLastSecond_ThenBeatsFasterAndStronger_LastBeatOnTheImpact()
+    {
+        float lead = ThicketStormDangerRules.PulseLeadTicks;
+        Assert.AreEqual(0f, ThicketStormDangerRules.PulseOf(FirstImpact - lead - 1f, FirstImpact), "до окна — тихо");
+        Assert.AreEqual(0f, ThicketStormDangerRules.PulseOf(Start, FirstImpact), "начало волны — без пульса");
+        Assert.AreEqual(0f, ThicketStormDangerRules.PulseOf(FirstImpact + 1f, FirstImpact), "после удара — вспышка, не пульс");
+        Assert.AreEqual(0f, ThicketStormDangerRules.PulseOf(float.NaN, FirstImpact));
+        Assert.AreEqual(1f, ThicketStormDangerRules.PulseOf(FirstImpact, FirstImpact), 1e-5f, "последний удар — в тик удара волны");
+        Assert.Less(lead, Simulation.ThicketStormSecondWaveTicks, "окно пульса помещается и в короткую вторую волну");
+
+        // Удар пульса — где он скачком растёт; между ударами только гаснет.
+        const int steps = 20;
+        int samples = (int)(lead * steps);
+        var beats = new List<float>();
+        float previous = 0f;
+        for (int i = 0; i <= samples; i++)
+        {
+            float tick = FirstImpact - (samples - i) / (float)steps;
+            float v = ThicketStormDangerRules.PulseOf(tick, FirstImpact);
+            Assert.That(v, Is.GreaterThanOrEqualTo(0f).And.LessThanOrEqualTo(1f), "тик " + tick);
+            if (v > previous + .3f) beats.Add(tick);
+            else Assert.LessOrEqual(v, previous + 1e-6f, "между ударами пульс только гаснет, тик " + tick);
+            previous = v;
+        }
+        Assert.AreEqual(ThicketStormDangerRules.PulseBeats, beats.Count, "ударов пульса");
+        Assert.GreaterOrEqual(beats[0], FirstImpact - 33f, "первый удар — за ~секунду до волны, не раньше");
+        Assert.LessOrEqual(beats[0], FirstImpact - 24f, "и не позже: успеть добежать");
+        for (int k = 2; k < beats.Count; k++)
+            Assert.Less(beats[k] - beats[k - 1], beats[k - 1] - beats[k - 2], "всё чаще");
+        Assert.AreEqual(FirstImpact, beats[beats.Count - 1], 1e-3f, "последний — в тик удара");
+        float firstPeak = ThicketStormDangerRules.PulseOf(beats[0], FirstImpact);
+        float lastPeak = ThicketStormDangerRules.PulseOf(beats[beats.Count - 2], FirstImpact);
+        Assert.Greater(lastPeak, firstPeak, "всё ярче");
+    }
+
+    [Test]
+    public void Look_PulsesOnlyWhilePending_ResolvedAndCancelledWavesDoNot()
+    {
+        var wave = Pending();
+        Assert.AreEqual(1f, ThicketStormDangerRules.LookOf(wave, FirstImpact).Pulse, 1e-5f, "в тик удара ещё ждёт — пульс полный");
+        Assert.AreEqual(0f, ThicketStormDangerRules.LookOf(wave, Start + 10).Pulse, "середина волны — тихо");
+
+        var resolved = wave;
+        ThicketStormDangerRules.Observe(ref resolved, Start, FirstImpact, true);
+        for (int tick = FirstImpact; tick < FirstImpact + 10; tick++)
+            Assert.AreEqual(0f, ThicketStormDangerRules.LookOf(resolved, tick).Pulse, "ударила — вспышка вместо пульса, тик " + tick);
+
+        var lost = wave;
+        ThicketStormDangerRules.Lose(ref lost, FirstImpact - 5);
+        for (int tick = FirstImpact - 5; tick < FirstImpact + 3; tick++)
+            Assert.AreEqual(0f, ThicketStormDangerRules.LookOf(lost, tick).Pulse, "снята — не бьётся, тик " + tick);
+
+        // Песочные Часы сдвигают удар — пульс идёт за ним.
+        int shiftedImpact = FirstImpact + Simulation.ThicketHourglassShiftTicks;
+        var shifted = Pending(Start, shiftedImpact);
+        Assert.AreEqual(0f, ThicketStormDangerRules.LookOf(shifted, FirstImpact - 40).Pulse, "старый срок — уже не он");
+        Assert.AreEqual(1f, ThicketStormDangerRules.LookOf(shifted, shiftedImpact).Pulse, 1e-5f);
+
+        // Тот же тик — тот же пульс: пауза и съёмка держат кадр.
+        for (float tick = FirstImpact - 40; tick <= FirstImpact; tick += .37f)
+            Assert.AreEqual(ThicketStormDangerRules.LookOf(wave, tick).Pulse, ThicketStormDangerRules.LookOf(wave, tick).Pulse);
+    }
+
+    /// <summary>
+    /// Аура канала у ног босса — слой поля бури (ревью 02.10, вечер: «круг укрытия у босса розовый, а остальные
+    /// золотые» — частицы ауры под полем заливали круг 0): раскрывается за 0,35 с от начала бури, гаснет к её
+    /// концу, по тикам Sim (пауза держит).
+    /// </summary>
+    [Test]
+    public void Aura_OpensWithTheStorm_FadesToItsEnd_HoldsOnPause()
+    {
+        const int start = 1000;
+        int end = start + Simulation.ThicketStormFirstWaveTicks + Simulation.ThicketStormSecondWaveTicks + Simulation.ThicketStormRecoveryTicks;
+        Assert.AreEqual(0f, ThicketStormDangerRules.AuraOf(start - 5, start, end));
+        Assert.AreEqual(0f, ThicketStormDangerRules.AuraOf(start, start, end), "в тик начала ещё нет");
+        float open = start + ThicketStormDangerRules.AuraOpenSeconds * Simulation.TicksPerSecond;
+        Assert.AreEqual(1f, ThicketStormDangerRules.AuraOf(open, start, end), 1e-5f, "раскрылась за 0,35 с");
+        Assert.AreEqual(1f, ThicketStormDangerRules.AuraOf((start + end) * .5f, start, end), 1e-5f, "держится всю бурю");
+        Assert.AreEqual(0f, ThicketStormDangerRules.AuraOf(end, start, end), "к EndTick погасла");
+        Assert.That(ThicketStormDangerRules.AuraOf(end - 5, start, end), Is.InRange(.01f, .99f), "гаснет плавно");
+        Assert.AreEqual(0f, ThicketStormDangerRules.AuraOf(end + 3, start, end));
+        Assert.AreEqual(0f, ThicketStormDangerRules.AuraOf(float.NaN, start, end));
+        Assert.AreEqual(0f, ThicketStormDangerRules.AuraOf(start + 10, start, start), "буря без длины — ауры нет");
+
+        float last = -1f;
+        for (float tick = start; tick <= open; tick += .25f)
+        {
+            float a = ThicketStormDangerRules.AuraOf(tick, start, end);
+            Assert.That(a, Is.GreaterThanOrEqualTo(last - 1e-6f), "раскрытие без рывков назад, " + tick);
+            last = a;
+        }
+
+        Assert.AreEqual(0f, ThicketStormDangerRules.AuraSeconds(start - 3, start));
+        Assert.AreEqual(1f, ThicketStormDangerRules.AuraSeconds(start + Simulation.TicksPerSecond, start), 1e-5f);
+        Assert.AreEqual(ThicketStormDangerRules.AuraSeconds(start + 17.5f, start), ThicketStormDangerRules.AuraSeconds(start + 17.5f, start),
+            "тот же тик — тот же пульс");
+        Assert.That(ThicketStormDangerRules.AuraRadiusMetres, Is.EqualTo(2.3f * 1.15f).Within(1e-3), "радиус прежней ауры-частицы");
+    }
+
+    /// <summary>
+    /// Лепестки бури у героя гаснут, луч канала — нет (проверка находок 03.10): гашение только опускает альфу частицы
+    /// и назад её не поднимает — лепестку (2–3 с, поток новых) это не страшно, а луч канала с крон — одна частица на
+    /// всю бурю: погашенный, когда крона на экране легла на героя, он пропадал бы до конца бури.
+    /// </summary>
+    [Test]
+    public void HeroClear_PetalsFade_TheChannelBeamStays()
+    {
+        float channel = (Simulation.ThicketStormFirstWaveTicks + Simulation.ThicketStormSecondWaveTicks
+            + Simulation.ThicketStormRecoveryTicks) / (float)Simulation.TicksPerSecond;
+        Assert.That(ThicketStormDangerRules.ClearsAroundHero(280, 2.8f), Is.True, "лепестки вихря");
+        Assert.That(ThicketStormDangerRules.ClearsAroundHero(180, 2.4f), Is.True, "столб канала");
+        Assert.That(ThicketStormDangerRules.ClearsAroundHero(45, 3.0f), Is.True, "лепестки крон");
+        Assert.That(ThicketStormDangerRules.ClearsAroundHero(32, 1.2f), Is.True, "ветер канала");
+        Assert.That(ThicketStormDangerRules.ClearsAroundHero(1, channel), Is.False, "луч канала — одна частица на всю бурю");
+        Assert.That(ThicketStormDangerRules.ClearsAroundHero(1, 1f), Is.False, "одиночная частица — не конфетти");
+        Assert.That(ThicketStormDangerRules.ClearsAroundHero(12, channel), Is.False, "долгая частица гасла бы до конца бури");
+        Assert.That(ThicketStormDangerRules.HeroClearLifetimeMax, Is.LessThan(channel));
+        Assert.That(ThicketStormDangerRules.HeroClearLifetimeMax, Is.GreaterThanOrEqualTo(3f), "лепесток живёт до 3 с — гаснет у героя");
     }
 }

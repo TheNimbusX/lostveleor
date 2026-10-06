@@ -263,6 +263,8 @@ namespace Game.View
             if (hasDash) RefreshSlot(sim, DashSlot, Dash, pointer);
             // Плитка ЛКМ — серия саблей (02.10): без слота симуляции, только готовность.
             RefreshAttack(sim);
+            // Крушение (06.10): звенья серии под плиткой и кольцо окна (CombatHudView.Wreck, series-ui.png).
+            RefreshWreckSeries(sim, driver);
             RefreshTooltip(sim, driver);
             RefreshFeedback();
             RefreshPotions(camp,driver);
@@ -284,7 +286,7 @@ namespace Game.View
         void RefreshMoments(TickDriver driver)
         {
             RiftRun run = driver.Session != null && driver.Session.Mode == GameMode.Rift ? driver.Run : null;
-            if (run == null || run.Map == null) { _momentDepth = -1; _momentPhase = RunPhase.Idle; return; }
+            if (run == null || run.Map == null) { _momentDepth = -1; _momentPhase = RunPhase.Idle; _clearedLater = false; return; }
             // Под дымной завесой перехода плашка не начинается: её появление и смена числа ушли бы под дым.
             if (CampTransition.Covering) return;
             if (run.Depth != _momentDepth && run.Phase == RunPhase.Clearing)
@@ -292,13 +294,29 @@ namespace Game.View
                 bool next = _momentDepth > 0;
                 _momentDepth = run.Depth;
                 _momentPhase = run.Phase;
+                _clearedLater = false;
                 ArenaIntro(run, next);
                 return;
             }
+            // Смерть Хозяина Чащи (ревью 02.10, вечер): «АРЕНА ЗАЧИЩЕНА» — когда встал холм, а не в первую
+            // секунду смерти (ThicketMasterDeathView.HoldsClearedBanner, по тикам Sim — пауза держит).
+            // Джингл — на добивании (владелец 02.10, ночь: «джингл верни на добивание»), плашка — позже без него.
+            if (_clearedLater && !ThicketMasterDeathView.HoldsClearedBanner(driver))
+            {
+                _clearedLater = false;
+                if (run.Phase == RunPhase.SeekingExit) ArenaCleared(run, jingle: false);
+            }
             if (run.Phase == _momentPhase) return;
-            if (_momentPhase == RunPhase.Clearing && run.Phase == RunPhase.SeekingExit) ArenaCleared(run);
+            if (_momentPhase == RunPhase.Clearing && run.Phase == RunPhase.SeekingExit)
+            {
+                if (ThicketMasterDeathView.HoldsClearedBanner(driver)) { ArenaClearedJingle(); _clearedLater = true; }
+                else ArenaCleared(run);
+            }
             _momentPhase = run.Phase;
         }
+
+        /// <summary>Зачистка арены босса отложена до холма (ThicketMasterDeathView.HoldsClearedBanner).</summary>
+        bool _clearedLater;
 
         void ArenaIntro(RiftRun run, bool next)
         {
@@ -341,10 +359,15 @@ namespace Game.View
             LevelBanner.ShowMoment(Mathf.Max(1, run.Depth - 1).ToString(), run.Depth.ToString(), "АРЕНА", lines.ToArray(), 2.1f);
         }
 
-        void ArenaCleared(RiftRun run)
+        static void ArenaClearedJingle()
         {
             GameSound.Play("arena_cleared", .8f, 0f, 1f);
             GameSound.Play("map_ping", .45f, .02f, .5f);
+        }
+
+        void ArenaCleared(RiftRun run, bool jingle = true)
+        {
+            if (jingle) ArenaClearedJingle();
             // Концепт 2Б: зачистка — узкий баннер сверху, плашка уровня остаётся уровню и входу на арену.
             if (Announce != null) { Announce.Show("АРЕНА ЗАЧИЩЕНА", "Путь к выходу открыт"); return; }
             if (LevelBanner == null) return;
@@ -500,8 +523,11 @@ namespace Game.View
                 : !CaptureRig.ForestBudShowcase && Contains(widget.Hit, pointer);
             if (hovered) HoverSlot = slot;
 
-            if (widget.Art != null) widget.Art.color = state.Ready ? Color.white : ArtDimmed;
-            bool cooling = state.Block == HudAbilityBlock.Cooldown;
+            // Крушение (06.10): пока идёт серия этого слота — иконка со звеньями и кольцом окна, без вуали и цифры
+            // перезарядки (кулдаун от каста уже тикает); цифра — только после конца серии (HudWreckSeriesRules.InSeries).
+            bool wreckSeries = build.DefinitionId == WreckDefinitionId && HudWreckSeriesRules.InSeries(sim.Wreck, slot);
+            if (widget.Art != null) widget.Art.color = state.Ready || wreckSeries ? Color.white : ArtDimmed;
+            bool cooling = state.Block == HudAbilityBlock.Cooldown && !wreckSeries;
             SetActive(widget.Cooldown, cooling);
             SetActive(widget.CooldownText, cooling);
             if (cooling)

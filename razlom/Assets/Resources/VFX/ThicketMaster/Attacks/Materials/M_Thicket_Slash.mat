@@ -21,8 +21,6 @@ Material:
   - _CFXR_OVERLAYBLEND_RGB
   - _CFXR_OVERLAYTEX_OFF
   - _CFXR_SINGLE_CHANNEL
-  - _SINGLECHANNEL_ON
-  - _USEDISSOLVEOFFSETUV_ON
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0

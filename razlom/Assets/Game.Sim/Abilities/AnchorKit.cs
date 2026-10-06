@@ -19,6 +19,9 @@ namespace Game.Sim
     public static class AnchorKit
     {
         // ---- Бросок якоря ----
+        // С 02.10 Sim сроки ниже не читает (Simulation.Abordage). LeapRange — база
+        // дальности сборки (AbilityDefinition.AnchorLeap); LeapTicks, LeapWindupTicks
+        // и ChainStandoff держит только прежний вид (PelagAbilityTiming) до переделки показа.
 
         /// <summary>Дальность броска. Дальше цепь не достаёт.</summary>
         public static readonly Fix64 LeapRange = Fix64.FromInt(7);
@@ -68,49 +71,9 @@ namespace Game.Sim
         /// </summary>
         public static readonly Fix64 ChainStandoff = Fix64.Ratio(9, 10);
 
-        /// <summary>
-        /// БРОСОК ЯКОРЯ. Швыряет якорь в точку прицела и подтягивает туда себя.
-        ///
-        /// Точка ограничивается дальностью цепи, а не отменяется: клик за
-        /// пределом даёт бросок на максимум в ту же сторону. Отменять было бы
-        /// честнее формально и хуже на практике — игрок целится примерно.
-        /// </summary>
-        public static int CastBoarding(Simulation sim, FixVec2 aim, int enemy)
-            => CastBoarding(sim, aim, enemy, LeapRange);
-
-        /// <summary>То же с дальностью из сборки: талант «Длинная цепь» удлиняет цепь.</summary>
-        public static int CastBoarding(Simulation sim, FixVec2 aim, int enemy, Fix64 range)
-        {
-            EntityStore e = sim.Entities;
-            int player = Simulation.PlayerId;
-            FixVec2 from = e.Position[player];
-
-            bool hooked = (uint)enemy < (uint)e.Count
-                          && e.Alive[enemy]
-                          && e.Side[enemy] != e.Side[player];
-
-            FixVec2 destination = hooked ? e.Position[enemy] : aim;
-            FixVec2 delta = destination - from;
-
-            Fix64 distance = delta.Length;
-            if (distance.Raw == 0) return 0;
-
-            FixVec2 direction = delta / distance;
-
-            // К ВРАГУ ПОДЪЕЗЖАЕМ ВПЛОТНУЮ, НО НЕ В НЕГО. Тем же отступом, что
-            // и Шквал: иначе тела расталкиваются уже после прибытия и кулак
-            // бьёт в пустоту, из которой цель только что выдавило.
-            Fix64 reach = hooked && distance > ChainStandoff
-                ? distance - ChainStandoff
-                : distance;
-            if (reach > range) reach = range;
-
-            FixVec2 target = from + direction * reach;
-            e.Facing[player] = direction;
-
-            ForcedMotion.Begin(e, player, target, LeapTicks, ForcedMotionKind.Lunge);
-            return LeapTicks;
-        }
+        // Бросок в точку (прежний CastBoarding: замах LeapWindupTicks, тяга LeapTicks,
+        // отступ ChainStandoff) с 02.10 снят: Абордаж — Simulation.Abordage, цель —
+        // враг под курсором, тяга по длине, посадка по радиусам тел.
 
         // Выбор цели и посадка Шквала (прежние PickChainTarget, ChainLandingSpot со
         // случайной целью и пролётом сквозь одинокую) — Simulation.Squall.Targets, 02.10.

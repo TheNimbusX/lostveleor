@@ -5,22 +5,21 @@ namespace Game.View
 {
     /// <summary>
     /// Отклик на находки (концепт 2Б, владелец 25 сентября): вещь или артефакт из тайника и с элиты,
-    /// золото, выполненный заказ жителя — всплывашкой над портретом; «Разлом зачищен» — узким
-    /// баннером сверху. Награда, выбранная на экране выбора, всплывашкой не повторяется.
+    /// золото — всплывашкой над портретом; «Разлом зачищен» — узким баннером сверху. Награда,
+    /// выбранная на экране выбора, всплывашкой не повторяется. Заказы Лео сняты 06.10.
     /// </summary>
     public sealed partial class CombatHudView
     {
         [Header("Всплывашки и объявление (концепт 2Б)")]
         public HudToasts Toasts;
         public HudAnnounce Announce;
-        [Tooltip("Значки заказов алхимика по порядку AlchemistOrder: Живица, Порыв")] public Texture2D[] OrderIcons = new Texture2D[2];
+        // Заказов алхимика больше нет (06.10); поле остаётся, чтобы префаб не терял ссылки.
+        [Tooltip("Значки бывших заказов алхимика (сняты 06.10): Живица, Порыв")] public Texture2D[] OrderIcons = new Texture2D[2];
         public Texture2D GoldIcon;
 
         RiftRun _toastRun;
         int _toastTaken, _toastGold;
         RunPhase _toastPhase;
-        readonly AlchemistOrderStatus[] _orders = new AlchemistOrderStatus[2];
-        bool _ordersKnown;
 
         void RefreshToasts(TickDriver driver)
         {
@@ -52,7 +51,6 @@ namespace Game.View
                 _toastGold = run.Gold;
                 _toastPhase = run.Phase;
             }
-            RefreshOrders(session != null ? session.Camp : null);
         }
 
         void ToastReward(RewardOffer offer)
@@ -70,27 +68,6 @@ namespace Game.View
                 Toasts.Push(RunArtifactTexts.Icon(offer.Artifact), UiTheme.Role.Unique, RunArtifactTexts.Name(offer.Artifact),
                     "Артефакт забега", UiTheme.Role.Unique);
             }
-        }
-
-        /// <summary>Заказ жителя выполнен в забеге — «Заказ Лео выполнен · Живица».</summary>
-        void RefreshOrders(Camp camp)
-        {
-            if (camp == null) { _ordersKnown = false; return; }
-            for (int i = 0; i < _orders.Length; i++)
-            {
-                var order = (AlchemistOrder)i;
-                AlchemistOrderStatus status = camp.AlchemyStatus(order);
-                if (_ordersKnown && status == AlchemistOrderStatus.Ready && _orders[i] == AlchemistOrderStatus.Accepted)
-                {
-                    GameSound.Play("toast_rare", .7f, .02f, .3f);
-                    Toasts.Push(i < OrderIcons.Length ? OrderIcons[i] : null, UiTheme.Role.Epic,
-                        "Заказ " + CampServiceText.Get("npc.alchemist") + " выполнен",
-                        // Имя зелья — как в CampServiceText (01.10: «Лавидиевый порыв» → «Порыв»).
-                        CampServiceText.Get(order == AlchemistOrder.Resin ? "potion.LivingResin" : "potion.LavidiumSurge"), UiTheme.Role.TextMuted);
-                }
-                _orders[i] = status;
-            }
-            _ordersKnown = true;
         }
     }
 }

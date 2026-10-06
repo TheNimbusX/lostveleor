@@ -20,11 +20,11 @@ namespace Game.View
             Worn,
             /// <summary>Отметка «беречь».</summary>
             Protected,
-            /// <summary>У обычной вещи нечего перековывать.</summary>
+            /// <summary>Такого свойства у вещи нет (у обычной закаляется только базовое).</summary>
             NoAffix,
             /// <summary>Выбранное свойство уже на пределе.</summary>
             AtMaximum,
-            /// <summary>Три перековки использованы.</summary>
+            /// <summary>Попытки закалки израсходованы и рискованный удар недоступен.</summary>
             Exhausted,
             /// <summary>Не хватает золота или осколков.</summary>
             Funds,
@@ -32,24 +32,30 @@ namespace Game.View
             /// <summary>Товар с прилавка уже купили — до обновления товаров место пустое.</summary>
             SoldOut,
             Invalid,
+            /// <summary>Три трещины: вещь расколота, больше не куётся.</summary>
+            Shattered,
+            /// <summary>Шедевр: дальше только сердце.</summary>
+            Masterpiece,
+            /// <summary>У Эни ждёт оплаченный выбор переплавки или добавления.</summary>
+            Session,
         }
 
-        public const int ReforgeLimit = 3;
-
-        /// <summary>Перековка выбранного свойства: цена, нехватка, предел и уровень вещи после.</summary>
-        public struct Reforge
+        /// <summary>Закалка выбранного свойства (06.10): цена, нехватка, попытки, трещины, рост и риск первого удара.</summary>
+        public struct Temper
         {
             public Block Block;
             public int Gold, Shards;
             /// <summary>Сколько не хватает; 0 — хватает.</summary>
             public int GoldShort, ShardsShort;
-            public int LevelFrom, LevelTo;
-            /// <summary>Сколько перековок уже сделано (из <see cref="ReforgeLimit"/>).</summary>
-            public int Used;
-            /// <summary>Пределы нового значения свойства (есть при None и Funds).</summary>
-            public Fix64 Lower, Upper;
+            /// <summary>Попыток потрачено и всего по редкости (Camp.TemperAttempts), трещин на вещи.</summary>
+            public int Used, Limit, Cracks;
+            /// <summary>Рост первого удара в долях диапазона и шанс трещины этого удара.</summary>
+            public Fix64 Growth;
+            public int RiskPercent;
+            /// <summary>Попытки кончились: это рискованный удар (шедевр или осколки).</summary>
+            public bool Risky;
             public bool Allowed => Block == Block.None;
-            /// <summary>Цену показывать: перековка в принципе возможна, пусть и не по карману.</summary>
+            /// <summary>Цену показывать: закалка в принципе возможна, пусть и не по карману.</summary>
             public bool ShowsCost => Block == Block.None || Block == Block.Funds || Block == Block.AtMaximum;
         }
 
@@ -79,46 +85,50 @@ namespace Game.View
             return slot < camp.Bag.Capacity ? camp.Bag.At(slot) : default;
         }
 
-        public static Reforge PlanReforge(Camp camp, int slot, bool worn, int affix)
+        static ForgeTarget Target(int slot, bool worn) => worn ? ForgeTarget.Worn((EquipSlot)slot) : ForgeTarget.Bag(slot);
+
+        /// <summary>
+        /// Закалка свойства property (−1 — базовое свойство обычной вещи) по Camp.Quote:
+        /// окно и кузница не могут разойтись в цене и запрете. Уровень вещи закалка не меняет.
+        /// </summary>
+        public static Temper PlanTemper(Camp camp, int slot, bool worn, int property)
         {
-            var plan = new Reforge();
+            var plan = new Temper();
             ItemInstance item = Pick(camp, slot, worn);
             if (item.IsEmpty) { plan.Block = Block.NoItem; return plan; }
-            plan.Used = item.ReforgeCount;
-            plan.Gold = Camp.ReforgeGold(item);
-            plan.Shards = Camp.ReforgeShards(item);
+            plan.Used = camp.AttemptsUsed(item);
+            plan.Limit = Camp.TemperAttempts(item.Rarity);
+            plan.Cracks = camp.CrackCount(item);
+            var quote = camp.Quote(EniAction.Temper, Target(slot, worn), property);
+            plan.Gold = quote.Gold; plan.Shards = quote.Shards;
             plan.GoldShort = System.Math.Max(0, plan.Gold - camp.Money(CurrencyType.Gold));
             plan.ShardsShort = System.Math.Max(0, plan.Shards - camp.Money(CurrencyType.Shards));
-            plan.LevelFrom = item.ItemLevel;
-            // Как Camp.TryPayReforge: уровень растёт на 1 + редкость.
-            plan.LevelTo = item.ItemLevel + 1 + (int)item.Rarity;
-            SmithResult result = worn
-                ? camp.ReforgeRange((EquipSlot)slot, affix, out plan.Lower, out plan.Upper)
-                : camp.ReforgeRange(slot, affix, out plan.Lower, out plan.Upper);
-            switch (result)
+            plan.Growth = quote.NextGrowth; plan.RiskPercent = quote.RiskPercent; plan.Risky = quote.Risky;
+            switch (quote.Status)
             {
                 case SmithResult.Success: plan.Block = plan.GoldShort > 0 || plan.ShardsShort > 0 ? Block.Funds : Block.None; break;
                 case SmithResult.NoAffix: plan.Block = Block.NoAffix; break;
                 case SmithResult.AtMaximum: plan.Block = Block.AtMaximum; break;
                 case SmithResult.Exhausted: plan.Block = Block.Exhausted; break;
+                case SmithResult.Shattered: plan.Block = Block.Shattered; break;
+                case SmithResult.Masterpiece: plan.Block = Block.Masterpiece; break;
+                case SmithResult.SessionOpen: plan.Block = Block.Session; break;
                 default: plan.Block = Block.Invalid; break;
             }
             return plan;
         }
 
         /// <summary>
-        /// Свойство, выбранное при открытии вещи: первое, которое ещё можно перековать (не на пределе),
-        /// иначе первое. Раньше всегда бралось первое — и кнопка встречала отказом «уже на максимуме».
+        /// Свойство, выбранное при открытии вещи: у обычной — базовое (−1), у остальных — первое,
+        /// которое ещё можно закалить (не на пределе), иначе первое. Раньше всегда бралось первое —
+        /// и кнопка встречала отказом «уже на максимуме».
         /// </summary>
         public static int DefaultAffix(Camp camp, int slot, bool worn, int affixCount)
         {
+            ItemInstance item = Pick(camp, slot, worn);
+            if (!item.IsEmpty && item.Rarity == ItemRarity.Normal) return -1;
             for (int i = 0; i < affixCount; i++)
-            {
-                SmithResult result = worn
-                    ? camp.ReforgeRange((EquipSlot)slot, i, out _, out _)
-                    : camp.ReforgeRange(slot, i, out _, out _);
-                if (result == SmithResult.Success) return i;
-            }
+                if (camp.Quote(EniAction.Temper, Target(slot, worn), i).Status == SmithResult.Success) return i;
             return 0;
         }
 
@@ -127,9 +137,11 @@ namespace Game.View
             var plan = new Dismantle();
             ItemInstance item = Pick(camp, slot, worn);
             if (item.IsEmpty) { plan.Block = Block.NoItem; return plan; }
-            plan.Shards = Inventory.ShardsFor(item);
+            // Как Camp.Dismantle: с бонусом за закалку и «Знатоком рун».
+            plan.Shards = camp.SalvageShards(item);
             if (worn) plan.Block = Block.Worn;
             else if (camp.Bag.IsKept(slot)) plan.Block = Block.Protected;
+            else if (camp.Session.IsOpen && camp.Session.Target.Same(ForgeTarget.Bag(slot))) plan.Block = Block.Session;
             return plan;
         }
 

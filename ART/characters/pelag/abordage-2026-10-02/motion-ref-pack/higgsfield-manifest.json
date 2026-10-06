@@ -1,0 +1,9 @@
+{
+  "what": "Higgsfield generations for the Abordage motion-ref pack (the existing manifest.json is left untouched)",
+  "date": "2026-10-03",
+  "B2-key-poses-higgsfield.png": {"job_id": "df4b0236-1a81-42dc-8444-2b3f322e98e4", "model": "gpt_image_2_5 medium 2k", "refs": ["r2", "r7", "r3", "r6 (Abordage B sheet, style + layout)"], "poses": {"7": "Geyser uppercut on arrival", "8": "Quake slam, fist into the ground", "9": "short-throw dive along a short taut chain", "10": "over-the-shoulder windup"}},
+  "video/start-frame-studio.png": {"job_id": "6a38561d-75aa-4d4d-b05d-1ffd7b8a3a95", "model": "gpt_image_2_5 medium 1k"},
+  "video/abordage-kling.mp4": "= v2 (picked)",
+  "video/abordage-kling-v1.mp4": {"job_id": "8154d635-d179-4906-81aa-f52c4214c0db", "model": "kling3_0_turbo 5 s 720p", "result": "over-shoulder throw good, then he lets go of the chain and just lunges and punches; no chain yank"},
+  "video/abordage-kling-v2.mp4": {"job_id": "afe65ce2-7474-401d-97df-32ec1dab5465", "model": "kling3_0_turbo 5 s 720p, prompt: never lets go of the chain", "result": "throw, then the taut chain pulls him into a low dive (good, ~1.5-3.5 s); after that he flies past the anchor horizontally, no landing punch"}
+}

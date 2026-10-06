@@ -1,0 +1,58 @@
+{
+  "pack": "Pelag Wreck motion reference (ChatGPT image pack)",
+  "version": 2,
+  "date": "2026-10-03",
+  "status": "v2 (anchor swung on its chain like a flail) prepared 03.10; B generated 03.10 14:29 (poses 1 and 3 need a fix, see generations); B2 not generated yet; S only if video credits appear",
+  "prompts_file": "prompts.md (v2)",
+  "rejected": {"file": "prompts-hammer-rejected.md", "what": "v1: anchor gripped by the shank with both hands like a war hammer", "why": "owner 03.10: «якорь должен быть на цепи и должен быть физичный» — never go back to holding the anchor by its shank"},
+  "skill": "Wreck (Крушение) with Anchor Slam (Удар якорем) merged in",
+  "concept": "A fast series of three heavy blows with the anchor swung ON ITS CHAIN like a flail: swing 1 right-to-left, backhand swing 2 left-to-right, then the anchor goes over the head in a vertical arc and slams into the ground in front, sending a water wave along a lane. The anchor is physical: weight, inertia, chain taut in the swings, sagging in the pauses, impact bounce. Owner taste: sharp and fast, organic body, no slow wind-ups.",
+  "hands": {
+    "now_in_game": "Wreck clips Pelag_AN_WreckA/WreckB/WreckFinish (Resources/Characters/Pelag_v5/Mixamo, states WreckA_v5.. driven by TempoPhase). The anchor head is posed by code (PelagAnchorSlamView.Wreck.cs PoseWreck/WreckPayout) on 0.9-1.98 m of authored chain payout plus 0.42 m ring allowance (HeadSize 0.94, never below the stowed 1.31 m), like a flail. Main chain: LEFT hand (PelagEquipmentView.ChainGripPosition) -> anchor ring. RIGHT hand (ChainSupportPosition) holds the chain as a support: a 0.52-1.12 m bridge runs right hand -> left hand, a feed segment belt -> right hand. Nobody holds the shank. Swing contact 2.25 m in front of the root at 0.68 m height; the finisher lifts the head to 2.15 m (0.5 m forward, 0.35 m left) and drops it to 0.28 m. Sabre in the sash at the left hip (SetSlamOwnership -> BeginAnchorUse). Anchor Slam: AnchorSlam_v5, physical head on the chain (PelagAnchorSlamView.Physics). Source blend ART/PELAG/animation/anchor-slam/Pelag_Weighted_Combat_Work.blend no longer exists.",
+    "sheet": "Both hands on the chain only: left fist on the leather-wrapped grip with the chain running from it to the anchor, right fist on the chain right next to it (matches ChainGripPosition / ChainSupportPosition). Anchor about half his height on a dark iron chain about as long as he is tall (~1.5-2 m), never held by the shank. Sabre tucked in the red sash at the left hip in every figure.",
+    "build_implication": "No anchor-in-hand mode: keep the chain topology of the current view; body clips from sheets B/B2, anchor and chain motion physical per artifacts/wreck/anchor-tech (DESIGN.md pending, do not redesign it here). Two mismatches of the current PoseWreck against the sheet and the Sim comment («справа, обратный слева»): (1) stroke 1 sweeps the head from the left (-75 deg) through the front to +52 deg right, i.e. mirrored — the sheet is right, the staging must flip; (2) the finisher raises the head above and slightly in front, the sheet carries it over from behind the head (physical flail arc)."
+  },
+  "sim_now": {
+    "wreck": "radius 2.8 m, arc cosine 0.3 (+-72 deg), windup 6 ticks, stage 15 ticks, combo window 24 ticks, damage 70/70/140, stun 9 ticks on the finisher",
+    "anchor_slam": "lane 4.5 x 1.2 m, windup 15 ticks, duration 27 ticks, stun 15 ticks"
+  },
+  "attachments": [
+    {"file": "1-pelag-model-4views.jpg", "size": "2164x1080", "source": "ART/characters/pelag/abordage-2026-10-02/motion-ref-pack/1-pelag-model-4views.jpg (= squall-forms-2026-10-02/motion-ref-pack/1-pelag-model-4views.jpg = wreck-2026-10-03/chatgpt-refs/2-pelag-model-4views.jpg)", "what": "model identity, 4 views, sabre in sash, anchor on back", "used_in": ["B", "B2", "S"]},
+    {"file": "2-pelag-ingame.jpg", "size": "1440x960", "source": "ART/characters/pelag/abordage-2026-10-02/motion-ref-pack/2-pelag-ingame.jpg (crop of artifacts/capture/pelag-dash-closeup/shot_00_t3.00s.png)", "what": "in-game colours and brightness", "used_in": ["B", "B2", "S"]},
+    {"file": "3-anchor-on-back-ingame.jpg", "size": "1440x2200", "source": "ART/characters/pelag/abordage-2026-10-02/motion-ref-pack/3-anchor-on-back-ingame.jpg (zoom_anchor_stance.jpg + zoom_anchor_head.jpg stacked)", "what": "our anchor, ring and chain on the back in game; some frames show the sabre drawn — the prompts say to ignore it", "used_in": ["B", "B2", "S"]},
+    {"file": "4-anchor-chain-design.jpg", "size": "1024x1536", "source": "ART/characters/pelag/abordage-2026-10-02/motion-ref-pack/4-anchor-chain-design.jpg (= demo-polish-2026-09-30/references/anchor_identity.jpg = wreck-2026-10-03/chatgpt-refs/3-anchor-chain-design.jpg)", "what": "anchor head, chain and leather-wrapped grip with red tassel; ignore its glow and impact effects", "used_in": ["B", "B2", "S"]},
+    {"file": "5B-abordage-keyposes-format.png", "size": "1672x941", "source": "ART/characters/pelag/abordage-2026-10-02/motion-ref-pack/B-key-poses-chatgpt.png (ChatGPT 2026-10-02 22:10, Abordage2 clips built from it)", "what": "approved Abordage key-pose sheet (2 rows x 6): layout and render style only, not its poses or chain throw; sheet B needs 7 columns", "used_in": ["B"]},
+    {"file": "5S-scene-game-camera.jpg", "size": "1620x1080", "source": "ART/characters/pelag/wreck-2026-10-03/chatgpt-refs/1-scene-game-camera.jpg (= abordage-2026-10-02/motion-ref-pack/5S-scene-game-camera.jpg)", "what": "game camera, light, scale, forest arena, forest guardians", "used_in": ["S"]}
+  ],
+  "prompts": [
+    {"id": "B", "tool": "ChatGPT image, new chat (not the target-frame chat)", "attach_order": ["1-pelag-model-4views.jpg", "2-pelag-ingame.jpg", "3-anchor-on-back-ingame.jpg", "4-anchor-chain-design.jpg", "5B-abordage-keyposes-format.png"], "aspect": "16:9", "layout": "2 rows x 7 figures, side view facing right + three-quarter front", "save_as": "B-key-poses-chatgpt.png", "poses": [1, 2, 3, 4, 5, 6, 7]},
+    {"id": "B2", "tool": "ChatGPT image, new chat", "attach_order": ["1-pelag-model-4views.jpg", "2-pelag-ingame.jpg", "3-anchor-on-back-ingame.jpg", "4-anchor-chain-design.jpg", "B-key-poses-chatgpt.png (result of B)"], "aspect": "16:9", "layout": "2 rows x 4 figures", "save_as": "B2-form-poses-chatgpt.png", "poses": [8, 9, 10, 11]},
+    {"id": "S", "tool": "ChatGPT image, new chat", "attach_order": ["1-pelag-model-4views.jpg", "2-pelag-ingame.jpg", "3-anchor-on-back-ingame.jpg", "4-anchor-chain-design.jpg", "5S-scene-game-camera.jpg", "B-key-poses-chatgpt.png (result of B)"], "aspect": "16:9", "save_as": "S-start-frame-chatgpt.png", "camera": "game camera angle, framed ~1.5x closer", "pose": 1}
+  ],
+  "pose_numbers": {
+    "1": "ready: both hands on the chain grip at the right hip, anchor hanging and swinging low behind him to the right on the chain, weight on the back right foot, left foot forward, torso coiled right",
+    "2": "swing 1 contact, right to left: arms pull the chain across the body, chain taut, anchor flat at hip height ~2 m ahead-left, hips and chest turned left together, weight on the front left foot",
+    "3": "link: momentum carries the anchor on around behind him to the left, chain whipping in an arc, hands at the left hip, torso coiled left, short step with the right foot",
+    "4": "swing 2 contact, backhand left to right: chain taut, anchor flat at hip height ~2 m ahead-right, hips and chest turned right, weight on the front right foot",
+    "5": "overhead: arms raised, the anchor on the taut chain in a vertical arc high above and behind the head, chest open, left foot stepped forward, no jump",
+    "6": "slam: arms yanked down and forward, chain taut and straight, anchor crashed into the ground ~2 m ahead, deep lunge on the front left foot, back straight, lean ~40 deg",
+    "7": "recovery: chain pulled back, the anchor has dragged to his front foot, chain slack and sagging, wide balanced stance",
+    "8": "Ninth Wave (Девятый вал) hold: whirls the anchor overhead in a wide horizontal circle on the taut chain, arms raised, very low wide stance",
+    "9": "Ninth Wave release: bigger deeper slam, chain at full length, anchor buried far ahead, back knee almost on the ground",
+    "10": "Water Shell (Водяной панцирь): swing 2 (backhand) at contact in a wider, lower, rooted stance, feet flat, chin down",
+    "11": "Breakwater (Волнорез) drag: steps through after the anchor right after the slam, arms forward-down on the taut chain, the anchor ploughing forward along the ground by its own momentum, lean ~40 deg"
+  },
+  "clip_draft": {
+    "WreckA": "1 -> 2 -> 3",
+    "WreckB": "3 -> 4",
+    "WreckFinish": "5 -> 6 -> 7",
+    "NinthWave": "5 -> 8 (hold up to 1 s) -> 9 -> 7",
+    "WaterShell": "stance 10 over swings 2 and 4",
+    "Breakwater": "6 -> 11 -> 7"
+  },
+  "form_colours_for_reference": {"base": "turquoise #2EC4C9", "breakwater": "#1FB37E", "ninth_wave": "#4B3FD0", "water_shell": "#E4EEF6", "forbidden": "red, orange, gold (enemy telegraphs)"},
+  "next_step": "owner generates B, then B2 and S in ChatGPT; body clips authored in Blender from B and B2 like Squall v2 and Abordage v2; anchor and chain physics per artifacts/wreck/anchor-tech; S is the start frame for a video ref if Higgsfield credits appear",
+  "generations": [
+    {"id": "B", "file": "B-key-poses-chatgpt.png", "size": "1672x941", "date": "2026-10-03 14:29", "layout_got": "one view (~3/4) per pose, 4 + 3 figures, Russian captions and a logo, dust in 6-7 (not the requested 2 rows x 7 side + 3/4)", "usable": [2, 4, 5, 6, 7], "defects": {"1": "anchor lifted near the hands/shoulder on ~0.4 m of chain instead of hanging low behind-right on the full chain", "3": "two anchors in one figure (one on the chain to the right, a second above the head)"}, "fix": "same chat, C lines «Поза 1, якорь у руки» and «Поза 3, два якоря» one at a time; save as B-key-poses-chatgpt-fix13.png, keep the original"}
+  ]
+}

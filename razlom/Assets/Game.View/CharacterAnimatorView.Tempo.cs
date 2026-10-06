@@ -58,6 +58,10 @@ namespace Game.View
             if (_animator == null || _recoveryFootworkLayer < 0) return;
             // Ноги в восстановлении рывка — CharacterAnimatorView.Dash.
             if (UpdateDashFootwork()) return;
+            // Абордаж v2 ведёт ноги клипом (CharacterAnimatorView.Abordage): бег восстановления не подмешиваем.
+            if (_abordageDriven) { _animator.SetLayerWeight(_recoveryFootworkLayer, 0); return; }
+            // Крушение v2 ведёт слои само (CharacterAnimatorView.Wreck2): ожидание, Панцирь, бег в окне.
+            if (UpdateWreck2Footwork()) return;
             var sim = TempoSim;
             bool supported = _abilityDefinitionId == AbilityDefinition.AnchorSlamId || _abilityDefinitionId == AbilityDefinition.WreckId
                 || _abilityDefinitionId == AbilityDefinition.FireFlaskId || _abilityDefinitionId == AbilityDefinition.AnchorLeapId;
@@ -93,6 +97,9 @@ namespace Game.View
             { _tempoAbility = false; return false; }
             var sim = TempoSim;
             if (_animator == null || IsDead || sim == null) return true;
+            // Крушение v2 (CharacterAnimatorView.Wreck2): клипы Wreck2_* по тикам Sim, якорь — риг anchor-core.
+            // Контроллер без Wreck2_* или риг не взял серию (нет запечек) — прежний путь ниже, целиком.
+            if (wreck && TryBeginWreck2(sim)) return true;
             GetComponent<PelagAnchorSlamView>()?.Release();
             StopAttackWarp(); CancelUpperBodyAttack(.02f); ResetAbilityTriggers();
             _leapLocomotion = false; _attackPresentationActive = false;
@@ -113,7 +120,8 @@ namespace Game.View
             if (_saberFootworkLayer >= 0) _animator.SetLayerWeight(_saberFootworkLayer, 0f);
             _animator.SetFloat("TempoPhase", 0f);
             EnterCommittedAbilityState(Animator.StringToHash("Base Layer." + name + "_v5"), .025f);
-            if (wreck) GetComponent<PelagAnchorSlamView>()?.BeginWreck();
+            // Якорь на цепи (anchor-core): серию ведёт риг, если у него есть снимок Sim и запечки; иначе прежний путь.
+            if (wreck && !(GetComponent<PelagAnchorRig>()?.ClaimWreck() ?? false)) GetComponent<PelagAnchorSlamView>()?.BeginWreck();
             UpdateTempoAnimation();
             return true;
         }

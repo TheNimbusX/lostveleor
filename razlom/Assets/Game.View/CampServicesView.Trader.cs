@@ -105,7 +105,9 @@ namespace Game.View
             }
             s.Item.Show(inventory.SpriteFor(chosenItem),chosenItem.ItemLevel.ToString(),(int)chosenItem.Rarity,false);
             s.ItemName.text=inventory.ItemName(chosenItem.BaseId);
-            s.ItemMeta.text=RarityAndLevel(chosenItem)+"  ·  "+SmithText("attempts")+" "+chosenItem.ReforgeCount+"/"+CampShopDeals.ReforgeLimit+(_tradePick==TradePick.Worn?WornTag:"");
+            int cracks=camp.CrackCount(chosenItem);
+            s.ItemMeta.text=RarityAndLevel(chosenItem)+"  ·  "+SmithText("attempts")+" "+camp.AttemptsUsed(chosenItem)+"/"+Camp.TemperAttempts(chosenItem.Rarity)
+                +(cracks>0?" · трещин "+cracks:"")+(_tradePick==TradePick.Worn?WornTag:"");
             ItemGenerator.Generate(chosenItem,camp.Items,_traderRoll);
             s.Detail.text=Properties(_traderRoll);
             Say(s.Compare,_tradePick==TradePick.Worn?Paint(TradeText("worn.now"),UiTheme.Role.TextMuted):Comparison(camp,inventory,chosenItem));

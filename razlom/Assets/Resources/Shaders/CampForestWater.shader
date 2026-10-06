@@ -7,6 +7,14 @@ Shader "Game/Camp Forest Water"
         _FoamColor("Светлая рябь",Color)=(.63,.80,.73,1)
         [Normal] _Normal01("Речная рябь",2D)="bump"{}
         _FlowSpeed("Скорость течения",Range(0,2))=.3
+        [Toggle] _BridgePolishEnabled("Локальная доводка у моста",Float)=0
+        [NoScaleOffset] _BridgeDepthMap("Глубина / препятствия / берег / область",2D)="black"{}
+        _BridgeDepthBounds("Область карты XZ",Vector)=(0,0,1,1)
+        _BridgeDeepColor("Глубокая вода у моста",Color)=(.10,.29,.31,1)
+        _BridgeShallowColor("Мелководье у моста",Color)=(.24,.36,.29,1)
+        _BridgeSkyColor("Оттенок неба",Color)=(.42,.56,.65,1)
+        _BridgeSunStrength("Мягкий солнечный блик",Range(0,.3))=.07
+        _BridgeFoamStrength("Пена у камней и опор",Range(0,.5))=.16
     }
     SubShader
     {
@@ -24,9 +32,13 @@ Shader "Game/Camp Forest Water"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             TEXTURE2D(_Normal01);SAMPLER(sampler_Normal01);
+            TEXTURE2D(_BridgeDepthMap);SAMPLER(sampler_BridgeDepthMap);
             CBUFFER_START(UnityPerMaterial)
                 half4 _DeepWaterColor,_ShallowWaterColor,_FoamColor;
                 float _FlowSpeed;
+                float4 _BridgeDepthBounds;
+                half4 _BridgeDeepColor,_BridgeShallowColor,_BridgeSkyColor;
+                float _BridgePolishEnabled,_BridgeSunStrength,_BridgeFoamStrength;
             CBUFFER_END
             float4 _CampBreeze;
             float _CampDepthOn; float4 _CampDepthShore;
@@ -56,6 +68,28 @@ Shader "Game/Camp Forest Water"
                 }
                 color=lerp(color,_FoamColor.rgb,saturate(crest+shore));
                 Light light=GetMainLight(v.shadow);
+                if(_BridgePolishEnabled>.5)
+                {
+                    float2 mapUV=(v.world.xz-_BridgeDepthBounds.xy)/max(_BridgeDepthBounds.zw,float2(.001,.001));
+                    half4 bed=SAMPLE_TEXTURE2D(_BridgeDepthMap,sampler_BridgeDepthMap,mapUV);
+                    float inBounds=step(0,mapUV.x)*step(mapUV.x,1)*step(0,mapUV.y)*step(mapUV.y,1);
+                    float blend=bed.a*inBounds;
+                    // R is actual baked world-space depth in metres, not distance across the ribbon.
+                    float depth=smoothstep(.035,.53,bed.r);
+                    half3 localColor=lerp(_BridgeShallowColor.rgb,_BridgeDeepColor.rgb,depth);
+                    localColor*=1+(normal.x+second.y)*.045;
+                    float broken=smoothstep(.12,.58,second.x*.5+normal.y*.3+.2);
+                    float contactFoam=(bed.g*.75+bed.b*.20)*broken*_BridgeFoamStrength;
+                    localColor=lerp(localColor,_FoamColor.rgb,saturate(crest*.60+contactFoam));
+                    half3 surfaceNormal=normalize(half3(normal.x*.16+second.x*.08,1,normal.y*.16+second.y*.08));
+                    half3 view=GetWorldSpaceNormalizeViewDir(v.world);
+                    half3 halfway=SafeNormalize(light.direction+view);
+                    float sun=pow(saturate(dot(surfaceNormal,halfway)),18)*_BridgeSunStrength;
+                    float sky=pow(1-saturate(dot(surfaceNormal,view)),3)*.12;
+                    localColor=lerp(localColor,_BridgeSkyColor.rgb,sky);
+                    localColor+=light.color*sun*light.shadowAttenuation;
+                    color=lerp(color,localColor,blend);
+                }
                 color*=lerp(.74,1,light.shadowAttenuation);
                 return half4(MixFog(color,v.fog),1);
             }

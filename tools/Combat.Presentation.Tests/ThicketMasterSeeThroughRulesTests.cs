@@ -108,11 +108,12 @@ public sealed class ThicketMasterSeeThroughRulesTests
     }
 
     [Test]
-    public void Shown_IsZeroWhenHidden_AndSixtyToSeventyFivePercentAtFull()
+    public void Shown_IsZeroWhenHidden_AndFullAtFull()
     {
         Assert.AreEqual(0f, ThicketMasterSeeThroughRules.Shown(0f), 1e-6f);
         float full = ThicketMasterSeeThroughRules.Shown(1f);
-        Assert.That(full, Is.InRange(.6f, .75f));
+        // Ревью 02.10: середина круга выбита целиком (сетка 70 % читалась тёмным пятном).
+        Assert.AreEqual(1f, full, 1e-6f);
         float previous = 0f;
         for (int i = 1; i <= 20; i++)
         {
@@ -124,9 +125,9 @@ public sealed class ThicketMasterSeeThroughRulesTests
     }
 
     [Test]
-    public void Circle_IsAboutTwoMetres_AroundTheHeroMiddle()
+    public void Circle_IsAboutTwoMetresAndAHalf_AroundTheHeroMiddle()
     {
-        Assert.That(ThicketMasterSeeThroughRules.RadiusMetres, Is.InRange(1.6f, 2f));
+        Assert.That(ThicketMasterSeeThroughRules.RadiusMetres, Is.InRange(2f, 2.5f));
         Assert.That(ThicketMasterSeeThroughRules.HeroCentreHeight, Is.InRange(.7f, 1.2f));
         Assert.That(ThicketMasterSeeThroughRules.DepthRampMetres, Is.GreaterThan(0f));
     }

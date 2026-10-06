@@ -1,0 +1,36 @@
+00:02.938  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\clips\Pelag_Wreck4_Work.blend"
+C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\scripts\v4_render.py:37: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  mat = bpy.data.materials.new("Pelag_v6"); mat.use_nodes = True
+C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\scripts\v4_render.py:60: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  hm = bpy.data.materials.new("anchor"); hm.use_nodes = True
+00:06.907  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_000.png'
+00:07.094  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_001.png'
+00:07.266  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_002.png'
+00:07.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_003.png'
+00:07.657  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_004.png'
+00:07.813  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_005.png'
+00:08.016  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_006.png'
+00:08.172  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_007.png'
+00:08.328  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_008.png'
+00:08.500  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_009.png'
+00:08.657  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_010.png'
+00:08.797  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_011.png'
+00:08.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_012.png'
+00:09.078  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_013.png'
+00:09.250  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_014.png'
+00:09.407  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_015.png'
+00:09.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_016.png'
+00:09.828  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_017.png'
+00:10.016  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_018.png'
+00:10.188  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_019.png'
+00:10.360  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_020.png'
+00:10.547  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_021.png'
+00:10.766  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_022.png'
+00:10.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_023.png'
+00:11.125  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_024.png'
+00:11.282  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\wreck-2026-10-03\animation-v4\sim\r5\frames_stow_side\stow_side_025.png'
+FBX version: 7400
+render done side 26
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

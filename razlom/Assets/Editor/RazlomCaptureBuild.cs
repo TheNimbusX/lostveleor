@@ -80,6 +80,11 @@ namespace Game.EditorTools
             RunHudWcBuilder.Build(false);
             PauseMenuBuilder.EnsureBuilt(false);
             CampTentBuilder.EnsureBuilt(false);
+            // Палатка «Дыма и света» (CampTentWc) — миграции до CampTentView.LayoutVersion: старый CampTentBuilder выше их не
+            // зовёт, и без этой строки зеркало показывало палатку прежней версии (ловушка 2 ui-common 06.10).
+            CampTentWcBuilder.Build(false);
+            // Стол «Перед походом» (CampTravelWc, 06.10): нет префаба — собирается, есть — доводится миграциями.
+            CampTravelWcBuilder.Build(false);
             // Дымная завеса («Карта тушью» — миграция v1): Build(false) на готовом префабе тоже зовёт EnsureMigrated.
             SmokeTransitionBuilder.Build(false);
             // Тлеющие метки у края экрана (2a, 30.09): нет префаба — собирается, есть — доводится миграциями.
@@ -98,6 +103,7 @@ namespace Game.EditorTools
                 CampTrainingWcBuilder.Build(true);
                 CampGuideWcBuilder.Build(true);
                 CampRiftConfirmWcBuilder.Build(true);
+                CampTravelWcBuilder.Build(true);
                 SmokeTransitionBuilder.Build(true);
             }
             // Controller is generated from imported FBXs. Rebuild it explicitly
@@ -133,6 +139,8 @@ namespace Game.EditorTools
             global::PelagAnchorSlamContactSetup.Validate();
             global::CommonFootstepVfxSetup.Install();
             global::PelagWhirlwindVfxSetup.Install();
+            // Формы Вихря: своя версия сборки (FormsVersion) — в batchmode delayCall их не доводит.
+            global::PelagWhirlwindFoamVfxSetup.InstallForms(false);
             global::PelagSquallVfxSetup.Install();
             global::PelagRollVfxSetup.Install();
             global::PelagEvadeVfxSetup.Install();

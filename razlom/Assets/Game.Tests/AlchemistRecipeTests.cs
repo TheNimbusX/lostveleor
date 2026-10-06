@@ -6,53 +6,45 @@ namespace Game.Tests
 {
     public sealed class AlchemistRecipeTests
     {
+        /// <summary>Sandbox стоит на ранге 3: все восемь рецептов Лео открыты без заказов.</summary>
         static Camp CampWithFunds()
         {
             var camp = new Camp(PrototypeContent.Items());
             camp.Earn(CurrencyType.Gold, 500);
-            camp.MeetAlchemist();
-            Assert.That(camp.AcceptAlchemyOrder(AlchemistOrder.Resin), Is.EqualTo(AlchemistActionResult.Success));
-            Assert.That(camp.AcceptAlchemyOrder(AlchemistOrder.Surge), Is.EqualTo(AlchemistActionResult.Success));
             return camp;
         }
 
+        /// <summary>
+        /// Рецепты Лео (06.10) открывает только ранг лагеря — босс и уровень вместе;
+        /// заказов больше нет. Малые бутылки доступны всегда.
+        /// </summary>
         [Test]
-        public void BothExchangePathsUnlockOnceAndPreserveSelectedBottles()
+        public void RecipesFollowCampRankWithoutOrders()
         {
-            var camp = CampWithFunds();
-            Assert.That(camp.TryBuyPotion(PotionKind.LivingResin), Is.EqualTo(PotionPurchaseResult.RecipeLocked));
-            int slot = camp.Bag.Add(new ItemInstance(PrototypeContent.ItemBaseIds()[0], 1, ItemRarity.Magic, 99));
-            camp.Bag.SetKeep(slot, true);
-            Assert.That(camp.ExchangeRareForResin(slot), Is.EqualTo(AlchemistActionResult.ProtectedItem));
-            camp.Bag.SetKeep(slot, false);
-            Assert.That(camp.ExchangeRareForResin(slot), Is.EqualTo(AlchemistActionResult.Success));
-            Assert.That(camp.ExchangeRareForResin(slot), Is.EqualTo(AlchemistActionResult.AlreadyUnlocked));
-            Assert.That(camp.Bag.IsEmpty(slot), Is.True);
-            Assert.That(camp.ExchangeShardsForSurge(), Is.EqualTo(AlchemistActionResult.InsufficientShards));
-            camp.Earn(CurrencyType.Shards, 12);
-            Assert.That(camp.ExchangeShardsForSurge(), Is.EqualTo(AlchemistActionResult.Success));
-            Assert.That(camp.ExchangeShardsForSurge(), Is.EqualTo(AlchemistActionResult.AlreadyUnlocked));
-            Assert.That(camp.Money(CurrencyType.Shards), Is.Zero);
-            Assert.That(camp.BuyPotion(PotionKind.LivingResin), Is.True);
-            Assert.That(camp.BuyPotion(PotionKind.LavidiumSurge), Is.True);
-            Assert.That(camp.Money(CurrencyType.Gold), Is.EqualTo(360));
-            Assert.That(camp.SelectPotion(PotionKind.LivingResin), Is.True);
-            Assert.That(camp.SelectPotion(PotionKind.LavidiumSurge), Is.True);
-            var bytes = CampSaveCodec.Encode(camp);
-            var restored = CampSaveCodec.Decode(bytes, camp.Items);
-            CollectionAssert.AreEqual(bytes, CampSaveCodec.Encode(restored));
-            Assert.That(restored.SelectedPotion(0), Is.EqualTo(PotionKind.LivingResin));
-            Assert.That(restored.SelectedPotion(1), Is.EqualTo(PotionKind.LavidiumSurge));
+            var camp = PrototypeContent.NewCamp();
+            Assert.That(camp.PotionUnlocked(PotionKind.SmallHealth), Is.True);
+            Assert.That(camp.PotionUnlocked(PotionKind.LargeHealth), Is.False);
+            camp.DeveloperSetLevel(Camp.ResidentsLevel);
+            Assert.That(camp.HasResident(CampResident.Alchemist), Is.True);
+            Assert.That(camp.PotionUnlocked(PotionKind.LargeLavidium), Is.False);
+            camp.DeveloperSetLevel(6); camp.DeveloperCreditBoss(0);
+            Assert.That(camp.PotionUnlocked(PotionKind.LargeHealth), Is.True);
+            Assert.That(camp.PotionUnlocked(PotionKind.LivingResin), Is.False);
+            camp.DeveloperSetLevel(12); camp.DeveloperCreditBoss(1);
+            Assert.That(camp.PotionUnlocked(PotionKind.LivingResin), Is.True);
+            Assert.That(camp.PotionUnlocked(PotionKind.LavidiumSurge), Is.True);
+            Assert.That(camp.PotionUnlocked(PotionKind.Mixed), Is.False);
+            camp.DeveloperSetLevel(18); camp.DeveloperCreditBoss(2);
+            Assert.That(camp.PotionUnlocked(PotionKind.Mixed), Is.True);
+            Assert.That(camp.PotionUnlocked(PotionKind.Clear), Is.True);
+            var sandbox = CampWithFunds();
+            for (int i = 0; i < Camp.PotionKindCount; i++) Assert.That(sandbox.PotionUnlocked((PotionKind)i), Is.True);
         }
 
         [Test]
         public void EffectsRefreshWithoutStackingAndExpireOnSimulationTicks()
         {
             var camp = CampWithFunds();
-            camp.Earn(CurrencyType.Shards, 12);
-            camp.ExchangeShardsForSurge();
-            int slot = camp.Bag.Add(new ItemInstance(PrototypeContent.ItemBaseIds()[0], 1, ItemRarity.Magic, 99));
-            camp.ExchangeRareForResin(slot);
             for (int i = 0; i < 2; i++)
             {
                 Assert.That(camp.BuyPotion(PotionKind.LivingResin), Is.True);
@@ -88,47 +80,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void CleanLevelRequiresExitAndOnlyConsumedPotionInvalidatesIt()
-        {
-            var camp = CampWithFunds();
-            var session = new GameSession(73, camp, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
-            session.EnterRift();
-            Assert.That(session.AlchemyCleanLevelInProgress, Is.True);
-            session.Step(new InputFrame { PotionMask = Camp.PotionInputBit(PotionKind.SmallHealth) });
-            Assert.That(session.AlchemyCleanLevelInProgress, Is.True, "Empty bottle must not count as drinking");
-            for (int i = 1; i < session.Run.Sim.Entities.Count; i++) session.Run.Sim.Entities.Alive[i] = false;
-            session.Step(InputFrame.Empty);
-            Assert.That(session.Run.Phase, Is.EqualTo(RunPhase.SeekingExit));
-            Assert.That(camp.AlchemyStatus(AlchemistOrder.Surge), Is.EqualTo(AlchemistOrderStatus.Accepted));
-            session.Run.Sim.Entities.Position[0] = session.Run.Map.ExitPoint(0);
-            session.Step(InputFrame.Empty);
-            Assert.That(session.Run.Phase, Is.EqualTo(RunPhase.ChoosingReward));
-            Assert.That(camp.AlchemyStatus(AlchemistOrder.Surge), Is.EqualTo(AlchemistOrderStatus.Ready));
-            Assert.That(camp.TurnInAlchemyOrder(AlchemistOrder.Surge), Is.EqualTo(AlchemistActionResult.Success));
-            Assert.That(camp.TurnInAlchemyOrder(AlchemistOrder.Surge), Is.EqualTo(AlchemistActionResult.AlreadyUnlocked));
-        }
-
-        [Test]
-        public void DrinkingDuringExitWalkResetsAttemptAndLeavingDoesNotAwardIt()
-        {
-            var camp = CampWithFunds();
-            Assert.That(camp.BuyPotion(PotionKind.SmallHealth), Is.True);
-            var session = new GameSession(74, camp, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
-            session.EnterRift();
-            for (int i = 1; i < session.Run.Sim.Entities.Count; i++) session.Run.Sim.Entities.Alive[i] = false;
-            session.Step(InputFrame.Empty);
-            Assert.That(session.Run.Phase, Is.EqualTo(RunPhase.SeekingExit));
-            session.Run.Sim.Entities.Health[0] = 1;
-            session.Step(new InputFrame { PotionMask = Camp.PotionInputBit(PotionKind.SmallHealth) });
-            Assert.That(session.AlchemyCleanLevelInProgress, Is.False);
-            session.Run.Sim.Entities.Position[0] = session.Run.Map.ExitPoint(0);
-            session.Step(InputFrame.Empty);
-            Assert.That(camp.AlchemyStatus(AlchemistOrder.Surge), Is.EqualTo(AlchemistOrderStatus.Accepted));
-            session.Step(new InputFrame { Command = (byte)RunCommand.Leave });
-            Assert.That(camp.AlchemyStatus(AlchemistOrder.Surge), Is.EqualTo(AlchemistOrderStatus.Accepted));
-        }
-
-        [Test]
         public void DeathEventCarriesTheActualKiller()
         {
             var sim = new Simulation(5);
@@ -139,65 +90,6 @@ namespace Game.Tests
                 if (e.Type == SimEventType.Death && e.Target == 1)
                 { Assert.That(e.Source, Is.EqualTo(0)); found = true; }
             Assert.That(found, Is.True);
-        }
-
-        [Test]
-        public void BudKillRequiresAcceptedOrderAndNormalRun()
-        {
-            var camp = new Camp(PrototypeContent.Items());
-            camp.MeetAlchemist();
-            var session = new GameSession(81, camp, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
-            session.EnterRift();
-            int id = 1;
-            Assert.That(session.Run.Sim.Entities.Count, Is.GreaterThan(id));
-            session.Run.Sim.Entities.Kind[id] = EnemyKind.ForestBud;
-            session.Run.Sim.ApplyAbilityDamage(0, id, 10000, -1, DamageType.Physical);
-            session.RecordAlchemyDeaths(session.Run.Sim.Events, session.Run.Sim);
-            Assert.That(camp.AlchemyStatus(AlchemistOrder.Resin), Is.EqualTo(AlchemistOrderStatus.Available));
-            Assert.That(camp.AcceptAlchemyOrder(AlchemistOrder.Resin), Is.EqualTo(AlchemistActionResult.Success));
-            session.Run.Sim.Step(InputFrame.Empty);
-            int fresh = session.Run.Sim.Entities.Spawn(FixVec2.Zero, 100, Faction.Orvill);
-            session.Run.Sim.Entities.Kind[fresh] = EnemyKind.ForestBud;
-            session.Run.Sim.ApplyAbilityDamage(0, fresh, 10000, -1, DamageType.Physical);
-            session.RecordAlchemyDeaths(session.Run.Sim.Events, session.Run.Sim);
-            Assert.That(camp.AlchemyStatus(AlchemistOrder.Resin), Is.EqualTo(AlchemistOrderStatus.Ready));
-
-            var other = CampWithFunds();
-            var developer = new GameSession(82, other, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
-            developer.StartForestBudTest(null, 82);
-            developer.Run.Sim.ApplyAbilityDamage(0, 1, 10000, -1, DamageType.Physical);
-            developer.RecordAlchemyDeaths(developer.Run.Sim.Events, developer.Run.Sim);
-            Assert.That(other.AlchemyStatus(AlchemistOrder.Resin), Is.EqualTo(AlchemistOrderStatus.Accepted));
-        }
-
-        [Test]
-        public void AlchemistTrialUsesNormalQuestRulesWithGuaranteedBud()
-        {
-            var camp = CampWithFunds();
-            var modules = PrototypeContent.Modules();
-            var level = new RiftLevelSettings(11, 1, 1, 2, 1, 3, 60);
-            var location = new LocationDefinition(31, modules, new[] { level });
-            var session = new GameSession(83, camp, modules, PrototypeContent.ItemBaseIds(), location: location);
-            session.StartAlchemyBudTrial(location, 83);
-            Assert.That(session.IsDeveloperRun, Is.False);
-            Assert.That(session.Run.Sim.Entities.Kind[1], Is.EqualTo(EnemyKind.ForestBud));
-            Assert.That(session.Run.ForestBudShowcaseCount, Is.EqualTo(1));
-            Assert.That(session.AlchemyCleanLevelInProgress, Is.True);
-        }
-
-        [Test]
-        public void VersionSevenLoadsWithOriginalFourAndClosedRecipes()
-        {
-            var camp = CampWithFunds();
-            camp.BuyPotion(PotionKind.LargeHealth);
-            camp.SelectPotion(PotionKind.LargeHealth);
-            var old = LegacyCampSaveFixture.Encode(camp, 7);
-            var restored = CampSaveCodec.Decode(old, camp.Items);
-            Assert.That(restored.PotionCount(PotionKind.LargeHealth), Is.EqualTo(1));
-            Assert.That(restored.SelectedPotion(0), Is.EqualTo(PotionKind.LargeHealth));
-            Assert.That(restored.PotionCount(PotionKind.LivingResin), Is.Zero);
-            Assert.That(restored.HasMetAlchemist, Is.False);
-            Assert.That(restored.AlchemyStatus(AlchemistOrder.Resin), Is.EqualTo(AlchemistOrderStatus.Hidden));
         }
 
         [Test]

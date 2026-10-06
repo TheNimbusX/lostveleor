@@ -69,6 +69,12 @@ namespace Game.Tests
         // скорости атаки 3, в хеше состояние серии. «Круг» расходится от хеша
         // (герой не бьёт), «бой» — от первого удара. Два отдельных процесса
         // дали одни и те же свёртки бит в бит; в «бою» к концу живы 11 из 48.
+        // И ещё раз 02.10 (владелец: «при зажатой лкм … чтоб цеплялся к
+        // ближайшему», Simulation.SabreCombo): «бой» держит ЛКМ — удары
+        // удержания после первого цепляются к ближайшему (5 м, запас 1 м,
+        // перехват ближе на 0,75 м), в хеше состояние захвата. «Круг» прежний
+        // бит в бит (ЛКМ не держит), «бой» расходится с первого удара. Два
+        // отдельных процесса дали одни и те же свёртки бит в бит; живы 12 из 48.
         private static readonly ulong[] CircleFolds =
         {
             0x64557D919CA5F712UL, 0x331D911AD462C374UL, 0x8316CD37CD08E60EUL,
@@ -78,10 +84,10 @@ namespace Game.Tests
 
         private static readonly ulong[] FightFolds =
         {
-            0x90E0259A0B1168FBUL, 0xE235185A70D36503UL, 0x957EA480FE0E6AA9UL,
-            0x58932AEEFFDD3BD9UL, 0xED3BE820F0E70BFBUL, 0x85319524528AA0B8UL,
+            0x6B1328365872CBF3UL, 0xAD05213E346B0918UL, 0x5B083AE8D620430EUL,
+            0xBB00C17ECC778F58UL, 0x4C273567459DC96EUL, 0xCC8AECFE8BDC6191UL,
         };
-        private const ulong FightEnd = 0xE7134F99DFFF0062UL;
+        private const ulong FightEnd = 0xAD37B7126A3BFA23UL;
 
         [Test]
         public void CircleCrowd48_HashSequencePinned() => Check(false, CircleFolds, CircleEnd);

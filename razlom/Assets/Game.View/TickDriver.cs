@@ -126,6 +126,13 @@ namespace Game.View
             => Session != null && (Session.Mode != GameMode.Camp || Session.OnProvingGround);
 
         /// <summary>
+        /// Пункт «В лагерь» в паузе игрока (06.10): только сойти с Полигона. Из Разлома в лагерь
+        /// ведут уход с экрана награды, смерть или F8 «Вернуться в лагерь» (ReturnToCampFromMenu).
+        /// </summary>
+        public bool CanReturnToCampFromPause
+            => Session != null && Session.Mode == GameMode.Camp && Session.OnProvingGround;
+
+        /// <summary>
         /// Кнопки экрана итогов (RunHudWc): то же, что клавиши «повторить» и «в лагерь».
         /// </summary>
         public void QueueSummaryCommand(bool repeat)
@@ -146,7 +153,7 @@ namespace Game.View
             bool validChoice = Run.Phase == RunPhase.ChoosingReward
                                && (command >= RunCommand.ChooseReward1 && command <= RunCommand.ChooseReward3
                                    || command == RunCommand.SkipReward && Run.ChoosingArtifact
-                                   || command == RunCommand.RerollReward && Run.CanRerollReward);
+                                   || command == RunCommand.RerollReward && (Run.CanFreeReroll || Run.CanRerollReward));
             bool validRoute = Run.Phase == RunPhase.ChoosingRoute && command >= RunCommand.ChooseRoute1 && command <= RunCommand.ChooseRoute3;
             bool validReplace = Run.Phase == RunPhase.ReplacingAbility
                                 && command >= RunCommand.ReplaceSlot1 && command <= RunCommand.SalvageAbility;
@@ -288,6 +295,8 @@ namespace Game.View
             Session.WhirlwindShowcase = CaptureRig.WhirlwindShowcase || ShowcaseStandInEditor;
             WatchTeleports |= CaptureRig.WatchTeleports;
             Session.CombatFeelShowcase = CaptureRig.CombatFeelTier;
+            // Съёмка идёт эталонным героем 270/54, как до 06.10: кадры и замеры сравнимы со старыми.
+            Session.CaptureReferenceHero = CaptureRig.Installed;
             Session.CombatFeelEnemyCount = CaptureRig.HasEnemyOverride
                 ? CaptureRig.EnemyOverride
                 : 1;
@@ -856,6 +865,8 @@ namespace Game.View
                                 Sim.Entities.RefreshStats(enemy); Sim.Entities.Health[enemy] = 2000;
                             }
                         }
+                        // Крушение V6: -capture-wreck-lane — враги вдоль полосы (TickDriver.WreckIronCapture).
+                        if (CaptureRig.VfxShowcase == PelagVfxShowcase.Wreck) PlaceWreckCaptureLane(face);
                     }
                     if (CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze && elapsed == 0)
                     {
@@ -902,8 +913,11 @@ namespace Game.View
                     int castAt = sequence ? 18 + _liveSkillCastStage * 75 : 18;
                     if (CaptureRig.SlamCase == "repeat") castAt = 18 + _liveSkillCastStage * 120;
                     bool wreckSeries = CaptureRig.VfxShowcase == PelagVfxShowcase.Wreck;
-                    if (wreckSeries) castAt = 18 + _liveSkillCastStage * 15;
-                    if (_liveSkillCastStage < (sequence ? 4 : wreckSeries ? 3 : CaptureRig.SlamCase == "repeat" ? 2 : 1) && elapsed >= castAt)
+                    if (wreckSeries) HoldWreckCaptureLane(elapsed);
+                    // Крушение: серия — три нажатия (через 15 тиков или -capture-wreck-tempo fast|pause); -capture-wreck-series N — N серий через 5 с (TickDriver.WreckIronCapture).
+                    int wreckRuns = wreckSeries ? WreckCaptureSeries : 1;
+                    if (wreckSeries) castAt = 18 + WreckCapturePressOffset(_liveSkillCastStage % 3, _liveSkillCastStage / 3) + (_liveSkillCastStage / 3) * 150;
+                    if (_liveSkillCastStage < (sequence ? 4 : wreckSeries ? 3 * wreckRuns : CaptureRig.SlamCase == "repeat" ? 2 : 1) && elapsed >= castAt)
                     {
                         int definition = sequence
                             ? (_liveSkillCastStage == 0 ? AbilityDefinition.AnchorLeapId
@@ -922,13 +936,15 @@ namespace Game.View
                             : AbilityDefinition.WhirlwindId;
                         for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
                             if (Sim.GetAbility(slot)?.DefinitionId == definition) _abilityLatch |= (byte)(1 << slot);
-                        _pending.AbilityTarget = Sim.Entities.Count > 1 ? 1 : -1;
+                        _pending.AbilityTarget = CaptureLiveSkillTarget(definition);
                         _liveSkillCastStage++;
                         _liveSkillCastTick = Sim.Tick;
                         Debug.Log($"[capture-live-cast] ability={definition} tick={Sim.Tick} stage={_liveSkillCastStage}");
                         // Прицел каста не заменяет ранее отданный приказ движения.
                         _pending.Flags = 0;
-                        Vector3 cast = Quaternion.Euler(0f, CaptureRig.CastYaw, 0f) * Vector3.right * CaptureRig.CastDistance;
+                        // Крушение v4: серия turn бьёт вперёд, вбок и назад (TickDriver.WreckIronCapture).
+                        float pressYaw = wreckSeries ? WreckCapturePressYaw((_liveSkillCastStage - 1) % 3, (_liveSkillCastStage - 1) / 3) : 0f;
+                        Vector3 cast = Quaternion.Euler(0f, CaptureRig.CastYaw + pressYaw, 0f) * Vector3.right * CaptureRig.CastDistance;
                         _pending.Aim = Sim.Entities.Position[Simulation.PlayerId]
                             + new FixVec2(Fix64.FromDouble(cast.x), Fix64.FromDouble(cast.z));
                     }
@@ -947,7 +963,8 @@ namespace Game.View
                         _pending.Aim = Sim.Entities.Position[1];
                     }
                     if (elapsed >= (sequence ? 282 : 90) && Sim.Entities.Count > 1
-                        && !(CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze && CaptureRig.EnemyOverride == 0))
+                        && !(CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze && CaptureRig.EnemyOverride == 0)
+                        && !(wreckSeries && wreckRuns > 1))
                     {
                         _pending.Aim = Sim.Entities.Position[1];
                         _pending.Flags = (byte)InputFlags.Attack;
@@ -973,17 +990,17 @@ namespace Game.View
 
             // ДВА РОДА ПРИЦЕЛИВАНИЯ.
             //
-            // Шаг по цепи выбирает ВРАГА: без цели прыгать не к кому, поэтому
-            // подтверждение требует наведения на живого противника.
+            // Шквал и Абордаж выбирают ВРАГА: подтверждение требует наведения на
+            // годного противника (Sim.ValidAbilityTarget — дальность сборки, у
+            // Абордажа ещё проходимый путь до посадки). Мимо — ЛКМ ничего не
+            // делает, прицел остаётся. Абордаж до 02.10 бросался в точку пола;
+            // владелец: «выбор врага как у шквала должен быть».
             //
-            // Бросок якоря выбирает ТОЧКУ. Это перемещение, и притягиваться к
-            // пустому месту — законный и основной сценарий: уйти из окружения,
-            // перескочить пропасть, занять позицию. Требовать здесь врага
-            // значило бы запретить способности её главное применение.
+            // Навык в ТОЧКУ на полу (GroundTargetedSlot) сейчас не задан ни один;
+            // ветка ниже — под него.
             if (GroundTargetedSlot(_targetAimSlot))
             {
                 // Точка уже лежит в _pending.Aim — это позиция курсора на полу.
-                // Дальность обрезает сама симуляция по AnchorKit.LeapRange.
                 _abilityLatch |= (byte)(1 << _targetAimSlot);
                 _targetAimSlot = -1;
                 return;
@@ -997,9 +1014,11 @@ namespace Game.View
             }
         }
 
-        /// <summary>Слот целится в точку на полу, а не во врага.</summary>
-        public bool GroundTargetedSlot(int slot) =>
-            Sim?.GetAbility(slot)?.DefinitionId == AbilityDefinition.AnchorLeapId;
+        /// <summary>
+        /// Слот целится в точку на полу, а не во врага. Таких сейчас нет: Абордаж с 02.10
+        /// выбирает врага, как Шквал (TargetedSlot). Зовут курсор, подсказка и кольцо прицела.
+        /// </summary>
+        public bool GroundTargetedSlot(int slot) => false;
 
         /// <summary>Слот вообще требует выбора цели перед применением.</summary>
         private bool TargetedSlot(int slot)
@@ -1075,7 +1094,8 @@ namespace Game.View
             switch (Session.Mode)
             {
                 case GameMode.Rift:
-                    if (leave) _commandLatch = (byte)RunCommand.Leave;
+                    // «Уйти» — только с экранов награды, замены и пути (06.10): в бою L ничего не делает.
+                    if (leave && Session.Run != null && Session.Run.CanLeave) _commandLatch = (byte)RunCommand.Leave;
                     break;
 
                 case GameMode.Camp:

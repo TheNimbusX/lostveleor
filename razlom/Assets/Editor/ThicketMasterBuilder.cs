@@ -29,7 +29,9 @@ using UnityEngine;
 ///   сборка падает. Длина в кадрах сверяется с контрактом. Клипы, что идут сами за собой
 ///   (PawR, PawL, Stomp — ThicketMasterClipRules.HasAlternate), получают вторую копию
 ///   состояния «&lt;Клип&gt;Alt» с параметром «&lt;Клип&gt;AltPhase»: вид переходит в неё
-///   смесью, когда серия начинается той же лапой, которой кончилась прошлая.
+///   смесью, когда серия начинается той же лапой, которой кончилась прошлая. Поверх — два добавочных
+///   слоя шагов разворота под ударом лапы «Paw Turn Legs R/L» (маска — задние лапы и опорная передняя,
+///   TurnL/TurnR; AddPawTurnLayers, проверка находок 03.10).
 /// • Материал — URP Lit без подъёма яркости (белый _BaseColor): цвет, нормали, ORM
 ///   (разложен в карты URP), второй слот — Texture Toon только с проходом
 ///   UnitOutlineMask (контур врага), как у Корнехвата и Расщепеня.
@@ -38,8 +40,9 @@ using UnityEngine;
 ///   решение владельца 02.10; Simulation.ThicketModelHeight): узел тела масштабируется
 ///   до TargetHeight, шаг Walk — на ту же долю. Рамка скина — куб 10,4 м (тело
 ///   4,8 × 6,6 × 4,14 м) вместо пересчёта каждый кадр. Контактная тень — 3,9 м.
-/// • Префаб ThicketMaster_Runtime: корень с ThicketMasterAnimatorView (шаг Walk из
-///   отчёта клипов), тело — модель с Animator и контроллером.
+/// • Префаб ThicketMaster_Runtime: корень с ThicketMasterAnimatorView (шаг Walk — путь стоящей
+///   лапы самого клипа за цикл в осях корня, MeasureWalkStride, 08.10; отчёт клипов × масштаб тела —
+///   запас), тело — модель с Animator и контроллером.
 ///
 /// Сам по себе не запускается: меню или RazlomCaptureBuild (BuildIfPackagePresent).
 /// </summary>
@@ -164,6 +167,9 @@ public static partial class ThicketMasterBuilder
             }
             SetBounds(root.transform, renderers);
             CheckRootDrift(body, clips);
+            // Шаг Walk — по самому клипу (владелец 08.10: «ноги проскальзывают при ходьбе»): путь стоящей лапы за цикл
+            // в осях корня, как его делит вид; отчёт пакета × масштаб тела — только запас.
+            if (clips.TryGetValue(ThicketClip.Walk, out var walkClip)) stride = MeasureWalkStride(root.transform, body, walkClip, stride);
             var view = root.AddComponent<ThicketMasterAnimatorView>();
             // Одежда фаз (руны, ягоды, цветы) — сразу в префаб: в пакетной сборке delayCall
             // постпроцессора ThicketMasterDressingSetup не надёжен (ревью 02.10).
@@ -245,6 +251,72 @@ public static partial class ThicketMasterBuilder
         }
         Debug.LogWarning($"[thicketmaster] Ни в пакете, ни в {AnimationReports} нет stride_m_per_cycle — шаг Walk {ThicketMasterClipRules.DefaultWalkStride} м по умолчанию (замер 02.10), ноги могут скользить.");
         return ThicketMasterClipRules.DefaultWalkStride;
+    }
+
+    /// <summary>Замер шага расходится с отчётом пакета × масштаб тела больше этой доли — в лог.</summary>
+    private const float StrideMismatch = .02f;
+
+    /// <summary>
+    /// Шаг Walk по самому клипу, м/цикл в осях корня префаба (их делит ThicketMasterAnimatorView): костяшка передней правой
+    /// (leg_front_R_toe) внутри окна опоры ThicketWalkRules едет назад на шаг за цикл — путь между двумя кадрами клипа / доля
+    /// цикла между ними. Поза модели после замера возвращается как была (префаб — без позы клипа). Замер 08.10
+    /// (artifacts/tools/boss-feet/walk_feet.py по Walk.anim): 2,1477 = отчёт 1,7857 × тело 1,2027 — совпадает. Замер не
+    /// вышел (нет кости, клип пуст, исключение) — fromReport; расходится больше StrideMismatch — предупреждение, верит замеру.
+    /// </summary>
+    private static float MeasureWalkStride(Transform root, GameObject body, AnimationClip walk, float fromReport)
+    {
+        var bones = body.GetComponentsInChildren<Transform>(true);
+        var toe = bones.FirstOrDefault(t => t.name == "leg_front_R_toe");
+        if (toe == null || walk == null || walk.length <= 0f)
+        {
+            Debug.LogWarning($"[thicketmaster] Шаг Walk не замерен по клипу (нет leg_front_R_toe или клип пуст) — {fromReport:0.###} м/цикл из отчёта.");
+            return fromReport;
+        }
+        var positions = new Vector3[bones.Length];
+        var rotations = new Quaternion[bones.Length];
+        var scales = new Vector3[bones.Length];
+        for (int i = 0; i < bones.Length; i++)
+        {
+            positions[i] = bones[i].localPosition;
+            rotations[i] = bones[i].localRotation;
+            scales[i] = bones[i].localScale;
+        }
+        try
+        {
+            int paw = ThicketWalkRules.FrontRight;
+            float from = ThicketWalkRules.LockStart(paw) + .05f, span = ThicketWalkRules.LockSpan(paw) - .1f;
+            walk.SampleAnimation(body, Mathf.Repeat(from, 1f) * walk.length);
+            Vector3 a = root.InverseTransformPoint(toe.position);
+            walk.SampleAnimation(body, Mathf.Repeat(from + span, 1f) * walk.length);
+            Vector3 b = root.InverseTransformPoint(toe.position);
+            float measured = (a.z - b.z) / span;
+            if (!(measured > .3f && measured < 6f) || Mathf.Abs(a.x - b.x) > .05f * measured)
+            {
+                Debug.LogWarning($"[thicketmaster] Замер шага Walk по клипу странный ({measured:0.###} м/цикл, вбок {Mathf.Abs(a.x - b.x):0.###} м) — " +
+                                 $"{fromReport:0.###} м/цикл из отчёта.");
+                return fromReport;
+            }
+            if (Mathf.Abs(measured - fromReport) > StrideMismatch * fromReport)
+                Debug.LogWarning($"[thicketmaster] Шаг Walk по клипу {measured:0.###} м/цикл, а отчёт пакета × масштаб тела — {fromReport:0.###}: " +
+                                 "беру замер клипа (иначе лапы скользят на разницу), отчёт пакета устарел.");
+            else
+                Debug.Log($"[thicketmaster] Шаг Walk по клипу {measured:0.###} м/цикл (отчёт × масштаб тела {fromReport:0.###}).");
+            return measured;
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[thicketmaster] Шаг Walk по клипу не замерен ({e.Message}) — {fromReport:0.###} м/цикл из отчёта.");
+            return fromReport;
+        }
+        finally
+        {
+            for (int i = 0; i < bones.Length; i++)
+            {
+                bones[i].localPosition = positions[i];
+                bones[i].localRotation = rotations[i];
+                bones[i].localScale = scales[i];
+            }
+        }
     }
 
     // ------------------------------------------------------------ import
@@ -372,7 +444,90 @@ public static partial class ThicketMasterBuilder
             clips[role] = clip;
             built++;
         }
+        AddPawTurnLayers(controller, clips);
         return controller;
+    }
+
+    // ------------------------------------------------------------ paw turn legs
+
+    /// <summary>Маски слоёв шагов под ударом лапы: «…_R.mask» (бьёт правая) и «…_L.mask».</summary>
+    private const string PawTurnMaskPath = Root + "ThicketMaster_PawTurnLegs_";
+
+    /// <summary>
+    /// Шаги разворота под ударом лапы (проверка находок 03.10): Sim крутит корпус в серии 3,5°/тик (первый удар —
+    /// до ~60° за замах, контракт § 11), а клип удара стоит на месте — задние лапы и опорная передняя ехали бы по
+    /// земле. Два добавочных слоя (вес 0, ведёт ThicketMasterAnimatorView по ThicketPawTurnLegs): маска — задние
+    /// лапы и опорная передняя (ThicketMasterClipRules.PawTurnMasks), состояния Empty / TurnL / TurnR с Motion Time
+    /// от «LegsR/L + TurnL/R + Phase». Добавочный слой считается от кадра 0 клипа разворота — к позе удара
+    /// прибавляются только шаги, корпус и бьющая лапа остаются из клипа удара. Нет клипов разворота — слоёв нет.
+    /// </summary>
+    private static void AddPawTurnLayers(AnimatorController controller, Dictionary<ThicketClip, AnimationClip> clips)
+    {
+        if (!clips.ContainsKey(ThicketClip.TurnL) || !clips.ContainsKey(ThicketClip.TurnR))
+        {
+            Debug.LogWarning("[thicketmaster] Нет клипов TurnL/TurnR — слоёв шагов под ударом лапы нет: корпус в серии крутится на лапах клипа.");
+            return;
+        }
+        var model = AssetDatabase.LoadAssetAtPath<GameObject>(Model);
+        if (model == null) return;
+        var bones = model.GetComponentsInChildren<Transform>(true);
+        foreach (bool right in new[] { true, false })
+        {
+            var mask = PawTurnMask(model.transform, bones, right);
+            controller.AddLayer(ThicketMasterClipRules.PawTurnLayer(right));
+            var layers = controller.layers;
+            var layer = layers[layers.Length - 1];
+            layer.avatarMask = mask;
+            layer.blendingMode = AnimatorLayerBlendingMode.Additive;
+            layer.defaultWeight = 0f;
+            controller.layers = layers;
+            var machine = layer.stateMachine;
+            var empty = machine.AddState(ThicketMasterClipRules.PawTurnEmptyState);
+            empty.writeDefaultValues = false;
+            machine.defaultState = empty;
+            foreach (ThicketClip turn in new[] { ThicketClip.TurnL, ThicketClip.TurnR })
+            {
+                var state = machine.AddState(ThicketMasterClipRules.Name(turn));
+                state.motion = clips[turn];
+                state.writeDefaultValues = false;
+                string parameter = ThicketMasterClipRules.PawTurnParameter(right, turn);
+                controller.AddParameter(parameter, AnimatorControllerParameterType.Float);
+                state.timeParameter = parameter;
+                state.timeParameterActive = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Маска слоя шагов: все узлы модели (пути от корня модели — как у кривых клипов; корень — пустой путь),
+    /// включены только кости ThicketMasterClipRules.PawTurnMasks и их дети. Ассет переиспользуется.
+    /// </summary>
+    private static AvatarMask PawTurnMask(Transform top, Transform[] bones, bool right)
+    {
+        string path = PawTurnMaskPath + (right ? "R" : "L") + ".mask";
+        var mask = AssetDatabase.LoadAssetAtPath<AvatarMask>(path);
+        bool created = mask == null;
+        if (created) mask = new AvatarMask();
+        var paths = new List<string>();
+        var active = new List<bool>();
+        foreach (var bone in bones)
+        {
+            string relative = bone == top ? "" : AnimationUtility.CalculateTransformPath(bone, top);
+            paths.Add(relative);
+            active.Add(relative.Length > 0 && relative.Split('/').Any(n => ThicketMasterClipRules.PawTurnMasks(n, right)));
+        }
+        mask.transformCount = paths.Count;
+        for (int i = 0; i < paths.Count; i++)
+        {
+            mask.SetTransformPath(i, paths[i]);
+            mask.SetTransformActive(i, active[i]);
+        }
+        if (created) AssetDatabase.CreateAsset(mask, path);
+        else EditorUtility.SetDirty(mask);
+        int on = active.Count(a => a);
+        if (on == 0) Debug.LogWarning("[thicketmaster] В модели нет костей leg_hind_* / leg_front_* — маска шагов под ударом лапы пуста.");
+        else Debug.Log($"[thicketmaster] Слой шагов под ударом {(right ? "правой" : "левой")} лапы: {on} узлов в маске.");
+        return mask;
     }
 
     // ------------------------------------------------------------ checks

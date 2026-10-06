@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using Game.Sim;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 #if ENABLE_INPUT_SYSTEM
@@ -7,37 +7,44 @@ using UnityEngine.InputSystem;
 #endif
 namespace Game.View
 {
+    /// <summary>
+    /// Окно Эни (06.10, минимальный проход): закалка «Ещё удар?», переплавка, добавление и
+    /// сердце на прежнем префабе CampForge. Цена, риск и рост — из Camp.Quote, исход броска
+    /// окно не знает до удара. Настоящее окно по temper-a.png — в UI-проходе; блок доноров
+    /// (перенос удалён) всегда скрыт.
+    /// </summary>
     public sealed class CampForgeView : MonoBehaviour
     {
         public static CampForgeView Instance { get; private set; }
         public static int ClosedFrame {get;private set;}=-1;
         public bool IsOpen=>_panel!=null && _panel.gameObject.activeSelf;
         TickDriver _driver;CampForgePanel _panel;Camp _camp;
-        ForgeTarget _target;ForgeOperation _operation;ForgePreview _preview;
-        int _affix,_choice,_donor=-1,_donorAffix,_page,_openedFrame;
+        ForgeTarget _target;EniAction _action;EniQuote _quote;
+        int _affix,_choice,_openedFrame;
         System.Action _changed;GameObject _previousSelection;
-        readonly GeneratedItem _before=new GeneratedItem(),_after=new GeneratedItem(),_donorRoll=new GeneratedItem();
-        readonly List<int> _donors=new List<int>();
-        static readonly string[] OperationNames={"Усилить","Перенастроить","Дополнить","Перенести"};
+        readonly GeneratedItem _before=new GeneratedItem(),_after=new GeneratedItem();
+        static readonly string[] OperationNames={"Закалить","Переплавить","Добавить","Сердце"};
+        static readonly string[] OperationRanks={"","Ранг лагеря 1","Ранг лагеря 2","Ранг лагеря 1"};
+        static readonly string[] FacetNames={"","Корни","Пыльца","Цветение"};
         public void Initialize(TickDriver driver)
         {
             Instance=this;_driver=driver;
             var prefab=Resources.Load<GameObject>("UI/Prefabs/CampForge");if(prefab==null){Debug.LogError("[camp] Нет префаба кузницы");return;}
             _panel=Instantiate(prefab,transform).GetComponent<CampForgePanel>();
             CampChoiceFeedback.Install(_panel.gameObject);
-            for(int i=0;i<4;i++){int index=i;_panel.Operations[i].onClick.AddListener(()=>{_operation=(ForgeOperation)index;_choice=0;_donor=-1;_donorAffix=0;Refresh();});}
-            for(int i=0;i<_panel.Affixes.Length;i++){int index=i;_panel.Affixes[i].onClick.AddListener(()=>{_affix=index;_choice=0;Refresh();});}
+            for(int i=0;i<_panel.Operations.Length && i<OperationNames.Length;i++){int index=i;_panel.Operations[i].onClick.AddListener(()=>{_action=(EniAction)index;_choice=0;Refresh();});}
+            for(int i=0;i<_panel.Affixes.Length;i++){int index=i;_panel.Affixes[i].onClick.AddListener(()=>{_affix=IsNormal()?-1:index;_choice=0;Refresh();});}
             for(int i=0;i<_panel.Options.Length;i++){int index=i;_panel.Options[i].onClick.AddListener(()=>{_choice=index;Refresh();});}
-            for(int i=0;i<_panel.Donors.Length;i++){int index=i;_panel.Donors[i].onClick.AddListener(()=>{int at=_page*_panel.Donors.Length+index;if(at<_donors.Count){_donor=_donors[at];_donorAffix=0;Refresh();}});}
-            for(int i=0;i<_panel.DonorAffixes.Length;i++){int index=i;_panel.DonorAffixes[i].onClick.AddListener(()=>{_donorAffix=index;Refresh();});}
-            _panel.PreviousDonors.onClick.AddListener(()=>{_page=System.Math.Max(0,_page-1);Refresh();});
-            _panel.NextDonors.onClick.AddListener(()=>{_page++;Refresh();});
             _panel.Confirm.onClick.AddListener(Commit);_panel.Back.onClick.AddListener(Close);_panel.gameObject.SetActive(false);
         }
         public void Open(Camp camp,ForgeTarget target,int affix,System.Action changed)
         {
             if(_panel==null || _driver.Session.Mode!=GameMode.Camp)return;
-            _camp=camp;_target=target;_affix=affix;_operation=ForgeOperation.Refine;_choice=0;_donor=-1;_donorAffix=0;_page=0;_changed=changed;
+            _camp=camp;_target=target;_affix=affix;_action=EniAction.Temper;_choice=0;_changed=changed;
+            // Ждёт оплаченный выбор этой вещи — окно открывается сразу на нём.
+            var session=camp.Session;
+            if(session.IsOpen && session.Target.Same(target) && session.Kind!=ForgeSessionKind.Temper)
+            {_action=session.Kind==ForgeSessionKind.Add?EniAction.Add:EniAction.Remelt;_affix=session.Property;}
             _previousSelection=EventSystem.current!=null?EventSystem.current.currentSelectedGameObject:null;
             // В кузнице место портрета занимает сравнение вещи; разговоры жителей его сохраняют.
             CampServicesView.Instance?.SetShopModal(true,false);
@@ -57,107 +64,183 @@ namespace Game.View
 #endif
             if(cancel)Close();
         }
-        public void Close(){if(!IsOpen)return;_panel.gameObject.SetActive(false);CampServicesView.Instance?.SetShopModal(false);ClosedFrame=Time.frameCount;_driver?.ClearCapturedInput();if(EventSystem.current!=null)EventSystem.current.SetSelectedGameObject(_previousSelection);_changed?.Invoke();}
+        /// <summary>Закрытие — это «забрать»: закалка закрывается с набранным, оплаченный выбор ждёт.</summary>
+        public void Close()
+        {
+            if(!IsOpen)return;
+            _camp?.SettleForgeSession();
+            _panel.gameObject.SetActive(false);CampServicesView.Instance?.SetShopModal(false);ClosedFrame=Time.frameCount;_driver?.ClearCapturedInput();
+            if(EventSystem.current!=null)EventSystem.current.SetSelectedGameObject(_previousSelection);_changed?.Invoke();
+        }
+        ItemInstance Current=>_target.IsWorn?_camp.Worn.Worn((EquipSlot)_target.Slot):_camp.Bag.At(_target.Slot);
+        bool IsNormal()=>_camp!=null && !Current.IsEmpty && Current.Rarity==ItemRarity.Normal;
+        bool ChoicePending=>_camp.Session.IsOpen && _camp.Session.Target.Same(_target) && _camp.Session.Kind!=ForgeSessionKind.Temper;
+        /// <summary>Сердце первого босса, которое есть в лагере; нет ни одного — Хозяин Чащи (покажет «нет сердца»).</summary>
+        int HeartBoss()
+        {
+            for(int i=0;i<RunBossKeys.Count;i++)if(_camp.HeartCount(RunBossKeys.At(i))>0 && Camp.HeartFacetCount(RunBossKeys.At(i))>0)return RunBossKeys.At(i);
+            return RunBossKeys.ThicketMaster;
+        }
+        HeartFacet ChosenFacet=>Camp.HeartFacetAt(HeartBoss(),_choice);
         void Commit()
         {
-            if(_preview==null || !_panel.Confirm.interactable)return;
-            // Повторный Submit не подтверждает следующую операцию без нового просмотра.
-            _panel.Confirm.interactable=false;
-            var result=_camp.CommitForge(_preview);
-            if(result!=SmithResult.Success)Refresh();
-            _panel.Status.text=result==SmithResult.Success?"Готово. Для следующей ковки выбери действие снова.":Reason(result);
+            if(!_panel.Confirm.interactable)return;
+            SmithResult result;string done;
+            switch(_action)
+            {
+                case EniAction.Temper:
+                    if(_quote.Risky)
+                    {
+                        result=_camp.RiskyStrike(_target,out bool masterpiece,out int shards);
+                        done=masterpiece?"Шедевр! Клеймо Эни на вещи.":"Вещь рассыпалась: +"+shards+" осколков.";
+                    }
+                    else
+                    {
+                        result=_camp.Strike(_target,_affix,out var outcome);
+                        done=outcome==StrikeOutcome.Grew?"Удар лёг. Ещё удар — или «Назад», чтобы забрать."
+                            :outcome==StrikeOutcome.Shattered?"Трещина. Третья — вещь расколота.":"Трещина: рост этой закалки сгорел.";
+                    }
+                    break;
+                case EniAction.Remelt:
+                case EniAction.Add:
+                    if(ChoicePending){result=_camp.ChooseSessionCandidate(_choice);done="Готово. Свойство влито.";}
+                    else if(_action==EniAction.Remelt){result=_camp.BeginRemelt(_target,_affix);done="Оплачено. Выбери одно из свойств.";}
+                    else{result=_camp.BeginAdd(_target,out bool cracked);done=cracked?"Перелив: трещина, свойство не легло.":"Оплачено. Выбери новое свойство.";}
+                    break;
+                default:
+                    result=_camp.InlayHeart(_target,HeartBoss(),ChosenFacet);done="Сердце вплавлено.";
+                    break;
+            }
+            _choice=0;Refresh();
+            _panel.Status.text=result==SmithResult.Success?done:Reason(result);
             if(result==SmithResult.Success){_changed?.Invoke();GameSound.Sequence(("smith_hammer",0,.8f),("smith_sizzle",.25f,.5f),("smith_ring",.5f,.45f));}
         }
-        internal void CaptureOperation(ForgeOperation operation)
-        {
-            _operation=operation;_choice=0;_donor=-1;_donorAffix=0;
-            if(operation==ForgeOperation.Transfer)for(int slot=0;slot<_camp.Bag.Capacity && _donor<0;slot++)
-            {
-                if(_camp.Bag.IsEmpty(slot) || _camp.Bag.IsKept(slot) || !_target.IsWorn && slot==_target.Slot)continue;
-                if(!ItemGenerator.Generate(_camp.Bag.At(slot),_camp.Items,_donorRoll))continue;
-                for(int a=0;a<_donorRoll.AffixCount;a++)if(_camp.PreviewForge(_target,operation,_affix,0,slot,a).Status==SmithResult.Success){_donor=slot;_donorAffix=a;break;}
-            }
-            Refresh();
-        }
+        /// <summary>Съёмка: окно сразу на нужном действии.</summary>
+        internal void CaptureAction(EniAction action){_action=action;_choice=0;if(action==EniAction.Temper && IsNormal())_affix=-1;Refresh();}
         void Refresh()
         {
-            var item=_target.IsWorn?_camp.Worn.Worn((EquipSlot)_target.Slot):_camp.Bag.At(_target.Slot);
-            bool generated=ItemGenerator.Generate(item,_camp.Items,_before);
-            _preview=_camp.PreviewForge(_target,_operation,_affix,_choice,_donor,_donorAffix);
-            _panel.Before.text=_panel.BeforeProperties!=null?ItemHeader(item):ItemText(item,_before);
-            if(_panel.BeforeProperties!=null)_panel.BeforeProperties.text=ItemProperties(_before);
+            var item=Current;
+            bool generated=!item.IsEmpty && ItemGenerator.Generate(item,_camp.Items,_before);
+            if(IsNormal())_affix=-1;
+            int boss=HeartBoss();
+            _quote=_camp.Quote(_action,_target,_affix,boss,_action==EniAction.Heart?ChosenFacet:HeartFacet.None);
+            _panel.Before.text=item.IsEmpty?"Вещи больше нет":_panel.BeforeProperties!=null?ItemHeader(item):ItemText(item,_before);
+            if(_panel.BeforeProperties!=null)_panel.BeforeProperties.text=generated?ItemProperties(_before):"";
             ShowItem(_panel.BeforeItem,item);
-            bool valid=_preview.Status==SmithResult.Success;
-            bool resultGenerated=valid && ItemGenerator.Generate(_preview.After,_camp.Items,_after);
-            _panel.After.text=resultGenerated?(_panel.AfterProperties!=null?ItemHeader(_preview.After,item.ItemLevel):ItemText(_preview.After,_after)):"Выбери действие и свойство";
+            ItemInstance after=default;
+            if(_action==EniAction.Temper && !_quote.Risky && _quote.Status==SmithResult.Success)after=_camp.PreviewTemperStrike(_target,_affix);
+            else if((_action==EniAction.Remelt || _action==EniAction.Add) && ChoicePending)after=_camp.SessionCandidateItem(_choice);
+            bool resultGenerated=!after.IsEmpty && ItemGenerator.Generate(after,_camp.Items,_after);
+            _panel.After.text=resultGenerated?(_panel.AfterProperties!=null?ItemHeader(after):ItemText(after,_after)):AfterHint(boss);
             if(_panel.AfterProperties!=null)_panel.AfterProperties.text=resultGenerated?ChangedProperties(_before,_after):"";
-            ShowItem(_panel.AfterItem,resultGenerated?_preview.After:default);
-            _panel.Changes.text=resultGenerated?HeroChanges(item,_preview.After):"";
-            _panel.Price.text=valid?ForgePrice():"Цена появится после выбора допустимого результата";
-            _panel.Status.text=valid?(_camp.CanAffordForge(_preview)?"Ресурсы списываются после подтверждения.":"Не хватает ресурсов"):
-                _preview.Status==SmithResult.Locked?"Эни · нужно улучшение "+(int)_operation:Reason(_preview.Status);
-            _panel.Confirm.interactable=valid && _camp.CanAffordForge(_preview);
-            for(int i=0;i<4;i++){_panel.OperationLabels[i].text=OperationNames[i]+(_camp.ForgeOperationUnlocked((ForgeOperation)i)?"":"\n<size=65%>Улучшение Эни "+i+"</size>");CampChoiceFeedback.Choose(_panel.Operations[i],_operation==(ForgeOperation)i);}
-            if(_panel.TargetAffixCaption!=null)_panel.TargetAffixCaption.gameObject.SetActive(generated && _before.AffixCount>0 && _operation!=ForgeOperation.Add);
+            ShowItem(_panel.AfterItem,resultGenerated?after:default);
+            _panel.Changes.text=resultGenerated && generated?HeroChanges(item,after):"";
+            bool pending=ChoicePending;
+            _panel.Price.text=PriceText(pending);
+            _panel.Status.text=StatusText(pending);
+            bool canPick=_action!=EniAction.Heart || ChosenFacet!=HeartFacet.None;
+            _panel.Confirm.interactable=!item.IsEmpty && (pending?(_action==EniAction.Remelt || _action==EniAction.Add) && _choice<_camp.SessionCandidateCount
+                :_quote.Status==SmithResult.Success && _quote.Affordable && canPick && (_action!=EniAction.Heart || _camp.HeartCount(boss)>0));
+            var confirmLabel=_panel.Confirm.GetComponentInChildren<TMP_Text>();if(confirmLabel!=null)confirmLabel.text=ConfirmText(pending);
+            for(int i=0;i<_panel.Operations.Length;i++)
+            {
+                bool shown=i<OperationNames.Length;_panel.Operations[i].gameObject.SetActive(shown);if(!shown)continue;
+                _panel.OperationLabels[i].text=OperationNames[i]+(_camp.EniActionUnlocked((EniAction)i)?"":"\n<size=65%>"+OperationRanks[i]+"</size>");
+                CampChoiceFeedback.Choose(_panel.Operations[i],_action==(EniAction)i);
+            }
+            bool pickProperty=_action==EniAction.Temper || _action==EniAction.Remelt && !pending;
+            bool baseOnly=generated && item.Rarity==ItemRarity.Normal && _before.HasImplicit;
+            int rows=!pickProperty || !generated?0:baseOnly?(_action==EniAction.Temper?1:0):_before.AffixCount;
+            if(_panel.TargetAffixCaption!=null)_panel.TargetAffixCaption.gameObject.SetActive(rows>0);
             for(int i=0;i<_panel.Affixes.Length;i++)
             {
-                bool shown=generated && i<_before.AffixCount && _operation!=ForgeOperation.Add;_panel.Affixes[i].gameObject.SetActive(shown);
-                if(shown)_panel.AffixLabels[i].text=AffixText(_before.GetAffix(i));
-                CampChoiceFeedback.Choose(_panel.Affixes[i],shown && _affix==i);
+                bool shown=i<rows;_panel.Affixes[i].gameObject.SetActive(shown);
+                if(shown)_panel.AffixLabels[i].text=baseOnly?StatText.Name(_before.ImplicitStat)+"  "+StatText.Modifier(_before.ImplicitStat,_before.ImplicitValue,_before.ImplicitOp)+"\n<size=65%>базовое свойство</size>"
+                    :AffixText(_before.GetAffix(i));
+                CampChoiceFeedback.Choose(_panel.Affixes[i],shown && (baseOnly || _affix==i));
             }
+            int options=pending?_camp.SessionCandidateCount:_action==EniAction.Heart?Camp.HeartFacetCount(boss):0;
             for(int i=0;i<_panel.Options.Length;i++)
             {
-                bool shown=i<_preview.CandidateCount;_panel.Options[i].gameObject.SetActive(shown);
-                if(shown)_panel.OptionLabels[i].text=AffixText(_preview.Candidate(i));
+                bool shown=i<options;_panel.Options[i].gameObject.SetActive(shown);
+                if(shown)_panel.OptionLabels[i].text=pending?AffixText(_camp.SessionCandidate(i)):FacetText(Camp.HeartFacetAt(boss,i));
                 CampChoiceFeedback.Choose(_panel.Options[i],shown && _choice==i);
             }
-            RefreshDonors();
+            HideDonors();
         }
-        void RefreshDonors()
+        void HideDonors()
         {
-            bool transfer=_operation==ForgeOperation.Transfer;_donors.Clear();
-            if(transfer)for(int i=0;i<_camp.Bag.Capacity;i++)
-            {
-                if(_camp.Bag.IsEmpty(i) || _camp.Bag.IsKept(i) || !_target.IsWorn && i==_target.Slot)continue;
-                var item=_camp.Bag.At(i);if(!ItemGenerator.Generate(item,_camp.Items,_donorRoll))continue;
-                for(int a=0;a<_donorRoll.AffixCount;a++)if(_camp.PreviewForge(_target,ForgeOperation.Transfer,_affix,0,i,a).Status==SmithResult.Success){_donors.Add(i);break;}
-            }
-            int pages=System.Math.Max(1,(_donors.Count+_panel.Donors.Length-1)/_panel.Donors.Length);_page=System.Math.Min(_page,pages-1);
-            _panel.DonorCaption.text=transfer?"Совместимые доноры · "+(_page+1)+" / "+pages:"";
-            for(int i=0;i<_panel.Donors.Length;i++)
-            {
-                int at=_page*_panel.Donors.Length+i;bool shown=transfer && at<_donors.Count;_panel.Donors[i].gameObject.SetActive(shown);
-                if(shown){int slot=_donors[at];var item=_camp.Bag.At(slot);_panel.DonorLabels[i].text=ItemName(item)+" · ур. "+item.ItemLevel;CampChoiceFeedback.Choose(_panel.Donors[i],_donor==slot);}
-            }
-            bool generated=transfer && _donor>=0 && ItemGenerator.Generate(_camp.Bag.At(_donor),_camp.Items,_donorRoll);
-            for(int i=0;i<_panel.DonorAffixes.Length;i++)
-            {
-                bool shown=generated && i<_donorRoll.AffixCount;_panel.DonorAffixes[i].gameObject.SetActive(shown);
-                if(shown){_panel.DonorAffixLabels[i].text=AffixText(_donorRoll.GetAffix(i));_panel.DonorAffixes[i].interactable=_camp.PreviewForge(_target,ForgeOperation.Transfer,_affix,0,_donor,i).Status==SmithResult.Success;CampChoiceFeedback.Choose(_panel.DonorAffixes[i],_donorAffix==i);}
-            }
-            ShowItem(_panel.DonorItem,generated?_camp.Bag.At(_donor):default);
-            if(_panel.DonorInfo!=null){_panel.DonorInfo.gameObject.SetActive(transfer);_panel.DonorInfo.text=generated?"Донор будет израсходован\n"+ItemName(_camp.Bag.At(_donor)):"Выбери вещь-донор";}
-            _panel.PreviousDonors.gameObject.SetActive(transfer);_panel.NextDonors.gameObject.SetActive(transfer);
-            _panel.PreviousDonors.interactable=_page>0;_panel.NextDonors.interactable=_page+1<pages;
+            _panel.DonorCaption.text="";
+            foreach(var donor in _panel.Donors)donor.gameObject.SetActive(false);
+            foreach(var affix in _panel.DonorAffixes)affix.gameObject.SetActive(false);
+            ShowItem(_panel.DonorItem,default);
+            if(_panel.DonorInfo!=null)_panel.DonorInfo.gameObject.SetActive(false);
+            _panel.PreviousDonors.gameObject.SetActive(false);_panel.NextDonors.gameObject.SetActive(false);
         }
-        string ItemName(ItemInstance item)=>GetComponent<CampInventoryView>().ItemName(item.BaseId);
-        string ItemHeader(ItemInstance item,int oldLevel=-1)=>ItemName(item)+"\nУровень "+(oldLevel>=0 && oldLevel!=item.ItemLevel?oldLevel+" → "+item.ItemLevel:item.ItemLevel.ToString());
-        void ShowItem(CampShopCell cell,ItemInstance item)
-        {if(cell==null)return;cell.gameObject.SetActive(!item.IsEmpty);if(!item.IsEmpty)cell.Show(GetComponent<CampInventoryView>().SpriteFor(item),"",(int)item.Rarity,false);}
-        string ForgePrice()
+        static string FacetText(HeartFacet facet)=>(int)facet<FacetNames.Length?"Грань «"+FacetNames[(int)facet]+"»":facet.ToString();
+        string AfterHint(int boss)
         {
-            string price="Цена: "+_preview.Gold+" золота · "+_preview.Shards+" осколков";
-            if(_preview.Steel>0)price+="\n"+_preview.Steel+" стали";
-            if(_preview.Cores>0)price+="\n"+_preview.Cores+" сердечник";
-            if(_operation==ForgeOperation.Transfer && _panel.DonorInfo==null)price+="\nВещь-донор будет уничтожена";
+            switch(_action)
+            {
+                case EniAction.Temper:return _quote.Risky?"Рискованный удар: шедевр (+25% ко всем свойствам) или осколки":"Выбери свойство";
+                case EniAction.Heart:return "Сердце не меняет числа вещи: грань действует в забеге, пока вещь надета\nСердец в лагере: "+_camp.HeartCount(boss);
+                default:return "Варианты появятся после оплаты";
+            }
+        }
+        string PriceText(bool pending)
+        {
+            if(pending)return "Оплачено · выбор обязателен";
+            if(_quote.Status!=SmithResult.Success)return "";
+            if(_action==EniAction.Temper && _quote.Strikes>0)return "Следующий удар бесплатный";
+            string price="Цена: "+_quote.Gold+" золота";
+            if(_quote.Shards>0)price+=" · "+_quote.Shards+" осколков";
+            if(_quote.Steel>0)price+="\n"+_quote.Steel+" стали";
+            if(_quote.Hearts>0)price+="\n"+_quote.Hearts+" сердце босса";
             return price;
         }
+        string StatusText(bool pending)
+        {
+            if(pending)return "Выбери одно из оплаченных свойств — выбор ждёт и после закрытия окна";
+            if(_quote.Status==SmithResult.Locked)return "Эни · нужен "+OperationRanks[(int)_action].ToLowerInvariant();
+            if(_quote.Status!=SmithResult.Success)return Reason(_quote.Status);
+            if(!_quote.Affordable)return "Не хватает ресурсов";
+            string attempts="Попыток: "+_quote.AttemptsLeft+(_quote.Cracks>0?" · трещин "+_quote.Cracks:"");
+            switch(_action)
+            {
+                case EniAction.Temper:
+                    return _quote.Risky?"Рискованный удар · рассыпется с шансом "+_quote.RiskPercent+"%"
+                        :"Удар +"+Percent(_quote.NextGrowth)+"% · трещина "+_quote.RiskPercent+"% · "+attempts;
+                case EniAction.Add:return (_quote.Overflow?"Перелив сверх лимита · трещина "+_quote.RiskPercent+"% · ":"")+attempts;
+                case EniAction.Remelt:return "Три варианта без старого свойства · "+attempts;
+                default:return "Без риска · попытку не тратит";
+            }
+        }
+        string ConfirmText(bool pending)
+        {
+            if(pending)return "Выбрать";
+            switch(_action)
+            {
+                case EniAction.Temper:return _quote.Risky?"Рискованный удар":_quote.Strikes>0?"Ещё удар? трещина "+_quote.RiskPercent+"%":"Удар";
+                case EniAction.Heart:return "Вплавить";
+                default:return "Оплатить";
+            }
+        }
+        static string Percent(Fix64 fraction)=>((int)System.Math.Round(fraction.ToFloat()*100f)).ToString();
+        string ItemName(ItemInstance item)=>GetComponent<CampInventoryView>().ItemName(item.BaseId);
+        string ItemHeader(ItemInstance item)=>ItemName(item)+"\nУровень "+item.ItemLevel+(_camp.IsMasterpiece(item)?" · шедевр":_camp.IsShattered(item)?" · расколота":"");
+        void ShowItem(CampShopCell cell,ItemInstance item)
+        {if(cell==null)return;cell.gameObject.SetActive(!item.IsEmpty);if(!item.IsEmpty)cell.Show(GetComponent<CampInventoryView>().SpriteFor(item),"",(int)item.Rarity,false);}
         static string ItemProperties(GeneratedItem roll)
-        {string text="";for(int i=0;i<roll.AffixCount;i++)text+=AffixText(roll.GetAffix(i))+"\n";return text.TrimEnd('\n');}
+        {
+            string text=roll.HasImplicit?StatText.Name(roll.ImplicitStat)+"  "+StatText.Modifier(roll.ImplicitStat,roll.ImplicitValue,roll.ImplicitOp)+"\n":"";
+            for(int i=0;i<roll.AffixCount;i++)text+=AffixText(roll.GetAffix(i))+"\n";return text.TrimEnd('\n');
+        }
         static string Tint(string text,UiTheme.Role role)=>"<color=#"+ColorUtility.ToHtmlStringRGB(UiTheme.Current!=null?UiTheme.Current.Get(role):Color.white)+">"+text+"</color>";
         static string ChangedProperties(GeneratedItem before,GeneratedItem after)
         {
             string text="";
+            if(before.HasImplicit && after.HasImplicit && before.ImplicitValue!=after.ImplicitValue)
+                text+=StatText.Name(after.ImplicitStat)+"  "+StatText.Modifier(before.ImplicitStat,before.ImplicitValue,before.ImplicitOp)+" → "+Tint(StatText.Modifier(after.ImplicitStat,after.ImplicitValue,after.ImplicitOp),UiTheme.Role.Accent)+"\n";
             for(int i=0;i<after.AffixCount;i++)
             {
                 var next=after.GetAffix(i);
@@ -168,8 +251,7 @@ namespace Game.View
             }
             return text.Length==0?"Свойства сохранятся":text.TrimEnd('\n')+"\n"+Tint("Остальные свойства сохранятся",UiTheme.Role.TextMuted);
         }
-        string ItemText(ItemInstance item,GeneratedItem roll)
-        {string text=ItemName(item)+"\nУровень "+item.ItemLevel+"\n\n";for(int i=0;i<roll.AffixCount;i++)text+=AffixText(roll.GetAffix(i))+"\n";return text;}
+        string ItemText(ItemInstance item,GeneratedItem roll)=>ItemHeader(item)+"\n\n"+ItemProperties(roll);
         static string AffixText(RolledAffix affix)=>StatText.Name(affix.Stat)+"  "+StatText.Modifier(affix.Stat,affix.Value,affix.Op);
         string HeroChanges(ItemInstance before,ItemInstance after)
         {
@@ -183,7 +265,25 @@ namespace Game.View
         static StatSheet CopyStats(StatSheet source){var sheet=new StatSheet(System.Math.Max(32,source.ModifierCount+16));for(int s=0;s<(int)StatType.Count;s++)sheet.SetBase((StatType)s,source.GetBase((StatType)s));for(int m=0;m<source.ModifierCount;m++){var mod=source.GetModifier(m);sheet.Add(in mod);}return sheet;}
         static string Reason(SmithResult result)
         {
-            switch(result){case SmithResult.Protected:return "Донор защищён";case SmithResult.Locked:return "Нужно улучшение Эни";case SmithResult.InvalidDonor:return "Выбери совместимую вещь-донор";case SmithResult.Incompatible:return "Свойство несовместимо с целью";case SmithResult.NoSpace:return "Достигнут предел свойств этой редкости";case SmithResult.InvalidItem:return "Нужна обычная, редкая или эпическая вещь с подходящими свойствами";case SmithResult.NoAffix:return "Выбери свойство";case SmithResult.AtMaximum:return "Свойство на пределе";case SmithResult.Exhausted:return "Усиления этой вещи использованы";case SmithResult.InsufficientFunds:return "Не хватает ресурсов";case SmithResult.StalePreview:return "Вещь изменилась — проверь новый результат";default:return result.ToString();}
+            switch(result)
+            {
+                case SmithResult.Locked:return "Нужен ранг лагеря";
+                case SmithResult.Incompatible:return "Такую грань или свойство сюда не вплавить";
+                case SmithResult.NoSpace:return "Предел свойств этой редкости и перелива";
+                case SmithResult.InvalidItem:return "Это действие этой вещи недоступно";
+                case SmithResult.NoAffix:return "Выбери свойство";
+                case SmithResult.AtMaximum:return "Свойство на пределе — «Назад», чтобы забрать";
+                case SmithResult.Exhausted:return "Попытки закалки этой вещи использованы";
+                case SmithResult.InsufficientFunds:return "Не хватает ресурсов";
+                case SmithResult.Shattered:return "Вещь расколота: три трещины";
+                case SmithResult.NoHeart:return "Нет сердца босса";
+                case SmithResult.HeartsFull:return "Сердец в вещи уже столько, сколько позволяет ранг";
+                case SmithResult.SessionOpen:return "Эни ждёт выбора оплаченной переплавки";
+                case SmithResult.NoSession:return "Сессия закрыта";
+                case SmithResult.Masterpiece:return "Шедевр: дальше только сердце";
+                case SmithResult.NotTempered:return "Рискованный удар — когда попытки кончились";
+                default:return result.ToString();
+            }
         }
         void OnDestroy(){if(Instance==this)Instance=null;}
         void OnDisable(){Close();}

@@ -1,0 +1,13 @@
+CharacterAnimatorView.Tempo: этап Крушения сначала предлагается ригу. Риг берёт серию, только если есть снимок
+Simulation.Wreck (PelagAnchorRig.WreckSnapshot.cs) и запечки Swing1/Swing2/Slam; иначе — прежний BeginWreck.
+Файл правит и поток клипов Wreck2_* — если строка уже другая, apply.py откажет, патч переносится руками.
+
+### PATCH wreck-to-rig
+### FILE razlom/Assets/Game.View/CharacterAnimatorView.Tempo.cs
+### OP replace
+### ANCHOR
+            if (wreck) GetComponent<PelagAnchorSlamView>()?.BeginWreck();
+### TEXT
+            // Якорь на цепи (anchor-core): серию ведёт риг, если у него есть снимок Sim и запечки; иначе прежний путь.
+            if (wreck && !(GetComponent<PelagAnchorRig>()?.ClaimWreck() ?? false)) GetComponent<PelagAnchorSlamView>()?.BeginWreck();
+### END

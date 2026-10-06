@@ -1,0 +1,108 @@
+{
+ "repo": "C:/Users/d.grab/Desktop/the-game",
+ "chainSwing": 0.45,
+ "reelSpeed": 9,
+ "fps": 60,
+ "preroll": 1.5,
+ "segments": [
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Draw.track.json",
+   "from": 0,
+   "to": 8
+  },
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Swing1.track.json",
+   "from": 0,
+   "to": 9
+  },
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Swing2.track.json",
+   "from": 0,
+   "to": 9
+  },
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Lunge.track.json",
+   "from": 0,
+   "to": 16
+  },
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Stow.track.json",
+   "from": 0,
+   "to": 8
+  }
+ ],
+ "follow": [
+  {
+   "seg": 1,
+   "from": 0.0,
+   "to": 5.5,
+   "omega": 16
+  },
+  {
+   "seg": 2,
+   "from": 0.0,
+   "to": 5.5,
+   "omega": 16
+  },
+  {
+   "seg": 3,
+   "from": 0.0,
+   "to": 4.5,
+   "omega": 16
+  }
+ ],
+ "contacts": [
+  {
+   "seg": 1,
+   "frame": 5,
+   "fwd": 1.25,
+   "side": 0.0,
+   "h": 0.85,
+   "deg": 25,
+   "rMin": 1.0,
+   "rMax": 1.5,
+   "hMin": 0.6,
+   "hMax": 1.0
+  },
+  {
+   "seg": 2,
+   "frame": 5,
+   "fwd": 1.25,
+   "side": 0.0,
+   "h": 0.85,
+   "deg": 25,
+   "rMin": 1.0,
+   "rMax": 1.5,
+   "hMin": 0.6,
+   "hMax": 1.0
+  }
+ ],
+ "lunge": {
+  "seg": 3,
+  "release": 4.5,
+  "contact": 8,
+  "hold": 10.5,
+  "reach": 2.2,
+  "landPitch": 50,
+  "landSpeed": 14,
+  "arcUp": 0.9,
+  "arcFwd": 0.2,
+  "arcBack": 0.8,
+  "arcHigh": 1.5
+ },
+ "draw": {
+  "seg": 0,
+  "grab": 3.25,
+  "end": 8,
+  "lift": 0.9
+ },
+ "stow": {
+  "seg": 4,
+  "reel": 0.0,
+  "mount": 3.5,
+  "length": 0.3,
+  "speed": 5,
+  "omega": 30
+ },
+ "tail": 0.3
+}

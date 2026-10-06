@@ -51,6 +51,17 @@ namespace Game.View
         /// </summary>
         private const float DashRunLeftPlantPhase = .28f;
 
+        /// <summary>
+        /// Восстановление рывка (кадры 6–12, выпад с саблей вперёд) держится, только пока герой
+        /// бежит дальше по ходу рывка или стоит. Бег дальше 45° от рывка забирает тело сразу с
+        /// постановки: ноги — в бег (как с кадра 7), базовый слой — в бег за DashTurnOutBlend.
+        /// Иначе Sim разворачивает взгляд к приказу по 40° за тик прямо в позе выпада: корпус
+        /// крутился волчком на опорной ноге, носок ехал по кругу до 16 м/с (съёмка 06.10, рывок
+        /// и бег назад/вбок, -capture-dash-run).
+        /// </summary>
+        private const float DashTurnOutCos = .7071f;
+        private const float DashTurnOutBlend = .08f;
+
         private static readonly int DashState = Animator.StringToHash("Base Layer.Dash_v5");
         private static readonly int DashPhaseId = Animator.StringToHash("DashPhase");
         private static readonly int RunState = Animator.StringToHash("Base Layer.Run_v5");
@@ -68,6 +79,8 @@ namespace Game.View
         private float _dashCutFrom = -1f, _dashCutFrame;
         private bool _dashLegsReleased;
         private float _dashLegsHoldUntil;
+        // Бег увёл в сторону от рывка: восстановление отдаётся бегу с постановки (DashTurnOutCos).
+        private bool _dashTurnOut;
 
         /// <summary>Контроллер собран с рывком (RazlomPelagV5AnimatorBuilder, Dash_v5 и DashPhase).</summary>
         private bool SupportsDash
@@ -103,6 +116,7 @@ namespace Game.View
             _dashCutFrom = -1f;
             _dashLegsReleased = false;
             _dashLegsHoldUntil = 0f;
+            _dashTurnOut = false;
             _dashEnterFrame = Time.frameCount;
             _dashReplacedFrame = -1;
             _animator.SetFloat(DashPhaseId, 0f);
@@ -138,6 +152,16 @@ namespace Game.View
                 DashTrace($"plant frame={frame:F2} shown={DashShownTick(sim):F2} stop={dash.StopTick} cut={dash.CutShort}");
             _dashLastFrame = frame;
             if (frame >= DashClipFrames) { EndDash(DashExitBlend); return; }
+            if (_dashReplacedFrame < 0 && frame >= DashPlantFrame && _locomotionMoving)
+            {
+                // Ноги отданы бегу кадром раньше (UpdateDashFootwork) — базовый слой идёт в бег в их фазе.
+                if (_dashTurnOut && _dashLegsReleased) { EndDash(DashTurnOutBlend); return; }
+                if (!_dashTurnOut && DashRunTurnsAway(sim, in dash))
+                {
+                    _dashTurnOut = true;
+                    DashTrace($"turn-out frame={frame:F2}");
+                }
+            }
             _animator.SetFloat(DashPhaseId, frame / DashClipFrames);
             if (_dashReplacedFrame >= 0) return;
             // Показ держится до конца восстановления; часы общего Update его не снимают.
@@ -209,6 +233,34 @@ namespace Game.View
             _animator.CrossFadeInFixedTime(RunState, blend, 0, offset);
         }
 
+        /// <summary>Бег Sim (скорость последнего тика) уводит дальше 45° от направления рывка.</summary>
+        private static bool DashRunTurnsAway(Simulation sim, in PelagDashState dash)
+        {
+            FixVec2 velocity = sim.Entities.Velocity[Simulation.PlayerId];
+            float x = velocity.X.ToFloat(), y = velocity.Y.ToFloat();
+            float length = Mathf.Sqrt(x * x + y * y);
+            if (length < .0001f) return false;
+            return (x * dash.Direction.X.ToFloat() + y * dash.Direction.Y.ToFloat()) / length < DashTurnOutCos;
+        }
+
+        /// <summary>
+        /// Вес постановки стоп на стыке рывок → бег (PelagFootPlantView): ноги бегут слоем
+        /// Recovery Footwork, а таз ещё у клипа рывка (маска ног его не берёт) — без постановки
+        /// опорный носок ехал за тазом: назад на 0,16 м при входе ног, вперёд на 0,19 м при
+        /// уходе базового слоя в бег (съёмка 06.10). Вес — вес слоя ног; после конца рывка —
+        /// полный, пока слой держится. До отдачи ног 0: прижатый задний носок срывался при
+        /// отрыве рывком колена на 41° за кадр (проба 06.10). 0 — стык не идёт.
+        /// </summary>
+        public float DashRunLegsWeight
+        {
+            get
+            {
+                if (_animator == null || _recoveryFootworkLayer < 0 || IsDead) return 0f;
+                if (_dashDriven) return _dashLegsReleased ? _animator.GetLayerWeight(_recoveryFootworkLayer) : 0f;
+                return _dashLegsHoldUntil > 0f && Time.time < _dashLegsHoldUntil ? 1f : 0f;
+            }
+        }
+
         /// <summary>Базовый слой в клипе рывка или идёт в него; уходящий из него в чужое состояние — уже нет.</summary>
         private bool BaseInDash()
         {
@@ -231,7 +283,7 @@ namespace Game.View
                 _dashLegsHoldUntil = 0f;
                 return false;
             }
-            bool run = _locomotionMoving && _dashLastFrame >= DashLegsReleaseFrame;
+            bool run = _locomotionMoving && (_dashLastFrame >= DashLegsReleaseFrame || _dashTurnOut);
             float weight = _animator.GetLayerWeight(_recoveryFootworkLayer);
             if (run && !_dashLegsReleased)
             {
@@ -260,6 +312,7 @@ namespace Game.View
             _dashReplacedFrame = -1;
             _dashLegsReleased = false;
             _dashLegsHoldUntil = 0f;
+            _dashTurnOut = false;
         }
     }
 }

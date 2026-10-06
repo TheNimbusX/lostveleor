@@ -186,6 +186,7 @@ public sealed class DeveloperMenuInventoryTests
     [TestCase("visual.mood")]
     [TestCase("visual.mood-mode")]
     [TestCase("visual.mood-status")]
+    [TestCase("visual.boss-rim")]
     public void EveryInventoryEntryIsRegistered(string id)
     {
         var ids = Registration.Matches(MenuSource()).Cast<Match>().Select(m => m.Groups[2].Value).ToList();

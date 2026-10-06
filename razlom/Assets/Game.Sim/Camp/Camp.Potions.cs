@@ -27,14 +27,16 @@ namespace Game.Sim
             ? (byte)(1 << ((int)kind < 4 ? (int)kind : (int)kind + 2)) : (byte)0;
         public int PotionCount(PotionKind kind) => (uint)kind < PotionKindCount ? _potions[(int)kind] : 0;
         public PotionKind SelectedPotion(int slot) => _selectedPotions[slot];
+        /// <summary>
+        /// Рецепты Лео (06.10) открываются только рангом лагеря; заказы удалены. Малые
+        /// открыты всегда: новый профиль начинает с тремя малыми до приезда Лео. Sandbox
+        /// стоит на ранге 3, поэтому там открыто всё.
+        /// </summary>
         public bool PotionUnlocked(PotionKind kind)
         {
             if ((uint)kind >= PotionKindCount) return false;
             if (kind == PotionKind.SmallHealth || kind == PotionKind.SmallLavidium) return true;
-            if (kind == PotionKind.LivingResin && AlchemyStatus(AlchemistOrder.Resin) == AlchemistOrderStatus.Unlocked
-                || kind == PotionKind.LavidiumSurge && AlchemyStatus(AlchemistOrder.Surge) == AlchemistOrderStatus.Unlocked) return true;
             if (!HasResident(CampResident.Alchemist)) return false;
-            if (!UsesCampProgression && (uint)kind < 4) return true;
             int rank = Rank(CampResident.Alchemist);
             return (kind == PotionKind.LargeHealth || kind == PotionKind.LargeLavidium) && rank >= 1
                 || (kind == PotionKind.LivingResin || kind == PotionKind.LavidiumSurge) && rank >= 2
@@ -111,34 +113,29 @@ namespace Game.Sim
             if (kind == PotionKind.Mixed) return e.Health[0] < e.MaxHealth[0] || e.Lavidium[0] < Fix64.FromInt(e.MaxLavidium[0]);
             return (uint)kind < PotionKindCount;
         }
-        internal void RestorePotions(int[] counts, byte selection)
+        /// <summary>
+        /// Запасы из сохранения v10. Кодек уже проверил границы; видов в файле может быть
+        /// меньше (старее) или больше (новее) — лишнее отброшено, недостающее нулём.
+        /// </summary>
+        internal void RestorePotionCount(PotionKind kind, int count) => _potions[(int)kind] = count;
+
+        /// <summary>Выбор из сохранения; закрытое или повторное подгоняет ValidatePotionSelection.</summary>
+        internal void RestorePotionSelection(PotionKind first, PotionKind second)
         {
-            if (counts.Length != 4 || selection > 3) throw new System.IO.InvalidDataException("Некорректные зелья");
-            for (int i = 0; i < 4; i++) { ValidatePotionCount(counts[i]); _potions[i] = counts[i]; }
-            _selectedPotions[0] = (selection & 1) != 0 ? PotionKind.LargeHealth : PotionKind.SmallHealth;
-            _selectedPotions[1] = (selection & 2) != 0 ? PotionKind.LargeLavidium : PotionKind.SmallLavidium;
+            _selectedPotions[0] = first; _selectedPotions[1] = second;
         }
-        internal void RestorePotions(int[] counts, PotionKind health, PotionKind lavidium)
-        {
-            if ((counts.Length != 6 && counts.Length != PotionKindCount) || (uint)health >= PotionKindCount
-                || (uint)lavidium >= PotionKindCount || health == lavidium)
-                throw new System.IO.InvalidDataException("Некорректные зелья");
-            for (int i = 0; i < counts.Length; i++) { ValidatePotionCount(counts[i]); _potions[i] = counts[i]; }
-            _selectedPotions[0] = health;
-            _selectedPotions[1] = lavidium;
-        }
-        static void ValidatePotionCount(int value)
-        {
-            if (value < 0 || value > PotionLimit) throw new System.IO.InvalidDataException("Некорректный запас зелий");
-        }
-        // Legacy size flags remain for older tests and save migrations.
-        public byte PotionSelection => (byte)((_selectedPotions[0] == PotionKind.LargeHealth ? 1 : 0) |
-            (_selectedPotions[1] == PotionKind.LargeLavidium ? 2 : 0));
+
+        /// <summary>
+        /// Прослойка для чужого незакоммиченного CampBridgePolishProbe (план 06.10, A.4):
+        /// знакомства с Лео больше нет — он «знаком», как только приехал.
+        /// </summary>
+        public bool HasMetAlchemist => HasResident(CampResident.Alchemist);
+        public void MeetAlchemist() { }
+
         void HashPotions(ref ulong hash)
         {
             foreach (int count in _potions) Hashing.Mix(ref hash, count);
             Hashing.Mix(ref hash, (int)_selectedPotions[0]); Hashing.Mix(ref hash, (int)_selectedPotions[1]);
-            HashAlchemy(ref hash);
         }
     }
 }

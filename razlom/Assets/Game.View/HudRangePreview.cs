@@ -16,7 +16,7 @@ namespace Game.View
     // предел — тонкое кремовое кольцо вокруг героя, прыжок и бросок — кремовый пунктир дуги от героя
     // к месту приземления, у «Абордажа» на диске приземления — якорь тушью. Вид фигуры — uv0.w
     // (<see cref="Look"/>), центр завитков — uv1.
-    internal sealed class HudRangePreview
+    internal sealed partial class HudRangePreview
     {
         // Заливка без затухания внутрь (диск, полоса); у кольца — ширина светлой полосы.
         const float Open = 1000f;

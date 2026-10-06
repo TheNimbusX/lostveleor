@@ -1,0 +1,24 @@
+{
+  "what": "Anchor Throw (Бросок якоря) target frames, Higgsfield gpt_image_2_5 medium 1k, 16:9, 1344x752",
+  "date": "2026-10-03",
+  "refs_in_order": ["artifacts/hf/r1_scene.jpg (Image 1, game camera + guardians)", "artifacts/hf/r2_model.jpg (Image 2, Pelag 4 views)", "artifacts/hf/r3_anchor.jpg (Image 3, anchor/chain/grip)", "artifacts/hf/r4_quake.jpg (Image 4, approved water VFX style)", "artifacts/hf/r8_abordageA.jpg (Image 5, approved Abordage frame)"],
+  "mechanic": "anchor flies on its chain in a straight line ~7 m, hits everyone on the line, the return yanks them toward Pelag",
+  "picked": {
+    "A-base.png": "= A-base-v2 (cleaner painted turquoise ribbon along the chain, 3 guardians on the line hooked with foam splashes, 2 off the line untouched, leather grip + red tassel visible)",
+    "B-net.png": "= B-net-v1 (cobalt woven foam net with white knots, 6 guardians raked; v2 is the same idea but 8 guardians, reads more like an ultimate)",
+    "C-fan.png": "= C-fan-v2 (three clearly anchor-shaped heads: real iron anchor in the middle on the iron chain, two indigo-violet water-ghost anchors on water chains; v1 ghosts read as splashes)",
+    "D-harpoon.png": "= D-harpoon-v2 (single elite stabbed, magenta bite splash, drag furrow, others untouched, grip with red tassel; v1 also good, elite has antler crown and the sabre is visible at the hip)"
+  },
+  "variants": {
+    "A-base-v1.png": {"job_id": "658fe0b9-14d2-4a45-8687-2faff7a846c5", "note": "ribbon reads as a thin beam"},
+    "A-base-v2.png": {"job_id": "7fd4fd9c-c446-4263-96e5-d78743f0fd7f"},
+    "B-net-v1.png": {"job_id": "aa6263ad-e6d0-4535-90cf-0abc5de7f9b3"},
+    "B-net-v2.png": {"job_id": "da7ec7a4-bcfe-4560-be56-716fd8348dad"},
+    "C-fan-v1.png": {"job_id": "cffe4fe9-cccd-43c6-80af-1fb3ae8b768d"},
+    "C-fan-v2.png": {"job_id": "3e8e7bd5-91d0-4f97-a847-0ba8271b58df"},
+    "D-harpoon-v1.png": {"job_id": "26cb0bde-c1be-492b-8063-668f092a59da"},
+    "D-harpoon-v2.png": {"job_id": "ea9c6c14-a7c0-499a-80c8-44ca74f302e5"}
+  },
+  "known_flaws": "the anchor head at the far end is small and sometimes reads as a double grapnel rather than our crescent-arm anchor; Pelag is game-camera small, so hands/grip are only roughly legible",
+  "colours": {"base": "#2EC4C9", "net": "#2D5BE3", "fan": "#4B3FD0", "harpoon": "#D23C9C", "forbidden": "red, orange, gold"}
+}

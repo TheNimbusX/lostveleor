@@ -164,6 +164,9 @@ namespace Game.View
                 // Его рисуют поле бури (ThicketStormDangerView: вырез в опасности, золотая кромка)
                 // и свет бури (ThicketMasterCombatView, «LightPillar»).
                 if ((t.Flags & TelegraphFlags.SafeZone) != 0) continue;
+                // Кольцо рёва во вступлении Хозяина Чащи — кат-сцена, не угроза (владелец 02.10, вечер:
+                // «убери»): метки босса, открытые в окне вступления, не рисуются. Sim и урон те же.
+                if (ThicketMasterIntroRules.HidesTelegraph(sim, t.Source, t.StartTick)) continue;
                 var m = Take(PoolFor(t.Shape));
                 if (m == null) continue;
                 Show(m, slot, in t);

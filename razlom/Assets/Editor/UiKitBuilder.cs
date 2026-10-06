@@ -57,7 +57,9 @@ namespace Game.EditorTools
             Save("CloseButton", () => CloseButton(null, "CloseButton"));
             EnsureControlPrefabs();
             EnsureHudPrefabs();
-            AssetDatabase.SaveAssets();
+            // Общего AssetDatabase.SaveAssets нет: его зовут в начале сборок HUD, паузы и окон, и он сбрасывал на диск чужие
+            // грязные ассеты (02.10 — материалы босса). Префабы пака пишет SaveAsPrefabAsset (Save), тема сохраняет себя сама
+            // (UiThemeBuilder), настройки импорта — SaveAndReimport (UiKitImport.Ensure); больше этот проход ничего не меняет.
         }
 
         static void Save(string name, System.Func<RectTransform> build)

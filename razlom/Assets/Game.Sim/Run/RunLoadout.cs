@@ -403,16 +403,27 @@ namespace Game.Sim
             Applications++;
         }
 
+        /// <summary>Сколько первых индексов пула хешируются всегда (пул до Броска якоря); дальше — только ненулевые.</summary>
+        private const int HashedPoolPrefix = 10;
+
         public void HashInto(ref ulong hash)
         {
             for (int i = 0; i < Slots; i++) Hashing.Mix(ref hash, _slots[i]);
-            for (int i = 0; i < _taken.Length; i++) Hashing.Mix(ref hash, _taken[i]);
+            // Индексы пула с 10 (Бросок якоря, 03.10) — только ненулевые и с номером: рост пула
+            // не сдвигает хеш ни одного прежнего набора (FormPinTests прибит).
+            for (int i = 0; i < _taken.Length; i++)
+            {
+                if (i < HashedPoolPrefix) Hashing.Mix(ref hash, _taken[i]);
+                else if (_taken[i] != 0) { Hashing.Mix(ref hash, i); Hashing.Mix(ref hash, _taken[i]); }
+            }
 
             // Формы и сабля — только когда есть хоть что-то: набор без форм хешируется как до них.
             if (!HasFormState()) return;
             Hashing.Mix(ref hash, 0x464F524D);   // "FORM"
             for (int i = 0; i < _form.Length; i++)
             {
+                if (i >= HashedPoolPrefix && _form[i] == PelagForm.None && _formTaken[i] == 0) continue;
+                if (i >= HashedPoolPrefix) Hashing.Mix(ref hash, i);
                 Hashing.Mix(ref hash, (int)_form[i]);
                 Hashing.Mix(ref hash, _formTaken[i]);
             }

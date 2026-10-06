@@ -1,0 +1,51 @@
+{
+  "created": "2026-10-04",
+  "mode": "built-in image_gen",
+  "use_case": "precise-object-edit",
+  "transparent_background": true,
+  "file": "01-camp-lantern-post-tall.png",
+  "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-ecb27725-a5f5-4ca2-8d06-e555f63cba2f.png",
+  "path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\standing-lantern-2026-10-04-v2\\01-camp-lantern-post-tall.png",
+  "edit_target": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\standing-lantern-2026-10-04\\01-camp-lantern-post.png",
+  "image_inputs": [
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\standing-lantern-2026-10-04\\01-camp-lantern-post.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\concepts\\ed226779-a1a6-4319-9e53-8edd684a841a.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\CAMP\\concepts\\a4108eeb-f0bd-4329-b1e9-5e72d85e7626.png"
+  ],
+  "correction": "Tall slender upright, much smaller lamp, short suspension, raised arm, smaller collars and base. Hand-painted style and alpha preserved.",
+  "suggested_model_scale": {
+    "post_height_m": 3.2,
+    "post_thickness_m": [
+      0.16,
+      0.18
+    ],
+    "lantern_total_height_including_handle_m": [
+      0.3,
+      0.35
+    ],
+    "lantern_width_m": 0.22,
+    "suspension_height_m": [
+      0.06,
+      0.1
+    ],
+    "arm_length_m": [
+      0.4,
+      0.45
+    ],
+    "base_width_m": [
+      0.28,
+      0.32
+    ]
+  },
+  "proportion_target": "Post at least nine times taller than complete lantern including handle. Dimensions are authoring targets, not measured 3D output.",
+  "recommended_game_mesh_budget": {
+    "target_triangles": 2500,
+    "working_range_triangles": [
+      1500,
+      3000
+    ],
+    "scope": "Whole post, arm, suspension and lantern."
+  },
+  "intended_3d_pivot": "Centre of flat bottom plane of the post's foot.",
+  "prompt": "Use case: precise-object-edit.\nEdit target: Image 1, the lantern post. Images 2 and 3 are supporting STYLE references only, for the original hand-painted fantasy prop rendering.\nPrimary request: CORRECT THE PROPORTIONS of the lantern-post concept. The current image is wrong: the lamp and suspension are much too large and the post looks stubby. Redesign it as a TALL, SLENDER camp lantern post with a genuinely SMALL lamp hanging HIGH near its top. This must be an obvious major correction, not a subtle rework.\nPreserve: the original chunky hand-painted fantasy game art language, broad visible brush strokes, rich warm brown wood with lighter painted facets, plain bevelled dark iron, amber glass, exactly one lamp, one upright, one short side arm, simple diagonal brace, and genuine transparent background. Use the supplied original crate/smithy concepts for stylization. No photorealism, PBR microtexture or realistic glass glare.\nCRITICAL DIMENSIONAL PROPORTIONS:\n- Overall upright post height approximately 3.2 metres; wood post thickness ONLY 16 to 18 centimetres. The upright is long and slender with clear thick carved bevels, not a fat short timber block.\n- The SMALL hanging lantern's ENTIRE height including its roof and top handle is ONLY 30 to 35 centimetres; width approximately 22 centimetres. This includes the handle, not just the window body.\n- The post is at least NINE TIMES taller than the ENTIRE lantern including its handle. The lamp should look like a small practical light on a full-height pole. It is only a little wider than the wooden post. Do NOT enlarge the lamp to show interior details.\n- Replace the oversized two-link suspension with ONE SHORT simple thick hook, only 6 to 10 centimetres tall. No long chain or giant rings.\n- A short side arm, approximately 40 to 45 centimetres long, connects near the top of the upright. Its thickness and brace match the slim post. Reduce its width and thickness from Image 1.\n- Hang the lamp at the TOP: its bottom is approximately 2.6 metres above the ground, not at waist height or the middle of the post. Most of the long post continues visibly down below the lamp.\n- Small ground shoe only 28 to 32 centimetres wide, flat underneath. Scale down all iron collars and rivets with the slimmer pole. No chunky pedestal.\nRelative to Image 1: greatly lengthen the visible upright (roughly 1.5 to 1.7 times its present length before reframing), reduce the lamp to less than half its present proportional size, reduce its handle, suspension and arm, and make the pole substantially slimmer. The final assembled silhouette should be dominated by the LONG NARROW POST. A small side arm and small amber lamp sit close to the top. The lamp is a small accent, not the main mass.\nConstruction: clean believable timber joints, one modest diagonal brace beneath the high arm, simple metal collars, short strong hook, lamp hangs vertically with a small open gap from the post. The lantern is a compact four-sided metal cage with large simple amber window colour planes and a low shallow top. One tiny visible candle glow inside, no requirement to show elaborate candle detail. Prioritize the correct proportional scale.\nCamera: keep an orthographic-like high front three-quarter gameplay view, around 45 to 48 degrees above horizontal. Correct the actual object proportions; do NOT lower the camera to fake a taller pole. Entire post, base, arm, hook and small lamp fully visible. Show the whole long vertical silhouette centered in a high-resolution square canvas with comfortable transparent margins. Do not crop the upright or zoom into the lamp. No inset, no extra close-up, no comparison panel.\nPresentation: neutral outer material colour visibility, simplified broad painted form shading and bevel accents as in the source concepts. Warm light confined to the small lamp interior, no outside light halo, beams, bloom, ground light pool or cast shadow.\nBackground: fully transparent alpha around the object and through open gaps. No opaque background, checkerboard, gradient, floor, ground, landscape, plants, pedestal or environmental props.\nAbsolutely exclude: second lamp, floor lantern, short squat post, giant oversized lantern, massive suspension rings, long chain, extra ornaments, flags, banners, heraldry, symbols, logos, labels, dimensions, text, watermark, characters, animals, weapons, smoke, sparks and surrounding scenery."
+}

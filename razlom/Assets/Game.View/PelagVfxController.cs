@@ -150,7 +150,7 @@ namespace Game.View
                 if (_active != null)
                     foreach (var fx in _active)
                         if (fx.Active && fx.Motion == Motion.AnchorFlight && fx.Object.activeInHierarchy) count++;
-                return count;
+                return count + AbordageFlyingAnchors + AnchorThrowFlyingAnchors;
             }
         }
         public bool ShowcaseRunning => _showcase != PelagVfxShowcase.None;
@@ -166,6 +166,10 @@ namespace Game.View
             BuildHeroLight();
             HeroTrail();
             PrepareSkewerWake();
+            PrepareAbordageVfx();
+            PrepareSquallVfx();
+            PrepareAnchorThrowVfx();
+            PrepareWreckVfx();
             _footstepCampGround = FindAnyObjectByType<CampGroundStudy>(FindObjectsInactive.Include);
         }
 
@@ -183,6 +187,10 @@ namespace Game.View
             UpdateAbilityMotion();
             UpdateSkewerWake();
             UpdateDashFoam();
+            UpdateAbordageVfx();
+            UpdateSquallVfx();
+            UpdateAnchorThrowVfx();
+            UpdateWreckVfx();
             UpdateFootstepDust();
             UpdateActive(Time.deltaTime);
             UpdateCombatLighting(Time.unscaledDeltaTime);
@@ -264,7 +272,11 @@ namespace Game.View
                     || entry.Id == PelagVfxId.SabreWave || entry.Id == PelagVfxId.SabreCrash
                     || entry.Id == PelagVfxId.SabreWash || entry.Id == PelagVfxId.SabreSplash
                     // Рывок: след и корона брызг — без создания объектов на первом рывке.
-                    || entry.Id == PelagVfxId.DashWake || entry.Id == PelagVfxId.DashSplash)
+                    || entry.Id == PelagVfxId.DashWake || entry.Id == PelagVfxId.DashSplash
+                    // Формы Вихря: второе кольцо волн, короны на нескольких врагах и следы тяги
+                    // рождаются в один кадр — без прогрева это был Instantiate посреди эффекта.
+                    || entry.Id == PelagVfxId.WhirlwindFoamWave || entry.Id == PelagVfxId.WhirlwindCrownSplash
+                    || entry.Id == PelagVfxId.WhirlwindMaelstromDrag || entry.Id == PelagVfxId.WhirlwindWaveSplash)
                     _pools[id].Pool.PrewarmStep(Mathf.Max(3,entry.Prewarm));
             }
 
@@ -276,7 +288,8 @@ namespace Game.View
         {
             var effect = Instantiate(prefab);
             if (appearance == null || appearance.AnchorHeadPrefab == null
-                || (id != PelagVfxId.AnchorLeapThrow && id != PelagVfxId.CycloneHook)) return effect;
+                || (id != PelagVfxId.AnchorLeapThrow && id != PelagVfxId.CycloneHook && id != PelagVfxId.AbordageAnchor
+                    && id != PelagVfxId.AnchorThrowAnchor)) return effect;
             var original = System.Array.Find(effect.GetComponentsInChildren<Transform>(true),
                 t => t.name == "Physical Anchor");
             if (original == null) return effect;
@@ -427,8 +440,16 @@ namespace Game.View
                     StopWhirlwindForms();
                     continue;
                 }
+                // Крушение v2: этапы, удар оземь, вал, стена, заряд, панцирь, конец (PelagVfxController.Wreck).
+                if (ConsumeWreckEvent(e, i)) continue;
                 if (e.Source != Simulation.PlayerId) continue;
                 if (ConsumeWhirlwindFormEvent(e, EventTick(i))) continue;
+                // Абордаж v2: выпуск, зацеп, удар, формы, конец (PelagVfxController.Abordage).
+                if (ConsumeAbordageEvent(e, i)) continue;
+                // Шквал v2: прыжки, удары, Охота, возврат, полосы Пенного следа (PelagVfxController.Squall).
+                if (ConsumeSquallEvent(e, i)) continue;
+                // Бросок якоря: выпуск, попадания, натяг, ловля, конец (PelagVfxController.AnchorThrow).
+                if (ConsumeAnchorThrowEvent(e, i)) continue;
                 if (e.Type == SimEventType.AbilityCast) StopCleaveSlash();
 
                 if (e.Type == SimEventType.Evaded)
@@ -565,12 +586,16 @@ namespace Game.View
                         PlayBlazeHit(e.Target, e.Position);
                     if (ability != null && ability.DefinitionId == AbilityDefinition.ChainStepId)
                     {
-                        PlaySquallImpact(e.Target, e.Position, _squallFinalHop);
+                        // Шквал v2: всплеск пены и кольцо у ног — PelagVfxController.Squall (после всех событий кадра).
+                        if (!TakeSquallDamage(e)) PlaySquallImpact(e.Target, e.Position, _squallFinalHop);
                     }
                     if (ability != null && ability.DefinitionId == AbilityDefinition.SkewerId)
                         PlaySquallImpact(e.Target, e.Position, false);
-                    if (ability != null && ability.DefinitionId == AbilityDefinition.WreckId)
+                    // Крушение v2: знаки задетых — PelagVfxController.Wreck; прежний всплеск Шквала — запасной путь.
+                    if (ability != null && ability.DefinitionId == AbilityDefinition.WreckId && !TakeWreckDamage(e, EventTick(i)))
                         PlaySquallImpact(e.Target, e.Position, _driver.Sim.WreckStage >= 3);
+                    if (ability != null && ability.DefinitionId == AbilityDefinition.AnchorLeapId)
+                        TakeAbordageDamage(e, AbordageEventTick(i));
                     if (ability == null || ability.DefinitionId != AbilityDefinition.CleaveId)
                         PulseCombatLight(IsWhirlwindSlot(e.ActionVariant) ? 0.30f : 0.46f);
                 }
@@ -1248,7 +1273,11 @@ namespace Game.View
                 Vector3 blade = bladeTip.position - bladeRoot.position;
                 yaw = Mathf.Atan2(blade.x, blade.z) * Mathf.Rad2Deg;
             }
-            if (TryAcquire(PelagVfxId.WhirlwindRing, out GameObject go, out PelagVfxElement element))
+            // Пенные волны (v4): на выбранном кадре waves-2 серпа нет — удар и есть первое кольцо,
+            // оно выходит в этот же тик от героя. Тонированный серп внутри колец вместе с ними
+            // читался рваной спиралью; в этой форме он не рисуется, свет контакта остаётся.
+            if (CurrentWhirlwindForm() != PelagForm.WhirlwindFoamWaves
+                && TryAcquire(PelagVfxId.WhirlwindRing, out GameObject go, out PelagVfxElement element))
             {
                 bool authored = element.AuthoredRadius > 0f;
                 float radius = 2.3f;
@@ -1343,6 +1372,11 @@ namespace Game.View
             {
                 ScheduleGameplayWhirlwind();
             }
+            else if (id == AbilityDefinition.AnchorLeapId && AbordageVfxReady)
+            {
+                // Абордаж v2: якорь, цепь, вода и формы — от событий Sim (PelagVfxController.Abordage*).
+                BeginAbordageVfxCast(slot);
+            }
             else if (id == AbilityDefinition.AnchorLeapId)
             {
                 FixVec2 aimed = sim.LeapAim;
@@ -1417,9 +1451,13 @@ namespace Game.View
             _motionTime = 0f;
             _motionStartedAt = Time.time;
             _motionAbility = PelagVfxShowcase.ChainStep;
-            _juice?.PlayChainSlashTrail();
+            // Шквал v2 рисует струю пены сам (PelagVfxController.Squall); прежние росчерк CFXR и лента
+            // клинка — только без него и в витрине.
+            bool squallV2 = SquallVfxReady && !_captureMotion;
+            if (!squallV2) _juice?.PlayChainSlashTrail();
             if (CaptureRig.HasEnemyOverride)
                 Debug.Log($"[squall-hop] index={_squallHop} final={_squallFinalHop} from={from} to={to}");
+            if (squallV2) return;
             int dash = SpawnMoving(PelagVfxId.ChainStepDash, from + Vector3.up * 0.75f,
                 to + Vector3.up * 0.75f, PelagAbilityTiming.ChainHop, 0f, Motion.Dash);
             Camera camera = Camera.main;

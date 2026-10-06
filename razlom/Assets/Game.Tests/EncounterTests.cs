@@ -139,11 +139,14 @@ namespace Game.Tests
 
         /// <summary>
         /// Босс встаёт на пол. Поляна босса (02.10) неизменна, и её центр —
-        /// центр комнаты перед выходом: босс стоит ровно посреди поляны, герой —
-        /// в тропе входа под ней. Запасной путь (центр комнаты за контуром —
-        /// сессия с сидом 10 ставила босса в (−30, 35), вне пола) проверяется
-        /// той же картой с вырезанным под центром полом: тогда — ближайшая
-        /// клетка маршрута, до которой можно дойти от входа.
+        /// центр комнаты перед выходом: временный босс стоит ровно посреди поляны,
+        /// Хозяин Чащи (ревью 02.10, вечер) — в её дальнем верхнем правом углу
+        /// (GladeLayout.BossSpawnOffset) всем корпусом на полу, а центр поляны —
+        /// его Home (центр поводка); герой — в тропе входа под ней. Запасной путь
+        /// (центр комнаты за контуром — сессия с сидом 10 ставила босса в (−30, 35),
+        /// вне пола) проверяется той же картой с вырезанным под центром полом:
+        /// тогда — ближайшая клетка маршрута, до которой можно дойти от входа
+        /// (у Хозяина Чащи это его Home, сам он всё равно в углу).
         /// </summary>
         [Test]
         public void BossArena_PutsTheBossOnTheFloor_EvenWhenTheRoomCentreIsOffTheGlade()
@@ -184,25 +187,38 @@ namespace Game.Tests
                     Assert.That(map.IsWalkable(boss, radius), Is.True, "босс вне пола, " + where);
                     Assert.That(sim.Entities.Position[Simulation.PlayerId], Is.EqualTo(map.EntryPoint), where);
                     Assert.That(map.EntryPoint.Y, Is.LessThan(glade.Center.Y - GladeLayout.BossFloorHalfDepth), "герой в тропе входа, " + where);
+                    var home = boss;
+                    if (thicket)
+                    {
+                        Assert.That(boss, Is.EqualTo(glade.Center + GladeLayout.BossSpawnOffset), "в дальнем верхнем правом углу, " + where);
+                        Assert.That(boss.X > glade.Center.X && boss.Y > glade.Center.Y, Is.True, where);
+                        Assert.That(map.IsWalkable(boss, Simulation.ThicketHullReach), Is.True, "корпус на полу, " + where);
+                        Assert.That(FixVec2.Dot(sim.Entities.Facing[plan.BossId], map.EntryPoint - boss), Is.GreaterThan(Fix64.Zero),
+                            "лицом ко входу, " + where);
+                        Assert.IsTrue(sim.TryGetThicketMasterMemory(plan.BossId, out var memory), where);
+                        home = memory.Home;
+                        Assert.That(map.IsWalkable(home, radius), Is.True, "центр поводка на полу, " + where);
+                    }
                     if (!hole)
                     {
-                        Assert.That(boss, Is.EqualTo(centre), "босс посреди поляны, " + where);
+                        Assert.That(home, Is.EqualTo(centre), "босс (Хозяин Чащи — центр его поводка) посреди поляны, " + where);
                         continue;
                     }
                     Assert.That(map.IsWalkable(centre, radius), Is.False, where);
-                    int cell = map.Routes.CellAt(boss);
+                    int cell = map.Routes.CellAt(home);
                     Assert.That(cell, Is.GreaterThanOrEqualTo(0), where);
                     Assert.That(map.Routes.DistanceFromEntry(cell), Is.GreaterThanOrEqualTo(0), "до босса не дойти, " + where);
-                    Assert.That(FixVec2.Distance(boss, centre), Is.LessThan(Fix64.FromInt(6)), where);
-                    Assert.That(glade.Field(boss), Is.LessThanOrEqualTo(Fix64.One), "запасная точка — на поляне, " + where);
+                    Assert.That(FixVec2.Distance(home, centre), Is.LessThan(Fix64.FromInt(6)), where);
+                    Assert.That(glade.Field(home), Is.LessThanOrEqualTo(Fix64.One), "запасная точка — на поляне, " + where);
                 }
             }
         }
 
         /// <summary>
-        /// Малая поляна босса (20 × 15 м) вмещает всё, что ставится вокруг него:
-        /// тестовый переход «К боссу» — герой на поляне не ближе 4 м, подмога на
-        /// 66% — на полу поляны, не ближе 6 м к герою, вся волна.
+        /// Малая поляна босса (21 × 15,7 м, +10% площади 02.10) вмещает всё, что
+        /// ставится вокруг него: тестовый переход «К боссу» — герой на тропе входа в
+        /// 4 м до кромки, босс в дальнем верхнем правом углу; подмога на 66% — на
+        /// полу поляны, не ближе 6 м к герою, вся волна.
         /// </summary>
         [Test]
         public void BossArena_TestJumpAndAdds_FitTheSmallClearing()
@@ -218,15 +234,18 @@ namespace Game.Tests
                 var glade = run.Map.GetGlade(0);
                 int boss = run.BossId;
                 string where = "сид " + seed;
-                Assert.That(e.Position[boss], Is.EqualTo(glade.Center), where);
+                Assert.That(e.Position[boss], Is.EqualTo(glade.Center + GladeLayout.BossSpawnOffset), "босс в дальнем углу, " + where);
                 var hero = e.Position[Simulation.PlayerId];
                 // Вступление-кат-сцена (02.10): «К боссу» ставит героя на тропу входа в 4 м до
                 // кромки — босс проснётся, когда он ступит на поляну (Simulation.ForestBoss.Intro).
                 Assert.That(glade.Field(hero), Is.GreaterThan(Fix64.One), "герой на тропе, не на поляне, " + where);
                 Assert.That(run.Map.IsWalkable(hero, e.BodyRadius[Simulation.PlayerId]), Is.True, where);
                 Assert.That(hero.Y < e.Position[boss].Y, Is.True, "тропа входа — снизу, " + where);
-                double away = FixVec2.Distance(hero, e.Position[boss]).ToDouble();
-                Assert.That(away, Is.InRange(10.0, 13.0), "4 м до кромки, " + where);
+                // Тропа — по оси поляны от её центра (Home), а не от угла, где стоит босс.
+                double edge = GladeLayout.BossFloorHalfDepth.ToDouble();
+                Assert.That(FixVec2.Distance(hero, glade.Center).ToDouble(), Is.InRange(edge + 3.5, edge + 4.5), "4 м до кромки, " + where);
+                // Поляна 25,66 × 19,24 (07.10, +30% площади): от тропы входа до угла ~19 м.
+                Assert.That(FixVec2.Distance(hero, e.Position[boss]).ToDouble(), Is.InRange(17.5, 20.5), "босс в дальнем углу, " + where);
                 // Подмога на 66% встаёт вокруг героя, а бой идёт на поляне: герой — в 4 м перед боссом.
                 hero = run.Map.ClampToWalkable(e.Position[boss] - new FixVec2(Fix64.Zero, Fix64.FromInt(4)),
                     e.BodyRadius[Simulation.PlayerId]);

@@ -58,14 +58,10 @@ namespace Game.Sim
 
         public ItemInstance At(int slot) => _slots[slot];
 
-        /// <summary>Вещь легла в сумку — лагерь отмечает её основу в атласе.</summary>
-        internal System.Action<int> Placed;
-
         internal void Put(int slot, ItemInstance item, bool keep = false)
         {
             _slots[slot] = item;
             _keep[slot] = !item.IsEmpty && keep;
-            if (!item.IsEmpty) Placed?.Invoke(item.BaseId);
         }
 
         public bool Swap(int from, int to)
@@ -94,7 +90,6 @@ namespace Game.Sim
 
                 _slots[i] = item;
                 _keep[i] = false;
-                if (!item.IsEmpty) Placed?.Invoke(item.BaseId);
                 return i;
             }
             return -1;
@@ -122,12 +117,13 @@ namespace Game.Sim
         /// и остаться играбельным: место освобождается одним нажатием, а не
         /// двадцатью.
         /// </summary>
-        public int SalvageUnkept()
+        public int SalvageUnkept(int skipSlot = -1)
         {
             int shards = 0;
             for (int i = 0; i < _slots.Length; i++)
             {
-                if (_slots[i].IsEmpty || _keep[i]) continue;
+                // skipSlot — вещь открытой сессии Эни: оплаченный выбор не уходит в осколки.
+                if (_slots[i].IsEmpty || _keep[i] || i == skipSlot) continue;
 
                 shards += ShardsFor(_slots[i]);
                 _slots[i] = default;
@@ -154,7 +150,11 @@ namespace Game.Sim
                 default: byRarity = 1; break;
             }
 
-            return byRarity + item.ItemLevel / 5;
+            // Закалка окупается и при разборе: +5 за каждое оплаченное действие без трещины
+            // (06.10, пробел №18) — в том числе у расколотой и рассыпавшейся вещи.
+            var crafting = item.Crafting;
+            int bonus = crafting == null ? 0 : Camp.SalvageBonusPerAction * (crafting.PaidActions - crafting.Cracks);
+            return byRarity + item.ItemLevel / 5 + bonus;
         }
 
         public void Clear()

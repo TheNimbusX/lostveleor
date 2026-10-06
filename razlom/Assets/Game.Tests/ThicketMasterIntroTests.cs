@@ -87,7 +87,9 @@ namespace Game.Tests
                 Assert.IsTrue(sim.ThicketWakesOnClearing(boss), where);
                 var start = e.Position[Hero];
                 Assert.That(glade.Field(start), Is.GreaterThan(Fix64.One), "«К боссу» — на тропе, " + where);
-                Assert.That(FixVec2.Distance(start, e.Position[boss]).ToDouble(), Is.InRange(10.0, 13.0), where);
+                // Босс — в дальнем верхнем правом углу поляны (ревью 02.10, вечер), герой — на тропе снизу.
+                // Поляна 25,66 × 19,24 (07.10, +30% площади): от тропы входа до угла ~19 м.
+                Assert.That(FixVec2.Distance(start, e.Position[boss]).ToDouble(), Is.InRange(17.5, 20.5), where);
 
                 // Стоит на тропе 30 с — босс спит, вступления нет.
                 for (int k = 0; k < 900; k++)
@@ -109,6 +111,46 @@ namespace Game.Tests
                 Assert.AreEqual(105, Simulation.ThicketIntroTicks);
                 Assert.IsFalse(sim.ThicketMasterAwake(boss), "камера ещё летит — спит, " + where);
                 Assert.IsTrue(sim.ThicketIntroHoldsHero, where);
+            }
+        }
+
+        /// <summary>
+        /// Ревью 02.10, вечер: «босса надо ставить дальше в противоположный угол». Встаёт в дальнем
+        /// верхнем правом углу поляны (вход — снизу по центру) лицом ко входу; весь корпус и ещё 1 м
+        /// вокруг — на полу; центр поляны — его Home (центр поводка, буря и вид меряют поляну от него),
+        /// «К боссу» ставит героя на ось тропы входа.
+        /// </summary>
+        [Test]
+        public void Spawn_FarTopRightCorner_FacingTheEntrance_WholeHullOnTheFloor_HomeIsTheClearingCentre()
+        {
+            for (ulong seed = 1; seed <= 3; seed++)
+            {
+                string where = "сид " + seed;
+                var run = Jump(seed);
+                var sim = run.Sim;
+                var e = sim.Entities;
+                int boss = run.BossId;
+                var glade = run.Map.GetGlade(0);
+                var at = e.Position[boss];
+                Assert.AreEqual(glade.Center + GladeLayout.BossSpawnOffset, at, where);
+                Assert.That(at.X > glade.Center.X && at.Y > glade.Center.Y, Is.True, "верхний правый, " + where);
+                var entry = run.Map.EntryPoint;
+                Assert.That(entry.Y < glade.Center.Y && entry.X == glade.Center.X, Is.True, "вход снизу по центру, " + where);
+                Assert.IsTrue(sim.TryGetThicketMasterMemory(boss, out var memory), where);
+                Assert.AreEqual(glade.Center, memory.Home, "центр поводка — центр поляны, " + where);
+                Assert.That(FixVec2.Dot(e.Facing[boss].Normalized(), (entry - at).Normalized()).ToDouble(), Is.GreaterThan(0.999),
+                    "лицом ко входу, " + where);
+                for (int k = 0; k < Simulation.ThicketHullCircleCount; k++)
+                {
+                    Assert.IsTrue(sim.TryGetThicketHullCircle(boss, k, out var c, out var r), where);
+                    for (int s = 0; s < 24; s++)
+                    {
+                        var edge = c + FixVec2.FromAngle(Fix64.TwoPi * Fix64.Ratio(s, 24)) * (r + Fix64.One);
+                        Assert.That(glade.Field(edge), Is.LessThanOrEqualTo(Fix64.One), "круг корпуса " + k + " + 1 м на полу, " + where);
+                    }
+                }
+                var hero = e.Position[Hero];
+                Assert.AreEqual(glade.Center.X, hero.X, "«К боссу» — на оси тропы входа, " + where);
             }
         }
 
@@ -170,6 +212,9 @@ namespace Game.Tests
             Assert.IsTrue(sim.TryGetThicketMasterAction(boss, out var dive));
             Assert.AreEqual(ThicketMasterAction.Dive, dive.Action);
             Assert.AreEqual(end, dive.StartTick);
+            Assert.IsFalse(Simulation.ThicketDiveUnderHero(dive), "с кромки — сближение: круг под героем в тик фиксации");
+            Assert.AreEqual(end + Simulation.ThicketDiveFirstTicks, sim.ThicketDiveDueTick(boss),
+                "нырок «под героя» — через 10 с от этого нырка, а не через 24 с фазы 1 (проверка находок 03.10)");
             Assert.AreNotEqual(stood, e.Position[Hero], "ввод героя снова читается");
             sim.ApplyAbilityDamage(boss, Hero, 40, -1, DamageType.Physical);
             Assert.That(e.Health[Hero], Is.LessThan(health), "неуязвимость кончилась с окном");
@@ -246,9 +291,56 @@ namespace Game.Tests
             Assert.IsTrue(sim.TryGetThicketMasterAction(boss, out var paw));
             Assert.AreEqual(ThicketMasterAction.Paw, paw.Action);
             Assert.AreEqual(end, paw.StartTick);
+            Assert.AreEqual(end + Simulation.ThicketDiveFirstTicks, sim.ThicketDiveDueTick(boss), "первый нырок «под героя» — через 10 с (03.10)");
+            Assert.AreEqual(end + Simulation.ThicketStompPickCooldownTicks, sim.ThicketStompPickReadyTick(boss),
+                "топот в жребии — с 4,5 с: бой открывают серии (03.10)");
             int health = e.Health[boss];
             sim.ApplyAbilityDamage(Hero, boss, 100, -1, DamageType.Physical);
             Assert.That(e.Health[boss], Is.LessThan(health), "с концом окна босса снова бьют");
+        }
+
+        /// <summary>
+        /// Проверка находок 03.10: с кромки поляны первая атака — всегда нырок-сближение (в тик конца
+        /// рёва, пока камера возвращается из кат-сцены). Он не отодвигает первый нырок «под героя» на
+        /// 24 с фазы 1: герой, оставшийся у корпуса, получает его через ~10 с от сближения — ещё в фазе 1
+        /// (в лесном забеге она ≈ 24 с; раньше «под героя» в ней был лишь в 18% боёв).
+        /// </summary>
+        [Test]
+        public void FromTheClearingEdge_OpenerDive_ThenUnderHeroDiveTenSecondsLater_StillPhaseOne()
+        {
+            foreach (ulong seed in new ulong[] { 5, 8, 13 })
+            {
+                var run = Jump(seed);
+                var sim = run.Sim;
+                var e = sim.Entities;
+                int boss = run.BossId;
+                EnterClearing(run);
+                Assert.IsTrue(sim.TryGetThicketIntro(boss, out _, out _, out int end));
+                while (sim.Tick < end) run.Step(InputFrame.Empty);
+                run.Step(Walk(sim, e.Position[boss]));
+                Assert.IsTrue(sim.TryGetThicketMasterAction(boss, out var opener), "семя " + seed);
+                Assert.AreEqual(ThicketMasterAction.Dive, opener.Action, "с кромки — нырок первой атакой, семя " + seed);
+                Assert.AreEqual(end, opener.StartTick);
+                Assert.IsFalse(Simulation.ThicketDiveUnderHero(opener), "сближение, семя " + seed);
+                int due = end + Simulation.ThicketDiveFirstTicks;
+                Assert.AreEqual(due, sim.ThicketDiveDueTick(boss), "срок — 10 с от сближения, семя " + seed);
+
+                // Ближник держится у корпуса (идёт на босса, здоровье доливается) и не бьёт.
+                int under = -1;
+                for (int k = 0; k < Simulation.ThicketDiveEveryPhase1Ticks && under < 0; k++)
+                {
+                    e.Health[Hero] = e.MaxHealth[Hero];
+                    int tick = sim.Tick;
+                    run.Step(Walk(sim, e.Position[boss]));
+                    if (Count(sim, SimEventType.EnemyActionStarted, EnemyActionKind.ThicketDive, 0) > 0) under = tick;
+                }
+                TestContext.WriteLine("seed " + seed + ": under-hero dive " + (under - end) + " ticks after the opener");
+                Assert.That(under, Is.InRange(due, due + 150), "первый «под героя» — через ~10 с от сближения, не через 24 с; семя " + seed);
+                Assert.IsTrue(sim.TryGetThicketMasterAction(boss, out var dive));
+                Assert.IsTrue(Simulation.ThicketDiveUnderHero(dive), "герой у корпуса — «под героя», семя " + seed);
+                Assert.AreEqual(1, sim.ThicketMasterPhase(boss), "ещё фаза 1, семя " + seed);
+                Assert.AreEqual(under + Simulation.ThicketDiveEveryPhase1Ticks, sim.ThicketDiveDueTick(boss), "дальше — 24 с фазы 1, семя " + seed);
+            }
         }
 
         [Test]

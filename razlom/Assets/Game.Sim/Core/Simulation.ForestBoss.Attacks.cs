@@ -41,8 +41,18 @@ namespace Game.Sim
     ///
     /// Фазы: нырок — 1–3, прорастание и пыльца — 2–3, ливень — 3.
     ///
+    /// Ревью 02.10, ночь («лапа — основа, темп, дальники»): нырок — только
+    /// сближение по герою 2 с в дальней полосе (ThicketDiveFarTicks), бугор 18
+    /// тиков вместо 30; касты фаз 2–3 — с лапой в жребии или по дальнему и
+    /// кайтящему герою на любом расстоянии; ливень фазы 3 — по сроку, раньше бури.
+    /// Ревью 03.10 («босс за игру ни разу не залез под землю»): ещё и нырок «под
+    /// героя» по сроку (ThicketDiveEvery*, DiveNextTick) — круг там, где герой
+    /// стоял, когда бугор тронулся (ThicketDiveUnderHeroBit). Владелец 08.10
+    /// («перемещение под землёй оч быстрое»): ход бугра — по пути, 7 м/с
+    /// (ThicketDiveTravelPlan: 18–60 тиков, ThicketDiveTravelOf).
+    ///
     /// НЫРОК. Замах — уход в землю (ThicketDiveBurrowTicks), потом бугор
-    /// ThicketDiveTravelTicks едет к герою своим ходом босса (без оглядки на
+    /// ThicketDiveTravelOf тиков (путь на 7 м/с, 18–60) едет к герою своим ходом босса (без оглядки на
     /// поворот, с поводком и стенами; шаг — остаток пути на оставшиеся тики,
     /// не больше ThicketMoundMaxStep), в тик фиксации круг r4,0 встаёт под
     /// героем (не дальше поводка + круга от точки появления — Target), через
@@ -81,26 +91,91 @@ namespace Game.Sim
     {
         // ---- нырок в корни ----
 
-        public const int ThicketDiveBurrowTicks = 12, ThicketDiveTravelTicks = 30;
+        /// <summary>
+        /// Уход 12, бугор — по пути (ниже), круг под героем 24 до выхода. Под землёй — неуязвим
+        /// (ThicketShielded) 12 + ход + 24 тика. Ход бугра (владелец 08.10: «само перемещение под
+        /// землёй оч быстрое… холмик просто скользит по полу»): путь от тела до героя (в поводке) на
+        /// ThicketMoundSpeed (7 м/с), не короче ThicketDiveTravelTicks (18 — прежний ход: короткий
+        /// нырок «под героя» до 4,2 м не меняется) и не длиннее ThicketDiveTravelMaxTicks (60, 2 с:
+        /// дальше 14 м бугор быстрее, до 10 м/с на 20 м). Было (02.10, ночь — 08.10): всегда 18
+        /// тиков, бугор до 16,5 м/с (ThicketMoundMaxStep 0,55). Ход этого нырка — в Tag
+        /// (ThicketDiveTravelOf), его начало — ThicketDiveBurrowEndTick.
+        /// </summary>
+        public const int ThicketDiveBurrowTicks = 12, ThicketDiveTravelTicks = 18, ThicketDiveTravelMaxTicks = 60;
+
+        /// <summary>Ход бугра, м за тик: 7/30 (7 м/с) — по нему считается время хода нырка (ThicketDiveTravelPlan).</summary>
+        public static readonly Fix64 ThicketMoundSpeed = Fix64.Ratio(7, 30);
+
+        /// <summary>Ход нырка лежит в Tag со сдвигом 8 (биты 8–15; бит 0 — «под героя»).</summary>
+        private const int ThicketDiveTravelShift = 8;
         /// <summary>Стойка после выхода 36 (владелец 02.10: «дать чуть больше окно для атаки», было 24).</summary>
         public const int ThicketDiveLockTicks = 24, ThicketDiveStandTicks = 36;
 
         /// <summary>Круг выхода 4,0 м (3,5 × 1,15).</summary>
         public static readonly Fix64 ThicketDiveRadius = Fix64.FromInt(4);
 
-        /// <summary>Нырок — если герой дальше 7 м (между центрами) или раз в ~10 с.</summary>
-        public static readonly Fix64 ThicketDiveFarRange = Fix64.FromInt(7);
+        /// <summary>
+        /// Нырок-сближение (ревью 02.10, ночь): герой ThicketDiveFarTicks (60, 2 с) тиков подряд
+        /// в дальней полосе (ThicketHeroBand == Far, FarTicks). Ближе — нырок «под героя» по своему
+        /// сроку (ThicketDiveEvery*, 03.10).
+        /// </summary>
+        public const int ThicketDiveFarTicks = 60;
 
-        /// <summary>«Раз в ~10 с» от начала прошлого нырка: ×1,25 при подмоге, ×0,85 с половины здоровья, Часы сдвигают.</summary>
-        public const int ThicketDiveEveryTicks = 300;
+        /// <summary>
+        /// Перезарядка нырка-СБЛИЖЕНИЯ от начала любого нырка: фаза 1 — 540 (18 с), фазы 2–3 — 450
+        /// (15 с; баланс 02.10, ночь — было 360 / 300: дальник был под землёй у босса 10–12% боя);
+        /// ×1,25 при подмоге, ×0,85 с половины здоровья, Часы сдвигают (ThicketReady[Dive]).
+        /// </summary>
+        public const int ThicketDiveCooldownPhase1Ticks = 540, ThicketDiveCooldownTicks = 450;
 
-        /// <summary>Самое частое — раз в 5 с от начала; первый — не раньше 5 с после первого выбора.</summary>
-        public const int ThicketDiveCooldownTicks = 150;
+        /// <summary>
+        /// Нырок «под героя» (03.10, владелец: «босс за игру ни разу не залез под землю. надо
+        /// участить»): по герою рядом (центром в круге топота, 5,2 м) не раньше 720 (фаза 1, 24 с) /
+        /// 180 (фаза 2, 6 с) / 180 (фаза 3; в фазе 3 всегда ярость ×0,85 — 153, 5,1 с, как и в
+        /// фазе 2 ниже половины здоровья) тиков от начала ЛЮБОГО нырка (ThicketMasterMemory.DiveNextTick):
+        /// сближение и «под героя» сбрасывают оба срока. ×1,25 при подмоге, ×0,85 с половины здоровья, Часы сдвигают.
+        /// Срок — нижняя граница: нырок встаёт, только когда босс свободен, герой рядом и лапа готова, —
+        /// в фазах 2–3 он на деле приходит раз в ~12–15 с.
+        /// Фаза 1 — правилом, в первый свободный тик; фазы 2–3 — в жребии вместо серии лапы
+        /// (ThicketDiveWeight 80 к лапе 10 и кастам 6 / 4): свободных выборов там мало (ливень, буря,
+        /// связки), и правило забирало их все — касты фазы 3 пропадали. Перебаланс 03.10: фаза 1 —
+        /// 450 → 720 (24 с: в фазе 1 первая атака-сближение и ещё один «под героя» примерно в каждом
+        /// втором бою — нырок 13% атак фазы 1, а не 19%), фазы 2–3 — 330 → 180 и вес 40 → 80 (нырки
+        /// переехали в фазу 2). Проверка находок 03.10: сближение первой атакой больше не отодвигает
+        /// первый «под героя» на эти 24 с (он через ThicketDiveFirstTicks от сближения, StartThicketDive) —
+        /// «под героя» в фазе 1 почти в каждом бою (F8 41% → 100%, лесной забег 18% → 99%), нырок
+        /// 19% атак фазы 1; у сильного ближника ≈ 4,7 нырка за бой в F8 (фаза 1 — 2,0 с первой атакой,
+        /// фаза 2 — 1,9, фаза 3 — 0,9) и 4,2 в лесном забеге, под землёй ≈ 10–11% боя. Было (баланс 02.10,
+        /// ночь): только по дальнему герою — ближник за бой видел один нырок, первую атаку после вступления.
+        /// </summary>
+        public const int ThicketDiveEveryPhase1Ticks = 720, ThicketDiveEveryPhase2Ticks = 180, ThicketDiveEveryPhase3Ticks = 180;
+
+        /// <summary>
+        /// Первый нырок «под героя» — не раньше чем через 300 тиков (10 с) после конца рёва
+        /// вступления (DiveNextTick). Нырок-сближение первой атакой (герой с кромки поляны, тик
+        /// конца рёва) ставит тот же срок — 300 от себя, а не ThicketDiveEveryOf (проверка находок
+        /// 03.10: иначе первый «под героя» ждал 24 с и в лесном забеге в фазу 1 почти не попадал).
+        /// </summary>
+        public const int ThicketDiveFirstTicks = 300;
+
+        /// <summary>
+        /// Бит Tag нырка: «под героя» (03.10) — нырок не по правилу сближения (герой не в дальней
+        /// полосе и не 2 с в ней в тик начала). Круг ложится не туда,
+        /// где герой в тик фиксации, а туда, где он стоял, когда бугор тронулся (Stage 1, через 12
+        /// тиков после ухода, — Target): кто пошёл прочь от уходящего в землю босса, выходит из
+        /// круга ногами (ход бугра + 24 ≥ 42 тика до выхода); кто стоял — рывок. Сближение (дальний герой) — по-прежнему
+        /// под героем в тик фиксации.
+        /// </summary>
+        public const int ThicketDiveUnderHeroBit = 1;
 
         /// <summary>Тело под землёй — не перегораживает проход, но бьётся.</summary>
         public static readonly Fix64 ThicketMoundRadius = Fix64.Ratio(1, 2);
 
-        /// <summary>Бугор — не быстрее 0,4 м за тик (12 м/с).</summary>
+        /// <summary>
+        /// Бугор — не быстрее 0,4 м за тик (12 м/с; 08.10 — было 0,55, 16,5 м/с): потолок, когда
+        /// герой убегает от бугра и тот догоняет к фиксации круга; стоящего героя бугор везёт
+        /// ровно путь / ход ≤ 7 м/с (до 10 м/с на самом длинном пути).
+        /// </summary>
         public static readonly Fix64 ThicketMoundMaxStep = Fix64.Ratio(2, 5);
 
         // ---- прорастание ----
@@ -109,10 +184,49 @@ namespace Game.Sim
         public const int ThicketSproutCooldownTicks = 450;
         public static readonly Fix64 ThicketSproutRadius = Fix64.Ratio(3, 2);
 
+        /// <summary>
+        /// «Корни-плеть» фазы 1 (баланс 02.10, ночь — ответ дальникам; ЖДЁТ ПОДТВЕРЖДЕНИЯ
+        /// владельца): то же прорастание, но 3 круга вместо 6 и только по дальнему или кайтящему
+        /// герою (лапа не достаёт ThicketKiteTicks подряд), когда лапы в жребии нет. Лапа такого
+        /// героя не достаёт, так что перезарядка — всегда «издали», ThicketSproutFarCooldownTicks
+        /// (240, 8 с; отдельные 360 не наступали никогда и убраны). В фазах 2–3 — полное
+        /// (6 кругов, 450 под лапой).
+        /// </summary>
+        public const int ThicketSproutPhase1Circles = 3;
+
+        /// <summary>
+        /// Каст издали (баланс 02.10, ночь: дальник получал атаку раз в 4–5 с, ближник — раз в 2,4):
+        /// если в тик каста лапа героя не достаёт, перезарядка короче — прорастание 240 (было 450;
+        /// «Корни-плеть» фазы 1 — всегда 240), пыльца 180 (было 270). Под лапой — прежние.
+        /// </summary>
+        public const int ThicketSproutFarCooldownTicks = 240, ThicketPollenFarCooldownTicks = 180;
+
+        // ---- упреждение кастов (баланс 02.10, ночь: «дальник уходит из всего ногами») ----
+
+        /// <summary>
+        /// Круги каста ложатся не под героя, а туда, где он будет, если не свернёт: герой +
+        /// его ход за тик × столько тиков (прорастание и ливень — 20 из 30 до удара: бегущий
+        /// прямо попадает краем, свернувший или вставший — нет; пыльца — 12 из 24 до падения),
+        /// не дальше ThicketLeadMax (3 м) и на полу (ClampToWalkable). Стоящему — под ноги, как было.
+        /// </summary>
+        public const int ThicketSproutLeadTicks = 20, ThicketRainLeadTicks = 20, ThicketPollenLeadTicks = 12;
+        public static readonly Fix64 ThicketLeadMax = Fix64.FromInt(3);
+
+        /// <summary>Центр круга каста на полу: проба малым радиусом (круги мимо пола никого не бьют и сбивают с толку).</summary>
+        private static readonly Fix64 ThicketFloorProbe = Fix64.Ratio(1, 5);
+
         // ---- ягодный ливень ----
 
         public const int ThicketRainVolleys = 5, ThicketRainCircles = 4, ThicketRainEveryTicks = 12, ThicketRainImpactTicks = 30;
-        public const int ThicketRainCooldownTicks = 450;
+
+        /// <summary>
+        /// Ливень фазы 3 — по сроку, а не жребием (ревью 02.10, ночь: «ливня почти нет», был
+        /// вес 6 в жребии — 0,6 за бой): готов — начинается раньше бури, топотов, нырка и
+        /// выбора (буря ждёт конца его кругов), перезарядка 420 (в фазе 3 всегда ×0,85 —
+        /// 357 тиков, 11,9 с; было 450). Первый — сразу после рёва 33, до бури. Ждёт только
+        /// фоновой опасности, бюджета и такта; под ним — серии лапы.
+        /// </summary>
+        public const int ThicketRainCooldownTicks = 420;
         public static readonly Fix64 ThicketRainRadius = Fix64.Ratio(7, 5);
 
         // ---- наслоение ----
@@ -136,11 +250,17 @@ namespace Game.Sim
         /// <summary>Вес каста прорастания и ливня в бюджете крупных меток.</summary>
         public const int ThicketCastMarkWeight = 2;
 
-        /// <summary>Касты (прорастание, пыльца, ливень) — когда герой ближе 10 м.</summary>
-        public static readonly Fix64 ThicketCastRange = Fix64.FromInt(10);
-
-        /// <summary>Веса взвешенного выбора рядом с лапой (у неё 10).</summary>
-        public const int ThicketSproutWeight = 6, ThicketPollenWeight = 4, ThicketRainWeight = 6;
+        /// <summary>
+        /// Веса взвешенного выбора рядом с лапой (у неё 10). Касты фаз 2–3 (ревью 02.10, ночь,
+        /// «дальники»): с лапой в жребии, когда лапа готова; без неё — только по дальнему
+        /// герою или по кайтящему (лапа не достаёт ThicketKiteTicks подряд), на любом
+        /// расстоянии (круги ложатся под героя); иначе босс идёт к герою под лапу. Ливень —
+        /// по сроку (ThicketRainCooldownTicks), не жребием. Нырок «под героя» фаз 2–3 (03.10) — 80
+        /// (перебаланс 03.10, было 40), когда срок пришёл и лапа готова: почти всегда он, но касты
+        /// фазы не пропадают (правилом нырок забирал все редкие свободные выборы фазы 3 — касты 5% и
+        /// 4% атак → 1% и 1%).
+        /// </summary>
+        public const int ThicketSproutWeight = 6, ThicketPollenWeight = 4, ThicketDiveWeight = 80;
 
         /// <summary>Мест под круги на одного босса: 6 прорастания, 5 × 4 ливня или 2 × 3 бури.</summary>
         public const int ThicketShapeSlots = 20;
@@ -189,7 +309,19 @@ namespace Game.Sim
         /// </summary>
         public bool ThicketHazardActive(int id)
             => (_thicketHazards != null && (uint)id < (uint)_thicketHazards.Length && _thicketHazards[id].Serial != 0)
-                || ThicketPollenOf(id, fallingOnly: false);
+                || ThicketPollenOf(id, fallingOnly: false) || ThicketSeedsHoldToken(id);
+
+        /// <summary>
+        /// Держит ли опасность выбор босса (только серии лапы): круги прорастания или ливня,
+        /// падающая пыльца — всегда; лежащая пыльца (до 4,8 с) — только пока лапа достаёт героя
+        /// (баланс 02.10, ночь: дальника босс после пыльцы 5 с только догонял — темп по дальнику
+        /// был 4–5 с между атаками; издали под лежащей пыльцой можно прорастание и нырок).
+        /// </summary>
+        private bool ThicketHazardBlocks(int id)
+            => (_thicketHazards != null && (uint)id < (uint)_thicketHazards.Length && _thicketHazards[id].Serial != 0)
+                || ThicketSeedsHoldToken(id)
+                || ThicketPollenOf(id, fallingOnly: true)
+                || (ThicketPollenOf(id, fallingOnly: false) && ThicketPawInReach(id));
 
         public bool TryGetThicketShape(int id, int index, out FixVec2 center, out int impactTick, out bool resolved)
         {
@@ -234,48 +366,111 @@ namespace Game.Sim
         // ---- выбор ----
 
         /// <summary>
-        /// Нырок: герой дальше 7 м (или дальше поводка + лапы от точки появления —
-        /// пешком босс его не достанет) или пришёл срок «раз в ~10 с», перезарядка
-        /// готова. Герой и за поводком не в безопасности: круг ляжет на краю
-        /// досягаемого (ThicketDiveLock). Первый выбор только заводит часы:
-        /// первый нырок — не раньше ThicketDiveCooldownTicks, по сроку — через
-        /// ThicketDiveEveryTicks (оба — со множителями подмоги и ярости).
+        /// После топотов — нырок. Сближение (ревью 02.10, ночь): герой ThicketDiveFarTicks подряд в
+        /// дальней полосе (от 6,5 м за кромкой корпуса, или за поводком дальше лапы — пешком босс
+        /// его не достанет), своя перезарядка (ThicketReady[Dive], 18 / 15 с); круг — под ним в тик
+        /// фиксации, за поводком — на краю досягаемого (ThicketDiveLock). «Под героя» (03.10,
+        /// владелец: «босс за игру ни разу не залез под землю»): герой рядом (в круге топота), срок
+        /// пришёл (DiveNextTick: 10 с после вступления, дальше 24 / 6 / 6 с от начала любого
+        /// нырка) и нырок встанет сейчас (бюджет крупных меток с подмогой, такт) — иначе обычный
+        /// выбор, босс не стоит в ожидании. Здесь — фаза 1; в фазах 2–3 «под героя» идёт в жребий
+        /// (ThicketAddCandidates). Серию лапы, топот, каст и связку не прерывает: выбор — только у
+        /// свободного босса, связки и ливень с бурей — раньше (ThicketChooseForced), фоновая
+        /// опасность держит только лапу (ThicketHazardBlocks).
         /// </summary>
         partial void ThicketChooseRule(int id, ref ThicketMasterAction choice)
         {
             ref var m = ref ThicketMemory[id];
-            if (m.DiveNextTick == 0)
-            {
-                m.DiveNextTick = Tick + ThicketScaled(id, ThicketDiveEveryTicks);
-                // Стенд или тест мог уже отложить нырок дальше — не укорачивать.
-                int first = Tick + ThicketScaled(id, ThicketDiveCooldownTicks);
-                if (ThicketReadyAt(id, ThicketMasterAction.Dive) < first)
-                    ThicketReady[id * ThicketActionSlots + (int)ThicketMasterAction.Dive] = first;
-                return;
-            }
-            if (Tick < ThicketReadyAt(id, ThicketMasterAction.Dive)) return;
-            FixVec2 hero = Entities.Position[PlayerId];
-            bool far = FixVec2.DistanceSq(hero, Entities.Position[id]) > ThicketDiveFarRange * ThicketDiveFarRange;
-            // Пешком не достать: босс на поводке, герой дальше лапы от его края —
-            // ныряет, как по дальнему герою, а не стоит у края до срока.
-            Fix64 foot = ThicketLeash + ThicketPawStartRange;
-            bool beyond = FixVec2.DistanceSq(hero, m.Home) > foot * foot;
-            if (far || beyond || Tick >= m.DiveNextTick) choice = ThicketMasterAction.Dive;
+            if ((Tick >= ThicketReadyAt(id, ThicketMasterAction.Dive) && m.FarTicks >= ThicketDiveFarTicks)
+                || (m.Phase < 2 && ThicketDiveUnderHeroDue(id)))
+                choice = ThicketMasterAction.Dive;
         }
 
-        /// <summary>Касты фаз 2–3 рядом с лапой: герой ближе 10 м и перезарядка готова.</summary>
-        partial void ThicketAddCandidates(int id)
+        /// <summary>
+        /// Нырок «под героя» пора и встанет сейчас: срок, герой рядом — центром в круге топота
+        /// (HugTicks &gt; 0, 5,2 м: ближник; дальник, которого сближение вынесло к боссу, к сроку уже
+        /// отошёл), бюджет и такт.
+        /// </summary>
+        private bool ThicketDiveUnderHeroDue(int id)
+        {
+            ref var m = ref ThicketMemory[id];
+            if (m.DiveNextTick == 0 || Tick < m.DiveNextTick || m.HugTicks == 0) return false;
+            return BigMarkAllowed(id, 1, Tick + ThicketDiveBurrowTicks + ThicketDiveTravelPlan(id) + ThicketDiveLockTicks);
+        }
+
+        /// <summary>
+        /// Ход бугра нырка, начатого сейчас: путь от тела до героя (герой за поводком — до края
+        /// поводка, куда бугор доедет) на ThicketMoundSpeed, с округлением вверх, в
+        /// [ThicketDiveTravelTicks; ThicketDiveTravelMaxTicks]. Считается в тик начала (выход и
+        /// метка бронируются сразу); дальше герой может уйти — бугор догоняет (ThicketMoundMaxStep).
+        /// </summary>
+        private int ThicketDiveTravelPlan(int id)
+        {
+            FixVec2 goal = ThicketWithin(ThicketMemory[id].Home, Entities.Position[PlayerId], ThicketLeash);
+            Fix64 path = FixVec2.Distance(Entities.Position[id], goal);
+            int ticks = (path / ThicketMoundSpeed).ToInt();
+            if (ThicketMoundSpeed * ticks < path) ticks++;
+            return Math.Max(ThicketDiveTravelTicks, Math.Min(ThicketDiveTravelMaxTicks, ticks));
+        }
+
+        /// <summary>Ход бугра нырка a, тиков (Tag, биты 8–15; 0 — прежние ThicketDiveTravelTicks).</summary>
+        public static int ThicketDiveTravelOf(in ThicketMasterState a)
+        {
+            int travel = (a.Tag >> ThicketDiveTravelShift) & 0xFF;
+            return travel > 0 ? travel : ThicketDiveTravelTicks;
+        }
+
+        /// <summary>
+        /// Тик, когда нырок a уходит под землю и бугор трогается (Stage 1, Started(Dive, 1)):
+        /// ImpactTick − ThicketDiveLockTicks − ход. От ImpactTick — его сдвигают Часы.
+        /// </summary>
+        public static int ThicketDiveBurrowEndTick(in ThicketMasterState a)
+            => a.ImpactTick - ThicketDiveLockTicks - ThicketDiveTravelOf(a);
+
+        /// <summary>Срок нырка «под героя» по фазе (до множителей): 720 / 180 / 180.</summary>
+        private int ThicketDiveEveryOf(int id)
         {
             int phase = ThicketMemory[id].Phase;
-            if (phase < 2) return;
-            Fix64 range = ThicketCastRange;
-            if (FixVec2.DistanceSq(Entities.Position[PlayerId], Entities.Position[id]) > range * range) return;
+            return phase >= 3 ? ThicketDiveEveryPhase3Ticks : phase == 2 ? ThicketDiveEveryPhase2Ticks : ThicketDiveEveryPhase1Ticks;
+        }
+
+        /// <summary>
+        /// Ливень фазы 3 по сроку: готов и встанет сейчас (бюджет, такт) — не держит ни лапу,
+        /// ни бурю: не встаёт — обычный выбор.
+        /// </summary>
+        private bool ThicketRainDue(int id)
+            => ThicketMemory[id].Phase >= 3 && Tick >= ThicketReadyAt(id, ThicketMasterAction.Rain) && ThicketRainFits(id);
+
+        /// <summary>
+        /// Касты фаз 2–3 (перезарядка готова): в жребии с лапой, когда она готова; без неё —
+        /// только по дальнему или кайтящему герою (ответ дальникам: круги ложатся под героя
+        /// на любом расстоянии). Иначе — ничего: босс идёт к герою под лапу. Нырок «под героя»
+        /// фаз 2–3 (03.10) — тоже в жребии с лапой, вес ThicketDiveWeight.
+        /// </summary>
+        partial void ThicketAddCandidates(int id)
+        {
+            ref var m = ref ThicketMemory[id];
+            bool withPaw = _thicketCandidateCount > 0;
+            bool kiting = m.OutOfReachTicks >= ThicketKiteTicks || ThicketHeroBand(id) == ThicketBand.Far;
+            if (m.Phase < 2)
+            {
+                // Фаза 1 (баланс 02.10, ночь; ждёт подтверждения владельца): дальнику — короткие
+                // «Корни-плеть» (3 круга), а не одни нырки.
+                if (!withPaw && kiting && Tick >= ThicketReadyAt(id, ThicketMasterAction.Sprout))
+                    AddThicketCandidate(ThicketMasterAction.Sprout, ThicketSproutWeight);
+                // «Терновник» (владелец 08.10; до него — «Веер шипов-семян», 07.10) — главный ответ дальнику
+                // фазы 1: средняя и дальняя полосы — 8, ближняя — 2 (Simulation.ForestBoss.Seeds).
+                AddThicketCandidate(ThicketMasterAction.Seeds, ThicketBushWeightNow(id));
+                return;
+            }
+            if (withPaw && ThicketDiveUnderHeroDue(id)) AddThicketCandidate(ThicketMasterAction.Dive, ThicketDiveWeight);
+            // Терновник в фазах 2–3 — реже (перезарядка 12 с, вес 5; ближняя полоса — нет).
+            AddThicketCandidate(ThicketMasterAction.Seeds, ThicketBushWeightNow(id));
+            if (!withPaw && !kiting) return;
             if (Tick >= ThicketReadyAt(id, ThicketMasterAction.Sprout))
                 AddThicketCandidate(ThicketMasterAction.Sprout, ThicketSproutWeight);
             if (Tick >= ThicketReadyAt(id, ThicketMasterAction.Pollen) && ThicketLivePollenZones() == 0)
                 AddThicketCandidate(ThicketMasterAction.Pollen, ThicketPollenWeight);
-            if (phase >= 3 && Tick >= ThicketReadyAt(id, ThicketMasterAction.Rain))
-                AddThicketCandidate(ThicketMasterAction.Rain, ThicketRainWeight);
         }
 
         partial void ThicketStartExtra(int id, ThicketMasterAction action, ref bool started)
@@ -287,6 +482,7 @@ namespace Game.Sim
                 case ThicketMasterAction.Pollen: started = StartThicketPollen(id); return;
                 case ThicketMasterAction.Rain: started = StartThicketRain(id); return;
                 case ThicketMasterAction.Storm: started = StartThicketStorm(id); return;
+                case ThicketMasterAction.Seeds: started = StartThicketSeeds(id); return;
             }
         }
 
@@ -298,7 +494,8 @@ namespace Game.Sim
                 case ThicketMasterAction.Sprout:
                 case ThicketMasterAction.Rain:
                 case ThicketMasterAction.Pollen:
-                    // Жест каста: опасность уже идёт сама, босс стоит до EndTick.
+                case ThicketMasterAction.Seeds:
+                    // Жест каста: опасность (круги, облака, кусты терновника) уже идёт сама, босс стоит до EndTick.
                     if (Tick >= ThicketMasters[id].EndTick) FinishThicketAction(id, ThicketRestTicks(id));
                     return;
                 case ThicketMasterAction.Storm: AdvanceThicketStorm(id); return;
@@ -350,26 +547,48 @@ namespace Game.Sim
 
         // ---------- нырок в корни ----------
 
-        /// <summary>Нырок: крупная метка весом 1 бронируется с начала ухода — круг ляжет на 42-м тике, выход на 66-м.</summary>
+        /// <summary>
+        /// Нырок: крупная метка весом 1 бронируется с начала ухода — круг ляжет через 12 + ход
+        /// (ThicketDiveTravelPlan, 18–60) тиков, выход — ещё через 24. Оба срока — от этого начала: сближение (18 / 15 с) и «под героя»
+        /// (24 / 6 / 6 с; после сближения первой атакой вступления — 10 с); счёт дальней полосы — заново. Герой не в дальней полосе — нырок «под
+        /// героя» (ThicketDiveUnderHeroBit в Tag): круг — где он стоял, когда бугор тронулся.
+        /// </summary>
         private bool StartThicketDive(int id)
         {
-            int impact = Tick + ThicketDiveBurrowTicks + ThicketDiveTravelTicks + ThicketDiveLockTicks;
+            // Ход бугра — по пути (08.10): дальний нырок дольше под землёй, короткий — прежние 18.
+            int travel = ThicketDiveTravelPlan(id);
+            int impact = Tick + ThicketDiveBurrowTicks + travel + ThicketDiveLockTicks;
             if (!BigMarkAllowed(id, 1, impact)) return false;
-            BeginThicketAction(id, ThicketMasterAction.Dive, impact, impact, impact + ThicketDiveStandTicks, 1,
+            ref var m = ref ThicketMemory[id];
+            bool under = m.FarTicks < ThicketDiveFarTicks && ThicketHeroBand(id) != ThicketBand.Far;
+            ref var a = ref BeginThicketAction(id, ThicketMasterAction.Dive, impact, impact, impact + ThicketDiveStandTicks, 1,
                 Entities.Facing[id], Entities.Position[PlayerId]);
-            SetThicketCooldown(id, ThicketMasterAction.Dive, ThicketDiveCooldownTicks);
-            ThicketMemory[id].DiveNextTick = Tick + ThicketScaled(id, ThicketDiveEveryTicks);
+            a.Tag = travel << ThicketDiveTravelShift;
+            if (under) a.Tag |= ThicketDiveUnderHeroBit;
+            SetThicketCooldown(id, ThicketMasterAction.Dive,
+                m.Phase >= 2 ? ThicketDiveCooldownTicks : ThicketDiveCooldownPhase1Ticks);
+            // Сближение первой атакой в тик конца рёва вступления (герой с кромки поляны — всегда)
+            // не отодвигает первый нырок «под героя»: он через ThicketDiveFirstTicks от этого нырка,
+            // а не через 24 с (проверка находок 03.10: в лесном забеге фаза 1 ≈ 24 с, и «под героя»
+            // в ней был лишь в 18% боёв; сам этот нырок прячется в возврате камеры кат-сцены).
+            m.DiveNextTick = Tick + (ThicketIntroOpenerDue(id) ? ThicketDiveFirstTicks : ThicketScaled(id, ThicketDiveEveryOf(id)));
+            m.FarTicks = 0;
             return true;
         }
+
+        /// <summary>Нырок «под героя» (03.10): круг — где герой стоял, когда бугор тронулся (Target со Stage 1).</summary>
+        public static bool ThicketDiveUnderHero(in ThicketMasterState a)
+            => a.Action == ThicketMasterAction.Dive && (a.Tag & ThicketDiveUnderHeroBit) != 0;
 
         /// <summary>Тик фиксации круга. Считается от ImpactTick — его сдвигают Часы, StartTick — нет.</summary>
         private static int ThicketDiveLockTick(in ThicketMasterState a) => a.ImpactTick - ThicketDiveLockTicks;
 
         /// <summary>
-        /// Ход под землёй — свой, вместо ядра. Уход: стоит. Бугор: к герою,
-        /// шаг — остаток пути на оставшиеся тики (в тик фиксации — под ним),
-        /// не больше ThicketMoundMaxStep. Круг лежит: к точке выхода (Origin). Поводок и
-        /// стены — как у обычного шага; круп не выталкивает.
+        /// Ход под землёй — свой, вместо ядра. Уход: стоит. Бугор: к герою (нырок «под
+        /// героя» — к месту, где герой стоял, когда бугор тронулся, Target), шаг — остаток пути
+        /// на оставшиеся тики хода (ThicketDiveTravelOf; в тик фиксации — под ним), не больше
+        /// ThicketMoundMaxStep: стоящего героя бугор везёт ровно, ≤ 7 м/с. Круг лежит: к точке
+        /// выхода (Origin). Поводок и стены — как у обычного шага; круп не выталкивает.
         /// </summary>
         partial void ThicketMoveExtra(int id, ref bool handled)
         {
@@ -378,7 +597,9 @@ namespace Game.Sim
             handled = true;
             if (a.Stage == 0) return;
             FixVec2 from = Entities.Position[id];
-            FixVec2 goal = a.Stage == 1 ? Entities.Position[PlayerId] : a.Origin;
+            FixVec2 goal = a.Stage != 1 ? a.Origin : ThicketDiveUnderHero(a) ? a.Target : Entities.Position[PlayerId];
+            // Бугор едет к герою не дальше поводка (08.10): шаг — остаток досягаемого пути, без рывка за край.
+            if (a.Stage == 1) goal = ThicketWithin(ThicketMemory[id].Home, goal, ThicketLeash);
             FixVec2 toGoal = goal - from;
             if (toGoal.LengthSq.Raw == 0) return;
             Fix64 distance = toGoal.Length;
@@ -405,11 +626,13 @@ namespace Game.Sim
         {
             ref var a = ref ThicketMasters[id];
             int lockTick = ThicketDiveLockTick(a);
-            if (a.Stage == 0 && Tick >= lockTick - ThicketDiveTravelTicks)
+            if (a.Stage == 0 && Tick >= ThicketDiveBurrowEndTick(a))
             {
-                // Ушёл: дальше едет бугор, тело — маленькое.
+                // Ушёл: дальше едет бугор, тело — маленькое. «Под героя» — бугор едет туда, где
+                // герой сейчас, и круг ляжет там же (Target): кто уже идёт прочь, уходит ногами.
                 a.Stage = 1;
                 a.StageStartTick = Tick;
+                if (ThicketDiveUnderHero(a)) a.Target = Entities.Position[PlayerId];
                 Entities.BodyRadius[id] = ThicketMoundRadius;
                 _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionStarted, id, PlayerId,
                     EnemyActionKind.ThicketDive, Entities.Position[id], 1));
@@ -430,7 +653,7 @@ namespace Game.Sim
                 ResolveThicketDive(id);
                 return;
             }
-            // Стоит 24 после выхода; связка фаз 2–3 (лапа или топот) — в ThicketFinishedExtra.
+            // Стоит 36 после выхода; связка фаз 2–3 (лапа или топот) — в ThicketFinishedExtra.
             if (a.Stage == 3 && Tick >= a.EndTick) FinishThicketAction(id, ThicketRestTicks(id));
         }
 
@@ -472,7 +695,8 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Фиксация круга нырка. Круг (Target) — под героем, но не дальше
+        /// Фиксация круга нырка. Круг (Target) — под героем (нырок «под героя» — где
+        /// он стоял, когда бугор тронулся, 03.10), но не дальше
         /// поводка + круга от точки появления: герой за поводком тоже под
         /// угрозой. Точка выхода (Origin) — ближайшая к кругу в поводке, где
         /// тело босса целиком помещается и куда бугор доедет по прямой
@@ -482,7 +706,8 @@ namespace Game.Sim
         private void ThicketDiveLock(int id, ref ThicketMasterState a)
         {
             FixVec2 home = ThicketMemory[id].Home;
-            FixVec2 circle = ThicketWithin(home, Entities.Position[PlayerId], ThicketLeash + ThicketDiveRadius);
+            FixVec2 aim = ThicketDiveUnderHero(a) ? a.Target : Entities.Position[PlayerId];
+            FixVec2 circle = ThicketWithin(home, aim, ThicketLeash + ThicketDiveRadius);
             FixVec2 surface = ThicketDiveSurface(id, ThicketWithin(home, circle, ThicketLeash - ThicketLeashSlack));
             FixVec2 off = circle - surface;
             if (off.LengthSq > ThicketDiveRadius * ThicketDiveRadius)
@@ -562,13 +787,26 @@ namespace Game.Sim
         /// </summary>
         private bool StartThicketSprout(int id)
         {
+            // Фаза 1 — «Корни-плеть»: 3 круга (баланс 02.10, ночь; ждёт подтверждения владельца) — только
+            // по герою, которого лапа не достаёт, так что перезарядка — «издали» (240).
+            bool short1 = ThicketMemory[id].Phase < 2;
+            int circles = short1 ? ThicketSproutPhase1Circles : ThicketSproutCircles;
             int first = Tick + ThicketSproutImpactTicks;
-            int last = first + ThicketSproutEveryTicks * (ThicketSproutCircles - 1);
+            int last = first + ThicketSproutEveryTicks * (circles - 1);
             if (!BigMarkAllowed(id, ThicketCastMarkWeight, first) || !HeroContactAllowed(id, first, last)) return false;
             BeginThicketCast(id, ThicketMasterAction.Sprout);
-            BeginThicketHazard(id, ThicketMasterAction.Sprout, ThicketSproutCircles, last);
-            SetThicketCooldown(id, ThicketMasterAction.Sprout, ThicketSproutCooldownTicks);
+            BeginThicketHazard(id, ThicketMasterAction.Sprout, circles, last);
+            SetThicketCooldown(id, ThicketMasterAction.Sprout,
+                ThicketPawInReach(id) ? ThicketSproutCooldownTicks : ThicketSproutFarCooldownTicks);
             return true;
+        }
+
+        /// <summary>Встанет ли ливень в этот тик: бюджет крупных меток и такт всех пяти залпов.</summary>
+        private bool ThicketRainFits(int id)
+        {
+            int first = Tick + ThicketRainImpactTicks;
+            int last = first + ThicketRainEveryTicks * (ThicketRainVolleys - 1);
+            return BigMarkAllowed(id, ThicketCastMarkWeight, first) && HeroContactAllowed(id, first, last);
         }
 
         /// <summary>Ливень: жест, первый залп — сразу, остальные 4 — раз в 12 тиков уже без босса.</summary>
@@ -576,7 +814,7 @@ namespace Game.Sim
         {
             int first = Tick + ThicketRainImpactTicks;
             int last = first + ThicketRainEveryTicks * (ThicketRainVolleys - 1);
-            if (!BigMarkAllowed(id, ThicketCastMarkWeight, first) || !HeroContactAllowed(id, first, last)) return false;
+            if (!ThicketRainFits(id)) return false;
             BeginThicketCast(id, ThicketMasterAction.Rain);
             BeginThicketHazard(id, ThicketMasterAction.Rain, ThicketRainVolleys, last);
             SetThicketCooldown(id, ThicketMasterAction.Rain, ThicketRainCooldownTicks);
@@ -616,14 +854,18 @@ namespace Game.Sim
         /// </summary>
         private void PlaceThicketHazardStage(int id, ref ThicketHazardState h)
         {
-            FixVec2 hero = Entities.Position[PlayerId];
             bool rain = h.Action == ThicketMasterAction.Rain;
+            // Упреждение (баланс 02.10, ночь): туда, где герой будет, если не свернёт; на полу.
+            FixVec2 hero = ThicketLeadPoint(rain ? ThicketRainLeadTicks : ThicketSproutLeadTicks);
             int impact = Tick + (rain ? ThicketRainImpactTicks : ThicketSproutImpactTicks);
             int stage = h.Stage;
             if (rain)
             {
                 _thicketRainScratch ??= new FixVec2[ThicketRainCircles];
                 ThicketRainTemplate(ref ThicketMemory[id].Rng, hero, _thicketRainScratch);
+                // Внешние круги — на пол (у стены 13–39% ложились мимо): поворот вокруг центра шаблона.
+                for (int k = 1; k < ThicketRainCircles; k++)
+                    _thicketRainScratch[k] = ThicketOntoFloor(hero, _thicketRainScratch[k]);
                 for (int k = 0; k < ThicketRainCircles; k++)
                     OpenThicketShape(id, stage * ThicketRainCircles + k, ThicketRainCircle(_thicketRainScratch[k]), impact);
             }
@@ -636,6 +878,45 @@ namespace Game.Sim
                 _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionStarted, id, PlayerId,
                     rain ? EnemyActionKind.ThicketRain : EnemyActionKind.ThicketSprout, hero, stage));
         }
+
+        /// <summary>
+        /// Точка упреждения каста: герой + его ход за тик × leadTicks, не дальше ThicketLeadMax,
+        /// на полу (тело героя там помещается; иначе ближайшее такое место). Стоящему — он сам.
+        /// </summary>
+        private FixVec2 ThicketLeadPoint(int leadTicks)
+        {
+            FixVec2 hero = Entities.Position[PlayerId];
+            FixVec2 lead = (Entities.Velocity[PlayerId] * Fix64.FromInt(leadTicks)).ClampLength(ThicketLeadMax);
+            if (lead.LengthSq.Raw == 0) return hero;
+            FixVec2 point = hero + lead;
+            Fix64 body = Entities.BodyRadius[PlayerId];
+            if (_layout == null || _layout.IsWalkable(point, body)) return point;
+            return _layout.ClampToWalkable(point, body);
+        }
+
+        /// <summary>
+        /// Круг каста point вокруг center — на пол: на месте, если центр на полу; иначе тот же
+        /// радиус, поворот на ±20°, ±40°, ±60°; иначе ближайшее место на полу. Поток не тратит.
+        /// </summary>
+        private FixVec2 ThicketOntoFloor(FixVec2 center, FixVec2 point)
+        {
+            if (_layout == null || _layout.IsWalkable(point, ThicketFloorProbe)) return point;
+            FixVec2 off = point - center;
+            if (off.LengthSq.Raw != 0)
+            {
+                Fix64 angle = off.Angle, radius = off.Length;
+                for (int k = 1; k <= 3; k++)
+                    for (int sign = 1; sign >= -1; sign -= 2)
+                    {
+                        FixVec2 q = center + FixVec2.FromAngle(angle + ThicketFloorTurn * (k * sign)) * radius;
+                        if (_layout.IsWalkable(q, ThicketFloorProbe)) return q;
+                    }
+            }
+            return _layout.ClampToWalkable(point, ThicketFloorProbe);
+        }
+
+        /// <summary>Шаг поворота круга каста на пол — 20°.</summary>
+        private static readonly Fix64 ThicketFloorTurn = Fix64.Pi / 9;
 
         private int OpenThicketShape(int id, int index, in EnemyTelegraph shape, int impact)
         {
@@ -735,14 +1016,19 @@ namespace Game.Sim
 
         private int[] _thicketImpactScratch;
 
-        /// <summary>Ляжет ли удар серии лапы (strikes ударов через gap от first) ближе ThicketOwnContactSpacingTicks к удару своей опасности.</summary>
-        private bool ThicketHazardClash(int id, int first, int strikes, int gap)
+        /// <summary>
+        /// Ляжет ли удар серии лапы (strikes ударов от first через gap1, gap2) ближе
+        /// ThicketOwnContactSpacingTicks к удару своей опасности.
+        /// </summary>
+        private bool ThicketHazardClash(int id, int first, int strikes, int gap1, int gap2)
         {
-            _thicketImpactScratch ??= new int[ThicketShapeSlots];
+            _thicketImpactScratch ??= new int[ThicketShapeSlots + ThicketBushSlots];
             int n = ThicketHazardImpacts(id, _thicketImpactScratch);
+            // И контакты шипов терновника (08.10): удар лапы не сливается с ними в одну вспышку.
+            n = ThicketBushImpacts(id, _thicketImpactScratch, n);
             for (int s = 0; s < strikes; s++)
             {
-                int strike = first + gap * s;
+                int strike = ThicketPawStrikeTick(first, s, gap1, gap2);
                 for (int k = 0; k < n; k++)
                     if (Math.Abs(strike - _thicketImpactScratch[k]) < ThicketOwnContactSpacingTicks) return true;
             }
@@ -752,7 +1038,7 @@ namespace Game.Sim
         /// <summary>Контакты опасности в такт ударов (вставшие и будущие).</summary>
         private void AddThicketHazardContacts(int id)
         {
-            _thicketImpactScratch ??= new int[ThicketShapeSlots];
+            _thicketImpactScratch ??= new int[ThicketShapeSlots + ThicketBushSlots];
             int n = ThicketHazardImpacts(id, _thicketImpactScratch);
             for (int k = 0; k < n; k++) AddHeroContact(id, _thicketImpactScratch[k], _thicketImpactScratch[k]);
         }
@@ -796,7 +1082,7 @@ namespace Game.Sim
 
         /// <summary>
         /// Вес действия в бюджете крупных меток: нырок — 1 с начала ухода до
-        /// выхода (круг ляжет на 42-м тике, место бронируется сразу), буря — весь
+        /// выхода (круг ляжет через 12 + ход тиков, место бронируется сразу), буря — весь
         /// бюджет (не меньше 4) до второй волны (Simulation.ForestBoss.Storm.cs).
         /// Жест каста — 0: его метки считает фоновая опасность (ThicketHazardMarkWeight).
         /// </summary>
@@ -849,6 +1135,7 @@ namespace Game.Sim
             ref var m = ref ThicketMemory[id];
             if (m.ChainNext != ThicketMasterAction.None) m.ChainStep += ticks;
             DelayThicketPollen(id, ticks);
+            ShiftThicketSeeds(id, ticks);
         }
 
         partial void ThicketResetExtra()
@@ -863,6 +1150,7 @@ namespace Game.Sim
             if (_thicketHazards != null) Array.Clear(_thicketHazards, 0, _thicketHazards.Length);
             _thicketHazardSerial = 0;
             ResetThicketPollen();
+            ResetThicketSeeds();
         }
 
         partial void ThicketHashExtra(ref ulong hash)
@@ -900,6 +1188,7 @@ namespace Game.Sim
                 }
             }
             HashThicketPollen(ref hash);
+            HashThicketSeeds(ref hash);
         }
     }
 }

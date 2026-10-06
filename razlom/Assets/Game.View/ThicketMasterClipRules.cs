@@ -30,6 +30,17 @@ namespace Game.View
     }
 
     /// <summary>
+    /// Тело вне действия (<see cref="ThicketMasterClipRules.Locomotion"/>): покой (или хвост прошлого клипа),
+    /// ход клипом Walk, разворот шагами TurnL/TurnR.
+    /// </summary>
+    public enum ThicketMotion : byte
+    {
+        Idle = 0,
+        Walk = 1,
+        Turn = 2,
+    }
+
+    /// <summary>
     /// Поза в кадре: клип, кадр клипа (0…длина) и доля для Motion Time
     /// (параметр «&lt;Клип&gt;Phase»). Burrowed — тело под землёй (нырок между
     /// концом DiveIn и выходом): вид прячет его, бой рисует бугор.
@@ -72,7 +83,8 @@ namespace Game.View
     /// клипов, кадр N = тик N), Sim короче — вид растягивает и сжимает их по тикам
     /// Sim, новые клипы не нужны. Время берётся только из полей ThicketMasterState:
     /// «Сложно» удлиняет первый замах серии до 30 — контакт всё равно на тике удара.
-    /// • Серия лапы П/Л/П: замах шага — от его знака до удара (15, дальше по 9). Удар
+    /// • Серия лапы П/Л/П: замах шага — от его знака до удара (первый — Simulation.ThicketPawWindupOf, 17,
+    ///   дальше — промежутки серии, броски по фазе в Tag, Simulation.ThicketPawGapOf; контракт § 11). Удар
     ///   k и знак k+1 Sim даёт в одном тике: тик удара показывает контакт прошлой лапы
     ///   (кадр 24→25), следующая лапа — со следующего тика. PawL кадр 0 = PawR кадр 25
     ///   (клип собран как связка) — переход П→Л без смеси; Л→П — смесь
@@ -85,6 +97,8 @@ namespace Game.View
     ///   и быстрое вырывание, пыльца — тряска в жест, оседание в хвосте, ливень —
     ///   толчки груди циклом раз в 12 тиков, пик толчка — на знаке залпа (ягоды
     ///   вылетают), пока тело свободно.
+    /// • Терновник (§ 17.2, 08.10; до него — веер § 16 на клипе ливня) — жест каста прорастания: тот же клип и
+    ///   отрезок, что у Sprout (лапы в землю на 18 тиков); кусты растут и стреляют сами, корпус не крутится.
     /// • Хвост: действие Sim кончилось, а клип ещё доигрывает (отход лапы, подъём
     ///   после топота, оседание каста) — вид продолжает ту же функцию по запомненному
     ///   действию до TailEndTick, если босс не пошёл и не начал новое.
@@ -159,6 +173,13 @@ namespace Game.View
         /// <summary>Новое действие из покоя, хода, хвоста или другого действия.</summary>
         public const int ActionBlendTicks = 3;
 
+        /// <summary>
+        /// Серия лапы из хвоста топота (связка «топот → лапа», фазы 2–3, контракт § 11): замах начинается через
+        /// 7–10 тиков после кольца, тело ещё в приседе подъёма (кадр ~49–52 из 71, ниже покоя на ~0,1 м и носом
+        /// вниз) — за ActionBlendTicks (0,1 с) оно подпрыгивало бы в стойку. Смесь длиннее, внутри замаха 15–16.
+        /// </summary>
+        public const int StompToPawBlendTicks = 7;
+
         /// <summary>Правая лапа после левой в серии: PawL кончается не в начале PawR — короткая смесь.</summary>
         public const int PawLeftToRightBlendTicks = 4;
 
@@ -182,8 +203,10 @@ namespace Game.View
         /// <summary>
         /// Метров на цикл Walk (два шага пар) в масштабе 1 — замер анимации 02.10
         /// после правки (production/unity_package/export.json: stride_m_per_cycle 1,7857,
-        /// цикл 30 кадров; Sim 2,0 м/с → ×1,12, до 02.10 — 2,6 → ×1,456). Сборщик ThicketMasterBuilder читает
-        /// свежий замер из отчёта клипов и пишет его в префаб; это число — запас без отчёта.
+        /// цикл 30 кадров; Sim 2,0 м/с → ×1,12, до 02.10 — 2,6 → ×1,456). Сборщик ThicketMasterBuilder меряет шаг
+        /// по самому клипу (MeasureWalkStride, 08.10) и пишет его в префаб; это число — запас без замера. Замер 08.10
+        /// Walk.anim, как его играет Unity: стоящие лапы назад 2,1477 м за цикл при теле ×1,2027 = 1,7857 × 1,2027 —
+        /// шаг верный, по прямой лапы стоят (скольжение на поворотах — ThicketWalkRules).
         /// </summary>
         public const float DefaultWalkStride = 1.7857f;
 
@@ -235,12 +258,14 @@ namespace Game.View
         /// <summary>
         /// Смесь в тиках при смене клипа действия. sameAction — тот же номер действия (шаг серии):
         /// П→Л — 0 (PawL кадр 0 = PawR кадр 25), Л→П — <see cref="PawLeftToRightBlendTicks"/>;
+        /// серия лапы из позы топота (хвост подъёма, связка «топот → лапа») — <see cref="StompToPawBlendTicks"/>;
         /// всё прочее — <see cref="ActionBlendTicks"/>.
         /// </summary>
         public static int ActionBlend(ThicketClip from, ThicketClip to, bool sameAction)
         {
             if (sameAction && from == ThicketClip.PawR && to == ThicketClip.PawL) return 0;
             if (sameAction && from == ThicketClip.PawL && to == ThicketClip.PawR) return PawLeftToRightBlendTicks;
+            if (!sameAction && from == ThicketClip.Stomp && (to == ThicketClip.PawR || to == ThicketClip.PawL)) return StompToPawBlendTicks;
             return ActionBlendTicks;
         }
 
@@ -290,13 +315,61 @@ namespace Game.View
 
         public static ThicketClip PawClip(int stage) => PawIsRight(stage) ? ThicketClip.PawR : ThicketClip.PawL;
 
-        /// <summary>Событие Thicket* (EnemyActionKind 11…19).</summary>
-        public static bool IsThicketKind(EnemyActionKind kind)
-            => kind >= EnemyActionKind.ThicketPaw && kind <= EnemyActionKind.ThicketStorm;
+        /// <summary>
+        /// Ленты когтей лапы (ThicketMasterCombatView.Vfx) пишутся с этой доли замаха шага до удара: 6 из 15
+        /// тиков — принятый вид первого удара до ревью 02.10 (вечер, «замедлить тычку на 10%»). Доля, а не
+        /// тики: лента начинается на одном и том же кадре клипа (~14 из 24, верх замаха) при любом замахе —
+        /// первый 17 → 7 тиков (15–16 → 6), следующие (промежуток серии 8–12 минус тик контакта прошлой лапы,
+        /// контракт § 11) → 3–4, тяжёлый 30 → 12.
+        /// </summary>
+        public const float ClawLeadShare = .4f;
 
-        /// <summary>Тик, с которого тело под землёй: конец ухода в нырке (ImpactTick − фиксация − ход бугра).</summary>
-        public static int BurrowEndTick(in ThicketMasterState a)
-            => a.ImpactTick - Simulation.ThicketDiveLockTicks - Simulation.ThicketDiveTravelTicks;
+        /// <summary>Замах шага серии в тиках по его полям: от знака (у шага &gt; 0 — после тика контакта прошлой лапы) до удара.</summary>
+        public static int PawWindupTicks(in ThicketMasterState a)
+            => Math.Max(1, a.ImpactTick - a.StageStartTick - (a.Stage > 0 ? Simulation.ThicketPawStrikeTicks : 0));
+
+        /// <summary>
+        /// Замах шага stage серии по полям действия на любом её шаге — знак удара прочитан позже, чем серия ушла
+        /// дальше (догон кадра, съёмка): у шага &gt; 0 — его промежуток (Simulation.ThicketPawGapOf, броски серии
+        /// по фазе в Tag) минус тик контакта прошлой лапы, у первого — от начала серии до его удара
+        /// (Simulation.ThicketPawWindupOf: 17, тяжёлый 30). Свой шаг — <see cref="PawWindupTicks(in ThicketMasterState)"/>.
+        /// </summary>
+        public static int PawWindupTicks(in ThicketMasterState a, int stage)
+        {
+            if (stage == a.Stage) return PawWindupTicks(a);
+            if (stage > 0) return Math.Max(1, Simulation.ThicketPawGapOf(a, stage - 1) - Simulation.ThicketPawStrikeTicks);
+            return Math.Max(1, PawImpactTick(a, 0) - a.StartTick);
+        }
+
+        /// <summary>
+        /// Тик удара шага stage серии по полям действия на любом её шаге: от удара текущего шага — назад (или вперёд)
+        /// через промежутки серии (удар k + 1 = удар k + ThicketPawGapOf(a, k)). Часы, пришедшиеся между ударами,
+        /// сдвигают только впереди лежащий — прошлый удар тогда раньше на их длину (знак давно прочитан).
+        /// </summary>
+        public static int PawImpactTick(in ThicketMasterState a, int stage)
+        {
+            int impact = a.ImpactTick;
+            for (int k = a.Stage - 1; k >= stage && k >= 0; k--) impact -= Simulation.ThicketPawGapOf(a, k);
+            for (int k = a.Stage; k < stage; k++) impact += Simulation.ThicketPawGapOf(a, k);
+            return impact;
+        }
+
+        /// <summary>За сколько тиков до удара начинается лента когтей при замахе windupTicks (не меньше 2).</summary>
+        public static int ClawLeadTicks(int windupTicks)
+            => Math.Max(2, (int)Math.Round(Math.Max(1, windupTicks) * ClawLeadShare, MidpointRounding.AwayFromZero));
+
+        /// <summary>
+        /// Событие Thicket* (EnemyActionKind 11…19) и терновник (21, § 17.2; до 08.10 — веер § 16). Вступление (20) — не здесь: его читает
+        /// вид кат-сцены.
+        /// </summary>
+        public static bool IsThicketKind(EnemyActionKind kind)
+            => kind >= EnemyActionKind.ThicketPaw && kind <= EnemyActionKind.ThicketStorm || kind == EnemyActionKind.ThicketSeeds;
+
+        /// <summary>
+        /// Тик, с которого тело под землёй: конец ухода в нырке (ImpactTick − фиксация − ход бугра этого нырка, § 17.1:
+        /// 18–60 тиков — Simulation.ThicketDiveBurrowEndTick; с прежними 18 на длинном нырке DiveIn тянулся до 42 тиков лишних).
+        /// </summary>
+        public static int BurrowEndTick(in ThicketMasterState a) => Simulation.ThicketDiveBurrowEndTick(a);
 
         /// <summary>
         /// Поза идущего действия на тике tick (тик Sim с долей кадра: Tick − 1 + Alpha).
@@ -357,6 +430,9 @@ namespace Game.View
                 }
 
                 case ThicketMasterAction.Sprout:
+                // Терновник (§ 17.2): жест — тот же каст прорастания (Sim: тот же BeginThicketCast, 18 тиков), кусты
+                // растут и стреляют сами, корпус не крутится.
+                case ThicketMasterAction.Seeds:
                 {
                     // Жест (StageStartTick … EndTick, Часы сдвигают оба): подъём и нажим 0–8 1:1,
                     // короткое удержание 8→, вырывание 80–90 за последние SproutReleaseTicks.
@@ -459,6 +535,18 @@ namespace Game.View
             return Segment(tick, land, land + VolleySettleTicks, VolleyWatchFrame, VolleyFrames);
         }
 
+        /// <summary>
+        /// Шаги разворота поверх клипа (слои «Paw Turn Legs», ThicketPawTurnLegs): только под ударом лапы — Sim крутит
+        /// корпус в серии 3,5°/тик, а клип удара стоит на месте. seeds — с 08.10 не влияет: терновник (§ 17.2) — жест каста
+        /// прорастания, корпус не доворачивает (до 08.10 веер § 16 доворачивал корпус в замахе на клипе ливня).
+        /// </summary>
+        public static bool TurnStepsUnder(ThicketClip clip, bool seeds, out bool rightStrikes)
+        {
+            if (clip == ThicketClip.PawR || clip == ThicketClip.PawL) { rightStrikes = clip == ThicketClip.PawR; return true; }
+            rightStrikes = true;
+            return false;
+        }
+
         /// <summary>Тик последнего толчка ливня (каст в start): после него ягоды больше не вылетают.</summary>
         public static int VolleyLastPopTick(int start)
             => start + Simulation.ThicketRainEveryTicks * Math.Max(1, Simulation.ThicketRainVolleys - 1);
@@ -466,7 +554,7 @@ namespace Game.View
         /// <summary>
         /// До какого тика клип действия ещё играет (дальше — последний кадр, вид уходит в покой).
         /// После EndTick это хвост: отход последней лапы, подъём после кольца топота, оседание
-        /// пыльцы, толчки и стойка ливня. У прочих клип кончается вместе с действием.
+        /// пыльцы, толчки и стойка ливня. У прочих (и у жеста терновника) клип кончается вместе с действием.
         /// </summary>
         public static int TailEndTick(in ThicketMasterState a)
         {
@@ -525,6 +613,107 @@ namespace Game.View
             float phase = Repeat(travel / TurnClipDegrees);
             return phase < .0001f && travel > 1f ? 1f : phase;
         }
+
+        // ---------- разворот и ход вне действия (ревью 02.10, вечер) ----------
+        //
+        // «Анимации разворота нет нормальной… закруживаешь его, и он тупо прокручивается на месте».
+        // Sim поворачивает босса 2,5°/тик и пускает шаг только вдоль взгляда — долей по косинусу с 53°
+        // от героя (ThicketWalkAlignFrom). Кружащий героя босс то стоит, то ползёт вперёд на 0,1–0,5 м/с,
+        // а корпус крутится 75°/с: Walk, шагающий по пройденному пути, почти стоял — тело вращалось на
+        // неподвижных лапах. Теперь: на месте и «почти на месте» — шаги TurnL/TurnR по углу поворота,
+        // на ходу с поворотом — Walk не медленнее поворота. Хвост прошлого клипа поворот обрывает.
+
+        /// <summary>Поворот Sim, °/тик: круг за ThicketTurnTicksPerCircle (144) — 2,5°.</summary>
+        public const float SimTurnDegreesPerTick = 360f / Simulation.ThicketTurnTicksPerCircle;
+
+        /// <summary>Тело идёт, если Sim сдвигает его быстрее, м/с; медленнее — стоит.</summary>
+        public const float WalkThresholdSpeed = .06f;
+
+        /// <summary>Корпус крутится, если показанное тело поворачивается быстрее, °/с (Sim — 75°/с).</summary>
+        public const float TurnRateThreshold = 30f;
+
+        /// <summary>
+        /// Поворот «почти на месте»: тело ползёт медленнее, м/с, — лапы переступают клипом разворота.
+        /// Вход ниже Enter, выход выше Exit: решение на дуге разгона не мигает. Полный ход — 2,0 м/с.
+        /// </summary>
+        public const float TurnInPlaceEnterSpeed = .45f, TurnInPlaceExitSpeed = .7f;
+
+        /// <summary>Ход с поворотом: Walk не реже цикла на столько градусов поворота (клип разворота — 90° на 30 кадров).</summary>
+        public const float WalkTurnDegreesPerCycle = 90f;
+
+        /// <summary>
+        /// Хвост клипа (отход лапы, подъём после топота) обрывается разворотом, когда корпус повернул в одну
+        /// сторону больше стольких градусов (4 тика Sim): мелкий доворот к герою хвост доигрывает.
+        /// </summary>
+        public const float TurnBreaksTailDegrees = 10f;
+
+        /// <summary>Поворот на travelledDegrees уже настоящий: хвост клипа уступает шагам разворота.</summary>
+        public static bool TurnBreaksTail(float travelledDegrees) => Math.Abs(travelledDegrees) >= TurnBreaksTailDegrees;
+
+        /// <summary>
+        /// Что играет тело вне действия. speed — ход Sim, м/с; turning — корпус крутится (быстрее
+        /// <see cref="TurnRateThreshold"/> или ещё держится разворот); wasTurning — в прошлом кадре
+        /// играл разворот. Стоит и крутится — Turn; ползёт, крутясь, — Turn до выхода из гистерезиса;
+        /// идёт — Walk (поворот на ходу — <see cref="WalkCyclesTurning"/>); стоит — Idle (или хвост клипа).
+        /// </summary>
+        public static ThicketMotion Locomotion(float speed, bool turning, bool wasTurning)
+        {
+            if (speed <= WalkThresholdSpeed) return turning ? ThicketMotion.Turn : ThicketMotion.Idle;
+            if (turning && speed < (wasTurning ? TurnInPlaceExitSpeed : TurnInPlaceEnterSpeed)) return ThicketMotion.Turn;
+            return ThicketMotion.Walk;
+        }
+
+        /// <summary>
+        /// Циклов Walk за кадр хода с поворотом: по пути (<see cref="WalkCycles"/>), но не меньше поворота на
+        /// <see cref="WalkTurnDegreesPerCycle"/> за цикл — лапы переступают, пока корпус доворачивает. С 08.10 фазу ведёт
+        /// ThicketWalkFeet (шаг под поворот и замок стоп, ThicketWalkRules); это правило — при выключенном F8 «лапы
+        /// держат землю» (ThicketMasterAnimatorView.FootLock) и для сравнения в тестах.
+        /// </summary>
+        public static float WalkCyclesTurning(float metres, float degrees, float stride, float scale = 1f)
+            => Math.Max(WalkCycles(metres, stride, scale), Math.Abs(degrees) / WalkTurnDegreesPerCycle);
+
+        /// <summary>Скорость клипа разворота при повороте degreesPerTick, кадров клипа на тик (2,5°/тик → ×0,83).</summary>
+        public static float TurnPlayback(float degreesPerTick) => Math.Abs(degreesPerTick) * TurnFrames / TurnClipDegrees;
+
+        // ---------- ноги в развороте серии лапы (проверка находок 03.10) ----------
+        //
+        // Sim крутит корпус в серии лапы быстрее хода (Simulation.ThicketPawTurnDecidegrees, баланс 02.10, ночь —
+        // 3,5°/тик, контракт § 11): первый удар — до ~60° за замах, следующие — до 35°. Клип PawR/PawL стоит на
+        // месте, поэтому задние лапы и опорная передняя ехали бы по земле дугой (передняя — до ~2,4 м при 60°):
+        // «крутится на стоящих лапах», что
+        // владелец отверг 02.10 вечером. Поверх клипа удара — добавочный слой шагов разворота TurnL/TurnR
+        // (ThicketMasterBuilder): маска — задние лапы и опорная передняя (бьёт правая — опора левая, и наоборот),
+        // бьющая лапа и корпус — из клипа удара. Доля клипа разворота — по накопленному повороту (90° на клип, как
+        // у разворота на месте: стоящая лапа стоит на земле), вес — с первого поворота под ударом до конца клипа
+        // удара (отход последней лапы), потом гаснет.
+
+        /// <summary>Слой шагов разворота под ударом правой (опора — левая передняя) и левой лапы.</summary>
+        public const string PawTurnLayerRight = "Paw Turn Legs R", PawTurnLayerLeft = "Paw Turn Legs L";
+
+        /// <summary>Пустое состояние слоя (по умолчанию, вес 0).</summary>
+        public const string PawTurnEmptyState = "Empty";
+
+        /// <summary>Слой шагов разворота под ударом лапы: rightStrikes — бьёт правая (PawR).</summary>
+        public static string PawTurnLayer(bool rightStrikes) => rightStrikes ? PawTurnLayerRight : PawTurnLayerLeft;
+
+        /// <summary>Параметр Motion Time состояния TurnL/TurnR слоя: «LegsRTurnLPhase».</summary>
+        public static string PawTurnParameter(bool rightStrikes, ThicketClip turn)
+            => (rightStrikes ? "LegsR" : "LegsL") + Name(turn) + "Phase";
+
+        /// <summary>
+        /// Кость (имя узла рига) в маске слоя шагов: задние лапы целиком и опорная передняя — левая под ударом правой,
+        /// правая под ударом левой. Корпус, хвост, голова и бьющая лапа — из клипа удара.
+        /// </summary>
+        public static bool PawTurnMasks(string bone, bool rightStrikes)
+            => bone != null && (bone.StartsWith("leg_hind_", StringComparison.Ordinal)
+                                || bone.StartsWith(rightStrikes ? "leg_front_L_" : "leg_front_R_", StringComparison.Ordinal));
+
+        /// <summary>
+        /// Слой шагов проявляется за столько тиков, гаснет за столько после конца клипа удара (серия и отход последней
+        /// лапы), меняет сторону (П↔Л) за столько. Пока клип удара идёт, вес держится и без поворота: корпус стоит —
+        /// стоящие лапы стоят там, куда шагнули (погасни слой между ударами — они ехали бы назад и снова вперёд).
+        /// </summary>
+        public const float PawTurnInTicks = 2f, PawTurnOutTicks = 6f, PawTurnSwapTicks = 4f;
 
         /// <summary>
         /// Кадр Death через seconds секунд от смерти: стоп-кадр тяжёлого убийства (hold)
@@ -596,6 +785,70 @@ namespace Game.View
             shown.ImpactTick += _impactShift;
             shown.LastImpactTick += _lastShift;
             return shown;
+        }
+    }
+
+    /// <summary>
+    /// НОГИ В РАЗВОРОТЕ СЕРИИ ЛАПЫ (проверка находок 03.10): вес и доля добавочного слоя шагов TurnL/TurnR поверх
+    /// клипа удара (ThicketMasterClipRules.PawTurnLayer). Пока идёт клип удара и показанный корпус крутится быстрее
+    /// ThicketMasterClipRules.TurnRateThreshold — копит поворот в одну сторону (смена стороны — счёт заново, клип
+    /// другой), доля = поворот / 90°: стоящие лапы клипа разворота стоят на земле, пока корпус поворачивает. Вес
+    /// проявляется за PawTurnInTicks с первого поворота, держится, пока идёт клип удара (корпус встал — доля стоит,
+    /// лапы там, куда шагнули), и гаснет за PawTurnOutTicks после него; доля слоя правой лапы <see cref="Right"/>
+    /// переходит к удару левой за PawTurnSwapTicks (сумма весов задних лап постоянна). Время — секунды кадра вида
+    /// (пауза и Часы его не шагают). Один на тело; без UnityEngine.
+    /// </summary>
+    public struct ThicketPawTurnLegs
+    {
+        /// <summary>Сторона поворота: −1 — TurnL, +1 — TurnR (знак SignedAngle вида), 0 — шагов нет.</summary>
+        public float Sign;
+
+        /// <summary>Поворот в одну сторону с начала шагов, °.</summary>
+        public float Travel;
+
+        /// <summary>Вес шагов 0…1 (оба слоя вместе).</summary>
+        public float Weight;
+
+        /// <summary>Доля слоя удара правой лапы 0…1 (1 — бьёт правая, опора — левая передняя).</summary>
+        public float Right;
+
+        public float WeightRight => Weight * Right;
+        public float WeightLeft => Weight * (1f - Right);
+
+        /// <summary>Доля клипа разворота (90° на клип).</summary>
+        public float Phase => Sign == 0f ? 0f : ThicketMasterClipRules.TurnPhase(Travel);
+
+        public ThicketClip Clip => Sign < 0f ? ThicketClip.TurnL : ThicketClip.TurnR;
+
+        /// <summary>
+        /// Кадр вида: yaw — поворот показанного корпуса за кадр, ° (знак — SignedAngle вокруг вверх), dt — с;
+        /// paw — играет клип удара серии (PawR/PawL), rightStrikes — бьёт правая.
+        /// </summary>
+        public void Step(float yaw, float dt, bool paw, bool rightStrikes)
+        {
+            if (dt <= 1e-5f) return;
+            bool turning = paw && Math.Abs(yaw) / dt > ThicketMasterClipRules.TurnRateThreshold;
+            if (turning)
+            {
+                float sign = yaw < 0f ? -1f : 1f;
+                if (sign != Sign) { Sign = sign; Travel = 0f; }
+                Travel += Math.Abs(yaw);
+            }
+            bool on = paw && Sign != 0f;
+            float ticks = dt * Simulation.TicksPerSecond;
+            bool fresh = Weight <= 0f;
+            Weight = on ? Math.Min(1f, Weight + ticks / ThicketMasterClipRules.PawTurnInTicks)
+                : Math.Max(0f, Weight - ticks / ThicketMasterClipRules.PawTurnOutTicks);
+            // Сторона — только под клипом удара: шаги с нуля — сразу слой бьющей лапы, на ходу — смена за
+            // PawTurnSwapTicks; гаснущие шаги после серии сторону не меняют.
+            float side = rightStrikes ? 1f : 0f;
+            if (fresh || Weight <= 0f) Right = paw ? side : Right;
+            else if (paw)
+            {
+                float swap = ticks / ThicketMasterClipRules.PawTurnSwapTicks;
+                Right = side > Right ? Math.Min(side, Right + swap) : Math.Max(side, Right - swap);
+            }
+            if (Weight <= 0f) { Sign = 0f; Travel = 0f; }
         }
     }
 }

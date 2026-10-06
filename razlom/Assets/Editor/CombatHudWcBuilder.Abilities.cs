@@ -26,6 +26,8 @@ namespace Game.EditorTools
                     new Vector2(i * (Slot + SlotGap), 0f), new Vector2(Slot, Slot));
                 view.Slots[i] = SlotWidget(slot, keys[i], 26f, upgrades: true);
             }
+            // Крушение (06.10): индикатор серии у каждой плитки — звенья под кейкапом и кольцо окна (CombatHudWcBuilder.WreckSeries).
+            BuildWreckSeries(view);
 
             // Кувырок — плитка того же размера справа от ряда (вариант B); клавиша — капсула по ширине подписи.
             RectTransform dash = Box(Node("Кувырок", root), BottomCenter, Vector2.zero, new Vector2(DashX, RowBottom), new Vector2(Slot, Slot));

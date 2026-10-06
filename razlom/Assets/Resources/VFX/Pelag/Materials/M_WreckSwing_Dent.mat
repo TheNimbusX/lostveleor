@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_WreckSwing_Dent
+  m_Shader: {fileID: 4800000, guid: 9e0796f12f1be3348bc6d1b97eb2eb07, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _CrackTex:
+        m_Texture: {fileID: 2800000, guid: 82c85ba9e7f36664fbc5a47e49fc4b1e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DirtTex:
+        m_Texture: {fileID: 2800000, guid: fa64409114f8d564d8dde73c320ae627, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoiseTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Cool: 0.22
+    - _CoreDeep: 0.55
+    - _Cut: 0.12
+    - _DarkAlpha: 0.8
+    - _DentSeconds: 1.35
+    - _EdgeBand: 0.3
+    - _EdgeWhite: 0.7
+    - _Glow: 1.4
+    - _Hold: 0.7407407
+    - _LinkAlpha: 0.6
+    - _LinkLength: 0.42
+    - _LinkMinBand: 0.16
+    - _LinkPitch: 0.3
+    - _LinkTube: 0.028
+    - _LinkWidth: 0.5
+    - _MaskMeters: 2.4
+    - _Mode: 1
+    - _NoiseMeters: 1.6
+    - _Opacity: 0.92
+    - _OutlineMeters: 0.035
+    m_Colors:
+    - _DarkColor: {r: 0.1, g: 0.07, b: 0.05, a: 1}
+    - _OutlineColor: {r: 0.049999982, g: 0.035, b: 0.035, a: 1}
+    - _Tint: {r: 0.31, g: 0.66, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

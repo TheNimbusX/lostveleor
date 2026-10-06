@@ -27,7 +27,7 @@ namespace Game.Sim
         AnchorSlamImpact = 9,
         Stun = 10,
 
-        /// <summary>Удар Крушения. Amount — номер этапа 0..2, Flag — завершающий.</summary>
+        /// <summary>Удар Крушения. Amount — номер этапа 0..3 (2 — удар оземь, 3 — «Четвёртый удар»), Flag — завершающий.</summary>
         WreckStage = 11,
 
         /// <summary>Сабля вспыхнула. Amount — на сколько тиков.</summary>
@@ -265,6 +265,160 @@ namespace Game.Sim
         /// сколько тиков живёт, Position — начало полосы. Урон пены — DamageOverTime.
         /// </summary>
         SquallFoamStrip = 55,
+
+        /// <summary>
+        /// Абордаж (Simulation.Abordage): выпуск якоря правой рукой, в тик каста +
+        /// замах. Source — герой, Target — цель, Amount — тиков полёта якоря до
+        /// зацепа (1–6), ActionVariant — номер каста (Simulation.Abordage.Serial),
+        /// Position — где герой. Якорь — Simulation.Abordage.AnchorFrom/AnchorAt.
+        /// </summary>
+        AbordageThrow = 56,
+
+        /// <summary>
+        /// Абордаж: зацеп, тик натяга (тело ещё стоит). Source — герой, Target —
+        /// цель, Amount — тиков до удара (тяга P, 2–12; без тяги — 1), Flag — цель
+        /// по корпусу босса, ActionVariant — номер каста, Position — точка посадки
+        /// (дальше её ведёт самонаведение: Simulation.Abordage.To).
+        /// </summary>
+        AbordageHook = 57,
+
+        /// <summary>
+        /// Абордаж: удар кулаком в тик прибытия. Source — герой, Target — кого
+        /// ударил (промах — цель каста), Flag — дошёл, ActionVariant — форма
+        /// (PelagForm, 0 — без формы), Position — где герой. Damage, Death, Stun — сразу за ним.
+        /// </summary>
+        AbordagePunch = 58,
+
+        /// <summary>
+        /// Абордаж · Обвал: волна по земле от точки посадки. Source — герой, Target —
+        /// цель кулака (волна её не бьёт; −1 — промах), Amount — тиков до края (5),
+        /// ActionVariant — радиус, см (300), Position — центр. Фронт —
+        /// Simulation.TryGetAbordageWave; Damage и Stun по каждому — в тик прихода фронта.
+        /// </summary>
+        AbordageQuake = 59,
+
+        /// <summary>
+        /// Абордаж · Гейзер: столб воды под целью кулака. Source — герой, Target —
+        /// цель, Flag — подброшена (false — устояла: тяжёлый, элита, босс, убитая),
+        /// Amount — тиков до падения (24), ActionVariant — радиус падения, см (200),
+        /// Position — место столба. В воздухе — Simulation.AbordageLifted.
+        /// </summary>
+        AbordageGeyserLift = 60,
+
+        /// <summary>
+        /// Абордаж · Гейзер: вода падает. Source — герой, Target — цель столба,
+        /// ActionVariant — радиус, см (200), Position — место падения. Damage по
+        /// каждому в радиусе (и по цели) — следом.
+        /// </summary>
+        AbordageGeyserFall = 61,
+
+        /// <summary>
+        /// Абордаж · Пробоина: струя-конус за целью по направлению тяги. Source —
+        /// герой, Target — цель кулака (струя её не бьёт), Amount — тиков до конца
+        /// фронта (4), ActionVariant — длина, см (400), Position — вершина конуса;
+        /// направление — Simulation.TryGetAbordageWave. Damage по каждому — приходом фронта.
+        /// </summary>
+        AbordageBreach = 62,
+
+        /// <summary>
+        /// Абордаж кончился. Source — герой, Amount — AbordageEnd (доигран, сорван
+        /// ходьбой, снят, без цели), ActionVariant — номер каста, Position — где
+        /// герой (у NoTarget — где был якорь).
+        /// </summary>
+        AbordageEnded = 63,
+
+        /// <summary>
+        /// Крушение (Simulation.Wreck): удар якорем оземь, третий удар серии. Source —
+        /// герой, Amount — шагов вала до его конца с учётом преград (8; Волнорез 15;
+        /// Призрачный якорь — 0, вала нет), Flag — Девятый вал с двумя зарядами,
+        /// ActionVariant — форма (PelagForm), Position — точка удара. Damage, Stun, Death
+        /// круга — сразу за ним; полоса и фронт — Simulation.Wreck (Lane*, Wave*) и TryGetWreckWave.
+        /// </summary>
+        WreckSlam = 64,
+
+        /// <summary>
+        /// НЕ РОЖДАЕТСЯ с 06.10 вечером: Девятый вал больше не держат (заряды — махи, WreckState.NinthCharges).
+        /// Было: якорь над головой, кнопку держат; Amount — предел заряда (30), ActionVariant — номер серии.
+        /// </summary>
+        WreckChargeStarted = 65,
+
+        /// <summary>
+        /// НЕ РОЖДАЕТСЯ с 06.10 вечером (см. WreckChargeStarted). Было: кнопку отпустили; Amount — заряд 0–30,
+        /// Flag — полный, ActionVariant — номер серии.
+        /// </summary>
+        WreckChargeReleased = 66,
+
+        /// <summary>
+        /// Крушение · Волнорез: стена подхватила врага. Source — герой, Target — враг,
+        /// Amount — тиков до обрушения, Flag — несёт (false — устоял: тяжёлый, элита,
+        /// босс, сверх предела), Position — где подхватила.
+        /// </summary>
+        WreckBreakwaterCatch = 67,
+
+        /// <summary>
+        /// Волнорез: стена дошла и обрушилась. Source — герой, Amount — сколько несла,
+        /// Flag — упёрлась в преграду раньше 8 м, ActionVariant — радиус, см (200),
+        /// Position — конец стены. Damage и Stun — следом.
+        /// </summary>
+        WreckBreakwaterCrash = 68,
+
+        /// <summary>
+        /// НЕ РОЖДАЕТСЯ с 06.10 вечером: форма «Якорная броня» заменена Призрачным якорем. Было: панцирь
+        /// принял удар; Source — кто бил, Target — герой, Amount — урон после снижения, Flag — отбит контроль.
+        /// </summary>
+        WreckShellHit = 69,
+
+        /// <summary>
+        /// НЕ РОЖДАЕТСЯ с 06.10 вечером (см. WreckShellHit). Было: панцирь лопнул в удар оземь;
+        /// ActionVariant — радиус, см (250), Position — герой.
+        /// </summary>
+        WreckShellBurst = 70,
+
+        /// <summary>
+        /// Серия Крушения кончилась. Source — герой, Amount — WreckEnd, ActionVariant —
+        /// номер серии, Position — герой (вид: якорь на спину, оболочка тает).
+        /// </summary>
+        WreckEnded = 71,
+
+        /// <summary>
+        /// Бросок якоря (Simulation.AnchorThrow): выпуск из правой руки. Source — герой, Amount — тики
+        /// полёта главной полосы, Flag — Веер (три полосы), Position — рука, ActionVariant — номер каста.
+        /// </summary>
+        AnchorThrowRelease = 72,
+
+        /// <summary>
+        /// Бросок якоря: попадание. Source — герой, Target — враг, Amount — полоса (0 — якорь, 1 — призрак
+        /// +30°, 2 — призрак −30°, 3 — сеть Невода), Flag — пойдёт на тягу, Position — точка касания на оси
+        /// полосы (у сети — тело), ActionVariant — номер каста. Damage, Death, Stun — сразу за ним.
+        /// </summary>
+        AnchorThrowHit = 73,
+
+        /// <summary>
+        /// Бросок якоря: натяг — голова в конце, цепь прямая, задетые трогаются. Source — герой, Target —
+        /// цель Гарпуна или −1, Amount — тики возврата, Flag — полёт оборван (стена, босс, Гарпун),
+        /// Position — конец главной полосы, ActionVariant — номер каста. Сеть Невода (Hit, полоса 3) — следом.
+        /// </summary>
+        AnchorThrowYank = 74,
+
+        /// <summary>
+        /// Бросок якоря: ловля. Source — герой, Amount — сколько тел доехало в своей тяге, Position — рука,
+        /// ActionVariant — номер каста. Stun приземления — следом.
+        /// </summary>
+        AnchorThrowCatch = 75,
+
+        /// <summary>
+        /// Бросок якоря кончился. Source — герой, Amount — AnchorThrowEnd, Position — герой, ActionVariant —
+        /// номер каста (вид: якорь на спину; Interrupted — голова падает, цепь сматывается).
+        /// </summary>
+        AnchorThrowEnded = 76,
+
+        /// <summary>
+        /// Крушение · Призрачный якорь (06.10 вечером): огромный призрачный якорь упал в точку выпада —
+        /// через WreckGhostDelayTicks после удара (живёт и после конца серии, как вал). Source — герой,
+        /// Amount — радиус круга, см (300; тело цели сверху), Position — точка выпада, ActionVariant —
+        /// номер серии. Damage, Death, Stun по задетым — сразу за ним (босс не оглушается).
+        /// </summary>
+        WreckGhostAnchor = 77,
     }
 
     /// <summary>
@@ -374,6 +528,15 @@ namespace Game.Sim
         /// слушается и неуязвим (Simulation.ThicketIntroHoldsHero).
         /// </summary>
         ThicketIntro = 20,
+
+        /// <summary>
+        /// Хозяин Чащи: «Веер шипов-семян» (07.10). Started (Amount 0) — замах, линии на земле;
+        /// EnemyProjectileLaunched — каждое семя (Amount — номер семени, Position — начало пути);
+        /// Impact — семя встало (Amount — номер семени, Position — где, Flag — попало);
+        /// Cancelled — замах снят (Amount 0) или семя в полёте снято (Amount — номер семени).
+        /// Подробно — Simulation.ForestBoss.Seeds.cs.
+        /// </summary>
+        ThicketSeeds = 21,
     }
 
     /// <summary>

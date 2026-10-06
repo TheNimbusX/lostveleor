@@ -337,8 +337,10 @@ namespace Game.View
             FormCardsOff();
             if (run.ChoosingForm) { FillFormChoice(run, letters); return; }
             if (run.ChoosingArtifact) { FillArtifactChoice(run, letters); return; }
-            RunHudView.SetActive(_view.Skip, run.CanRerollReward);
-            if(_view.Skip!=null && run.CanRerollReward)_view.Skip.GetComponentInChildren<TMPro.TMP_Text>().text="Резервный план · перебросить";
+            // «Второй взгляд» тратится раньше дара (RiftRun.TryFreeReroll) — подпись по тому, что уйдёт.
+            bool canReroll = run.CanFreeReroll || run.CanRerollReward;
+            RunHudView.SetActive(_view.Skip, canReroll);
+            if(_view.Skip!=null && canReroll)_view.Skip.GetComponentInChildren<TMPro.TMP_Text>().text=run.CanFreeReroll?"Второй взгляд · перебросить":"Резервный план · перебросить";
             RunHudView.SetText(_view.ChoiceTitle, "Выбери награду");
             RunHudView.SetText(_view.ChoiceSubtitle, run.IsFinalLevel
                 ? "Локация пройдена — последняя награда, дальше итоги"

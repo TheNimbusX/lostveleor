@@ -40,7 +40,7 @@ namespace Game.Sim
     /// лежат 120. Пока центр героя в лежащем облаке — замедление 30%
     /// (ApplyHeroSlow каждый тик на один шаг: вышел — следующий шаг уже
     /// свободен) и укус раз в 15 тиков от падения — доля 5/41 удара босса
-    /// (2 на арене 9 с лапой 16, баланс 02.10), не больше 8 укусов за жизнь облака и не больше
+    /// (2 на арене 9 с лапой 15, баланс 02.10), не больше 8 укусов за жизнь облака и не больше
     /// одного укуса на все облака за 15 тиков. Облаков на земле не больше 3:
     /// новое вытесняет самое старое. Своё состояние, как у луж, не метки;
     /// падение — крупная метка весом 1 в бюджете (ThicketHazardMarkWeight).
@@ -108,17 +108,20 @@ namespace Game.Sim
         {
             int land = Tick + ThicketPollenFallTicks;
             if (!BigMarkAllowed(id, 1, land)) return false;
-            FixVec2 hero = Entities.Position[PlayerId];
+            // Упреждение и пол (баланс 02.10, ночь): облако — туда, где герой будет через 12 тиков
+            // хода, боковые — на пол (у стены ложились мимо).
+            FixVec2 hero = ThicketLeadPoint(ThicketPollenLeadTicks);
             ref var a = ref BeginThicketCast(id, ThicketMasterAction.Pollen);
             ref var rng = ref ThicketMemory[id].Rng;
             Fix64 angle = rng.NextFix() * Fix64.TwoPi;
             Fix64 opposite = angle + Fix64.Pi + (rng.NextFix() * 2 - Fix64.One) * ThicketPollenSideJitter;
             int damage = ThicketPollenDamageOf(id);
             OpenThicketPollen(id, hero, land, damage);
-            OpenThicketPollen(id, hero + FixVec2.FromAngle(angle) * ThicketPollenSpread, land, damage);
-            OpenThicketPollen(id, hero + FixVec2.FromAngle(opposite) * ThicketPollenSpread, land, damage);
+            OpenThicketPollen(id, ThicketOntoFloor(hero, hero + FixVec2.FromAngle(angle) * ThicketPollenSpread), land, damage);
+            OpenThicketPollen(id, ThicketOntoFloor(hero, hero + FixVec2.FromAngle(opposite) * ThicketPollenSpread), land, damage);
             a.Tag = ThicketPollenZones;
-            SetThicketCooldown(id, ThicketMasterAction.Pollen, ThicketPollenCooldownTicks);
+            // Издали (лапа не достаёт) — короче (ThicketPollenFarCooldownTicks, баланс 02.10, ночь).
+            SetThicketCooldown(id, ThicketMasterAction.Pollen, ThicketPawInReach(id) ? ThicketPollenCooldownTicks : ThicketPollenFarCooldownTicks);
             return true;
         }
 

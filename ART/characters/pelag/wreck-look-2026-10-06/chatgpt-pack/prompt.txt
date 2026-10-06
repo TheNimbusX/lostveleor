@@ -1,0 +1,24 @@
+Attach images 1–6 in order, then paste:
+
+Image 1 is a screenshot from our game THE WAR REMAINS (top-down camera, about 48 degrees). Repaint ONLY the skill effect into this exact frame. Keep everything else identical: the hero Pelag, the guardians, the ground, the mushrooms, the camera and the lighting.
+
+Skill «Крушение» (Wreck), third hit: Pelag slams his heavy iron anchor ON ITS CHAIN into the ground about 2.2 m in front of him. Then a straight damage line runs 6 m forward toward the guardians.
+
+LOOK (the chosen direction is image 2, plus the crater from image 3): cold IRON, not water.
+- At the impact: a crater ring of cracked earth with a few big clods of earth and torn turf (like image 3).
+- Along the line: 3–4 BIG chain links pressed into the ground, glowing from inside with a vivid cold sky-blue/azure light (#4FA8FF to #9CD8FF) and white-hot glints.
+- 5–8 LARGE iron shards bursting up along the edges of the line.
+
+STYLE (our painted game look, see image 5):
+- Few BIG readable shapes with a thick dark outline on every effect shape.
+- Saturated colour that pops on the brown ground.
+- No tiny particles, no dust haze, no swarm of sparks, no lightning, no water or foam, no red/orange/gold.
+
+SCALE (image 6 shows the zones in magenta — do NOT draw the magenta, it only marks size):
+- Impact circle radius about 1.2 m (about 0.65 of the hero's height), centred 2.2 m in front of Pelag.
+- The line is 1.5 m wide (about 0.8 of the hero's height) and ends 6 m from Pelag.
+- This is a normal skill, not an ultimate — do not make it bigger.
+
+ANCHOR AND CHAIN: as in image 4 (a ring on top, a long shank, two barbed arms, a faceted crown spike). The anchor is buried in the crater and its chain runs back taut to Pelag's hands. Pelag holds the leather grip; his sabre stays tucked in the red sash.
+
+Output: the same 16:9 frame. Make 2 variants: (1) stronger blue glow in the chain imprints, (2) more iron shards and earth, glow a bit softer.

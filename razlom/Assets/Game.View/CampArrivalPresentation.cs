@@ -7,8 +7,9 @@ using UnityEngine.UI;
 namespace Game.View
 {
     /// <summary>
-    /// Одно спокойное представление нового места после настоящего похода.
-    /// Исходное состояние берётся с загруженного лагеря: старые открытия не повторяются.
+    /// Одно спокойное представление каждого нового открытия лагеря: прибытие Вена и Лео, походный стол, новый ранг.
+    /// Что ещё не показано, хранит сам лагерь (Camp.PendingUnlocks, в сохранении): открытие, случившееся
+    /// в Разломе или перед выходом из игры, объявится при следующем возвращении, а увиденное — никогда.
     /// Уведомление ждёт возвращения управления, не открывает окна и не двигает камеру.
     /// </summary>
     [DefaultExecutionOrder(110)]
@@ -19,13 +20,18 @@ namespace Game.View
         public static CampArrivalPresentation Instance { get; private set; }
         [Min(0)] public float SettleTime = .7f;
         [Min(.5f)] public float LabelLife = 3.4f;
+        /// <summary>Что объявится следующим; Smith — новый ранг лагеря (подпись над Эни).</summary>
         public CampServiceKind? PendingKind => _pending;
-        public int LastPresentedAttempt { get; private set; } = -1;
+
+        const CampUnlock RankFlags = CampUnlock.Rank1 | CampUnlock.Rank2 | CampUnlock.Rank3;
 
         TickDriver _driver;
         Camp _camp;
-        int _attempt, _knownOpen, _pendingAttempt;
         CampServiceKind? _pending;
+        CampUnlock _pendingFlag;
+        // Ранги снимает окно «Развитие лагеря» (значок над жителями держится до него), поэтому здесь
+        // только помним, какие уже объявлены в этой сессии, чтобы не повторять тост.
+        CampUnlock _presentedRanks;
         bool _previewPending;
         float _settled, _labelAge;
         Transform _installedRoot;
@@ -70,12 +76,11 @@ namespace Game.View
             if (!ready) { _settled = 0; HideLabel(); return; }
             if (_pending.HasValue)
             {
-                _settled += dt;
-                if (_settled >= SettleTime && Present(_pending.Value))
-                {
-                    if (!_previewPending) LastPresentedAttempt = _pendingAttempt;
-                    _pending = null; _previewPending = false; _settled = 0;
-                }
+                // Несколько открытий разом (уровень 3 вместе с первым забегом) идут по очереди:
+                // следующее ждёт, пока погаснет подпись предыдущего.
+                if (_label != null && _label.gameObject.activeSelf) _settled = 0;
+                else _settled += dt;
+                if (_settled >= SettleTime && Present(_pending.Value)) Presented();
             }
             UpdateLabel(dt);
         }
@@ -83,47 +88,49 @@ namespace Game.View
         void ObserveState()
         {
             Camp camp = _driver != null && _driver.Session != null ? _driver.Session.Camp : null;
-            if (!ReferenceEquals(camp, _camp))
-            {
-                _camp = camp;
-                Baseline();
-                return;
-            }
-            if (camp == null) return;
-            if (camp.AttemptCount < _attempt) { Baseline(); return; }
+            if (!ReferenceEquals(camp, _camp)) { _camp = camp; Baseline(); }
+            if (camp == null || _previewPending) return;
+            CampUnlock open = camp.PendingUnlocks;
             if (!camp.UsesCampProgression)
             {
-                _attempt = camp.AttemptCount; _knownOpen = OpenMask(camp);
-                if (!_previewPending) { _pending = null; _settled = 0; }
+                // В песочнице всё открыто с начала: объявлять нечего, флаги снимаются молча.
+                if (open != CampUnlock.None) camp.AcknowledgeUnlocks(open);
+                _pending = null; _pendingFlag = CampUnlock.None; _settled = 0;
                 return;
             }
-            int open = OpenMask(camp);
-            int newlyOpen = open & ~_knownOpen;
-            if (camp.AttemptCount > _attempt)
+            // Ранг, уже снятый в окне жителя, больше не помним: новый ранг объявится заново.
+            _presentedRanks &= open;
+            CampUnlock next = NextAnnouncement(open & ~_presentedRanks);
+            if (next == _pendingFlag) return;
+            _pendingFlag = next; _settled = 0;
+            _pending = next == CampUnlock.None ? (CampServiceKind?)null
+                : next == CampUnlock.Alchemist ? CampServiceKind.Alchemist
+                : next == CampUnlock.TravelTable ? CampServiceKind.TravelTable
+                : next == CampUnlock.Trader ? CampServiceKind.Trader : CampServiceKind.Smith;
+        }
+
+        /// <summary>Порядок плана 06.10: Лео → стол → Вен → ранг. Все новые ранги объявляются одним тостом.</summary>
+        static CampUnlock NextAnnouncement(CampUnlock open) =>
+            (open & CampUnlock.Alchemist) != 0 ? CampUnlock.Alchemist
+            : (open & CampUnlock.TravelTable) != 0 ? CampUnlock.TravelTable
+            : (open & CampUnlock.Trader) != 0 ? CampUnlock.Trader
+            : open & RankFlags;
+
+        void Presented()
+        {
+            if (!_previewPending && _camp != null && _pendingFlag != CampUnlock.None)
             {
-                // Не накапливаем старые объявления, если стенд перескочил несколько походов.
-                _pending = null; _previewPending = false; _settled = 0;
-                if (newlyOpen != 0 && camp.AttemptCount > LastPresentedAttempt)
-                {
-                    _pending = (newlyOpen & 4) != 0 ? CampServiceKind.Alchemist
-                        : (newlyOpen & 2) != 0 ? CampServiceKind.TravelTable : CampServiceKind.Trader;
-                    _pendingAttempt = camp.AttemptCount;
-                }
+                if ((_pendingFlag & RankFlags) != 0) _presentedRanks |= _pendingFlag;
+                else _camp.AcknowledgeUnlocks(_pendingFlag);
             }
-            // Generation меняется на выходе и возврате; исходное состояние на нём не сбрасываем.
-            _attempt = camp.AttemptCount; _knownOpen = open;
+            _pending = null; _pendingFlag = CampUnlock.None; _previewPending = false; _settled = 0;
         }
 
         void Baseline()
         {
-            _attempt = _camp != null ? _camp.AttemptCount : 0;
-            _knownOpen = _camp != null ? OpenMask(_camp) : 0;
-            LastPresentedAttempt = _attempt;
-            _pending = null; _previewPending = false; _settled = 0; HideLabel();
+            _pending = null; _pendingFlag = CampUnlock.None; _presentedRanks = CampUnlock.None;
+            _previewPending = false; _settled = 0; HideLabel();
         }
-
-        static int OpenMask(Camp camp) => (camp.HasResident(CampResident.Trader) ? 1 : 0)
-            | (camp.HasTravelTable ? 2 : 0) | (camp.HasResident(CampResident.Alchemist) ? 4 : 0);
 
         bool ReadyToPresent()
         {
@@ -143,35 +150,40 @@ namespace Game.View
             CampWorkstationStage.InstallCurrentContexts(root);
         }
 
-        /// <summary>Съёмочное представление через тот же UI; состояние лагеря не меняется.</summary>
+        /// <summary>Съёмочное представление через тот же UI; состояние лагеря не меняется. Smith — новый ранг.</summary>
         public void PreviewArrival(CampServiceKind kind)
         {
             if (kind != CampServiceKind.Trader && kind != CampServiceKind.Alchemist
-                && kind != CampServiceKind.TravelTable) return;
-            _pending = kind; _pendingAttempt = _attempt; _previewPending = true; _settled = 0;
+                && kind != CampServiceKind.TravelTable && kind != CampServiceKind.Smith) return;
+            _pending = kind; _pendingFlag = CampUnlock.None; _previewPending = true; _settled = 0;
         }
 
         bool Present(CampServiceKind kind)
         {
             var hud = FindAnyObjectByType<CombatHudView>();
             if (hud == null || hud.Toasts == null || hud.Toasts.Template == null) return false;
-            string title = kind == CampServiceKind.Trader ? "Вен пришёл в лагерь"
+            bool rank = kind == CampServiceKind.Smith;
+            int campRank = _camp != null ? _camp.CampRank : 0;
+            string title = rank ? (campRank > 0 ? "Ранг лагеря · " + campRank : "Новый ранг лагеря")
+                : kind == CampServiceKind.Trader ? "Вен пришёл в лагерь"
                 : kind == CampServiceKind.Alchemist ? "Лео пришёл в лагерь" : "Походный стол готов";
-            string line = kind == CampServiceKind.Trader ? "Лавка открыта"
+            string line = rank ? "Загляни к жителям: «Развитие лагеря»"
+                : kind == CampServiceKind.Trader ? "Лавка открыта"
                 : kind == CampServiceKind.Alchemist ? "Алхимик обустроил рабочее место"
                 : "Выбери навык, дар и два вида зелий";
             Texture icon = null;
             var guide = FindAnyObjectByType<CampGuidePanel>(FindObjectsInactive.Include);
-            int iconIndex = kind == CampServiceKind.Trader ? 1 : kind == CampServiceKind.Alchemist ? 2 : -1;
+            int iconIndex = rank ? 0 : kind == CampServiceKind.Trader ? 1 : kind == CampServiceKind.Alchemist ? 2 : -1;
             if (guide != null && guide.Icons != null && iconIndex >= 0 && iconIndex < guide.Icons.Length)
                 icon = guide.Icons[iconIndex];
             hud.Toasts.Push(icon, UiTheme.Role.Accent, title, line, UiTheme.Role.TextMuted);
             _labelTarget = FindTarget(kind);
             if (_labelTarget != null && EnsureLabel())
             {
-                _labelTitle.text = kind == CampServiceKind.TravelTable ? "Походный стол" : _labelTarget.Title;
+                _labelTitle.text = kind == CampServiceKind.TravelTable ? "Походный стол"
+                    : rank ? (campRank > 0 ? "Ранг лагеря " + campRank : "Новый ранг") : _labelTarget.Title;
                 if (_labelNote != null) _labelNote.text = kind == CampServiceKind.TravelTable
-                    ? "Подготовка к походу" : kind == CampServiceKind.Trader ? "Лавка открыта" : "Алхимик";
+                    ? "Подготовка к походу" : rank ? "Новое у жителей" : kind == CampServiceKind.Trader ? "Лавка открыта" : "Алхимик";
                 if (_labelRole != null) _labelRole.gameObject.SetActive(false);
                 _labelAge = 0; _label.gameObject.SetActive(true); _label.SetAsLastSibling();
             }

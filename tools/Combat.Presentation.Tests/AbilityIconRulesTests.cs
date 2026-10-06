@@ -68,8 +68,33 @@ public sealed class AbilityIconRulesTests
         Assert.That(AbilityIconRules.FormFile(whirlwind, PelagForm.WhirlwindMaelstrom), Is.EqualTo("Icon_Whirlwind_Maelstrom"));
         Assert.That(AbilityIconRules.FormFile(whirlwind, PelagForm.WhirlwindFoamWaves), Is.EqualTo("Icon_Whirlwind_FoamWaves"));
         Assert.That(AbilityIconRules.FormFile(whirlwind, PelagForm.WhirlwindOnTheMove), Is.EqualTo("Icon_Whirlwind_OnTheMove"));
+        int squall = AbilityDefinition.ChainStepId;
+        Assert.That(AbilityIconRules.FormFile(squall, PelagForm.SquallHunt), Is.EqualTo("Icon_Squall_Hunt"));
+        Assert.That(AbilityIconRules.FormFile(squall, PelagForm.SquallFoamTrail), Is.EqualTo("Icon_Squall_FoamTrail"));
+        Assert.That(AbilityIconRules.FormFile(squall, PelagForm.SquallElusive), Is.EqualTo("Icon_Squall_Elusive"));
+        int abordage = AbilityDefinition.AnchorLeapId;
+        Assert.That(AbilityIconRules.FormFile(abordage, PelagForm.AbordageQuake), Is.EqualTo("Icon_AnchorLeap_Quake"));
+        Assert.That(AbilityIconRules.FormFile(abordage, PelagForm.AbordageGeyser), Is.EqualTo("Icon_AnchorLeap_Geyser"));
+        Assert.That(AbilityIconRules.FormFile(abordage, PelagForm.AbordageBreach), Is.EqualTo("Icon_AnchorLeap_Breach"));
+        int wreck = AbilityDefinition.WreckId;
+        Assert.That(AbilityIconRules.FormFile(wreck, PelagForm.WreckBreakwater), Is.EqualTo("Icon_Wreck_Breakwater"));
+        Assert.That(AbilityIconRules.FormFile(wreck, PelagForm.WreckNinthWave), Is.EqualTo("Icon_Wreck_NinthWave"));
+        Assert.That(AbilityIconRules.FormFile(wreck, PelagForm.WreckGhostAnchor), Is.EqualTo("Icon_Wreck_Shell"), "файл иконки пока прежний");
         // Номер формы без своей строки всё равно получает свой файл — две формы не делят одну картинку.
         Assert.That(AbilityIconRules.FormSuffix((PelagForm)200), Is.EqualTo("Form200"));
+    }
+
+    [Test]
+    public void WreckForms_HaveTheirOwnArtOnDisk()
+    {
+        // Лист владельца 03.10 (2×2: база, Волнорез, Девятый вал, Панцирь) нарезан в Resources/UI/Abilities.
+        string folder = Path.Combine(RepoRoot.Path, "razlom", "Assets", "Resources", "UI", "Abilities");
+        foreach (PelagForm form in new[] { PelagForm.WreckBreakwater, PelagForm.WreckNinthWave, PelagForm.WreckGhostAnchor })
+        {
+            string file = AbilityIconRules.FormFile(AbilityDefinition.WreckId, form);
+            Assert.That(File.Exists(Path.Combine(folder, file + ".png")), Is.True, file + ".png нет в Resources/UI/Abilities");
+            Assert.That(File.Exists(Path.Combine(folder, file + ".png.meta")), Is.True, file + ".png.meta нет — GUID задаёт черновик");
+        }
     }
 
     [Test]

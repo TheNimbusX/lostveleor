@@ -1,0 +1,102 @@
+{
+ "repo": "C:/Users/d.grab/Desktop/the-game",
+ "chain": 0.45,
+ "tail": 0.0,
+ "passes": 14,
+ "segments": [
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Draw.track.json",
+   "from": 0,
+   "to": 8
+  },
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Swing1.track.json",
+   "from": 0,
+   "to": 9
+  },
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Swing2.track.json",
+   "from": 0,
+   "to": 15
+  },
+  {
+   "track": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/wreck-2026-10-03/animation-v4/clips/Pelag_AN_Wreck4_Swing2.track.json",
+   "from": 15,
+   "to": 63
+  }
+ ],
+ "mace": {
+  "omega": 16,
+  "zeta": 0.6,
+  "droop": 0.45,
+  "maxW": 19,
+  "impactMaxW": 30,
+  "recoil": 0.35,
+  "soft": 0.55,
+  "softEnd": 3,
+  "rollRate": 3,
+  "feed": 0.6
+ },
+ "draw": {
+  "seg": 0,
+  "grab": 3.25,
+  "end": 8,
+  "lift": 0.4,
+  "back": 0.1,
+  "out": 0.4,
+  "peel": 3,
+  "spin": 6,
+  "pitch": 25
+ },
+ "contacts": [
+  {
+   "seg": 1,
+   "frame": 5,
+   "fwd": 1.25,
+   "side": 0.0,
+   "h": 0.85,
+   "aimIn": 6,
+   "aimOut": 4
+  },
+  {
+   "seg": 2,
+   "frame": 5,
+   "fwd": 1.25,
+   "side": 0.0,
+   "h": 0.85,
+   "aimIn": 7,
+   "aimOut": 4
+  }
+ ],
+ "whip": {
+  "links": 16,
+  "sub": 4,
+  "iters": 8,
+  "swing": 0.53,
+  "flightSlack": 0.3,
+  "biteSlack": 0.45,
+  "take": 0.06,
+  "snap": 0.85,
+  "release": 0.025,
+  "drag": 1.2,
+  "fold": 0.55,
+  "gripAim": 0.3,
+  "friction": 18,
+  "secW": 20,
+  "secZ": 0.5,
+  "secF": 0.85,
+  "rollW": 14,
+  "rollZ": 0.75,
+  "rollF": 0.8,
+  "maxDev": 22,
+  "secMaxW": 22
+ },
+ "hang": {
+  "seg": 2,
+  "start": 9.5,
+  "blend": 0.2,
+  "air": 0.8,
+  "kill": 7,
+  "slack": 0.015
+ }
+}

@@ -250,13 +250,15 @@ namespace Game.Tests
             int afterFirst = Health(sim, victim);
             Assert.Less(afterFirst, 10000, "первый удар не прошёл");
 
+            // Второй мах (сабельный ритм v4 06.10): замах 5, слева направо.
             sim.Step(Press(0, 30));
-            Idle(sim, 8);
+            Idle(sim, 16);
             int afterSecond = Health(sim, victim);
             Assert.Less(afterSecond, afterFirst, "второй удар не прошёл");
 
+            // Выпад: замах 8, цель в круге 1,2 м у точки 2,2 м.
             sim.Step(Press(0, 30));
-            Idle(sim, 8);
+            Idle(sim, 16);
             Assert.Less(Health(sim, victim), afterSecond, "завершающий удар не прошёл");
         }
 

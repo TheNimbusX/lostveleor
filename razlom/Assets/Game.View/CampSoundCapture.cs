@@ -26,7 +26,9 @@ namespace Game.View
             _master=GameUserSettings.MasterVolume;_effects=GameUserSettings.EffectsVolume;_music=GameUserSettings.MusicVolume;_settingsCaptured=true;
             GameUserSettings.SetAudio(1,1,.75f);
             // Только профиль съёмки: для аудита доступны все рабочие места.
-            while(_driver.Session.Camp.AttemptCount<3)_driver.Session.Camp.RecordRealAttemptEnded(1,0);
+            // Вен и Лео приходят на уровне 3, стол — после первого завершённого забега (06.10).
+            var camp=_driver.Session.Camp;camp.DeveloperSetLevel(System.Math.Max(3,camp.Level));
+            if(camp.AttemptCount==0)camp.RecordRealAttemptEnded(1,0);
             yield return null;
             foreach(var layer in _sound.Layers)Check(layer.Source!=null && layer.Source.clip!=null,"clip assigned: "+layer.Place);
             var root=_sound.CampRoot.transform;

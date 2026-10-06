@@ -113,7 +113,6 @@ namespace Game.Tests
         {
             var camp = new Camp(PrototypeContent.Items());
             camp.Earn(CurrencyType.Gold, 500);
-            camp.MeetAlchemist();
             Assert.That(camp.BuyPotion(PotionKind.SmallHealth), Is.True);
             var session = Create(camp);
             var sim = session.CampSim;

@@ -7,12 +7,22 @@ using UnityEngine;
 /// выбор владельца, ART/characters/pelag/whirlwind-forms-2026-10-02/chatgpt-results:
 ///  • Буря — storm-2: водяной столб из витков-полос, ломающийся гребень сверху,
 ///    брызги с кромки; у земли витки прозрачнее, чтобы враги внутри читались;
-///  • Водоворот — vortex-1: шесть плоских рукавов-спиралей на земле, пена по
-///    выпуклой кромке, струи пены к центру;
-///  • Пенные волны — waves-2: чистое кольцо воды с белыми струями и пенным
-///    гребнем на бегущей кромке, тонкий тёмный обвод; на ударе — корона брызг.
+///  • Водоворот — vortex-1: шесть рукавов-спиралей на земле, пена по выпуклой
+///    кромке, струи к центру. v3 (02.10, вечер): рукава — живая вода на
+///    радиусе удара (меш пишет вид, PelagMaelstromWater), тяга 4 м — только
+///    струи; за притянутыми — пенный след (копия следа рывка, свой материал);
+///  • Пенные волны — waves-2: кольцо воды с пенными гребнями, тонкий тёмный
+///    обвод; на ударе — корона брызг. v3: кольцо — живая вода (PelagFoamRingWater):
+///    волнистый гребень, выход с замедлением, без остановки, распад на капли.
+/// v4 (проверка по выбранным кадрам, 02.10): волны — полоса около метра с градиентом
+///    глубины и крупными комьями пены по обоим краям, на ударе — большой веер брызг
+///    (VFX_Pelag_Whirlwind_WaveSplash); рукава — фиолетовая вода (градиент, струи,
+///    рваный гребень, капли с концов «TipDrops»), струи тяги — изогнутые струи воды
+///    («Strands», материал M_Whirlwind_MaelstromStrand), след тяги — узкая пенная
+///    борозда. Вода ложится поверх низких препятствий, но не поверх тел (_Over шейдера).
 /// Язык тот же: плоская бирюзовая вода, белые комья пены, тонкий тёмный обвод,
-/// вырезанные капли, без свечения и дыма. Шейдеры — серии сабли (не меняются),
+/// вырезанные капли, без свечения и дыма. Шейдеры — серии сабли (не меняются)
+/// и свой Razlom/Whirlwind Form Water (вода v3 в языке следа рывка),
 /// капли, комья и клякса — материалы пенного Вихря (только чтение); свои —
 /// материалы M_Whirlwind_Storm*/Maelstrom*/FoamWave* и меши Geometry/Whirlwind*Form*.
 ///
@@ -24,7 +34,9 @@ using UnityEngine;
 public static partial class PelagWhirlwindFoamVfxSetup
 {
     /// <summary>Версия сборки форм. Поднимать при любой правке сборки форм.</summary>
-    private const int FormsVersion = 2;
+    // v6 (02.10): вторая проба v4 — редактор успел собрать v5 до того, как его заняли; съёмка и
+    // следующий запуск редактора пересобирают формы по этой версии.
+    private const int FormsVersion = 6;
     private static readonly string FormsRevision = "PelagWhirlwindFormsV" + FormsVersion;
     private const string LibraryPath = Root + "/AbilityVfxLibrary.asset";
 
@@ -33,15 +45,27 @@ public static partial class PelagWhirlwindFoamVfxSetup
     public const string MaelstromName = "VFX_Pelag_Whirlwind_Maelstrom";
     public const string FoamWaveName = "VFX_Pelag_Whirlwind_FoamWave";
     public const string CrownSplashName = "VFX_Pelag_Whirlwind_CrownSplash";
+    public const string MaelstromDragName = "VFX_Pelag_Whirlwind_MaelstromDrag";
+    public const string WaveSplashName = "VFX_Pelag_Whirlwind_WaveSplash";
+    /// <summary>Вода v3: кольца волн и рукава Водоворота (меш пишет вид каждый кадр).</summary>
+    private const string FormWaterShaderName = "Razlom/Whirlwind Form Water";
+    private const string FormsPerlinTexture = CfxrGraphics + "cfxr perlin mid.png";
+    /// <summary>След тяги — копия следа рывка (его префаб и материал только читаются).</summary>
+    private const string DashWakePrefab = PrefabFolder + "/VFX_Pelag_Dash_Wake.prefab";
+    private const string DashWakeMaterial = MaterialFolder + "/M_Dash_Wake.mat";
     private static string FormPrefabPath(string name) => PrefabFolder + "/" + name + ".prefab";
 
-    private static readonly string[] FormPrefabNames = { StormColumnName, StormSplashName, MaelstromName, FoamWaveName, CrownSplashName };
+    private static readonly string[] FormPrefabNames =
+        { StormColumnName, StormSplashName, MaelstromName, FoamWaveName, CrownSplashName, MaelstromDragName, WaveSplashName };
     private static readonly string[] FormMaterialNames =
-        { "M_Whirlwind_StormBand", "M_Whirlwind_StormCrest", "M_Whirlwind_StormRing", "M_Whirlwind_MaelstromArm", "M_Whirlwind_FoamWaveRing" };
+        { "M_Whirlwind_StormBand", "M_Whirlwind_StormCrest", "M_Whirlwind_StormRing", "M_Whirlwind_MaelstromArm", "M_Whirlwind_FoamWaveRing",
+          "M_Whirlwind_MaelstromDrag", "M_Whirlwind_MaelstromStrand" };
 
     // Жизни витков, с: виток рождается, обегает героя и рассыпается — столб из
     // накладывающихся витков держится, пока их рождает удержание.
-    private const float StormBandLife = .46f, StormCrestLife = .50f, StormRingLife = .42f, MaelstromLife = .80f;
+    private const float StormBandLife = .46f, StormCrestLife = .50f, StormRingLife = .42f;
+    /// <summary>Объект Водоворота живёт, пока рукава не рассыпались (их время ведёт вид), с.</summary>
+    private const float MaelstromLife = .95f;
     /// <summary>Петля эмиттеров столба, с: длиннее удержания (3 с), чтобы стартовая вспышка не повторялась.</summary>
     private const float StormLoopSeconds = 4f;
 
@@ -69,6 +93,8 @@ public static partial class PelagWhirlwindFoamVfxSetup
         PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.WhirlwindMaelstrom, FormPrefabPath(MaelstromName), 1);
         PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.WhirlwindFoamWave, FormPrefabPath(FoamWaveName), 3);
         PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.WhirlwindCrownSplash, FormPrefabPath(CrownSplashName), 8);
+        PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.WhirlwindMaelstromDrag, FormPrefabPath(MaelstromDragName), 6);
+        PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.WhirlwindWaveSplash, FormPrefabPath(WaveSplashName), 10);
         // Пишется, только если записи действительно поменялись (Bind ставит dirty лишь при смене).
         AssetDatabase.SaveAssetIfDirty(library);
     }
@@ -77,7 +103,11 @@ public static partial class PelagWhirlwindFoamVfxSetup
     public static bool EnsureForms(bool force)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) return false;
-        if (Shader.Find(WaveShaderName) == null || AssetDatabase.LoadAssetAtPath<Texture2D>(BubblesTexture) == null) return false;
+        if (Shader.Find(WaveShaderName) == null || Shader.Find(FormWaterShaderName) == null
+            || AssetDatabase.LoadAssetAtPath<Texture2D>(BubblesTexture) == null
+            || AssetDatabase.LoadAssetAtPath<Texture2D>(FormsPerlinTexture) == null
+            || AssetDatabase.LoadAssetAtPath<GameObject>(DashWakePrefab) == null
+            || AssetDatabase.LoadAssetAtPath<Material>(DashWakeMaterial) == null) return false;
         // Капли, комья и клякса — материалы пенного Вихря: нет их — сначала он.
         if ((AssetDatabase.LoadAssetAtPath<Material>(MaterialPath("M_Whirlwind_FoamDrop")) == null
              || AssetDatabase.LoadAssetAtPath<Material>(MaterialPath("M_Whirlwind_FoamBit")) == null
@@ -102,6 +132,8 @@ public static partial class PelagWhirlwindFoamVfxSetup
     private static readonly Color StormDeep = new Color(.16f, .19f, .23f), StormWater = new Color(.42f, .48f, .55f), StormShallow = new Color(.70f, .75f, .80f);
     private static readonly Color MaelstromDeep = new Color(.12f, .04f, .30f), MaelstromWater = new Color(.36f, .16f, .70f), MaelstromShallow = new Color(.66f, .48f, .95f);
     private static readonly Color WavesDeep = new Color(.02f, .30f, .20f), WavesWater = new Color(.10f, .70f, .48f), WavesShallow = new Color(.50f, .95f, .76f);
+    /// <summary>Пена Водоворота (v4): светлая сиренево-кремовая, а не бирюзово-белая пена базы.</summary>
+    private static readonly Color MaelstromFoam = new Color(1.12f, 1.06f, 1.14f), MaelstromFoamShade = new Color(.78f, .70f, .96f);
 
     private static void TintForm(Material material, Color deep, Color water, Color shallow)
     {
@@ -125,8 +157,10 @@ public static partial class PelagWhirlwindFoamVfxSetup
         // ---- меши
         Mesh band = StormBandMesh("WhirlwindFormStormBand", 280f, .12f, .30f, .05f);
         Mesh crest = BandMesh("WhirlwindFormStormCrest", thick, 300f, .30f);
-        Mesh arms = MaelstromArmsMesh("WhirlwindFormMaelstromArms", 6, 115f, .16f, .22f);
+        // Кольцо всплеска Бури (кольцо Пенных волн v3 — живой меш вида, ассета нет).
         Mesh ring = MirroredRingMesh("WhirlwindFormFoamRing", .17f, .40f);
+        // Рукава Водоворота v2 были мешем-ассетом; v3 пишет вид — старый ассет больше никому не нужен.
+        AssetDatabase.DeleteAsset(GeometryFolder + "/WhirlwindFormMaelstromArms.asset");
 
         // ---- материалы (шейдер серии сабли, свои числа)
         // Виток: голова дорисовывается за .08 с, хвост рассыпается пеной вдоль u.
@@ -158,45 +192,93 @@ public static partial class PelagWhirlwindFoamVfxSetup
         ringMat.SetFloat("_ErodeAlong", .4f);
         ringMat.SetFloat("_EdgeRag", .22f);
         ringMat.SetFloat("_CameraPush", 0f);
-        // Рукав Водоворота: голова (u = 1) — у центра, дорастает внутрь за .14 с; струи
-        // бегут по u к центру; рассыпается от внешнего хвоста.
-        Material armMat = WaveMaterial(waveShader, "M_Whirlwind_MaelstromArm", bubbles, MaelstromLife,
-            .30f, .14f, .40f, .74f, .64f, MaelstromLife, 7f, new Vector4(6f, 1.1f, 2.2f, .5f));
-        armMat.SetVector("_Bands", new Vector4(.14f, .38f, .62f, .32f));
-        armMat.SetFloat("_EdgeRag", .24f);
-        armMat.SetFloat("_HeadFoam", .30f);
-        armMat.SetFloat("_ErodeAlong", .8f);
-        armMat.SetFloat("_Streaks", 1f);
-        armMat.SetFloat("_FlowSpeed", 1.6f);
-        armMat.SetFloat("_Glow", .15f);
-        armMat.SetFloat("_CameraPush", 0f);
-        // Кольцо Пенных волн: время в долях жизни (жизнь ставит вид по ходу кольца из Sim):
-        // ход — кольцо целое, после — рассыпается. Гребень пены — бегущая внешняя кромка.
-        Material waveMat = WaveMaterial(waveShader, "M_Whirlwind_FoamWaveRing", bubbles, 1f,
-            1.02f, .01f, .60f, .97f, .86f, 1f, 24f, new Vector4(24f, 1.2f, 8f, .5f));
-        waveMat.SetVector("_Bands", new Vector4(.06f, .26f, .60f, .32f));
-        waveMat.SetFloat("_HeadFoam", 0f);
-        waveMat.SetFloat("_Streaks", 1f);
-        waveMat.SetFloat("_ErodeAlong", .5f);
-        waveMat.SetFloat("_EdgeRag", .22f);
-        waveMat.SetFloat("_FlowSpeed", .25f);
-        waveMat.SetFloat("_Glow", .2f);
-        waveMat.SetFloat("_CameraPush", 0f);
+        // Вода v3 (02.10, вечер): рукава Водоворота и кольцо Пенных волн — живой меш вида на
+        // шейдере Razlom/Whirlwind Form Water (язык следа рывка: валики пены по краям, распад
+        // на капли без тёмного кружева). Время — секунды вида; когда рвётся вода — _Break.x.
+        var perlin = AssetDatabase.LoadAssetAtPath<Texture2D>(FormsPerlinTexture);
+        Shader formWater = Shader.Find(FormWaterShaderName);
+        // Рукав: контакт через 0,33 с после тяги; хвост старше головы на 0,10 с (вид), значит хвост
+        // белеет пеной с ~0,38 с и рвётся к ~0,52 с, голова — к ~0,62 с; последние капли — к 0,82 с.
+        // v4 (vortex-1, «плоская фиолетовая краска с белой каймой»): фиолетовая ВОДА — от глубокой у
+        // вогнутой стороны (там рукав прозрачнее и без туши, уходит в воронку) к светлой у выпуклой,
+        // светлые струи внутри, по выпуклой кромке — рваный гребень крупных комьев сиреневой пены.
+        Material armMat = FormWaterMaterial(formWater, "M_Whirlwind_MaelstromArm", bubbles, perlin,
+            new Vector4(.62f, .06f, 0f, .14f), .74f, .82f);
+        // Проба v4a: гребень 0,14 на ячейках 0,55 читался тонкой кремовой каймой — комья крупнее и толще.
+        // Внутренняя сторона прозрачна слегка (0,8): полупрозрачный фиолет на траве — та же серая муть.
+        armMat.SetVector("_Crest", new Vector4(.22f, .16f, .035f, .12f));
+        armMat.SetVector("_Bands", new Vector4(.15f, .75f, .55f, .40f));
+        armMat.SetVector("_Across", new Vector4(.95f, .80f, .25f, .75f));
+        armMat.SetFloat("_ClumpScale", .40f);
+        armMat.SetFloat("_EndRag", .30f);
+        armMat.SetVector("_Lines", new Vector4(4f, 1.5f, .45f, .95f));
+        armMat.SetVector("_DarkLines", new Vector4(3f, 2.2f, .35f, .45f));
+        armMat.SetColor("_Foam", MaelstromFoam);
+        armMat.SetColor("_FoamShade", MaelstromFoamShade);
+        // Кольцо: вид ведёт возраст так, что вода рвётся (0,30) вскоре после хода кольца и белеет
+        // пеной только перед самым разрывом. v4 (waves-2): полоса около метра — градиент от глубокой
+        // воды у внутреннего края к светлой у внешнего, по ОБОИМ краям крупные круглые комья пены
+        // (ячейки крупнее вдвое), рвётся разом по кругу (_Break.y меньше) на крупные капли.
+        Material waveMat = FormWaterMaterial(formWater, "M_Whirlwind_FoamWaveRing", bubbles, perlin,
+            new Vector4(PelagFoamRingWater.ShaderBreakAge, .04f, 0f, .06f), .40f, .46f);
+        waveMat.SetVector("_Crest", new Vector4(.17f, .13f, .035f, .70f));
+        waveMat.SetVector("_Bands", new Vector4(.15f, .75f, .30f, .30f));
+        waveMat.SetVector("_Across", new Vector4(.85f, 1f, 1f, 0f));
+        waveMat.SetFloat("_ClumpScale", .48f);
+        waveMat.SetFloat("_CoarseScale", .45f);
+        waveMat.SetFloat("_BreakScale", 1.3f);
+        waveMat.SetFloat("_DropLife", .08f);
+        waveMat.SetVector("_Lines", new Vector4(5f, 1.6f, .32f, .85f));
+        waveMat.SetVector("_DarkLines", new Vector4(3f, 2.2f, .30f, .30f));
+        // Струи тяги (v4): узкие изогнутые струи фиолетовой воды, голова в пене, не рвутся — стягиваются.
+        Material strandMat = FormWaterMaterial(formWater, "M_Whirlwind_MaelstromStrand", bubbles, perlin,
+            new Vector4(10f, 0f, 0f, .10f), 9f, 10f);
+        // Проба v4a: тёмно-фиолетовые струи читались тонкими «лезвиями» — светлая сиреневая вода, пенная голова.
+        // Проба v4b: тонкая струя с тушью по обоим краям читалась тёмной линией — обвод фиолетовый и тоньше, пены больше.
+        strandMat.SetVector("_Crest", new Vector4(.042f, .02f, .01f, 1f));
+        strandMat.SetColor("_Outline", new Color(.22f, .10f, .42f, .85f));
+        strandMat.SetVector("_Bands", new Vector4(0f, .35f, 0f, 0f));
+        strandMat.SetVector("_Across", new Vector4(0f, 1f, 1f, 0f));
+        strandMat.SetFloat("_ClumpScale", 1.2f);
+        strandMat.SetFloat("_EndRag", .04f);
+        strandMat.SetFloat("_OutlinePx", 1.0f);
+        strandMat.SetFloat("_Glow", .25f);
+        strandMat.SetVector("_Lines", new Vector4(2f, 1.2f, .5f, 0f));
+        strandMat.SetVector("_DarkLines", new Vector4(2f, 1.2f, .5f, 0f));
+        strandMat.SetColor("_Foam", MaelstromFoam);
+        strandMat.SetColor("_FoamShade", MaelstromFoamShade);
+        // След тяги: копия материала следа рывка, цвета Водоворота. v4 («фиолетовые плиты»): пенная
+        // борозда — толстые комковатые валики пены по обоим краям, светлая вода между ними, у ног каша
+        // пены; саму полосу префаб сужает до 0,55 (SaveMaelstromDrag), код следа рывка не меняется.
+        Material dragMat = PelagWhirlwindVfxSetup.LoadOrCreateMaterial(MaterialPath("M_Whirlwind_MaelstromDrag"),
+            Shader.Find("Razlom/Dash Foam Wake"));
+        EditorUtility.CopySerialized(AssetDatabase.LoadAssetAtPath<Material>(DashWakeMaterial), dragMat);
+        dragMat.name = "M_Whirlwind_MaelstromDrag";
+        dragMat.SetVector("_Crest", new Vector4(.11f, .22f, .11f, .03f));
+        dragMat.SetFloat("_HeadFoam", .95f);
+        dragMat.SetVector("_Bands", new Vector4(.05f, .55f, 0f, 0f));
+        dragMat.SetVector("_Lines", new Vector4(4f, 1.6f, .40f, .95f));
+        dragMat.SetColor("_Foam", MaelstromFoam);
+        dragMat.SetColor("_FoamShade", MaelstromFoamShade);
 
         // Цвета форм (владелец 02.10: «бурю более стальную, водоворот более фиолет» — как иконки форм).
-        // Пена и обвод общие; база Вихря остаётся бирюзовой.
+        // Пена и обвод общие (у Водоворота v4 пена сиренево-кремовая); база Вихря остаётся бирюзовой.
         foreach (Material m in new[] { bandMat, crestMat, ringMat }) TintForm(m, StormDeep, StormWater, StormShallow);
         TintForm(armMat, MaelstromDeep, MaelstromWater, MaelstromShallow);
+        TintForm(strandMat, MaelstromDeep, MaelstromWater, MaelstromShallow);
+        TintForm(dragMat, MaelstromDeep, MaelstromWater, MaelstromShallow);
         TintForm(waveMat, WavesDeep, WavesWater, WavesShallow);
-        var materials = new[] { bandMat, crestMat, ringMat, armMat, waveMat };
+        var materials = new[] { bandMat, crestMat, ringMat, armMat, waveMat, dragMat, strandMat };
         foreach (Material material in materials) { EditorUtility.SetDirty(material); AssetDatabase.SaveAssetIfDirty(material); }
-        foreach (Mesh mesh in new[] { band, crest, arms, ring }) AssetDatabase.SaveAssetIfDirty(mesh);
+        foreach (Mesh mesh in new[] { band, crest, ring }) AssetDatabase.SaveAssetIfDirty(mesh);
 
         SaveStormColumn(band, crest, bandMat, crestMat, dropMat, bitMat);
         SaveStormSplash(ring, ringMat, dropMat, bitMat);
-        SaveMaelstrom(arms, armMat, dropMat, bitMat);
-        SaveFoamWave(ring, waveMat, dropMat, bitMat);
+        SaveMaelstrom(armMat, strandMat, dropMat, bitMat);
+        SaveFoamWave(waveMat, dropMat, bitMat);
         SaveCrownSplash(splatMat, dropMat, bitMat);
+        SaveMaelstromDrag(dragMat);
+        SaveWaveSplash(splatMat, dropMat, bitMat);
 
         foreach (Material material in materials)
             AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(material), ImportAssetOptions.ForceUpdate);
@@ -206,7 +288,38 @@ public static partial class PelagWhirlwindFoamVfxSetup
             importer.userData = FormsRevision;
             importer.SaveAndReimport();
         }
-        Debug.Log("[whirlwind-forms] Формы Вихря собраны: столб и всплеск Бури, рукава Водоворота, кольцо Пенных волн, корона брызг, ревизия " + FormsRevision + ".");
+        Debug.Log("[whirlwind-forms] Формы Вихря собраны: столб и всплеск Бури, рукава и следы тяги Водоворота, кольцо Пенных волн, корона брызг, ревизия " + FormsRevision + ".");
         return true;
+    }
+    /// <summary>Материал воды v3: язык следа рывка (те же пена, обвод, капли); цвета базы тонирует форма.</summary>
+    private static Material FormWaterMaterial(Shader shader, string name, Texture2D bubbles, Texture2D perlin,
+        Vector4 breakUp, float fadeFrom, float fadeTo)
+    {
+        Material material = Fresh(name, shader);
+        material.SetTexture("_FoamTex", bubbles);
+        material.SetTexture("_ErodeTex", perlin);
+        material.SetColor("_Deep", Deep);
+        material.SetColor("_Water", Water);
+        material.SetColor("_Shallow", Shallow);
+        material.SetColor("_Foam", Foam);
+        material.SetColor("_FoamShade", FoamShade);
+        material.SetColor("_Outline", Outline);
+        material.SetFloat("_CoarseScale", .5f);
+        material.SetFloat("_ClumpScale", .85f);
+        material.SetFloat("_EndRag", .28f);
+        material.SetFloat("_OutlinePx", 2f);
+        material.SetFloat("_Glow", .2f);
+        material.SetVector("_Break", breakUp);
+        material.SetFloat("_BreakScale", 2.2f);
+        material.SetFloat("_DropLife", .07f);
+        material.SetFloat("_EdgeEarly", .03f);
+        material.SetFloat("_BreakRimPx", 1.5f);
+        material.SetFloat("_FadeFrom", fadeFrom);
+        material.SetFloat("_FadeTo", fadeTo);
+        // v4: вода ложится поверх всего, что не выше метра над ней (колодец, корни, кочки, трава),
+        // поверх тел — никогда (трафарет Razlom/Texture Toon); у ног героя — прежний допуск 0,3 м.
+        material.SetVector("_Over", new Vector4(1f, .25f, .45f, .30f));
+        material.SetVector("_Across", new Vector4(0f, 1f, 1f, 0f));
+        return material;
     }
 }

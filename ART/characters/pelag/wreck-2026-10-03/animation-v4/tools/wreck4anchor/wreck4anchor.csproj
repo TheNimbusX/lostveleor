@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Крушение v4, правка якоря (06.10, «физика якоря дно, проворачивается 100 раз»): тело серии Wreck4 НЕ трогается,
+       переписан только слой головы якоря и цепи. Физика — те же файлы игры (AnchorRigCore/AnchorHeadDynamics):
+       полёт броска, земля (укус, отскок, оседание). Управляемый слой — ориентация (кватернионы), булава в махах,
+       дуги снятия/уборки, выбор цепи. Сборка: dotnet build wreck4anchor.csproj -artifacts-path ../obj-w4a. razlom/ только читается. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>Wreck4Anchor</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Core>../../../../../../../artifacts/anchor-core</Core>
+    <View>../../../../../../../razlom/Assets/Game.View</View>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(View)/AnchorHeadDynamics.cs" Link="View/AnchorHeadDynamics.cs" />
+    <Compile Include="$(View)/AnchorChainSolver.cs" Link="View/AnchorChainSolver.cs" />
+    <Compile Include="$(Core)/drafts/razlom/Assets/Game.View/AnchorRigBlend.cs" Link="Rig/AnchorRigBlend.cs" />
+    <Compile Include="$(Core)/drafts/razlom/Assets/Game.View/AnchorRigCore.cs" Link="Rig/AnchorRigCore.cs" />
+    <Compile Include="$(Core)/drafts/razlom/Assets/Game.View/AnchorRigBody.cs" Link="Rig/AnchorRigBody.cs" />
+    <Compile Include="$(Core)/bake/anchorbake/GripTrack.cs" Link="Bake/GripTrack.cs" />
+    <Compile Include="$(Core)/bake/anchorbake/HeadModel.cs" Link="Bake/HeadModel.cs" />
+  </ItemGroup>
+</Project>

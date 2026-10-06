@@ -112,6 +112,9 @@ namespace Game.View
                     sim.AddComponent<MainMenuView>();
                 }
             }
+            // Съёмка навыка с HUD (capture.ps1 -Skill … -Hud; 06.10, индикатор серии Крушения): боевой HUD и в витрине.
+            else if (CaptureRig.Installed && System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-hud") >= 0)
+                sim.AddComponent<PlayerHud>();
 
             sim.SetActive(true);
             if (EnemySandbox != null) Driver.StartEnemySandbox();

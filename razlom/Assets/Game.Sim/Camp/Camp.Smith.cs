@@ -3,7 +3,24 @@ using System.Collections.Generic;
 
 namespace Game.Sim
 {
-    public enum SmithResult { Success, InvalidItem, Protected, NoAffix, AtMaximum, Exhausted, InsufficientFunds, Locked, InvalidDonor, Incompatible, NoSpace, StalePreview }
+    /// <summary>Ответ Эни. Не сохраняется, но окна сравнивают значения: только дописывать.</summary>
+    public enum SmithResult
+    {
+        Success, InvalidItem, Protected, NoAffix, AtMaximum, Exhausted, InsufficientFunds, Locked, InvalidDonor, Incompatible, NoSpace, StalePreview,
+        /// <summary>Три трещины: вещь больше не куётся, но носится и разбирается.</summary>
+        Shattered,
+        /// <summary>Нет сердца этого босса (или у босса пока нет граней).</summary>
+        NoHeart,
+        /// <summary>В вещи уже столько сердец, сколько позволяет ранг (1, на ранге 3 — 2).</summary>
+        HeartsFull,
+        /// <summary>Оплаченная переплавка или добавление ждёт выбора — другое действие нельзя.</summary>
+        SessionOpen,
+        NoSession,
+        /// <summary>Шедевр: дальше только сердце.</summary>
+        Masterpiece,
+        /// <summary>Рискованный удар — только когда попытки закалки кончились.</summary>
+        NotTempered,
+    }
     public readonly struct ForgeTarget
     {
         public readonly bool IsWorn;
@@ -11,42 +28,91 @@ namespace Game.Sim
         ForgeTarget(bool worn, int slot) { IsWorn = worn; Slot = slot; }
         public static ForgeTarget Bag(int slot) => new ForgeTarget(false, slot);
         public static ForgeTarget Worn(EquipSlot slot) => new ForgeTarget(true, (int)slot);
+        public bool Same(ForgeTarget other) => IsWorn == other.IsWorn && Slot == other.Slot;
     }
-    public sealed class ForgePreview
+
+    /// <summary>Действия Эни (06.10). Порядок — порядок кнопок окна: только дописывать.</summary>
+    public enum EniAction : byte { Temper, Remelt, Add, Heart }
+
+    /// <summary>Открытая сессия кузнеца. Лежит в сохранении (секция 10): только дописывать.</summary>
+    public enum ForgeSessionKind : byte { None = 0, Temper = 1, Remelt = 2, Add = 3 }
+
+    public enum StrikeOutcome : byte { None, Grew, Cracked, Shattered }
+
+    /// <summary>Снимок открытой сессии для окна: что куётся и сколько ударов уже было.</summary>
+    public readonly struct ForgeSession
     {
-        internal readonly Camp Owner;
-        readonly RolledAffix[] _candidates;
-        public SmithResult Status { get; }
-        public ForgeTarget Target { get; }
-        public ForgeOperation Operation { get; }
-        public ItemInstance Before { get; }
-        public ItemInstance After { get; }
-        public ItemInstance DonorItem { get; }
-        public int AffixIndex { get; }
-        public int Choice { get; }
-        public int DonorSlot { get; }
-        public int DonorAffix { get; }
-        public int Gold { get; }
-        public int Shards { get; }
-        public int Steel { get; }
-        public int Cores { get; }
-        public int CandidateCount => _candidates?.Length ?? 0;
-        public RolledAffix Candidate(int index) => (uint)index < CandidateCount ? _candidates[index] : default;
-        internal ForgePreview(Camp owner, SmithResult status, ForgeTarget target, ForgeOperation operation, ItemInstance before,
-            ItemInstance after, int affix, int choice, int donorSlot, int donorAffix, ItemInstance donor,
-            int gold, int shards, int steel, int cores, RolledAffix[] candidates)
+        public readonly ForgeSessionKind Kind;
+        public readonly ForgeTarget Target;
+        /// <summary>Вещь до оплаты сессии: от неё считаются броски и кандидаты.</summary>
+        public readonly ItemInstance Snapshot;
+        /// <summary>Свойство: −1 — базовое свойство основы; у добавления — индекс нового свойства.</summary>
+        public readonly int Property;
+        /// <summary>Удачных ударов закалки в этой сессии.</summary>
+        public readonly int Strikes;
+        public bool IsOpen => Kind != ForgeSessionKind.None;
+        internal ForgeSession(ForgeSessionKind kind, ForgeTarget target, ItemInstance snapshot, int property, int strikes)
+        { Kind = kind; Target = target; Snapshot = snapshot; Property = property; Strikes = strikes; }
+    }
+
+    /// <summary>
+    /// Что будет стоить действие и чем оно рискует — до клика. Исход броска сюда не
+    /// попадает никогда: только шанс, рост и число ударов (защита от подглядывания).
+    /// </summary>
+    public readonly struct EniQuote
+    {
+        public readonly SmithResult Status;
+        public readonly int Gold, Shards, Steel, Hearts;
+        /// <summary>Закалка — шанс трещины этого удара; рискованный удар — шанс рассыпаться; перелив — шанс трещины.</summary>
+        public readonly int RiskPercent;
+        /// <summary>Рост этого удара закалки в долях диапазона свойства.</summary>
+        public readonly Fix64 NextGrowth;
+        public readonly int AttemptsLeft, Cracks, Strikes;
+        /// <summary>Попытки кончились: закалка становится рискованным ударом (шедевр или осколки).</summary>
+        public readonly bool Risky;
+        /// <summary>Добавление сверх лимита редкости: свойство или трещина.</summary>
+        public readonly bool Overflow;
+        public readonly bool Affordable;
+        public bool Allowed => Status == SmithResult.Success && Affordable;
+        internal EniQuote(SmithResult status, int gold, int shards, int steel, int hearts, int risk, Fix64 growth,
+            int left, int cracks, int strikes, bool risky, bool overflow, bool affordable)
         {
-            Owner = owner; Status = status; Target = target; Operation = operation; Before = before; After = after;
-            AffixIndex = affix; Choice = choice; DonorSlot = donorSlot; DonorAffix = donorAffix; DonorItem = donor;
-            Gold = gold; Shards = shards; Steel = steel; Cores = cores; _candidates = candidates;
+            Status = status; Gold = gold; Shards = shards; Steel = steel; Hearts = hearts; RiskPercent = risk; NextGrowth = growth;
+            AttemptsLeft = left; Cracks = cracks; Strikes = strikes; Risky = risky; Overflow = overflow; Affordable = affordable;
         }
     }
+
+    /// <summary>
+    /// Эни без мини-игр (решение 06.10): закалка «Ещё удар?», переплавка, добавление,
+    /// сердце босса, рискованный удар и разбор. Правило «перековка не ухудшает» отменено:
+    /// промах — трещина. Все броски детерминированы от вещи до оплаты и номера действия,
+    /// поэтому перезагрузка не меняет исход. Сессия и её хранение — в Camp.Temper.
+    /// </summary>
     public sealed partial class Camp
     {
-        public static int ReforgeGold(in ItemInstance item) => 30 * (item.ReforgeCount + 1);
-        public static int ReforgeShards(in ItemInstance item) => 3 * (item.ReforgeCount + 1);
-        public bool ForgeOperationUnlocked(ForgeOperation operation) => HasResident(CampResident.Smith)
-            && (uint)operation <= (uint)ForgeOperation.Transfer && (operation == ForgeOperation.Refine || Rank(CampResident.Smith) >= (int)operation);
+        // Цены 06.10 (суровая экономика: одно действие ≈ удачный лес). Золото и осколки
+        // дорожают ×1,5 за каждое оплаченное действие над вещью, сталь и сердце — нет.
+        public const int TemperGold = 80, TemperShards = 5, RemeltGold = 120, RemeltSteel = 1, AddGold = 150, AddSteel = 2, HeartGold = 100;
+
+        // Буфер разворачивания для проверок Эни: окна спрашивают цену на каждой перерисовке.
+        readonly GeneratedItem _forgeRoll = new GeneratedItem();
+
+        /// <summary>
+        /// Действия по рангу лагеря (06.10): закалка и разбор — с начала, переплавка и
+        /// сердце — ранг 1, добавление — ранг 2; второе сердце в вещь — ранг 3 (HeartSlots).
+        /// </summary>
+        public bool EniActionUnlocked(EniAction action)
+        {
+            if (!HasResident(CampResident.Smith)) return false;
+            switch (action)
+            {
+                case EniAction.Temper: return true;
+                case EniAction.Remelt: case EniAction.Heart: return Rank(CampResident.Smith) >= 1;
+                case EniAction.Add: return Rank(CampResident.Smith) >= 2;
+                default: return false;
+            }
+        }
+
         bool TryForgeTarget(ForgeTarget target, out ItemInstance item)
         {
             item = default;
@@ -54,102 +120,366 @@ namespace Game.Sim
             else { if ((uint)target.Slot >= Bag.Capacity) return false; item = Bag.At(target.Slot); }
             return !item.IsEmpty;
         }
+
+        /// <summary>Эни берёт любую известную вещь, кроме артефактов; редкость ограничивает действия, а не допуск.</summary>
         bool Forgeable(in ItemInstance item)
         {
             int index = Items.IndexOfBase(item.BaseId);
-            return !item.IsEmpty && index >= 0 && item.Rarity < ItemRarity.Unique && Items.GetBase(index).Category != ItemCategory.Artifact;
+            return !item.IsEmpty && index >= 0 && Items.GetBase(index).Category != ItemCategory.Artifact;
         }
-        public SmithResult ReforgeRange(int slot, int affix, out Fix64 lower, out Fix64 upper)
-            => ReforgeRange(ForgeTarget.Bag(slot), affix, out lower, out upper);
-        public SmithResult ReforgeRange(EquipSlot slot, int affix, out Fix64 lower, out Fix64 upper)
-            => ReforgeRange(ForgeTarget.Worn(slot), affix, out lower, out upper);
-        SmithResult ReforgeRange(ForgeTarget target, int affix, out Fix64 lower, out Fix64 upper)
+
+        EniQuote Refuse(SmithResult status, int left = 0, int cracks = 0)
+            => new EniQuote(status, 0, 0, 0, 0, 0, Fix64.Zero, left, cracks, 0, false, false, false);
+
+        EniQuote Priced(SmithResult status, int gold, int shards, int steel, int hearts, int bossKey, int risk, Fix64 growth,
+            int left, int cracks, bool risky = false, bool overflow = false)
         {
-            lower = upper = Fix64.Zero;
-            if (!Has(CampService.Smith) || !TryForgeTarget(target, out var item) || !Forgeable(item) || item.ItemLevel > short.MaxValue - 4) return SmithResult.InvalidItem;
-            if (item.ReforgeCount >= 3) return SmithResult.Exhausted;
-            var rolled = new GeneratedItem(); if (!ItemGenerator.Generate(item, Items, rolled)) return SmithResult.InvalidItem;
-            if ((uint)affix >= rolled.AffixCount) return SmithResult.NoAffix;
-            var current = rolled.GetAffix(affix); int index = Items.IndexOfAffix(current.AffixId);
-            upper = index < 0 ? current.Value : Fix64.Max(current.Value, Items.GetAffix(index).MaxValue);
-            lower = current.Value + (upper - current.Value) * Fix64.Ratio(1, 4);
-            return upper <= current.Value ? SmithResult.AtMaximum : SmithResult.Success;
+            bool affordable = Money(CurrencyType.Gold) >= gold && Money(CurrencyType.Shards) >= shards
+                && Money(CurrencyType.Steel) >= steel && HeartCount(bossKey) >= hearts;
+            return new EniQuote(status, gold, shards, steel, hearts, risk, growth, left, cracks, 0, risky, overflow, affordable);
         }
-        public ForgePreview PreviewForge(ForgeTarget target, ForgeOperation operation, int affix = 0, int choice = 0, int donorSlot = -1, int donorAffix = 0)
+
+        /// <summary>
+        /// Цена, допуск и риск действия до клика. property — свойство (−1 — базовое
+        /// свойство обычной вещи), bossKey и facet — для сердца. Без бросков и без трат.
+        /// </summary>
+        public EniQuote Quote(EniAction action, ForgeTarget target, int property = 0, int bossKey = 0, HeartFacet facet = HeartFacet.None)
         {
-            ItemInstance before = default, after = default, donor = default;
-            RolledAffix[] candidates = null;
-            int gold = 0, shards = 0, steel = 0, cores = 0;
-            SmithResult status = SmithResult.Success;
-            if (!ForgeOperationUnlocked(operation)) status = SmithResult.Locked;
-            else if (!TryForgeTarget(target, out before) || !Forgeable(before)) status = SmithResult.InvalidItem;
-            else if ((before.Crafting?.Count ?? 0) >= CraftingRecipe.MaximumSteps) status = SmithResult.Exhausted;
-            else
+            if (!EniActionUnlocked(action)) return Refuse(SmithResult.Locked);
+            if (!TryForgeTarget(target, out var item) || !Forgeable(item)) return Refuse(SmithResult.InvalidItem);
+            var crafting = item.Crafting;
+            int left = AttemptsLeft(item), cracks = CrackCount(item), paid = crafting?.PaidActions ?? 0;
+            if (cracks >= CracksToShatter) return Refuse(SmithResult.Shattered, left, cracks);
+            if ((crafting?.Count ?? 0) >= CraftingRecipe.MaximumSteps) return Refuse(SmithResult.Exhausted, left, cracks);
+            bool pending = PendingChoice();
+            switch (action)
             {
-                var rolled = new GeneratedItem();
-                if (!ItemGenerator.Generate(before, Items, rolled)) status = SmithResult.InvalidItem;
-                else
+                case EniAction.Temper:
                 {
-                    CraftStep step = default;
-                    if (operation == ForgeOperation.Refine)
+                    if (ContinuesTemper(target, property))
                     {
-                        gold = ReforgeGold(before); shards = ReforgeShards(before);
-                        status = ReforgeRange(target, affix, out _, out _);
-                        if (status == SmithResult.Success)
-                        {
-                            var rng = new Pcg32(before.Seed, 0x534D495448UL); Fix64 fraction = Fix64.Zero;
-                            for (int i = 0; i <= before.ReforgeCount; i++) fraction = rng.NextFix(Fix64.Ratio(1, 4), Fix64.One);
-                            step = new CraftStep(operation, (byte)affix, 0, fraction);
-                        }
+                        // Сессия уже оплачена: следующий удар бесплатный, растёт только риск.
+                        int strike = _sessionStrikes;
+                        TemperRoom(_sessionSnapshot, property, out var sessionRoom);
+                        var status = SessionGrowth(strike) >= sessionRoom ? SmithResult.AtMaximum : SmithResult.Success;
+                        return new EniQuote(status, 0, 0, 0, 0, CrackPercent(strike), TemperGrowth(strike), left, cracks, strike, false, false, true);
                     }
-                    else if (operation == ForgeOperation.Replace || operation == ForgeOperation.Add)
-                    {
-                        bool add = operation == ForgeOperation.Add;
-                        gold = add ? 120 : 60; shards = add ? 15 : 8; steel = add ? 2 : 1;
-                        int cap = before.Rarity == ItemRarity.Magic ? 2 : before.Rarity == ItemRarity.Rare ? 4 : 0;
-                        if (add && rolled.AffixCount >= cap) status = SmithResult.NoSpace;
-                        else if (!add && (uint)affix >= rolled.AffixCount) status = SmithResult.NoAffix;
-                        else
-                        {
-                            if (add) affix = rolled.AffixCount;
-                            candidates = ForgeCandidates(before, rolled, add ? -1 : affix, operation);
-                            if (candidates.Length == 0) status = SmithResult.Incompatible;
-                            else if ((uint)choice >= candidates.Length) status = SmithResult.NoAffix;
-                            else
-                            {
-                                var selected = candidates[choice]; var definition = Items.GetAffix(Items.IndexOfAffix(selected.AffixId));
-                                step = new CraftStep(operation, (byte)affix, selected.AffixId, NormalizeAffix(selected.Value, definition));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        gold = 180; shards = 20; cores = 1;
-                        if ((uint)affix >= rolled.AffixCount) status = SmithResult.NoAffix;
-                        else if ((uint)donorSlot >= Bag.Capacity || !target.IsWorn && donorSlot == target.Slot || !Forgeable(donor = Bag.At(donorSlot))) status = SmithResult.InvalidDonor;
-                        else if (Bag.IsKept(donorSlot)) status = SmithResult.Protected;
-                        else
-                        {
-                            var donorRolled = new GeneratedItem();
-                            if (!ItemGenerator.Generate(donor, Items, donorRolled) || (uint)donorAffix >= donorRolled.AffixCount) status = SmithResult.InvalidDonor;
-                            else
-                            {
-                                var selected = donorRolled.GetAffix(donorAffix); int index = Items.IndexOfAffix(selected.AffixId);
-                                if (index < 0 || !CanPlaceAffix(Items.GetAffix(index), before, rolled, affix)) status = SmithResult.Incompatible;
-                                else step = new CraftStep(operation, (byte)affix, selected.AffixId, NormalizeAffix(selected.Value, Items.GetAffix(index)));
-                            }
-                        }
-                    }
-                    if (status == SmithResult.Success)
-                    {
-                        var recipe = (before.Crafting ?? new CraftingRecipe(Array.Empty<CraftStep>())).Append(step);
-                        short level = (short)(before.ItemLevel + (operation == ForgeOperation.Refine ? 1 + (int)before.Rarity : 0));
-                        after = new ItemInstance(before.BaseId, level, before.Rarity, before.Seed, before.ForgeRecipe, recipe);
-                    }
+                    if (crafting?.IsMasterpiece == true) return Refuse(SmithResult.Masterpiece, left, cracks);
+                    if (pending) return Refuse(SmithResult.SessionOpen, left, cracks);
+                    if (left == 0) return QuoteRisky(item, left, cracks);
+                    if (!TemperRoom(item, property, out var room)) return Refuse(SmithResult.NoAffix, left, cracks);
+                    return Priced(room <= Fix64.Zero ? SmithResult.AtMaximum : SmithResult.Success, Escalate(TemperGold, paid), Escalate(TemperShards, paid),
+                        0, 0, 0, CrackPercent(0), TemperGrowth(0), left, cracks);
                 }
+                case EniAction.Remelt:
+                case EniAction.Add:
+                {
+                    bool add = action == EniAction.Add;
+                    // Уникальная и обычная вещь не переплавляются и не дополняются (пробел №20).
+                    if (item.Rarity != ItemRarity.Magic && item.Rarity != ItemRarity.Rare) return Refuse(SmithResult.InvalidItem, left, cracks);
+                    if (crafting?.IsMasterpiece == true) return Refuse(SmithResult.Masterpiece, left, cracks);
+                    if (pending) return Refuse(SmithResult.SessionOpen, left, cracks);
+                    if (left == 0) return Refuse(SmithResult.Exhausted, left, cracks);
+                    if (!ItemGenerator.Generate(item, Items, _forgeRoll)) return Refuse(SmithResult.InvalidItem, left, cracks);
+                    bool overflow = false;
+                    if (add)
+                    {
+                        int cap = ItemGenerator.AddCap(item.Rarity);
+                        // Лимит редкости — безопасно, +1 сверх — перелив с трещиной, дальше нельзя (пробел №16).
+                        if (_forgeRoll.AffixCount > cap) return Refuse(SmithResult.NoSpace, left, cracks);
+                        overflow = _forgeRoll.AffixCount == cap;
+                    }
+                    else if ((uint)property >= (uint)_forgeRoll.AffixCount) return Refuse(SmithResult.NoAffix, left, cracks);
+                    if (ForgeCandidates(item, _forgeRoll, add ? -1 : property, add ? ForgeOperation.Add : ForgeOperation.Remelt).Length == 0)
+                        return Refuse(SmithResult.Incompatible, left, cracks);
+                    return Priced(SmithResult.Success, Escalate(add ? AddGold : RemeltGold, paid), 0, add ? AddSteel : RemeltSteel, 0, 0,
+                        overflow ? AddOverflowCrackPercent : 0, Fix64.Zero, left, cracks, overflow: overflow);
+                }
+                case EniAction.Heart:
+                {
+                    if (pending) return Refuse(SmithResult.SessionOpen, left, cracks);
+                    if ((crafting?.HeartCount ?? 0) >= HeartSlots) return Refuse(SmithResult.HeartsFull, left, cracks);
+                    if (HeartFacetCount(bossKey) == 0) return Refuse(SmithResult.NoHeart, left, cracks);
+                    // Второе сердце — другая пара (босс, грань) (пробел №19).
+                    if (facet != HeartFacet.None && (!IsHeartFacetOf(bossKey, facet) || HasHeart(crafting, bossKey, facet)))
+                        return Refuse(SmithResult.Incompatible, left, cracks);
+                    return Priced(SmithResult.Success, Escalate(HeartGold, paid), 0, 0, 1, bossKey, 0, Fix64.Zero, left, cracks);
+                }
+                default: return Refuse(SmithResult.Locked);
             }
-            return new ForgePreview(this, status, target, operation, before, after, affix, choice, donorSlot, donorAffix, donor, gold, shards, steel, cores, candidates);
         }
+
+        EniQuote QuoteRisky(in ItemInstance item, int left, int cracks)
+        {
+            int paid = item.Crafting?.PaidActions ?? 0;
+            // Цена — как у закалки (пробел №15); риск — шанс, что вещь рассыпется.
+            return Priced(SmithResult.Success, Escalate(TemperGold, paid), Escalate(TemperShards, paid), 0, 0, 0,
+                100 - RiskySuccessPercent, Fix64.Zero, left, cracks, risky: true);
+        }
+
+        static bool HasHeart(CraftingRecipe crafting, int bossKey, HeartFacet facet)
+        {
+            int count = crafting?.HeartCount ?? 0;
+            for (int i = 0; i < count; i++) { crafting.HeartAt(i, out int key, out var f); if (key == bossKey && f == facet) return true; }
+            return false;
+        }
+
+        void Pay(in EniQuote quote, int bossKey)
+        {
+            // Всё проверено Quote до первого изменения: списание не бывает частичным.
+            Spend(CurrencyType.Gold, quote.Gold); Spend(CurrencyType.Shards, quote.Shards); Spend(CurrencyType.Steel, quote.Steel);
+            for (int i = 0; i < quote.Hearts; i++) SpendHeart(bossKey);
+        }
+
+        static ItemInstance WithStep(in ItemInstance item, CraftStep step)
+            => new ItemInstance(item.BaseId, item.ItemLevel, item.Rarity, item.Seed, item.ForgeRecipe,
+                (item.Crafting ?? new CraftingRecipe(Array.Empty<CraftStep>())).Append(step));
+
+        static CraftStep CrackStep => new CraftStep(ForgeOperation.Crack, CraftingRecipe.BaseSlot, 0, Fix64.Zero);
+
+        void Place(ForgeTarget target, in ItemInstance item)
+        {
+            // Надетая вещь закаляется на месте: Equip пересобирает статы героя.
+            if (target.IsWorn) Worn.Equip(item, out _);
+            else Bag.Put(target.Slot, item, Bag.IsKept(target.Slot));
+        }
+
+        void RemoveAt(ForgeTarget target)
+        {
+            if (target.IsWorn) Worn.Unequip((EquipSlot)target.Slot);
+            else Bag.Remove(target.Slot);
+        }
+
+        // ---- закалка ----
+
+        /// <summary>
+        /// Удар закалки. Без сессии — проверки, оплата и первый удар (без риска); в сессии
+        /// — следующий удар того же свойства, бесплатно, с растущим шансом трещины. Рост
+        /// пишется в вещь сразу: вход в Разлом уносит набранное без отдельного «забрать».
+        /// </summary>
+        public SmithResult Strike(ForgeTarget target, int property, out StrikeOutcome outcome)
+        {
+            outcome = StrikeOutcome.None;
+            // Другая вещь или другое свойство: прежняя закалка закрывается с тем, что набрано.
+            if (_sessionKind == ForgeSessionKind.Temper && !ContinuesTemper(target, property)) SettleForgeSession();
+            if (_sessionKind == ForgeSessionKind.None)
+            {
+                var quote = Quote(EniAction.Temper, target, property);
+                if (quote.Status != SmithResult.Success) return quote.Status;
+                // Попытки кончились: рискованный удар — отдельное решение игрока (RiskyStrike).
+                if (quote.Risky) return SmithResult.Exhausted;
+                if (!quote.Affordable) return SmithResult.InsufficientFunds;
+                TryForgeTarget(target, out var item);
+                Pay(quote, 0);
+                OpenSession(ForgeSessionKind.Temper, target, item, property);
+            }
+            else if (_sessionKind != ForgeSessionKind.Temper) return SmithResult.SessionOpen;
+            else if (!ResolveSession(out _)) return SmithResult.NoSession;
+
+            int strike = _sessionStrikes;
+            if (!TemperRoom(_sessionSnapshot, _sessionProperty, out var room)) { CloseSession(); return SmithResult.InvalidItem; }
+            // Свойство уже на пределе с учётом роста сессии: броска нет, окно предлагает забрать.
+            if (SessionGrowth(strike) >= room) return SmithResult.AtMaximum;
+            if (Roll(_sessionSnapshot, strike, TemperStream) < CrackPercent(strike))
+            {
+                // Трещина сжигает рост всей сессии (пробел №12) и съедает попытку.
+                var cracked = WithStep(_sessionSnapshot, CrackStep);
+                Place(_sessionTarget, cracked); CloseSession();
+                outcome = IsShattered(cracked) ? StrikeOutcome.Shattered : StrikeOutcome.Cracked;
+                return SmithResult.Success;
+            }
+            _sessionStrikes = strike + 1;
+            _sessionItem = TemperedBy(_sessionSnapshot, _sessionProperty, _sessionStrikes);
+            Place(_sessionTarget, _sessionItem);
+            outcome = StrikeOutcome.Grew;
+            return SmithResult.Success;
+        }
+
+        /// <summary>«Забрать»: рост уже в вещи, сессия просто закрывается.</summary>
+        public SmithResult TakeTemper()
+        {
+            if (_sessionKind != ForgeSessionKind.Temper || !ResolveSession(out _)) return SmithResult.NoSession;
+            CloseSession();
+            return SmithResult.Success;
+        }
+
+        /// <summary>
+        /// Закрывает закалку с тем, что набрано (окно закрыто, другое действие, конец забега).
+        /// Оплаченные переплавка и добавление остаются: выбор обязателен и ждёт (пробел №17).
+        /// </summary>
+        public void SettleForgeSession()
+        {
+            if (_sessionKind == ForgeSessionKind.Temper) CloseSession();
+        }
+
+        /// <summary>Вещь, если следующий удар закалки будет удачным. Без бросков — для сравнения в окне.</summary>
+        public ItemInstance PreviewTemperStrike(ForgeTarget target, int property)
+        {
+            if (ContinuesTemper(target, property)) return TemperedBy(_sessionSnapshot, property, _sessionStrikes + 1);
+            return TryForgeTarget(target, out var item) ? TemperedBy(item, property, 1) : default;
+        }
+
+        static ItemInstance TemperedBy(in ItemInstance snapshot, int property, int strikes)
+            => WithStep(snapshot, TemperStep(property, strikes));
+
+        static CraftStep TemperStep(int property, int strikes)
+            => new CraftStep(ForgeOperation.Temper, property < 0 ? CraftingRecipe.BaseSlot : (byte)property, 0, SessionGrowth(strikes));
+
+        /// <summary>
+        /// Сколько ещё может вырасти свойство, в долях диапазона: аффикс — до максимума,
+        /// базовое свойство обычной вещи — до +100% основы за всю жизнь вещи. false — свойства нет.
+        /// </summary>
+        bool TemperRoom(in ItemInstance item, int property, out Fix64 room)
+        {
+            room = Fix64.Zero;
+            if (!ItemGenerator.Generate(item, Items, _forgeRoll)) return false;
+            if (item.Rarity == ItemRarity.Normal)
+            {
+                if (property != -1 || !_forgeRoll.HasImplicit) return false;
+                Fix64 grown = Fix64.Zero; var crafting = item.Crafting;
+                for (int i = 0; i < (crafting?.Count ?? 0); i++)
+                {
+                    var step = crafting.Step(i);
+                    if (step.Operation == ForgeOperation.Temper && step.Slot == CraftingRecipe.BaseSlot) grown += step.Fraction;
+                }
+                room = Fix64.Max(Fix64.Zero, CraftingRecipe.ImplicitTemperCap - grown);
+                return true;
+            }
+            if ((uint)property >= (uint)_forgeRoll.AffixCount) return false;
+            var current = _forgeRoll.GetAffix(property); int index = Items.IndexOfAffix(current.AffixId);
+            if (index < 0) return false;
+            var definition = Items.GetAffix(index); Fix64 range = definition.MaxValue - definition.MinValue;
+            room = range <= Fix64.Zero ? Fix64.Zero : Fix64.Max(Fix64.Zero, (definition.MaxValue - current.Value) / range);
+            return true;
+        }
+
+        /// <summary>
+        /// Рискованный удар (только когда попытки кончились): 50% — шедевр, иначе вещь
+        /// рассыпается в осколки (с героя — снимается). Цена — как у закалки.
+        /// </summary>
+        public SmithResult RiskyStrike(ForgeTarget target, out bool masterpiece, out int shards)
+        {
+            masterpiece = false; shards = 0;
+            if (_sessionKind == ForgeSessionKind.Temper) SettleForgeSession();
+            if (!EniActionUnlocked(EniAction.Temper)) return SmithResult.Locked;
+            if (!TryForgeTarget(target, out var item) || !Forgeable(item)) return SmithResult.InvalidItem;
+            if (AttemptsLeft(item) > 0) return SmithResult.NotTempered;
+            var quote = Quote(EniAction.Temper, target, -1);
+            if (quote.Status != SmithResult.Success) return quote.Status;
+            if (!quote.Risky) return SmithResult.NotTempered;
+            if (!quote.Affordable) return SmithResult.InsufficientFunds;
+            Pay(quote, 0);
+            if (Roll(item, item.Crafting?.PaidActions ?? 0, RiskyStream) < RiskySuccessPercent)
+            {
+                Place(target, WithStep(item, new CraftStep(ForgeOperation.Masterpiece, CraftingRecipe.BaseSlot, 0, Fix64.Zero)));
+                masterpiece = true;
+                return SmithResult.Success;
+            }
+            // Неудача: осколки с бонусом за прежнюю закалку; сам удар бонуса не даёт — он не удался.
+            shards = SalvageShards(item); RemoveAt(target); Earn(CurrencyType.Shards, shards);
+            return SmithResult.Success;
+        }
+
+        // ---- переплавка и добавление ----
+
+        /// <summary>Оплата переплавки: три кандидата без старого свойства, выбор обязателен и ждёт (пробел №17).</summary>
+        public SmithResult BeginRemelt(ForgeTarget target, int property) => BeginChoice(EniAction.Remelt, target, property, out _);
+
+        /// <summary>
+        /// Оплата добавления. В пределах лимита редкости — сессия выбора; перелив (+1 сверх
+        /// лимита) сначала бросает трещину 50%: cracked — оплата и попытка сгорели.
+        /// </summary>
+        public SmithResult BeginAdd(ForgeTarget target, out bool cracked) => BeginChoice(EniAction.Add, target, 0, out cracked);
+
+        SmithResult BeginChoice(EniAction action, ForgeTarget target, int property, out bool cracked)
+        {
+            cracked = false;
+            if (_sessionKind == ForgeSessionKind.Temper) SettleForgeSession();
+            var quote = Quote(action, target, property);
+            if (quote.Status != SmithResult.Success) return quote.Status;
+            if (!quote.Affordable) return SmithResult.InsufficientFunds;
+            TryForgeTarget(target, out var item);
+            Pay(quote, 0);
+            if (quote.Overflow && Roll(item, item.Crafting?.PaidActions ?? 0, OverflowStream) < AddOverflowCrackPercent)
+            {
+                Place(target, WithStep(item, CrackStep));
+                cracked = true;
+                return SmithResult.Success;
+            }
+            ItemGenerator.Generate(item, Items, _forgeRoll);
+            bool add = action == EniAction.Add;
+            OpenSession(add ? ForgeSessionKind.Add : ForgeSessionKind.Remelt, target, item, add ? _forgeRoll.AffixCount : property);
+            return SmithResult.Success;
+        }
+
+        public int SessionCandidateCount => PendingChoice() ? _sessionCandidates.Length : 0;
+
+        public RolledAffix SessionCandidate(int index) => (uint)index < (uint)SessionCandidateCount ? _sessionCandidates[index] : default;
+
+        /// <summary>Вещь, если выбрать кандидата index. Без изменений — для сравнения в окне.</summary>
+        public ItemInstance SessionCandidateItem(int index)
+        {
+            if ((uint)index >= (uint)SessionCandidateCount) return default;
+            var candidate = _sessionCandidates[index]; var definition = Items.GetAffix(Items.IndexOfAffix(candidate.AffixId));
+            var operation = _sessionKind == ForgeSessionKind.Add ? ForgeOperation.Add : ForgeOperation.Remelt;
+            return WithStep(_sessionSnapshot, new CraftStep(operation, (byte)_sessionProperty, candidate.AffixId, NormalizeAffix(candidate.Value, definition)));
+        }
+
+        /// <summary>Выбор оплаченного кандидата: вещь меняется, сессия закрывается.</summary>
+        public SmithResult ChooseSessionCandidate(int index)
+        {
+            if (!PendingChoice()) return SmithResult.NoSession;
+            if ((uint)index >= (uint)_sessionCandidates.Length) return SmithResult.NoAffix;
+            var after = SessionCandidateItem(index);
+            if (!ItemGenerator.Generate(after, Items, _forgeRoll)) return SmithResult.Incompatible;
+            Place(_sessionTarget, after);
+            CloseSession();
+            return SmithResult.Success;
+        }
+
+        // ---- сердце ----
+
+        /// <summary>Вплавить сердце босса гранью facet: без риска и без траты попытки (пробел №13).</summary>
+        public SmithResult InlayHeart(ForgeTarget target, int bossKey, HeartFacet facet)
+        {
+            if (_sessionKind == ForgeSessionKind.Temper) SettleForgeSession();
+            var quote = Quote(EniAction.Heart, target, 0, bossKey, facet);
+            if (quote.Status != SmithResult.Success) return quote.Status;
+            if (facet == HeartFacet.None) return SmithResult.Incompatible;
+            if (HeartCount(bossKey) < 1) return SmithResult.NoHeart;
+            if (!quote.Affordable) return SmithResult.InsufficientFunds;
+            TryForgeTarget(target, out var item);
+            Pay(quote, bossKey);
+            Place(target, WithStep(item, new CraftStep(ForgeOperation.Heart, (byte)facet, bossKey, Fix64.Zero)));
+            return SmithResult.Success;
+        }
+
+        // ---- разбор ----
+
+        /// <summary>
+        /// Осколки за разбор: основа по редкости и уровню, +5 за каждое оплаченное действие
+        /// без трещины (Inventory.ShardsFor), «Знаток рун» ×1,25 — вниз.
+        /// </summary>
+        public int SalvageShards(in ItemInstance item) => (int)((long)Inventory.ShardsFor(item) * SalvagePercent / 100);
+
+        /// <summary>
+        /// Процент осколков разбора. «Знаток рун» — включённая клятва (снимок CreateRunBoons
+        /// доски T2): пока доски нет, снимок пуст и процент 100.
+        /// </summary>
+        internal int SalvagePercent => CreateRunBoons().Rank(OathId.RuneSage) > 0 ? 125 : 100;
+
+        public SmithResult Dismantle(int slot, out int shards)
+        {
+            shards = 0;
+            if (!Has(CampService.Smith) || (uint)slot >= Bag.Capacity || Bag.IsEmpty(slot)) return SmithResult.InvalidItem;
+            if (Bag.IsKept(slot)) return SmithResult.Protected;
+            // Вещь открытой сессии ждёт выбора или удара: разбор не съест оплаченное.
+            if (SessionHolds(ForgeTarget.Bag(slot))) return SmithResult.SessionOpen;
+            shards = SalvageShards(Bag.At(slot)); Bag.Remove(slot); Earn(CurrencyType.Shards, shards); return SmithResult.Success;
+        }
+
+        // ---- кандидаты ----
+
         static Fix64 NormalizeAffix(Fix64 value, AffixDefinition definition) => definition.MaxValue <= definition.MinValue ? Fix64.Zero
             : Fix64.Clamp((value - definition.MinValue) / (definition.MaxValue - definition.MinValue), Fix64.Zero, Fix64.One);
         bool CanPlaceAffix(AffixDefinition definition, ItemInstance item, GeneratedItem rolled, int replacedSlot)
@@ -157,18 +487,21 @@ namespace Game.Sim
             if (definition.Weight <= 0 || definition.MinItemLevel > item.ItemLevel || !definition.AllowedOn(rolled.Category)) return false;
             for (int i = 0; i < rolled.AffixCount; i++)
             {
-                if (i == replacedSlot) continue;
+                // Переплавка: старое свойство не возвращается ни тем же, ни другим тиром своей группы.
                 int index = Items.IndexOfAffix(rolled.GetAffix(i).AffixId);
                 if (index >= 0 && Items.GetAffix(index).Group == definition.Group) return false;
             }
             return true;
         }
+        /// <summary>
+        /// Три кандидата разных групп. Детерминированы от вещи до оплаты: после закрытия
+        /// окна и перезагрузки те же — они не хранятся, а выводятся заново.
+        /// </summary>
         RolledAffix[] ForgeCandidates(ItemInstance item, GeneratedItem rolled, int replacedSlot, ForgeOperation operation)
         {
             var eligible = new List<int>();
             for (int i = 0; i < Items.AffixCount; i++)
-                if (CanPlaceAffix(Items.GetAffix(i), item, rolled, replacedSlot)
-                    && (replacedSlot < 0 || Items.GetAffix(i).Id != rolled.GetAffix(replacedSlot).AffixId)) eligible.Add(i);
+                if (CanPlaceAffix(Items.GetAffix(i), item, rolled, replacedSlot)) eligible.Add(i);
             ulong seed = Hashing.Offset; item.HashInto(ref seed); Hashing.Mix(ref seed, (int)operation); Hashing.Mix(ref seed, replacedSlot);
             var rng = new Pcg32(seed, 0x43414E4449444154UL); var candidates = new List<RolledAffix>(3);
             while (eligible.Count > 0 && candidates.Count < 3)
@@ -180,36 +513,6 @@ namespace Game.Sim
                 for (int i = eligible.Count - 1; i >= 0; i--) if (Items.GetAffix(eligible[i]).Group == definition.Group) eligible.RemoveAt(i);
             }
             return candidates.ToArray();
-        }
-        public bool CanAffordForge(ForgePreview preview) => preview != null && preview.Owner == this && preview.Status == SmithResult.Success
-            && Money(CurrencyType.Gold) >= preview.Gold && Money(CurrencyType.Shards) >= preview.Shards
-            && MaterialCount(ForgeMaterial.Steel) >= preview.Steel && MaterialCount(ForgeMaterial.Core) >= preview.Cores;
-        public SmithResult CommitForge(ForgePreview preview)
-        {
-            if (preview == null || preview.Owner != this) return SmithResult.StalePreview;
-            if (preview.Status != SmithResult.Success) return preview.Status;
-            if (!TryForgeTarget(preview.Target, out var current) || !current.SameRecipe(preview.Before)) return SmithResult.StalePreview;
-            if (preview.Operation == ForgeOperation.Transfer && ((uint)preview.DonorSlot >= Bag.Capacity || !Bag.At(preview.DonorSlot).SameRecipe(preview.DonorItem))) return SmithResult.StalePreview;
-            var reread = PreviewForge(preview.Target, preview.Operation, preview.AffixIndex, preview.Choice, preview.DonorSlot, preview.DonorAffix);
-            if (reread.Status != SmithResult.Success) return reread.Status;
-            if (!reread.After.SameRecipe(preview.After)) return SmithResult.StalePreview;
-            if (!CanAffordForge(reread)) return SmithResult.InsufficientFunds;
-            // Всё проверено до первого изменения; расход происходит только после подтверждения.
-            if (preview.Target.IsWorn) Worn.Equip(preview.After, out _);
-            else Bag.Put(preview.Target.Slot, preview.After, Bag.IsKept(preview.Target.Slot));
-            if (preview.Operation == ForgeOperation.Transfer) Bag.Remove(preview.DonorSlot);
-            Spend(CurrencyType.Gold, reread.Gold); Spend(CurrencyType.Shards, reread.Shards);
-            SpendForgeMaterial(ForgeMaterial.Steel, reread.Steel); SpendForgeMaterial(ForgeMaterial.Core, reread.Cores);
-            return SmithResult.Success;
-        }
-        public SmithResult Reforge(int slot, int affix) => CommitForge(PreviewForge(ForgeTarget.Bag(slot), ForgeOperation.Refine, affix));
-        public SmithResult Reforge(EquipSlot slot, int affix) => CommitForge(PreviewForge(ForgeTarget.Worn(slot), ForgeOperation.Refine, affix));
-        public SmithResult Dismantle(int slot, out int shards)
-        {
-            shards = 0;
-            if (!Has(CampService.Smith) || (uint)slot >= Bag.Capacity || Bag.IsEmpty(slot)) return SmithResult.InvalidItem;
-            if (Bag.IsKept(slot)) return SmithResult.Protected;
-            shards = Inventory.ShardsFor(Bag.At(slot)); Bag.Remove(slot); Earn(CurrencyType.Shards, shards); return SmithResult.Success;
         }
     }
 }

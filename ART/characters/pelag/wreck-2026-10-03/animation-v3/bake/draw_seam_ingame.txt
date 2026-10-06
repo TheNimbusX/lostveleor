@@ -1,0 +1,15 @@
+back mount centre (-0.04 1.08 0.00), bake frame 0 (0.43 1.08 -1.43), seam 1.51 m
+  f  0.0 shown (-0.04 1.08 0.00) |v| 0.0 offset 1.505 accel 400 residual 0.858
+  f  1.0 shown (0.14 1.04 -0.05) |v| 10.7 offset 1.579 accel 372 residual 0.526
+  f  2.0 shown (0.53 0.94 0.06) |v| 15.4 offset 1.443 accel 376 residual 0.249
+  f  3.0 shown (0.99 0.82 0.31) |v| 16.9 offset 1.057 accel 293 residual 0.105
+  f  4.0 shown (1.39 0.69 0.64) |v| 14.7 offset 0.551 accel 301 residual 0.032
+  f  5.0 shown (1.45 0.63 1.10) |v| 17.8 offset 0.135 accel 381 residual 0.000
+  f  6.0 shown (1.04 0.65 1.70) |v| 25.1 offset 0.015 accel 72 residual 0.000
+  f  7.0 shown (0.35 0.72 2.18) |v| 25.8 offset 0.001 accel 7 residual 0.000
+  f  8.0 shown (-0.47 0.84 2.33) |v| 25.6 offset 0.000 accel 1 residual 0.000
+  f  9.0 shown (-1.27 0.98 2.10) |v| 25.1 offset 0.000 accel 0 residual 0.000
+  f 10.0 shown (-1.88 1.11 1.58) |v| 24.4 offset 0.000 accel 0 residual 0.000
+  f 11.0 shown (-2.23 1.22 0.87) |v| 23.9 offset 0.000 accel 0 residual 0.000
+  f 12.0 shown (-2.29 1.27 0.10) |v| 23.2 offset 0.000 accel 0 residual 0.000
+SEAM max correction accel 400 m/s²

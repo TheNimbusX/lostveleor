@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "units": "metres",
+  "comment": "ONE file for the game (PelagAnchorRig reads bone/position/rotation from Resources/Weapons/Pelag/AnchorBakes/grip_socket.json, divides by the hand lossyScale) and for anchor_grip_export.py (metres / blender-to-metre factor). Position = ring of the grip (chain exit) in mixamorig:LeftHand axes, metres at body height 1.82 m. Values = today's contract PelagEquipmentView.cs:59 TransformPoint(0, 0.045, 0.012) x boneUnit 1.82 m (measured by the exporter, units.boneUnitMetres); re-measure with the Unity EditMode dump (DESIGN 3.5) once a modelled Anchor_Grip ring exists.",
+  "bone": "mixamorig:LeftHand",
+  "position": [0.0, 0.0819, 0.02184],
+  "rotation": [0.0, 0.0, 0.0, 1.0],
+  "support": { "bone": "mixamorig:RightHand", "position": [0.0, 0.0819, 0.02184] },
+  "abordage": { "bone": "mixamorig:RightHand", "position": [0.0, 0.0819, 0.02184] }
+}

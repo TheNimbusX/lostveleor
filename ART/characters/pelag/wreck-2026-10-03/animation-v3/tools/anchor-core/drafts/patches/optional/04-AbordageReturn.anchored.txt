@@ -1,0 +1,16 @@
+НЕОБЯЗАТЕЛЬНЫЙ (группа abordage-flag, по умолчанию НЕ кладётся). Абордаж принят владельцем — без флага ничего не меняется:
+TryCatchReturning сразу возвращает false, пока AnchorRigSwitches.AbordageReturn = false (по умолчанию), и вызывается
+прежний ReturnFlyingAnchor. С флагом голову у руки ловит риг (Caught → Stow ≤ 0,25 с вместо 0,14 с на спину).
+Скорость пуловой головы сюда не передаётся (Vector3.zero) — риг выбирает цепь со скоростью не ниже 6 м/с.
+Приёмка — съёмкой до/после тем же сидом (DESIGN §7.4).
+
+### PATCH abordage-return-flag
+### FILE razlom/Assets/Game.View/PelagVfxController.AbordageAnchor.cs
+### OP replace
+### ANCHOR
+                body.GetComponent<PelagAnchorSlamView>()?.ReturnFlyingAnchor(head.position, head.rotation);
+### TEXT
+                // Риг якоря ловит голову только за флагом AnchorRigSwitches.AbordageReturn (по умолчанию — прежний путь).
+                if (!(body.GetComponent<PelagAnchorRig>()?.TryCatchReturning(head.position, head.rotation, Vector3.zero) ?? false))
+                    body.GetComponent<PelagAnchorSlamView>()?.ReturnFlyingAnchor(head.position, head.rotation);
+### END

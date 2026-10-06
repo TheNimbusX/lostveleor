@@ -194,13 +194,18 @@ namespace Game.Tests
         public void WreckStagesHaveDistinctClocksAndPresentationEventsWithOnePayment()
         {
             var s=Arena();s.SetAbility(0,AbilityDefinition.Wreck(),Array.Empty<AbilityNode>(),0);
-            s.Step(Cast(0));int first=s.PlayerAction.Serial;Until(s,15);
+            s.Step(Cast(0));int first=s.PlayerAction.Serial;
+            // Крушение v2 (03.10): контакт — удар этапа (замах 5, v4 06.10), конец — удар + 2 тика проводки.
+            Assert.That(s.PlayerAction.ContactTick,Is.EqualTo(5));Assert.That(s.PlayerAction.EndTick,Is.EqualTo(7));
+            Until(s,15);
             var resource=s.Entities.Lavidium[0];s.Step(Cast(0));
             Assert.That(s.PlayerAction.Serial,Is.GreaterThan(first));
             Assert.That(s.Events,Has.Some.Matches<SimEvent>(e=>e.Type==SimEventType.ActionStageStarted && e.ActionVariant==1));
             Assert.That(s.Entities.Lavidium[0],Is.GreaterThanOrEqualTo(resource));
             Until(s,30);s.Step(Cast(0));
             Assert.That(s.Events,Has.Some.Matches<SimEvent>(e=>e.Type==SimEventType.ActionStageStarted && e.ActionVariant==2));
+            // Выпад (v4 06.10): замах 8; конец — удар + удержание 3 + выход 8.
+            Assert.That(s.PlayerAction.ContactTick,Is.EqualTo(38));Assert.That(s.PlayerAction.EndTick,Is.EqualTo(49));
         }
         [Test]
         public void DeathAndArenaResetDiscardBufferedSkillsAndPendingExplosions()

@@ -1,0 +1,54 @@
+{
+  "mode": "built-in image_gen edit",
+  "transparent_background": true,
+  "records": [
+    {
+      "id": "wood-fallen-log",
+      "group": "09-woodland",
+      "file": "04-fallen-split-log.png",
+      "title": "Поваленное бревно",
+      "dims": "длина 1,8 м, диаметр 0,45 м",
+      "subject": "ONE fallen split tree log, 1.8 m long and 45 cm diameter, resting sideways with a large snapped branch nub and a clearly visible split end exposing warm honey wood. Thick dark brown bark with large carved facets, a small restrained moss strip on upper side. One long simple split opens the cylinder slightly without exploding into thin splinters. Entire log and branch fully visible. No soil, grass, rock base, tiny twigs or background.",
+      "prompt": "Make a SQUARE 1:1 transparent PNG cutout of the horizontal log in image 1. Keep the log's painterly carved wood shape and detail unchanged. Remove the entire brown/olive halo and every background pixel outside the actual log. Image 2 shows the required perfectly isolated transparent presentation. Neutral diffuse shading only; no glow, halo, backdrop, ground or shadow. Fit the COMPLETE log diagonally in the square with 10% transparent margin all around. Only the solid log and attached moss remain.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-589568ce-a4a2-446e-a7e4-03350e6f265d.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-49f78456-c5f7-46de-9842-b1cc5e1ed8a1.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-f73833c3-222a-4b0e-b05c-a98e6bb3ba25.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-589568ce-a4a2-446e-a7e4-03350e6f265d.png"
+    },
+    {
+      "id": "plant-shrub",
+      "group": "10-plants",
+      "file": "03-low-leaf-shrub.png",
+      "title": "Низкий лиственный куст",
+      "dims": "около 1,0 × 0,65 м, высота 0,6 м",
+      "subject": "ONE low asymmetric broadleaf woodland shrub, 1 m wide and 0.6 m tall, formed by THREE chunky leafy lobes with a few visibly larger broad olive-green leaves at edges, short warm brown stems barely visible at centre. Painterly broad sage top and dark cool green underside, simplified faceted masses, no thousands of tiny leaves. Low enough for the camp hero to remain readable. No berries, flowers, ground mound, rocks, soil base or extra plants.",
+      "prompt": "Make a SQUARE 1:1 transparent PNG cutout of the shrub in image 1. Keep the three leafy masses and short woody stems unchanged. Remove ALL the green glow/halo and the whole background outside physical leaves and stems. Image 2 shows the required clean alpha presentation. Complete shrub centred with 10% transparent margin. Neutral diffuse shading, no background paint, vignette, halo, shadow or ground. Transparent gaps between stems.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-caae9983-a815-47f7-b393-b2b9a471fd6a.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-64cf7100-bf3e-446d-be7b-3422ffd73b6e.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-fc130c3a-19bd-4445-af5e-9d842f9b0405.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-caae9983-a815-47f7-b393-b2b9a471fd6a.png"
+    },
+    {
+      "id": "plant-flowers",
+      "group": "10-plants",
+      "file": "04-small-flower-patch.png",
+      "title": "Небольшое цветочное пятно",
+      "dims": "около 0,65 × 0,45 м, высота 0,25 м",
+      "subject": "ONE small sparse camp wildflower clump, 65 cm wide and only 25 cm tall. Seven clearly separated small warm-white five-petal flowers with muted ochre centres above a few broad olive-green leaves, two subtly cream flowers, simple chunky stems. Calm accents matching the flowers at the reference lantern base, not a bright garden bouquet. Broad painterly shapes and facets, no microscopic petals. No soil island, planter, pot, rocks, background or tall dense foliage.",
+      "prompt": "Make a SQUARE 1:1 transparent PNG cutout of the flower clump in image 1. Preserve the seven white flowers and painterly broad olive leaves, but REMOVE ALL coloured halo/glow and every background pixel beyond the physical leaf and flower silhouettes. Image 2 is the clean isolated alpha presentation guide. Complete clump centred with 10% transparent empty margin. Neutral diffuse shading, no aura, backdrop, ground or cast shadow. Clear alpha gaps between flowers.",
+      "references": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-ba85b886-aa38-403c-9bef-1f863c6a9408.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-64cf7100-bf3e-446d-be7b-3422ffd73b6e.png"
+      ],
+      "source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-bbdfa70a-ffac-43a6-a455-5ce2d23a26c1.png",
+      "status": "generated",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-ba85b886-aa38-403c-9bef-1f863c6a9408.png"
+    }
+  ]
+}

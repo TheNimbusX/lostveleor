@@ -74,7 +74,9 @@ namespace Game.EditorTools
             {
                 Object.DestroyImmediate(root);
             }
-            AssetDatabase.SaveAssets();
+            // Не общий SaveAssets (сбрасывал чужие грязные ассеты — материалы босса 02.10): префаб записан SaveAsPrefabAsset,
+            // тема сохраняет себя сама, новые ассеты пишет CreateAsset; дописываются только материалы «Дыма и света».
+            CampInkParts.SaveInkMaterials();
             return PrefabPath;
         }
 

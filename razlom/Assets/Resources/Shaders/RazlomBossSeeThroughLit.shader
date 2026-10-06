@@ -2,9 +2,11 @@
 // должна быть, чтоб было видно»). Копия Universal Render Pipeline/Lit пакета URP 17.5
 // (com.unity.render-pipelines.universal, Shaders/Lit.shader) слово в слово: те же свойства,
 // проходы, ключевые слова и include. Отличия — только обёртки фрагмента ForwardLit, GBuffer,
-// DepthOnly и DepthNormals: сначала RazlomSeeThroughClip, потом фрагмент URP как есть.
-// ShadowCaster не выбивается — тень босса остаётся целой. Без блока свойств вида
-// (ThicketMasterCombatView) прозрачности нет: шейдер рисует ровно как URP Lit.
+// DepthOnly и DepthNormals: сначала RazlomSeeThroughClip, потом фрагмент URP как есть; в ForwardLit
+// после него — лунная кромка силуэта RazlomBossRim (ревью 02.10 вечер: босс пропадал в синей тени
+// арены; рендер Forward+, в GBuffer кромки нет). ShadowCaster не выбивается — тень босса остаётся
+// целой. Без блока свойств вида (ThicketMasterCombatView — прозрачность, ThicketMasterPhaseDressing —
+// кромка) нет ни того, ни другого: шейдер рисует ровно как URP Lit.
 // Собран скриптом artifacts/tools/thicket-seethrough/gen.py (локальный, вне git). Обновился URP —
 // заново скопировать шейдер пакета и повторить обёртки (поиск «RazlomSeeThrough» в этом файле).
 Shader "Razlom/Boss See-Through Lit"
@@ -193,7 +195,7 @@ Shader "Razlom/Boss See-Through Lit"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/Shaders/LitForwardPass.hlsl"
 
-            // Сетчатая прозрачность босса перед героем (RazlomSeeThrough.hlsl).
+            // Сетчатая прозрачность босса перед героем и лунная кромка силуэта (RazlomSeeThrough.hlsl).
             #include "RazlomSeeThrough.hlsl"
             void RazlomSeeThroughLitFragment(
                 Varyings input
@@ -209,6 +211,7 @@ Shader "Razlom/Boss See-Through Lit"
                     , outRenderingLayers
             #endif
                 );
+                outColor.rgb += RazlomBossRim(input.positionCS, input.normalWS.xyz, outColor.rgb);
             }
             ENDHLSL
         }

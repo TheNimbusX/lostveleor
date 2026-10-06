@@ -1,0 +1,11 @@
+{
+  "what": "Higgsfield generations for the Wreck motion-ref pack (the owner's manifest.json is left untouched)",
+  "date": "2026-10-03",
+  "B-key-poses-fixed-higgsfield.png": "= v2 (picked): fix of B-key-poses-chatgpt.png, only poses 1 and 3 redrawn",
+  "B-key-poses-fixed-higgsfield-v1.png": {"job_id": "91c24d9e-981d-4ad3-8b85-6e65c0ab1e34", "model": "gpt_image_2_5 medium 1k", "refs": ["r5_wreckB (= sheet B)", "r2", "r3"], "result": "pose 3 has one anchor; pose 1 anchor on a long chain at the floor but IN FRONT of him, not behind"},
+  "B-key-poses-fixed-higgsfield-v2.png": {"job_id": "e879caaa-1623-4c5c-a499-5ad49c806b5e", "model": "gpt_image_2_5 medium 1k", "refs": ["r5_wreckB", "r2", "r3"], "result": "pose 1 anchor behind him at the floor on a long chain; pose 3 one anchor, but on a short chain near the hands; the Russian captions got two typos (pose 1 'kazhetsya', pose 7 'tsep pryamaya')"},
+  "B2-key-poses-higgsfield.png": {"job_id": "98451d2f-368a-4b91-ba04-50841dd4f3c0", "model": "gpt_image_2_5 medium 2k", "refs": ["r2", "r7", "r3", "r5 (render)", "r6 (layout only)"], "poses": "8-11, 2 rows: side + three-quarter"},
+  "S-start-frame-higgsfield.png": {"job_id": "40d3a4b3-3663-4449-a1b6-e399f9cfd398", "model": "gpt_image_2_5 medium 2k", "refs": ["r2", "r7", "r3", "r1"], "note": "game camera ~1.5x closer, 3 guardians, pose 1 with the anchor on the ground behind him"},
+  "video/start-frame-studio.png": {"job_id": "a2d1a571-d480-4d19-bbbf-e13fbbce4ef3", "model": "gpt_image_2_5 medium 1k", "note": "anchor rests on the floor at his right-front"},
+  "video/wreck-combo-kling.mp4": {"job_id": "173e3b55-38f1-4abd-b014-42563fab9a4f", "model": "kling3_0_turbo 5 s 720p", "result": "flat swing right-to-left, backhand back, overhead lift (anchor briefly out of frame), slam/drag forward; anchor stays on the chain; the head morphs in 1-2 frames; no retry needed"}
+}

@@ -1,0 +1,537 @@
+{
+  "mode": "built-in image_gen generation and reference-guided editing",
+  "transparent_background": true,
+  "final_outputs": [
+    {
+      "id": "main-firepit",
+      "title": "Каменное кострище",
+      "output_file": "01-main/01-firepit.png",
+      "prompt": "Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nSUBJECT TO GENERATE:\nA low uneven open circular camp fire hearth, outer diameter about 1.7 m. Ten large irregular grey-brown stones form a readable ring, a shallow charcoal/ash bed INSIDE the ring, four thick partly charred split logs laid loosely across its middle. The central opening and large log shapes remain clear from above. No flames, smoke, sparks or glowing embers: animated fire will be supplied by the engine. No cooking tripod, surrounding dirt patch, grass, lantern, chairs or extra props. The hearth is a compact standalone physical object.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b70e33a2-3898-463d-9fbe-fe57d6be8a6e.png"
+    },
+    {
+      "id": "main-prep-table",
+      "title": "Походный стол",
+      "output_file": "01-main/02-expedition-table.png",
+      "prompt": "Edit this exact expedition table. Erase ONLY all printed map geography on the large central parchment sheet: remove the islands, water, mountains, forests and any route marks, leaving an entirely BLANK plain warm-cream parchment surface with the existing edges and folds. Keep the big parchment sheet lying flat on the tabletop, with clearly exposed broad central area for a separate map texture overlay. Preserve the table, compass, rolled map, bottle holder, two bottles, camera, wood/metal materials and hand-painted style exactly. Do not put a map into any other place. True transparent alpha background; no backdrop, glow, haze, cast shadow, floor, text or symbols. Whole object visible.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b2b88a3f-c012-4b28-88e4-e65c2ce8ec5f.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-c7e15314-6e19-40d0-a196-97d9de977de8.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b2b88a3f-c012-4b28-88e4-e65c2ce8ec5f.png"
+    },
+    {
+      "id": "merchant-body",
+      "title": "Корпус лавки отдельно",
+      "output_file": "02-merchant/05-counter-body.png",
+      "prompt": "Edit this exact transparent merchant stall concept into its modular COUNTER BODY ONLY. DELETE all goods (sacks, rolls, jars, parcels and storage boxes), all olive cloth, the entire roof/canopy and the two tall curved canopy posts down to the rear shelf. Keep the low wooden counter body, stepped rear display shelves, side cubbies, corner iron fittings, timber material and exact painterly style/camera. All surviving shelves and countertop must be EMPTY. Reconstruct sensible complete low wooden joints where canopy posts were removed. Body is wider than deep. True clean transparent alpha background and transparent open gaps; NO brown backdrop, glow, haze, shadow, floor or new objects. Center whole counter with margin.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-stall-2026-10-04-v2/02-short-arched-canopy.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-2c773770-19e1-4b14-84ea-7e9f2a0752d3.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-846189b8-b277-4e29-92fd-b9f2a6c19cda.png"
+    },
+    {
+      "id": "merchant-canopy",
+      "title": "Задний навес отдельно",
+      "output_file": "02-merchant/06-rear-canopy-module.png",
+      "prompt": "Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nSUBJECT TO GENERATE:\nA freestanding REAR CANOPY MODULE ONLY for a modular travelling merchant stall, all its parts visibly connected. Two tall chunky rear wood posts 2.7 m high, joined by a top crossbar, holding a shallow muted olive canvas lean-to roof 3.8 m wide but ONLY 0.9 m deep. Its raised/open front edge has no valance and no front support posts; triangular sturdy timber rear braces support the shallow overhang. The roof covers only the back 20–25% of the complete future stall; most of a counter would stand IN FRONT outside this shallow canopy. Show the complete two posts down to their bottoms, top beam and broad painted canvas folds. No counter, no goods, no ground, no lanterns. No flags, no loose hanging cloth crossing future merchandise.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-8810686b-7e9c-4b92-b915-3a47cb16db54.png"
+    },
+    {
+      "id": "pelag-rope",
+      "title": "Канат Пелага",
+      "output_file": "03-pelag/01-rope-coil.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. A single isolated object with NO backdrop. Entire surroundings and all gaps must have alpha=0. Keep a generous transparent margin. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nOne heavy sailor's rope coiled into a low broad neatly uneven spiral, 65 cm across, with a large simple tied end laid across its top and a short loose tail tucked alongside. Warm pale flax ochre, visibly carved broad twisted rope strands, a few subtle worn darker patches. A substantial readable physical coil, not thin thread. No ship, anchor, chest, floor, grass or separate background objects.\n\nCRITICAL OUTPUT: true transparent background, opaque object, no brown haze or vignette; fit within a square image.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-bfa77853-b718-4d9d-9879-af233b94a61c.png"
+    },
+    {
+      "id": "pelag-chest",
+      "title": "Походный сундук Пелага",
+      "output_file": "03-pelag/02-travelling-chest.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. A single isolated object with NO backdrop. Entire surroundings and all gaps must have alpha=0. Keep a generous transparent margin. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nOne old seafarer's travelling chest, 1.05 m wide, low substantial rectangular wooden body and slightly arched CLOSED lid. Chunky weathered honey-brown timber, two wide dull dark iron straps, simple central clasp, oversized carrying handles, one short thick rope side handle and a folded plain oatmeal canvas strap bound around the chest. Maritime identity through rope, sturdy sea-worn joinery and rounded worn edges, NOT through emblems or anchor symbols. No skulls, treasure/gold spilling, flags, writing, floor or extra props.\n\nCRITICAL OUTPUT: true transparent background, opaque object, no brown haze or vignette; fit within a square image.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e2ecc591-cf48-4fb4-bf51-0cf84c377330.png"
+    },
+    {
+      "id": "pelag-tackle",
+      "title": "Снасти Пелага",
+      "output_file": "03-pelag/03-fishing-tackle.png",
+      "prompt": "Edit this exact fishing-tackle prop for easier 3D reconstruction. Preserve the wooden box, carved wood/iron/painterly style and camera. Remove EVERY thin fishing line stretching along the rods. Make both rods shorter so their tips are only 50% higher than the top of the box; thick solid simple rods with no thin hooks. Replace the complicated gridded fishing net with a compact tightly ROLLED coarse net bundle, an opaque muted olive/flax cylinder tied by just THREE thick widely separated rope bands. No exposed mesh grid or numerous holes. Keep the three large cork floats and a broad line spool in the box. One compact coherent sturdy bundle. Transparent alpha background, no backdrop, haze, floor, text, symbols or cast shadow.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-93ff01be-ad4a-4f31-bd96-10627155eec9.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b5741f3d-3999-40c2-99cc-87e1cbbad1aa.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-93ff01be-ad4a-4f31-bd96-10627155eec9.png"
+    },
+    {
+      "id": "pelag-map",
+      "title": "Свёрнутая карта Пелага",
+      "output_file": "03-pelag/04-map-and-case.png",
+      "prompt": "Edit ONLY the painted geography on the parchment in the FIRST image. Preserve the entire prop, exact wood/metal/materials, painterly style, position, camera, proportions, all surrounding props and transparent background. The SECOND image is the actual geography reference, NOT an environment to create. On the existing flat parchment replace the random continents with an accurately simplified plan of that reference: one much larger irregular WESTERN landmass on the left, one smaller elongated EASTERN landmass on the right separated by a clear channel, and the SMALL SOUTHERN ARCHIPELAGO below-right of the larger landmass. Keep the characteristic broad coastline outlines and relative placement. Paint simple muted olive-grey land and subdued dusty-blue sea on cream parchment, a few large restrained mountain/forest strokes, no detailed relief. Remove all flags, labels, names, heraldry, emblems and decorative border from the geography reference. The parchment remains a FLAT map surface, no miniature 3D landscape. Entire isolated prop cutout, truly transparent alpha outside it, no backdrop/glow/cast shadow.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a53328bc-17da-4a76-bf8e-af2ee8ac37ef.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/world-map-lviv-inspired-v9-flags-4k.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-21ae1b98-aa3b-404b-b756-cd213e621da6.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a53328bc-17da-4a76-bf8e-af2ee8ac37ef.png"
+    },
+    {
+      "id": "eni-rank-1",
+      "title": "Эни I — точильный круг",
+      "output_file": "04-eni/01-rank-1-grindstone.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nA compact medieval hand-cranked GRINDSTONE on a chunky wooden A-frame, one broad grey faceted circular wheel, simple dark iron axle and short wooden crank, low trough underneath, one large sharpening file secured to its side. A single coherent smithing precision-tool module, about 0.9 m wide and 0.85 m tall, outside-facing wheel fully visible. The wheel is unpowered and dry, no flames or sparks. No anvil, weapons rack, roof, ground, text or heraldry.\nTrue transparent alpha with no background or haze.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-4bbdece2-0f7f-4880-b853-b712bf149481.png"
+    },
+    {
+      "id": "eni-rank-2",
+      "title": "Эни II — сталь и зажим",
+      "output_file": "04-eni/02-rank-2-steel-and-clamp.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nA compact smith's property-addition work module: one stout low wooden work stand with a large dull iron bench vise on top holding a simple half-finished sabre blade; a lower open compartment contains three broad steel ingots and two clearly visible large tongs. One coherent connected stand, 0.9 m wide, 0.8 m high. The steel, blade blank, vise and timber have LARGE hand-painted facets and bevels, no tiny mechanical teeth or microdetails. No fire, glow, full anvil, existing smithy, roof, floor or symbols.\nTrue transparent alpha with no background or haze.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-bee3b262-7f53-4d77-9dc1-74fa11923b1a.png"
+    },
+    {
+      "id": "eni-rank-3",
+      "title": "Эни III — стол переноса",
+      "output_file": "04-eni/03-rank-3-donor-workbench.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nA compact master smith's TRANSFER WORKBENCH module: heavy 1.2 m wooden bench, two open shallow iron-lined trays side-by-side on top, one holds a worn donor sabre, the other a clean partly forged recipient sabre of visibly similar broad shape. Between trays a simple large hand press/vise and one pair of broad tongs attached to the rear edge. Below, one open bin with a few thick blade templates and a small dull metal core. All physical ordinary forge tools, no magic machine, runes, glow, gears or floating parts. No roof/canopy, light, ground, extra anvil or heraldry.\nTrue transparent alpha with no background or haze.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-273de756-dd40-4f0d-ada0-dfeddeaa9dc7.png"
+    },
+    {
+      "id": "ven-rank-1",
+      "title": "Вен I — дополнительная выкладка",
+      "output_file": "05-ven/01-rank-1-extra-display.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nOne compact three-tier merchant display addon made from chunky honey wooden crates securely stacked as a low stepped shelf. Six SIMPLE larger goods placed in six clearly separate places across the three heights: a small cream tied sack, olive cloth roll, plain ochre pottery jug, square wrapped parcel, squat lidded barrel and folded cream cloth. One coherent module 1.1 m wide and 0.7 m high. Open readable silhouettes and spaces, no microscopic objects. No full stall, canopy, floor, price tags, writing or emblems.\nTrue transparent alpha, no background or haze. Whole object in frame.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-cf1a2fa1-9e27-49e1-9737-e840a9c83db6.png"
+    },
+    {
+      "id": "ven-rank-2",
+      "title": "Вен II — ящик резерва",
+      "output_file": "05-ven/02-rank-2-reserve-box.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nOne sturdy merchant's reserved-goods lockbox with a single thick wooden lid shown HALF OPEN, a simple large iron padlock hanging from the open clasp, and one olive cloth-wrapped valuable parcel resting inside on folded cream padding. Low honey timber box reinforced by broad dark iron strips, visibly different from a seafarer's chest: flat rectangular lid, no arched top, no rope handles. No text, emblems, symbols, coins, floor or separate props. About 0.8 m wide.\nTrue transparent alpha, no background or haze. Whole object in frame.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-2140e99b-959f-4b59-a137-a2a05e541f61.png"
+    },
+    {
+      "id": "ven-rank-3",
+      "title": "Вен III — витрина категорий",
+      "output_file": "05-ven/03-rank-3-category-display.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nOne small upright wooden merchant catalogue/display module, a compact four-compartment open shelf about 1.15 m wide and 0.95 m high. Its four clearly distinct physical displays are: one broad short SABRE resting diagonally; one folded plain dark leather ARMOUR VEST; one oversized simple brass FINGER RING resting on an olive cloth pad; one TALISMAN made of a large plain tooth on a thick cord. The objects themselves communicate the categories. No drawn category icons, text, signboard, emblems, flags or heraldry. All four compartments openly visible from the 48-degree camera, no canopy, no full stall or floor.\nTrue transparent alpha, no background or haze. Whole object in frame.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-91e47153-b219-4198-8219-08b9ed3bb7e3.png"
+    },
+    {
+      "id": "leo-rank-1",
+      "title": "Лео I — большие бутыли",
+      "output_file": "06-leo/01-rank-1-large-bottles.png",
+      "prompt": "One isolated hand-painted fantasy game prop on a TRUE TRANSPARENT background: a low TWO-TIER chunky honey wooden rack containing FOUR large corked faceted bottles, two subdued berry-red and two muted blue, opaque painted glass, thick dark iron fittings, just one rope binding at a corner. Broad brush-painted facets and large bevels exactly matching attached wooden crate/herbal table. No glow, vignette, brown haze, background, ground or cast shadow. Orthographic three-quarter elevated 48-degree camera. Whole rack and corks visible, generous empty margins. PNG cutout only, empty alpha outside the silhouette. No text, labels, flags or symbols.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-8aad0242-8d8e-409d-a90e-d839c2911d62.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-828a00ab-ff38-463f-883e-d1bc5ce6eb65.png"
+    },
+    {
+      "id": "leo-rank-2",
+      "title": "Лео II — травы и живица",
+      "output_file": "06-leo/02-rank-2-herbs-and-resin.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nOne compact standing herbal/resin preparation module: a thick wooden frame on a low open ingredient box, three broad bundles of olive herbs hang from its short top bar, beside them one squat corked amber resin jar and one squat blue-green herbal infusion jar rest on a middle shelf. One large stone mortar with pestle sits at the front. A coherent ordinary alchemy addon about 0.8 m wide and 0.9 m tall, no tiny dangling leaves, all herbs chunky broad leaf shapes. No canopy, entire workshop, fire, glow, labels, writing or floor.\nTrue transparent alpha, no background or haze. Whole object in frame.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-51e27bd3-264f-4f4b-970e-83052a2b1841.png"
+    },
+    {
+      "id": "leo-rank-3",
+      "title": "Лео III — смешивание и фильтр",
+      "output_file": "06-leo/03-rank-3-mixing-and-filter.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nOne compact advanced alchemist's mixing/filtering stand: heavy small timber worktable, TWO broad ceramic mixing vessels side by side, one muted dusty red and one muted blue-green, a simple pale canvas filter funnel above a squat cream collecting jar at the back, one plainly shaped brass measuring balance with thick arms and shallow bowls. All tools ordinary physical medieval craft apparatus, broad painted forms, 0.95 m wide and 0.85 m tall. No tiny pipettes, delicate glass tubes, science fiction, runes, glow, text, roof or floor.\nTrue transparent alpha, no background or haze. Whole object in frame.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/59f424d3-25a7-4c70-9af9-28d3d5b32570 (1).png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/13907ff6-b416-4e93-a8a9-f5b63f492580.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-04139816-dd32-408e-b9d8-9acaeb94e4f3.png"
+    },
+    {
+      "id": "tree-broad",
+      "title": "Широкое лиственное дерево",
+      "output_file": "07-trees/01-broadleaf-wide.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE broad deciduous forest tree, 5.5 m tall with a chunky warm brown trunk and a wide rounded asymmetric crown made of FIVE clearly separated large olive-green faceted leafy volumes. Low-poly-shaped hand-painted foliage masses with broad brush strokes, individual leaves suggested sparingly by LARGE painterly shapes, no leaf noise. A few sturdy visible branches, short broad root toes at trunk foot. Muted cooler dark green underside, olive sage top, no sunset lighting. Entire tree fully visible including top and bare root foot. No ground mound, grass patch, flowers, rocks or other trees.\nEntire isolated tree with no backdrop or scenery, true transparent alpha all around, no cast shadow.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+    },
+    {
+      "id": "tree-crooked",
+      "title": "Изогнутое лиственное дерево",
+      "output_file": "07-trees/02-crooked-broadleaf.png",
+      "prompt": "TRANSPARENT PNG GAME ASSET CUTOUT. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE crooked deciduous forest tree, 5 m tall, thick warm brown trunk curves gently and forks into two sturdy unequal branches. Its off-centre crown leans to one side, made of FOUR large separated broad faceted olive-green foliage masses with clear gaps showing branch structure. Painterly broad colour planes consistent with the reference props, no individual-leaf noise or realism. Cool muted shadow-green under crown, olive sage top, entire silhouette and bare root toes fully visible. No ground base, shrubs, flowers, rocks or extra tree.\nEntire isolated tree with no backdrop or scenery, true transparent alpha all around, no cast shadow.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/55571365-2cfd-4f2f-b5da-5f5e36c0b7e3.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-8c24549f-9c4c-42d7-a0e6-f909ec4c4c64.png"
+    },
+    {
+      "id": "tree-conifer",
+      "title": "Узкое хвойное дерево",
+      "output_file": "07-trees/03-narrow-conifer.png",
+      "prompt": "Transform this isolated hand-painted tree into ONE narrow tall woodland CONIFER, preserving its carved brown wood, broad painterly leaf colour planes, exact transparent alpha and overall whole-tree framing. Replace all round leaf clusters with FOUR uneven layered conical dark olive/sage green branch masses separated by clear gaps. Crown much narrower than the input tree; trunk lower third and broad root toes remain clearly visible. Asymmetric natural conifer, no Christmas decoration, no individual needles, no bark microtexture. Full tree with empty margin; clean true TRANSPARENT background, no green/brown haze, vignette, glow, floor, soil or cast shadow.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b18a358a-e55e-46bd-9228-865cccad3de9.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a2187fe9-f6f1-4261-86b8-41c029137523.png"
+    },
+    {
+      "id": "tree-sparse",
+      "title": "Разреженное дерево",
+      "output_file": "07-trees/04-sparse-broadleaf.png",
+      "prompt": "Transform this isolated hand-painted tree into ONE SPARSE woodland tree. Preserve chunky carved warm brown bark and broad olive/sage painted leaf facets, style, true transparent alpha and full-tree framing. Make the trunk taller/slimmer with THREE long unequal branching arms, each ending in just ONE distinct small broad foliage cluster: only THREE foliage clusters total, with big clear empty gaps showing the branches. Large airy irregular asymmetrical silhouette. No fine twigs, fallen leaves, dead horror tree, individual leaf noise, ground or other props. Entire tree and root toes visible with margin. Clean TRUE TRANSPARENT background, absolutely no green/brown haze, vignette, glow or cast shadow.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-6449270e-3e67-4451-a431-aeea0cb0844c.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-caeb23a3-636d-400a-a86b-7c4374307cde.png"
+    },
+    {
+      "id": "rock-boulder",
+      "title": "Одиночный валун",
+      "output_file": "08-stones/01-faceted-boulder.png",
+      "prompt": "TRANSPARENT PNG CUTOUT, one isolated hand-painted game asset. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE compact irregular woodland boulder, 1.4 m wide and 0.85 m high, made of about TEN broad uneven grey-brown planes with generously softened chipped edges. Medium warm grey-brown top and cool grey underside, broad hand-painted brush shading and just two large restrained cracks. A small muted moss patch over one side edge, mostly stone remains bare. Similar facet/bevel vocabulary to the reference anvil stones. No pedestal, dirt, ground, grass, flowers or other rocks.\nTrue clean transparent alpha background, opaque object, zero haze or vignette, no physical earth base or floor.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/bed8590f-38a1-4484-979f-44e8b51c0c98.png",
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+    },
+    {
+      "id": "rock-flat",
+      "title": "Низкая группа плоских камней",
+      "output_file": "08-stones/02-low-flat-stones.png",
+      "prompt": "Create a NEW low woodland stone group in exactly the painted faceted material style of this boulder. FIVE broad FLAT stone slabs, each only 10–20 cm thick, laid beside each other with light overlap into a LOW irregular cluster 1.5 m wide, total height no more than 25 cm. Much wider than high, NO tall boulder or vertical pile. Two restrained olive moss patches. Large painted flat grey-brown facets and softened worn edges. One coherent cluster shown orthographic from 48 degrees above. TRUE TRANSPARENT PNG CUTOUT, no brown haze, vignette, ground, terrain base, grass, cast shadow or background. Whole subject inside frame.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-021d72cd-4e34-46ff-9cf0-7684ece1a8fe.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-bbbbf8a4-0a56-452a-86f0-87bcb856d538.png"
+    },
+    {
+      "id": "rock-shore",
+      "title": "Береговые камни",
+      "output_file": "08-stones/03-rounded-shore-stones.png",
+      "prompt": "Transform these flat stones into ONE LOW compact group of SIX smooth rounded riverbank stones of unequal sizes. Broad hand-painted grey/taupe/slate colour planes and softly bevelled polygonal shapes, no cracks, no moss, no shiny wet reflections. Width 1.3 m, height 0.35 m. Keep the same overhead three-quarter angle and CLEAN TRANSPARENT alpha outside the stone silhouettes. Complete group centred with 10% empty transparent margin. No backdrop, haze, glow, cast shadow, sand, ground or text.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-021d72cd-4e34-46ff-9cf0-7684ece1a8fe.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-73e5a940-10bf-4e09-96da-b29accdfa3a1.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-84ebd721-fa53-409f-a592-f363cdb5b7ab.png"
+    },
+    {
+      "id": "wood-roots",
+      "title": "Отдельное корневое основание",
+      "output_file": "09-woodland/01-root-base.png",
+      "prompt": "TRANSPARENT PNG CUTOUT, one isolated hand-painted game asset. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE low standalone tree ROOT BASE MODULE to place around the foot of an existing tree: short central hollow wood collar with a clearly open 35 cm socket, FOUR thick irregular roots radiate outward asymmetrically and taper gently. Warm brown carved painterly bark, large bevels and just a few broad cracks, total diameter 1.4 m, max height 0.25 m. Not a stump: central socket is empty for a trunk. No full tree, foliage, moss grass, stones, soil disc or ground.\nTrue clean transparent alpha background, opaque object, zero haze or vignette, no physical earth base or floor.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-2fecf7cc-85cf-4a1e-ab05-61bb69d45da1.png"
+    },
+    {
+      "id": "wood-cut-stump",
+      "title": "Рубленый пень",
+      "output_file": "09-woodland/02-cut-stump.png",
+      "prompt": "TRANSPARENT PNG CUTOUT, one isolated hand-painted game asset. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE freshly cut woodland stump, 65 cm diameter and 45 cm high, squat irregular chunky brown bark sides and four short root toes. Broad light honey cut top with FOUR widely spaced stylized growth-ring strokes and one simple large radial split. Painterly broad planes, hand-carved beveled edges, no noisy bark or tiny rings. Entire stump isolated, no axe, grass, stones, ground disc, fungi or extra props.\nTrue clean transparent alpha background, opaque object, zero haze or vignette, no physical earth base or floor.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-49f78456-c5f7-46de-9842-b1cc5e1ed8a1.png"
+    },
+    {
+      "id": "wood-old-stump",
+      "title": "Старый сломанный пень",
+      "output_file": "09-woodland/03-old-broken-stump.png",
+      "prompt": "TRANSPARENT PNG CUTOUT, one isolated hand-painted game asset. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE old broken woodland stump, low uneven silhouette 0.65 m tall, dark warm brown chunky bark and a large jagged splintered break exposing light tan wood in two big planes. Partly hollow top with a clear dark cavity; one restrained olive moss patch down the shaded side, three thick root toes. Broad painterly facets and large cracks only. No mushrooms, ground, grass, rocks, insects or axe.\nTrue clean transparent alpha background, opaque object, zero haze or vignette, no physical earth base or floor.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/ed226779-a1a6-4319-9e53-8edd684a841a.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-b18e8955-b3e5-4861-bc66-ab58950352fb.png"
+    },
+    {
+      "id": "wood-fallen-log",
+      "title": "Поваленное бревно",
+      "output_file": "09-woodland/04-fallen-split-log.png",
+      "prompt": "Make a SQUARE 1:1 transparent PNG cutout of the horizontal log in image 1. Keep the log's painterly carved wood shape and detail unchanged. Remove the entire brown/olive halo and every background pixel outside the actual log. Image 2 shows the required perfectly isolated transparent presentation. Neutral diffuse shading only; no glow, halo, backdrop, ground or shadow. Fit the COMPLETE log diagonally in the square with 10% transparent margin all around. Only the solid log and attached moss remain.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-589568ce-a4a2-446e-a7e4-03350e6f265d.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-49f78456-c5f7-46de-9842-b1cc5e1ed8a1.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-f73833c3-222a-4b0e-b05c-a98e6bb3ba25.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-589568ce-a4a2-446e-a7e4-03350e6f265d.png"
+    },
+    {
+      "id": "plant-grass",
+      "title": "Низкая куртина травы",
+      "output_file": "10-plants/01-low-grass-clump.png",
+      "prompt": "One isolated TRANSPARENT PNG game prop. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE small LOW grass clump for camp ground dressing, about 0.8 m wide and only 25 cm tall. Three overlapping tufts made of FEW wide tapered chunky olive/sage green blade shapes, clearly carved painterly colour planes, slightly darker base, varied tilt and muted yellow-green tips. Grass reads as large simple leaves rather than hundreds of fine thin strands. Roots concealed within the clump. NO soil island, ground disc, rocks, flowers, pedestal or other vegetation.\nEmpty true transparent alpha between leaves and outside silhouette, no haze or glow, no physical soil/ground disk. Keep thick broad reconstructable leaf shapes.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-64cf7100-bf3e-446d-be7b-3422ffd73b6e.png"
+    },
+    {
+      "id": "plant-ferns",
+      "title": "Папоротники",
+      "output_file": "10-plants/02-fern-clump.png",
+      "prompt": "Transform this isolated plant into ONE compact fern clump with FOUR arching fronds. Each frond has only six broad thick leaf lobes. Muted olive/sage greens, large hand-painted facets, no fine leaf noise. Preserve the reference's clean transparent background, overhead three-quarter angle and chunky painterly game style. Centre the complete fern with 10% empty margin. Remove all background colours and haze: every pixel beyond the physical leaf/stem silhouette must be transparent. No ground, soil, pot, glow, shadow or text.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-64cf7100-bf3e-446d-be7b-3422ffd73b6e.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-3ebf2144-7ded-41ff-a29c-11be29ab48ba.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-6d393c46-5b40-4119-80ab-2845d3572a08.png"
+    },
+    {
+      "id": "plant-shrub",
+      "title": "Низкий лиственный куст",
+      "output_file": "10-plants/03-low-leaf-shrub.png",
+      "prompt": "Transform this tree into ONE LOW, WIDE woodland shrub with THREE irregular olive/sage leafy lobes and a few broad leaves at the edges. Short stems hidden within the shrub. Width 1 m, height 0.6 m; no tall trunk or roots. Preserve this reference's clean transparent background, hand-painted large facets and overhead three-quarter angle. Centre complete shrub with 10% empty margin. All space outside physical leaves is fully transparent. No background wash, haze, shadow, ground, flowers or text.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-caae9983-a815-47f7-b393-b2b9a471fd6a.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-cfd54787-c569-4d8b-a809-8e2991d806dd.png",
+      "selection_note": "Выбран предыдущий экспорт с более широкими полями. Внешний RGB-ореол полностью прозрачен по alpha; это не фон."
+    },
+    {
+      "id": "plant-flowers",
+      "title": "Небольшое цветочное пятно",
+      "output_file": "10-plants/04-small-flower-patch.png",
+      "prompt": "Make a SQUARE 1:1 transparent PNG cutout of the flower clump in image 1. Preserve the seven white flowers and painterly broad olive leaves, but REMOVE ALL coloured halo/glow and every background pixel beyond the physical leaf and flower silhouettes. Image 2 is the clean isolated alpha presentation guide. Complete clump centred with 10% transparent empty margin. Neutral diffuse shading, no aura, backdrop, ground or cast shadow. Clear alpha gaps between flowers.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-ba85b886-aa38-403c-9bef-1f863c6a9408.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-64cf7100-bf3e-446d-be7b-3422ffd73b6e.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-bbdfa70a-ffac-43a6-a455-5ce2d23a26c1.png",
+      "previous_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-ba85b886-aa38-403c-9bef-1f863c6a9408.png"
+    },
+    {
+      "id": "plant-sedge",
+      "title": "Невысокая береговая осока",
+      "output_file": "10-plants/05-bank-sedge.png",
+      "prompt": "One isolated TRANSPARENT PNG game prop. Create a NEW isolated game prop concept that belongs EXACTLY to the artistic family of the attached reference props. Use the reference images ONLY as the style/material/shape vocabulary, not as a scene to extend. Thick irregular carved wood with large chamfered corners; warm honey and ochre timber; broad hand-painted brush strokes, simple large wood-grain strokes; chunky faceted forms with visibly painted colour planes and gently lightened worn edges. Dull dark iron fittings and a few oversized rivets; fabric is broad muted olive/oatmeal painted folds. Stylized grey-brown stones with large flat facets. This is a painterly fantasy game asset illustration, NOT a photorealistic PBR render. NO fine fabric weave, wood pores, photorealistic glass, dense scratches, excessive tiny clutter or black comic outlines. High clarity at the camp's overhead game camera: orthographic three-quarter view, camera 48 degrees above horizontal, about 35 degrees azimuth. Keep silhouettes and useful top surfaces unmistakable. One complete subject/coherent module only, centered with a clear 8% empty margin all around, fully visible without cropping. True transparent alpha background; absolutely no opaque background, checkerboard, ground plane, terrain plinth, cast shadow, vignette, text, labels, watermark, flags, banners, coats of arms, heraldry, emblems, runes or decorative symbols. Neutral diffuse material illumination, no directional cinematic lighting, bloom, rim light, external glow or visible light sources unless the subject is itself an actual lamp. Match the broad painted colour treatment and bevel scale of the original crate, fence and herbal table.\n\nONE low riverbank sedge clump about 75 cm wide and 50 cm high. Two joined tufts of a FEW broad folded muted olive-green strap leaves with simple dark sage planes and three short plain ochre seed heads. More upright silhouette than meadow grass, thick blades not thin hair-like reeds, no tall wall. Hand-painted chunky fantasy asset. No water, mud, soil disc, stones, flowers or other plants.\nEmpty true transparent alpha between leaves and outside silhouette, no haze or glow, no physical soil/ground disk. Keep thick broad reconstructable leaf shapes.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/CAMP/concepts/dc8b9763-8fff-4315-8eff-b276687c9659.png",
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-e9e8f729-8bca-4512-b7f0-eb3ee372d4cc.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-ebad3e70-2e37-48d2-9ce8-5b94a7efd9f1.png"
+    },
+    {
+      "id": "ground-dry",
+      "title": "Сухая земля рабочего места",
+      "output_file": "11-ground-decals/01-dry-workground.png",
+      "prompt": "Generate ONE FLAT HAND-PAINTED GROUND DECAL TEXTURE. Use the reference only for the muted earthy palette and broad brush treatment, never for its shape. Camera strictly straight overhead, 90 degrees, orthographic. Flat surface paint only: absolutely no perspective, raised edge, sidewalls, 3D volume or physical terrain island. One irregular organic patch centred with 12% empty transparent margin. Opaque textured centre, irregular softly feathered alpha perimeter fading into COMPLETELY TRANSPARENT exterior. No vignette, background colour field, lighting, shadows, glow, text, symbols or objects. Painterly stylized fantasy camp, broad restrained marks, no photographic noise.\nOne irregular FLAT patch of dry compacted camp earth, broad warm muted ochre/taupe brush-painted colour planes, two faint worn foot scuffs, a FEW small simplified pebble marks, completely flat. Soft uneven perimeter blends gradually into full alpha transparency; opaque centre. No paving, actual 3D stones, height, vegetation, footprint symbols or physical soil slab.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-1fb1d8b5-5764-4537-9505-1e4d5469c65c.png"
+    },
+    {
+      "id": "ground-ash",
+      "title": "Пепел и обожжённая земля",
+      "output_file": "11-ground-decals/02-ash-and-scorch.png",
+      "prompt": "Generate ONE FLAT HAND-PAINTED GROUND DECAL TEXTURE. Use the reference only for the muted earthy palette and broad brush treatment, never for its shape. Camera strictly straight overhead, 90 degrees, orthographic. Flat surface paint only: absolutely no perspective, raised edge, sidewalls, 3D volume or physical terrain island. One irregular organic patch centred with 12% empty transparent margin. Opaque textured centre, irregular softly feathered alpha perimeter fading into COMPLETELY TRANSPARENT exterior. No vignette, background colour field, lighting, shadows, glow, text, symbols or objects. Painterly stylized fantasy camp, broad restrained marks, no photographic noise.\nOne irregular FLAT scorched earth and ash patch for underneath a hearth/smithy. Muted charcoal-brown core with broad grey ash strokes, warm taupe transition, few large abstract charcoal flecks. Soft uneven perimeter fades to alpha transparency. Flat painted decal material, no fire, glow, objects, rocks, logs, raised soil slab or cast shadows.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-9c6e9825-a17b-4a64-9e00-69222d7c496b.png"
+    },
+    {
+      "id": "ground-wet",
+      "title": "Влажная прибрежная земля",
+      "output_file": "11-ground-decals/03-damp-bank.png",
+      "prompt": "Generate ONE FLAT HAND-PAINTED GROUND DECAL TEXTURE. Use the reference only for the muted earthy palette and broad brush treatment, never for its shape. Camera strictly straight overhead, 90 degrees, orthographic. Flat surface paint only: absolutely no perspective, raised edge, sidewalls, 3D volume or physical terrain island. One irregular organic patch centred with 12% empty transparent margin. Opaque textured centre, irregular softly feathered alpha perimeter fading into COMPLETELY TRANSPARENT exterior. No vignette, background colour field, lighting, shadows, glow, text, symbols or objects. Painterly stylized fantasy camp, broad restrained marks, no photographic noise.\nOne irregular FLAT damp riverbank earth patch, broad muted cool grey-brown/slate earthy paint strokes with olive transition and a few understated dull wet-looking colour patches, NO gloss or reflective water. Soft feathered uneven edge fading to alpha transparency, opaque centre. No 3D slab, pebbles, plants, reeds, puddles, floor shadow or landscape.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-1da7e70e-7b67-4485-aa8c-c88c1548c7ad.png"
+    },
+    {
+      "id": "ground-litter",
+      "title": "Лесная подстилка",
+      "output_file": "11-ground-decals/04-forest-litter.png",
+      "prompt": "Generate ONE FLAT HAND-PAINTED GROUND DECAL TEXTURE. Use the reference only for the muted earthy palette and broad brush treatment, never for its shape. Camera strictly straight overhead, 90 degrees, orthographic. Flat surface paint only: absolutely no perspective, raised edge, sidewalls, 3D volume or physical terrain island. One irregular organic patch centred with 12% empty transparent margin. Opaque textured centre, irregular softly feathered alpha perimeter fading into COMPLETELY TRANSPARENT exterior. No vignette, background colour field, lighting, shadows, glow, text, symbols or objects. Painterly stylized fantasy camp, broad restrained marks, no photographic noise.\nOne irregular FLAT woodland litter decal patch in broad hand-painted shapes: muted dark brown earth, a few LARGE ochre/olive fallen leaf silhouettes, two short broad twig strokes, irregular restrained sage moss patches. Large calm readable surface marks, not tiny noisy debris. Soft organic perimeter fading to alpha transparency, opaque centre. No raised ground slab, actual 3D plants, rocks, tree or cast shadows.",
+      "referenced_image_paths": [
+        "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-a3fec7ef-73a2-4446-9a0f-358a11a88383.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-f8f5b251-fba7-41ea-aab2-185badbede9f.png"
+    },
+    {
+      "id": "world-map-texture",
+      "title": "Карта мира — плоская текстура",
+      "output_file": "12-map-texture/01-world-map-topdown.png",
+      "prompt": "Create a standalone FLAT WORLD MAP TEXTURE from the attached owned world geography. This is NOT a 3D object or scene: strictly TOP-DOWN orthographic flat 2D map, ZERO perspective or foreshortening. Preserve the original coastline outlines, relative sizes and positions of the landmasses as closely as possible: huge western continent with northern snowy mountains, western forest belt, southwest broad mountains and southeast marshes; smaller eastern continent with northern mountains and volcanoes along its eastern side; southern/southeastern small Verano archipelago. Retain river routes and main terrain placement. DELETE every flag, flagpole, heraldic icon, city flag, place name, all writing and ornate outer decorations. Simplify dense town/road detail to large readable painterly terrain marks. The illustration is printed on ONE flat light warm-cream parchment sheet, approximately 4:3 rectangle with restrained slightly irregular worn edge, no rolls or curled corners. Muted olive/grey green land, dusty subdued blue water, broad painted grey mountain marks, consistent hand-painted game prop palette. Sheet opaque, outside perimeter true alpha transparency. Whole rectangular sheet visible with narrow empty transparent margin. No desk, props, border symbols, compass rose, shadow, light source, floating island relief or physical raised mountains. Image solely for a planar texture laid over a camp table.",
+      "referenced_image_paths": [
+        "C:/Users/d.grab/Desktop/the-game/ART/world-map-lviv-inspired-v9-flags-4k.png"
+      ],
+      "generated_source": "C:\\Users\\d.grab\\.codex\\generated_images\\01a0ef61-1cf7-7e92-b9fa-2bd4fe6f87cd\\exec-77428834-2eed-4376-aadb-2a63d1dc08b3.png"
+    }
+  ],
+  "assembled_existing": [
+    {
+      "id": "existing-01-rear-lean-to",
+      "output_file": "00-existing/merchant-variants/01-rear-lean-to.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-stall-2026-10-04-v2/01-rear-lean-to.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/merchant-stall-2026-10-04-v2-prompts.json"
+    },
+    {
+      "id": "existing-02-short-arched-canopy",
+      "output_file": "00-existing/merchant-variants/02-short-arched-canopy.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-stall-2026-10-04-v2/02-short-arched-canopy.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/merchant-stall-2026-10-04-v2-prompts.json"
+    },
+    {
+      "id": "existing-03-side-wing",
+      "output_file": "00-existing/merchant-variants/03-side-wing.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-stall-2026-10-04-v2/03-side-wing.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/merchant-stall-2026-10-04-v2-prompts.json"
+    },
+    {
+      "id": "existing-04-rear-gabled-canopy",
+      "output_file": "00-existing/merchant-variants/04-rear-gabled-canopy.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-stall-2026-10-04-v2/04-rear-gabled-canopy.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/merchant-stall-2026-10-04-v2-prompts.json"
+    },
+    {
+      "id": "existing-01-crates-and-boxes",
+      "output_file": "00-existing/goods-sheets/01-crates-and-boxes.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-goods-2026-10-04-v2/01-crates-and-boxes.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/merchant-goods-2026-10-04-v2-prompts.json"
+    },
+    {
+      "id": "existing-02-textiles-and-rolls",
+      "output_file": "00-existing/goods-sheets/02-textiles-and-rolls.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-goods-2026-10-04-v2/02-textiles-and-rolls.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/merchant-goods-2026-10-04-v2-prompts.json"
+    },
+    {
+      "id": "existing-03-sacks-and-parcels",
+      "output_file": "00-existing/goods-sheets/03-sacks-and-parcels.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-goods-2026-10-04-v2/03-sacks-and-parcels.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/merchant-goods-2026-10-04-v2-prompts.json"
+    },
+    {
+      "id": "existing-04-pottery-and-containers",
+      "output_file": "00-existing/goods-sheets/04-pottery-and-containers.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/merchant-goods-2026-10-04-v2/04-pottery-and-containers.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/merchant-goods-2026-10-04-v2-prompts.json"
+    },
+    {
+      "id": "existing-01-portable-floor-lantern",
+      "output_file": "00-existing/lighting/01-portable-floor-lantern.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/floor-light-2026-10-04/01-portable-floor-lantern.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/floor-light-2026-10-04-prompts.json"
+    },
+    {
+      "id": "existing-01-camp-lantern-post-tall",
+      "output_file": "00-existing/lighting/01-camp-lantern-post-tall.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/standing-lantern-2026-10-04-v2/01-camp-lantern-post-tall.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/standing-lantern-2026-10-04-v2-prompts.json"
+    },
+    {
+      "id": "existing-01-lantern-with-base",
+      "output_file": "00-existing/lighting/01-lantern-with-base.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/lantern-base-2026-10-04/01-lantern-with-base.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/lantern-base-2026-10-04-prompts.json"
+    },
+    {
+      "id": "existing-02-base-and-guard-only",
+      "output_file": "00-existing/lighting/02-base-and-guard-only.png",
+      "source_png": "C:/Users/d.grab/Desktop/the-game/ART/CAMP/lantern-base-2026-10-04/02-base-and-guard-only.png",
+      "exact_previous_prompts_file": "00-existing/prompt-sources/lantern-base-2026-10-04-prompts.json"
+    }
+  ],
+  "generation_history_files": [
+    "batch-01.json",
+    "batch-02.json",
+    "batch-03.json",
+    "batch-04.json",
+    "batch-05.json",
+    "batch-06.json",
+    "batch-07.json",
+    "batch-08.json"
+  ],
+  "history_note": "Первые визуальные отбраковки из-за ореола в предпросмотре были уточнены проверкой alpha: большой ореол находится под alpha=0. Итоговые выбранные файлы перечислены в final_outputs."
+}

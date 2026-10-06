@@ -19,7 +19,7 @@ namespace Game.Sim
         /// <summary>Рёв: кольцо 2,3–6,3 м, 36 тиков, без урона, отброс 2 м.</summary>
         Roar = 2,
 
-        /// <summary>Лапа: серия П/Л/П (Stages 2 / 2–3 / 3 по фазе), сектор 120° на 4,14 м.</summary>
+        /// <summary>Лапа: серия П/Л/П (Stages 2 / 2–3 / 3 по фазе), сектор 100° от бьющего плеча на 3,58 м (4,14 от центра).</summary>
         Paw = 3,
 
         /// <summary>Дыбом и топот: круг 5,2 м, через 15 тиков кольцо 5,2–7,5 м (Stages = 2), отброс 2 м.</summary>
@@ -39,6 +39,13 @@ namespace Game.Sim
 
         /// <summary>Этап 3: буря цветения (Simulation.ForestBoss.Storm.cs).</summary>
         Storm = 9,
+
+        /// <summary>
+        /// «Терновник» (владелец 08.10, Simulation.ForestBoss.Seeds.cs; до него, 07.10 — «Веер шипов-семян»
+        /// из кроны): жест каста, 2 / 3 куста в случайных местах пола, у каждого 4 шипа крестом по линиям на
+        /// земле; кусты вянут и уходят. Имя значения прежнее (событие — EnemyActionKind.ThicketSeeds).
+        /// </summary>
+        Seeds = 10,
     }
 
     /// <summary>
@@ -95,7 +102,11 @@ namespace Game.Sim
     {
         public int SpawnTick;
 
-        /// <summary>Точка появления — центр поводка.</summary>
+        /// <summary>
+        /// Центр поводка: точка появления, а на поляне босса — её центр (сам босс
+        /// встаёт в дальнем углу, GladeLayout.BossSpawnOffset; ревью 02.10, вечер).
+        /// Буря и вид меряют поляну от него.
+        /// </summary>
         public FixVec2 Home;
 
         public bool Awake;
@@ -126,7 +137,14 @@ namespace Game.Sim
         /// <summary>Этап 3: когда следующая буря.</summary>
         public int StormNextTick;
 
-        /// <summary>Этап 2: когда нырок «раз в ~10 с».</summary>
+        /// <summary>
+        /// Этап 2: срок нырка «под героя» (03.10, владелец: «босс за игру ни разу не залез под
+        /// землю. надо участить») — не раньше этого тика: конец рёва вступления +
+        /// ThicketDiveFirstTicks (10 с; сближение первой атакой в тот же тик ставит те же 10 с от себя),
+        /// потом начало любого нырка + ThicketDiveEvery* (24 / 6 /
+        /// 6 с по фазе, со множителями); 0 — вступления ещё не было. С ревью 02.10 (ночь) до 03.10
+        /// поле было всегда 0 (нырок — только по дальнему герою).
+        /// </summary>
         public int DiveNextTick;
 
         /// <summary>Свой поток решений: Pcg32(_encounterSeed ^ k, ThicketStream), заводится при пробуждении.</summary>
@@ -136,7 +154,7 @@ namespace Game.Sim
         /// <summary>
         /// Окно ответа (темп 02.10): после последнего удара серии лапы или
         /// кольца топота ни один удар босса не ляжет раньше этого тика
-        /// (удар + ThicketWindowTicks). Следующий замах может начаться и
+        /// (удар + ThicketWindowOf: 30 / 26 / 22 по фазе). Следующий замах может начаться и
         /// раньше — ударит не раньше окна.
         /// </summary>
         public int QuietUntil;
@@ -150,6 +168,39 @@ namespace Game.Sim
         /// В хеш — HashThicketIntro.
         /// </summary>
         public int Clearing, IntroStartTick, IntroWakeTick, IntroEndTick;
+
+        /// <summary>
+        /// Сколько последних тиков ПОДРЯД герой за спиной (дальше 100° от взгляда) и
+        /// не дальше 5,2 м между центрами — правило топота «за спиной»: ≥ 20
+        /// (ThicketRearStompTicks). Под землёй и после топота — с нуля.
+        /// </summary>
+        public int RearTicks;
+
+        /// <summary>
+        /// Ревью 02.10, ночь («лапа — основа»). HugTicks — сколько тиков ПОДРЯД герой
+        /// прижат (центр ближе ThicketStompRadius), что бы босс ни делал (баланс 02.10, ночь;
+        /// было — только пока у босса нет действия); топот «прижался» — от ThicketStompHugTicks
+        /// (240). FarTicks — сколько тиков подряд герой в дальней полосе (ThicketHeroBand == Far):
+        /// нырок — от ThicketDiveFarTicks. OutOfReachTicks — сколько тиков подряд лапа героя не
+        /// достаёт: касты средней полосы и быстрый ход — от ThicketKiteTicks.
+        /// </summary>
+        public int HugTicks, FarTicks, OutOfReachTicks;
+    }
+
+    /// <summary>
+    /// Полоса дистанции героя до Хозяина Чащи — от кромки корпуса до центра героя
+    /// (ThicketHullGap; ревью 02.10, ночь). Значение идёт в отчёты стенда — новые только в конец.
+    /// </summary>
+    public enum ThicketBand : byte
+    {
+        /// <summary>Ближняя: до ThicketNearGap (1,4 м) — досягаемость лапы.</summary>
+        Near = 0,
+
+        /// <summary>Средняя: босс идёт к герою и бьёт лапой.</summary>
+        Mid = 1,
+
+        /// <summary>Дальняя: от ThicketFarGap (6,5 м) — нырок, быстрый ход, касты издали.</summary>
+        Far = 2,
     }
 
     /// <summary>
@@ -191,15 +242,63 @@ namespace Game.Sim
         /// <summary>Ход 2,0 м/с (владелец 02.10: «темп ходьбы босса в целом надо замедлить», было 2,6).</summary>
         public static readonly Fix64 ThicketMasterMoveSpeed = Fix64.FromInt(2);
 
-        /// <summary>Поворот 4,5° за тик: заход сбоку и сзади имеет смысл.</summary>
-        private static readonly Fix64 ThicketTurnStep = Fix64.TwoPi / 80;
+        /// <summary>
+        /// Быстрый ход ×1,4 (2,8 м/с; ревью 02.10, ночь, «дальники»): герой в дальней полосе
+        /// или лапа не достаёт его ThicketKiteTicks подряд — босс сокращает дистанцию, а не
+        /// плетётся за кайтящим. Вид играет Walk по пройденному пути — клип ускоряется сам.
+        /// </summary>
+        public const int ThicketFarWalkPercent = 140;
+
+        // ---- полосы дистанции (ревью 02.10, ночь: «лапа — основа, темп, дальники») ----
+
+        /// <summary>
+        /// Полосы — от кромки корпуса до ЦЕНТРА героя (ThicketHullGap): ближняя — до
+        /// ThicketNearGap (1,4 м: лапа прямо вперёд достаёт 4,14 м от центра, грудь кончается
+        /// в 2,74), средняя — до ThicketFarGap, дальняя — от ThicketFarGap (6,5 м: ≈ 9,2 м от
+        /// центра перед мордой, ≈ 8,0 сбоку, ≈ 8,5 за хвостом). Будущие дальники (7–9 м от
+        /// тела) — в дальней. Ближняя и средняя — серии лапы (в средней босс подходит),
+        /// дальняя — нырок-сближение (ThicketDiveFarTicks), быстрый ход и касты издали.
+        /// </summary>
+        public static readonly Fix64 ThicketNearGap = Fix64.Ratio(7, 5);
+        public static readonly Fix64 ThicketFarGap = Fix64.Ratio(13, 2);
+
+        /// <summary>
+        /// Счёт дальней полосы для нырка (FarTicks) не рвётся, пока герой не ближе
+        /// ThicketFarGap − 1 м (5,5 м): дальник у края полосы (босс идёт на него, он отходит)
+        /// иначе обнулял бы счёт каждые полсекунды.
+        /// </summary>
+        public static readonly Fix64 ThicketFarKeepSlack = Fix64.One;
+
+        /// <summary>
+        /// «Кайтит»: лапа не достаёт героя 45 тиков подряд (1,5 с, OutOfReachTicks) — касты фаз
+        /// 2–3 в средней полосе и быстрый ход. Ближе — босс просто подходит и бьёт лапой.
+        /// </summary>
+        public const int ThicketKiteTicks = 45;
+
+        /// <summary>
+        /// Поворот 2,5° за тик (полный круг — 144 тика, 4,8 с; ревью 02.10, вечер:
+        /// «закруживаешь его и он тупо разворачивается на месте», было 4,5° — 80
+        /// тиков): заход сбоку и сзади имеет смысл, а героя за спиной встречает
+        /// топот (ThicketRearStompTicks), а не вращение. Вид играет поворот на месте
+        /// клипами TurnL/TurnR по изменению Entities.Facing.
+        /// </summary>
+        public const int ThicketTurnTicksPerCircle = 144;
+        private static readonly Fix64 ThicketTurnStep = Fix64.TwoPi / ThicketTurnTicksPerCircle;
         private static readonly Fix64 ThicketTurnCos = Fix64.Cos(ThicketTurnStep);
         private static readonly Fix64 ThicketTurnSin = Fix64.Sin(ThicketTurnStep);
 
         /// <summary>Шаг только вдоль взгляда: ноль при cos 0,6, как у Вендиго.</summary>
         private static readonly Fix64 ThicketWalkAlignFrom = Fix64.Ratio(6, 10);
 
-        /// <summary>Поводок: дальше 10 м от точки появления не уходит.</summary>
+        /// <summary>
+        /// Поводок: дальше 10 м от Home не уходит. На поляне босса Home — её центр.
+        /// Было (поляна 02.10, углы до 11,03 м): любой герой на полу в досягаемости лапы
+        /// босса, стоящего в поводке. С поляной 07.10 (+30%, полуоси 12,83 × 9,62) в
+        /// дальних углах герой стоит до ~14 м от центра — дальше поводка + лапы
+        /// (13,68): там ThicketHeroBand зовёт его дальним и вплотную к корпусу (нырок,
+        /// быстрый ход, касты издали); терновник меряет ближнюю полосу по самому
+        /// зазору (ThicketBushWeightNow). Поводок под новую поляну не менялся.
+        /// </summary>
         public static readonly Fix64 ThicketLeash = Fix64.FromInt(10);
 
         /// <summary>
@@ -223,23 +322,47 @@ namespace Game.Sim
         // ---- лапа: серия (темп 02.10) ----
 
         /// <summary>
-        /// Серия лапы: первый замах ThicketPawWindupTicks (15), каждый следующий
-        /// удар — через ThicketPawSeriesGapTicks (9) после прошлого, П/Л/П
-        /// (чётный номер — правая). Знак удара k (EnemyActionStarted, Amount k)
-        /// встаёт в тик удара k−1 — за 9 тиков до своего. Действие кончается
-        /// через ThicketPawStrikeTicks (кадр контакта) после последнего удара,
-        /// дальше отдых по фазе; окно ответа ThicketWindowTicks (30) — следующий
-        /// удар босса не раньше чем через 30 после последнего удара серии.
-        /// ThicketPawRecoveryTicks — стойки сверху нет (0; строка вида в EnemyArchetypes).
+        /// Серия лапы: первый замах ThicketPawWindupTicks (17) во всех фазах, каждый следующий
+        /// удар — через промежуток своей фазы после прошлого (не ровные 10, а 10–12 / 10–11 /
+        /// 10–11 тиков, ThicketPawGapPhase*, бросок своего потока в начале серии,
+        /// ThicketPawGapOf), П/Л/П (чётный номер — правая). ThicketPawSeriesGapTicks (10) —
+        /// промежуток ревью 02.10 (вечер) и нижняя граница бросков: для вида и тестов, Sim им
+        /// не считает. Знак удара k (EnemyActionStarted, Amount k) и его сектор на земле встают
+        /// в тик удара k−1 — за промежуток до своего. Действие кончается через
+        /// ThicketPawStrikeTicks (кадр контакта) после последнего удара, дальше отдых по фазе;
+        /// окно ответа (ThicketWindowTicks, 30) — следующий удар босса не раньше стольких тиков
+        /// после последнего удара серии. ThicketPawRecoveryTicks — стойки сверху нет (0; строка
+        /// вида в EnemyArchetypes).
         /// </summary>
-        public const int ThicketPawWindupTicks = 15, ThicketPawStrikeTicks = 1, ThicketPawRecoveryTicks = 0;
-        public const int ThicketPawSeriesGapTicks = 9;
+        public const int ThicketPawWindupTicks = 17, ThicketPawStrikeTicks = 1, ThicketPawRecoveryTicks = 0;
+        public const int ThicketPawSeriesGapTicks = 10;
 
         /// <summary>
-        /// Окно ответа после серии лапы и после кольца топота (темп 02.10): 30 тиков
-        /// (1 с) без ударов босса (ThicketMasterMemory.QuietUntil). Замахи следующего
-        /// действия могут начаться внутри окна: серия лапы — за 15 до его конца,
-        /// топот — за 24. Отдых по фазе считается от конца действия.
+        /// Промежутки между ударами серии по фазам (тиков, включительно): фаза 1 — 10–12, фазы 2–3 —
+        /// 10–11. Не короче 10 — «замедлить тычку лапой на 10%» (владелец, ревью 02.10, вечер:
+        /// 9 → 10); баланс 02.10 (ночь) сжал их до 8–11 / 8–10 и замах до 16 / 15 — проверка находок
+        /// 03.10 вернула просьбу владельца: фазы растут длиной серии, связками, кастами и отдыхом,
+        /// а не скоростью тычка. Броски — свой поток босса в начале серии (оба, даже если ударов 2:
+        /// поток тратится ровно), лежат в Tag действия: биты 0–7 — после удара 0, 8–15 — после
+        /// удара 1 (ThicketPawGapOf).
+        /// </summary>
+        public const int ThicketPawGapPhase1Min = 10, ThicketPawGapPhase1Max = 12;
+        public const int ThicketPawGapPhase2Min = 10, ThicketPawGapPhase2Max = 11;
+        public const int ThicketPawGapPhase3Min = 10, ThicketPawGapPhase3Max = 11;
+
+        /// <summary>Промежуток после удара stage серии лапы a (из Tag; 0 в Tag — средний 10).</summary>
+        public static int ThicketPawGapOf(in ThicketMasterState a, int stage)
+        {
+            int gap = stage <= 0 ? a.Tag & 0xFF : (a.Tag >> 8) & 0xFF;
+            return gap > 0 ? gap : ThicketPawSeriesGapTicks;
+        }
+
+        /// <summary>
+        /// Окно ответа после серии лапы и после кольца топота (темп 02.10, принятое владельцем):
+        /// 30 тиков (1 с) во всех фазах без ударов босса (ThicketMasterMemory.QuietUntil,
+        /// ThicketWindowOf; баланс 02.10, ночь, сжимал его до 26 / 22 — проверка находок 03.10
+        /// вернула 30). Замахи следующего действия могут начаться внутри окна: серия лапы — за
+        /// свой замах до его конца, топот — за 42. Отдых по фазе считается от конца действия.
         /// </summary>
         public const int ThicketWindowTicks = 30;
 
@@ -250,19 +373,39 @@ namespace Game.Sim
         /// <summary>
         /// Правило дока «больше 60 урона — от 30 тиков, моб стоит» (DESIGN.md,
         /// бой рогалика 26.09): при уроне лапы больше 60 ПЕРВЫЙ замах серии 30 —
-        /// удлиняется замах, урон не режется. С лапой 11 (баланс 02.10) на арене 9
-        /// до порога не доходят и «Сложно» с яростью (16 → 20 → 26).
+        /// удлиняется замах, урон не режется. С базой лапы 12 (проверка находок 03.10) на арене 9
+        /// до порога не доходят и «Сложно» с яростью (20 → 25 → 32).
         /// </summary>
         public const int ThicketPawHeavyDamage = 60, ThicketPawHeavyWindupTicks = 30;
 
         /// <summary>
-        /// «Мягче серии» (владелец 02.10): второй и третий удары серии бьют на 40%
-        /// слабее — 60% удара лапы с округлением (16 → 10 на арене 9). Доля от
+        /// «Мягче серии» (владелец 02.10): второй и третий удары серии бьют слабее —
+        /// 35% удара лапы с округлением (20 → 7 на арене 9; проверка находок 03.10 — было 45%,
+        /// до баланса 02.10, ночь — 60%: цена ошибки — первый удар, 7% здоровья героя, а не
+        /// россыпь добивок, которые при вернувшемся темпе собирает средний игрок). Доля от
         /// лапы: глубина, «Сложно» и ярость растят и их. Первый удар — полный.
         /// </summary>
-        public const int ThicketPawFollowUpDamagePercent = 60;
+        public const int ThicketPawFollowUpDamagePercent = 35;
+
+        /// <summary>Досягаемость лапы от ЦЕНТРА босса прямо вперёд, 4,14 м: начало серии (ThicketPawInReach) и знак на теле.</summary>
         public static readonly Fix64 ThicketPawRadius = Fix64.Ratio(414, 100);
-        public static readonly Fix64 ThicketPawArcCos = Fix64.Ratio(1, 2);
+
+        /// <summary>
+        /// Сектор удара лапы (ревью 02.10, вечер: «иногда попадает по герою, хотя
+        /// стоишь сбоку»): не от центра босса на 120°, а от БЬЮЩЕГО ПЛЕЧА —
+        /// ThicketPawShoulderForward вперёд и ThicketPawShoulderSide вбок (правая
+        /// лапа — вправо, левая — влево) по направлению удара, раствор 100° (±50°,
+        /// ThicketPawArcCos = cos 50°), ThicketPawReach 3,58 м от плеча — прямо
+        /// вперёд те же 4,14 м от центра. Покрывает всю зону начала серии (±40°,
+        /// до 3,68 м и вплотную к корпусу до 4,14) обеими лапами; герой у корпуса
+        /// (до 2 м от него) дальше 60° от взгляда на стороне бьющей лапы и дальше 45°
+        /// на другой — вне взмаха (тест PawSector_FromTheStrikingShoulder_*). Метка —
+        /// SharedView: общий красный сектор на земле (GroundTelegraphView) от знака
+        /// удара до контакта, ровно фигура попадания.
+        /// </summary>
+        public static readonly Fix64 ThicketPawShoulderForward = Fix64.Ratio(3, 5), ThicketPawShoulderSide = Fix64.Ratio(1, 2);
+        public static readonly Fix64 ThicketPawReach = Fix64.Ratio(358, 100);
+        public static readonly Fix64 ThicketPawArcCos = Fix64.Ratio(6428, 10000);
 
         /// <summary>Лапа начинается, когда герой ближе 3,68 м между центрами и в ±40° от взгляда.</summary>
         public static readonly Fix64 ThicketPawStartRange = Fix64.Ratio(368, 100);
@@ -271,21 +414,65 @@ namespace Game.Sim
         /// <summary>Подходит к герою до 3,22 м и стоит.</summary>
         public static readonly Fix64 ThicketHoldDistance = Fix64.Ratio(322, 100);
 
-        /// <summary>Каждый удар серии заново доворачивает к герою — не больше поворота за 9 тиков (40,5°).</summary>
-        private static readonly Fix64 ThicketPawRetargetCos = Fix64.Cos(ThicketTurnStep * ThicketPawSeriesGapTicks);
-        private static readonly Fix64 ThicketPawRetargetSin = Fix64.Sin(ThicketTurnStep * ThicketPawSeriesGapTicks);
+        /// <summary>
+        /// Поворот корпуса в серии лапы (баланс 02.10, ночь): 3,5° за тик — замах доворачивает
+        /// корпус к удару быстрее хода (2,5°): первый удар — до 17 × 3,5 = 59,5°, следующие — до
+        /// промежуток × 3,5°, но не больше 35° (ThicketPawRetargetMaxDecidegrees; при промежутках
+        /// 10–12 — всегда 35°). Вне лапы — 2,5°.
+        /// </summary>
+        public const int ThicketPawTurnDecidegrees = 35;
+        private static readonly Fix64 ThicketPawTurnStep = Fix64.Pi * ThicketPawTurnDecidegrees / 1800;
+        private static readonly Fix64 ThicketPawTurnCos = Fix64.Cos(ThicketPawTurnStep);
+        private static readonly Fix64 ThicketPawTurnSin = Fix64.Sin(ThicketPawTurnStep);
+
+        /// <summary>
+        /// Каждый следующий удар серии заново доворачивает к герою (баланс 02.10, ночь: было
+        /// ≤ 25°) — не больше поворота корпуса за свой промежуток (3,5°/тик) и не больше 35°:
+        /// корпус доходит до сектора ровно к контакту. Градусы ×10.
+        /// </summary>
+        public const int ThicketPawRetargetMaxDecidegrees = 350;
+
+        /// <summary>Наибольший доворот удара серии при среднем промежутке 10, градусы ×10 (350 = 35°): для вида и тестов.</summary>
+        public const int ThicketPawRetargetDecidegrees = ThicketPawSeriesGapTicks * ThicketPawTurnDecidegrees < ThicketPawRetargetMaxDecidegrees
+            ? ThicketPawSeriesGapTicks * ThicketPawTurnDecidegrees : ThicketPawRetargetMaxDecidegrees;
+
+        /// <summary>Доворот следующего удара серии после промежутка gap, радианы.</summary>
+        private static Fix64 ThicketPawRetargetAngle(int gap)
+            => Fix64.Pi * Math.Min(gap * ThicketPawTurnDecidegrees, ThicketPawRetargetMaxDecidegrees) / 1800;
+
+        /// <summary>
+        /// Первый удар серии доворачивает к герою не больше поворота корпуса за замах — 17 ×
+        /// 3,5° = 59,5° во всех фазах (ThicketPawOpeningDecidegrees = 595; баланс 02.10, ночь — было
+        /// 42,5° при 2,5°/тик, ревью 02.10, ночь — «вдоль взгляда»): так лапа достаёт и стоящего у
+        /// бока «под мышкой» между лапой и бедром (67–80° от взгляда, 1,7–1,9 м от центра; раньше —
+        /// только топот «прижался»). Замах не растёт.
+        /// </summary>
+        private static readonly Fix64 ThicketPawOpenCos = Fix64.Cos(ThicketPawTurnStep * ThicketPawWindupTicks);
+        private static readonly Fix64 ThicketPawOpenSin = Fix64.Sin(ThicketPawTurnStep * ThicketPawWindupTicks);
+        public const int ThicketPawOpeningDecidegrees = ThicketPawTurnDecidegrees * ThicketPawWindupTicks;
 
         // ---- топот: два кольца ----
 
         /// <summary>
-        /// Замах 24, круг r5,2 (контакт 2 тика — для вида); второе кольцо
+        /// Замах 42, круг r5,2 (контакт 2 тика — для вида); второе кольцо
         /// 5,2–7,5 м — через ThicketStompRingDelayTicks (15) после первого,
         /// урон ×0,75, отброс тот же. Действие кончается через
         /// ThicketStompStrikeTicks после кольца, дальше отдых по фазе; окно
-        /// ответа ThicketWindowTicks (30) после кольца. Кого первое кольцо ранило
+        /// ответа (ThicketWindowTicks, 30) после кольца. Кого первое кольцо ранило
         /// (и отбросило в полосу второго), второе не бьёт — одно попадание на топот.
+        /// Кольцо щадит героя, чей ЦЕНТР внутри круга 5,2 (шагнул обратно внутрь),
+        /// хоть тело и заходит на кромку (ThicketStompRingHits).
+        /// Ответ ногами (ревью 02.10, ночь: «топот — либо рывок, либо попал»): замах
+        /// 24 → 31 → 42 (проверка находок 03.10: при 31 из настоящего места «прижался» —
+        /// вплотную к корпусу, «подмышка» между лапой и бедром в 1,73 м от центра — выйти
+        /// пешком успевал только тот, кто тронулся за 2 тика; на стенде из 808 топотов
+        /// по прижатому сильному — 0 ушли ногами). Прижатый к корпусу герой идёт прямо прочь
+        /// и за 28 тиков хода с разгоном выходит из круга (5,2 + тело 0,45): с замахом 42 —
+        /// при реакции до 15 тиков (0,5 с) с любой стороны (тест Stomp_FootAnswer_*);
+        /// вернувшийся внутрь 5,2 до кольца кольцом не задет. Радиусы прежние; рывок —
+        /// по-прежнему ответ на всё. Замах один у всех топотов («прижался», «за спиной», связка).
         /// </summary>
-        public const int ThicketStompWindupTicks = 24, ThicketStompStrikeTicks = 2;
+        public const int ThicketStompWindupTicks = 42, ThicketStompStrikeTicks = 2;
         public const int ThicketStompRingDelayTicks = 15, ThicketStompRingDamagePercent = 75;
         public static readonly Fix64 ThicketStompRadius = Fix64.Ratio(26, 5);
         public static readonly Fix64 ThicketStompRingOuterRadius = Fix64.Ratio(15, 2);
@@ -294,22 +481,67 @@ namespace Game.Sim
         public const int ThicketStompRing1HitBit = 1;
 
         /// <summary>
-        /// Топот — если герой ПОДРЯД ThicketStompNearTicks (60, 2 с) тиков был ближе
-        /// 4 м между центрами («мягче топот», владелец 02.10): один тик дальше 4 м
-        /// начинает счёт заново, мимо пробежавшего не топчет. Память — последние
-        /// ThicketStompWindowTicks (90) тиков битами (NearLo/NearHi).
+        /// Окно «рядом» для отладки (ThicketMasterNearTicks / NearRunTicks): последние
+        /// ThicketStompWindowTicks (90) тиков битами (NearLo/NearHi), 1 — герой ближе
+        /// ThicketStompNearRange (4 м) между центрами. С ревью 02.10 (ночь) правило топота
+        /// по нему не считается — см. ThicketStompHugTicks.
         /// </summary>
         public const int ThicketStompWindowTicks = 90, ThicketStompNearTicks = 60;
         public static readonly Fix64 ThicketStompNearRange = Fix64.FromInt(4);
 
         /// <summary>
-        /// Топот по правилу — не чаще раза в 150 тиков (5 с) от начала прошлого
-        /// (баланс 02.10, было 90 = окно): правило «60 тиков подряд ближе 4 м»
-        /// остаётся главным, перезарядка лишь разносит топоты. Окно после топота
-        /// начинается заново; прижатого героя между топотами бьёт лапа.
-        /// Топот связки нырка перезарядку не ждёт, но ставит её.
+        /// Топот «прижался» (ревью 02.10, ночь: «босс топотов, а не лап» — топот теперь
+        /// наказание, а не основа): герой ThicketStompHugTicks тиков ПОДРЯД центром ближе
+        /// ThicketStompRadius (5,2), что бы босс ни делал (HugTicks; баланс 02.10, ночь — было
+        /// 45 тиков, пока у босса нет действия и лапа не достаёт: с лапой, достающей бок, такое
+        /// не наступало, и прижатый эксперт стоял в теле весь бой). 240 тиков (8 с) — у того,
+        /// кто не отходит, топот примерно раз на 2–3 серии лапы.
         /// </summary>
-        public const int ThicketStompCooldownTicks = 150;
+        public const int ThicketStompHugTicks = 240;
+
+        /// <summary>
+        /// Своя перезарядка топота «прижался» — 180 тиков (6 с) от начала прошлого такого
+        /// топота (было 150 при правиле «60 подряд ближе 4 м»). Любые два топота (прижался,
+        /// за спиной, связка нырка) — не ближе ThicketStompSpacingTicks (90, 3 с) от начала
+        /// до начала: место ThicketRearStompSlot — «готов любой топот».
+        /// </summary>
+        public const int ThicketStompCooldownTicks = 180, ThicketStompSpacingTicks = 90;
+
+        /// <summary>
+        /// Топот по герою за спиной (ревью 02.10, вечер: «он должен делать раньше
+        /// АоЕ-атаку, когда пытается развернуться ударить героя»): герой
+        /// ThicketRearStompTicks (20) тиков ПОДРЯД за спиной — дальше 100° от взгляда
+        /// (ThicketRearCos) — и не дальше ThicketRearStompRange (5,2 м = круг топота)
+        /// между центрами: босс не докручивается к нему, а топчет — мимо правила
+        /// «прижался» и его перезарядки 180, со своей перезарядкой
+        /// ThicketRearStompCooldownTicks (90 = ThicketStompSpacingTicks) от начала прошлого
+        /// топота (любого). Окно ответа, наслоение (фоновая опасность — только лапа), бюджет
+        /// и такт — как у топота. Счёт — ThicketMasterMemory.RearTicks.
+        /// </summary>
+        public const int ThicketRearStompTicks = 20, ThicketRearStompCooldownTicks = ThicketStompSpacingTicks;
+        public static readonly Fix64 ThicketRearStompRange = ThicketStompRadius;
+
+        /// <summary>«За спиной» — дальше 100° от взгляда: cos 100° ≈ −0,174.</summary>
+        public static readonly Fix64 ThicketRearCos = Fix64.Ratio(-174, 1000);
+
+        /// <summary>Место перезарядки топота «за спиной» в ThicketReady (вне значений ThicketMasterAction).</summary>
+        private const int ThicketRearStompSlot = ThicketActionSlots - 1;
+
+        /// <summary>
+        /// Топот в жребии рядом с лапой (03.10, владелец: «участить аое в ближнем бою, а то он
+        /// только лапой машет на фазе 1 — скучно»): фаза 1, герой центром в круге топота (5,2 м)
+        /// и лапа готова — во взвешенный выбор вместе с серией (вес лапы ThicketPawWeight) идёт и
+        /// топот, ThicketStompPickWeight (10 к 10: монетка); своя перезарядка ThicketStompPickCooldownTicks
+        /// (135, 4,5 с; перебаланс 03.10 — было 150) от начала любого топота (×1,25 при подмоге, не
+        /// меньше 90 — ThicketStompSpacingTicks). Фазы 2–3 — как были (касты в жребии, связка
+        /// «топот → лапа»); «прижался» (240), «за спиной» (20) — во всех фазах. Замах 42, круги,
+        /// ответ ногами — тот же топот. На стенде у сильного ближника фаза 1 — лапа ≈ 58%, топот ≈ 29%,
+        /// нырок ≈ 13% (до 03.10 — 73 / 18 / 9; с перезарядкой 150 и нырком через 15 с — 56 / 25 / 19).
+        /// </summary>
+        public const int ThicketPawWeight = 10, ThicketStompPickWeight = 10, ThicketStompPickCooldownTicks = 135;
+
+        /// <summary>Место перезарядки топота в жребии в ThicketReady (вне значений ThicketMasterAction).</summary>
+        private const int ThicketStompPickSlot = ThicketActionSlots - 2;
 
         // ---- рёв ----
 
@@ -317,6 +549,15 @@ namespace Game.Sim
         public static readonly Fix64 ThicketRoarInnerRadius = Fix64.Ratio(23, 10);
         public static readonly Fix64 ThicketRoarOuterRadius = Fix64.Ratio(63, 10);
         public const int ThicketRoarIntroBit = 1, ThicketRoar66Bit = 2, ThicketRoar50Bit = 4, ThicketRoar33Bit = 8;
+
+        /// <summary>
+        /// Рёв порога (66/50/33) доворачивает к герою только столько тиков от начала
+        /// (10 × 2,5° = 25°), дальше стоит: вид играет клип рёва без нижнего слоя, и
+        /// корпус, крутящийся за кружащим героем все 51 тик (до 127°), вертелся на
+        /// ногах рёва (ревью 02.10, вечер: «закруживаешь его… прокручивается на
+        /// месте»). Пробуждение и рёв вступления доворачивают весь (герой стоит).
+        /// </summary>
+        public const int ThicketRoarTurnTicks = 10;
 
         // ---- отброс (топот и рёв) ----
 
@@ -326,16 +567,21 @@ namespace Game.Sim
         // ---- темп ----
 
         /// <summary>
-        /// Отдых между действиями по фазам (темп 02.10): 0,6 / 0,4 / 0,2 с — от
-        /// конца действия до начала следующего (серия лапы и топот кончаются
-        /// через кадр контакта после последнего удара; нырок — после стойки 36;
-        /// каст — после жеста). После серии и топота ещё и окно ответа
-        /// ThicketWindowTicks: удар не раньше 30 после последнего. Связка нырка —
-        /// без отдыха. Рёв и пробуждение — без отдыха. Отдых и перезарядки растут
-        /// ×1,25 при живой подмоге и режутся ×0,85 с половины здоровья; замахи и
-        /// окно — никогда.
+        /// Отдых между действиями по фазам: 30 / 20 / 12 тиков (1,0 / 0,67 / 0,4 с; фаза 3 под
+        /// яростью ×0,85 — 10) — от конца действия до начала следующего (серия лапы и топот
+        /// кончаются через кадр контакта после последнего удара; нырок — после стойки 36; каст —
+        /// после жеста). После серии и топота ещё и окно ответа ThicketWindowTicks (30): удар не
+        /// раньше стольких тиков после последнего — так что после серии босс стоит не меньше 13
+        /// тиков при любом отдыхе. Проверка находок 03.10 (владелец: «когда мы с Костей тестили,
+        /// по темпу боя всё было отлично»): баланс 02.10 (ночь) поднял отдых до 46 / 34 / 36 (фаза 3
+        /// длиннее фазы 2 — темп не рос), и босс между атаками стоял над землёй вдвое дольше
+        /// сыгранного (медиана 35 тиков против 18, 42% боя против 30%). 30 / 20 / 12 возвращают ритм
+        /// сыгранного вечером (медиана простоя ~21 тик, ~29% боя) без нырков вместо атак; темп
+        /// растёт от фазы к фазе. Связки (нырок, топот → лапа) — без отдыха. Рёв и пробуждение —
+        /// без отдыха. Отдых и перезарядки растут ×1,25 при живой подмоге и режутся ×0,85 с
+        /// половины здоровья; замахи и окно — никогда.
         /// </summary>
-        public const int ThicketRestPhase1Ticks = 18, ThicketRestPhase2Ticks = 12, ThicketRestPhase3Ticks = 6;
+        public const int ThicketRestPhase1Ticks = 30, ThicketRestPhase2Ticks = 20, ThicketRestPhase3Ticks = 12;
         public const int ThicketAddsCooldownPercent = 125, ThicketEnragedCooldownPercent = 85;
 
         /// <summary>Песочные Часы: не оглушают, сдвигают таймеры босса на 2 с.</summary>
@@ -345,13 +591,21 @@ namespace Game.Sim
         //
         // Таблица долей: числа спецификации на арене 9 при лапе 41 (база 25 × 164%).
         // Баланс 02.10 снизил базу лапы до 10 (EnemyArchetypes.ThicketMasterPawDamage,
-        // весь урон босса ×0,4): на арене 9 лапа 16 (второй и третий удары серии 10),
-        // топот 24, кольцо 18, нырок 26, прорастание 13, ливень 12, буря 27, укус пыльцы 2 —
-        // ThicketShareOf от этой таблицы.
+        // весь урон босса ×0,4), после ревью 02.10 (вечер) — до 9. Баланс 02.10, ночь
+        // («ошибка должна стоить») — база 15 при отдыхе 46 / 34 / 36; доли прорастания
+        // 34 → 45, ливня 30 → 40 и пыльцы 5 → 6 подняты: издали ошибаются кругами, а не лапой.
+        // Проверка находок 03.10: темп сыгранного вечером вернулся (отдых 30 / 20 / 12, окно 30,
+        // тычок не быстрее 10) — база 12: на арене 9 лапа 20 (второй и третий удары серии 7),
+        // топот 30, кольцо 22, нырок 32, прорастание 22, ливень 20, буря 34 (в фазе 3 всегда
+        // ярость ×1,3 — 44), укус пыльцы 3 — ThicketShareOf от этой таблицы.
+        // Ревью владельца 03.10 (нырок «под героя», топот в жребии фазы 1): база 12 → 14 — на
+        // арене 9 лапа 23 (второй и третий удары 8), нырок 37, прорастание 25, ливень 22; доли
+        // топота 62 → 53 и бури 70 → 60 — их урон прежний (топот 30, кольцо 22, буря 34, в фазе 3 —
+        // 44): цена ошибки — удар лапы, а не круги, которые средний игрок ещё учится читать.
 
-        public const int ThicketPawDamageA9 = 41, ThicketStompDamageA9 = 62, ThicketDiveDamageA9 = 66;
-        public const int ThicketSproutDamageA9 = 34, ThicketRainDamageA9 = 30, ThicketStormDamageA9 = 70;
-        public const int ThicketPollenDamageA9 = 5;
+        public const int ThicketPawDamageA9 = 41, ThicketStompDamageA9 = 53, ThicketDiveDamageA9 = 66;
+        public const int ThicketSproutDamageA9 = 45, ThicketRainDamageA9 = 40, ThicketStormDamageA9 = 60;
+        public const int ThicketPollenDamageA9 = 6;
 
         /// <summary>Мест в таблице перезарядок на одного босса: по значению ThicketMasterAction.</summary>
         public const int ThicketActionSlots = 16;
@@ -378,7 +632,7 @@ namespace Game.Sim
         /// <summary>Перед правилом топота: буря по расписанию, связки фазы 3. Выбор — в choice.</summary>
         partial void ThicketChooseForced(int id, ref ThicketMasterAction choice);
 
-        /// <summary>После правила топота: нырок, если герой дальше 7 м или раз в ~10 с.</summary>
+        /// <summary>После правил топота: нырок по герою 2 с в дальней полосе (ревью 02.10, ночь).</summary>
         partial void ThicketChooseRule(int id, ref ThicketMasterAction choice);
 
         /// <summary>Взвешенный выбор: добавить свои варианты через AddThicketCandidate.</summary>
@@ -484,6 +738,38 @@ namespace Game.Sim
             return run;
         }
 
+        /// <summary>Сколько последних тиков ПОДРЯД герой за спиной ближе 5,2 м — правило топота «за спиной»: ≥ 20.</summary>
+        public int ThicketMasterRearTicks(int id) => TryGetThicketMasterMemory(id, out var m) ? m.RearTicks : 0;
+
+        /// <summary>Сколько тиков подряд герой прижат (ближе 5,2 м), что бы босс ни делал, — топот «прижался»: ≥ 240.</summary>
+        public int ThicketMasterHugTicks(int id) => TryGetThicketMasterMemory(id, out var m) ? m.HugTicks : 0;
+
+        /// <summary>Сколько тиков подряд герой в дальней полосе — нырок-сближение: ≥ 60.</summary>
+        public int ThicketMasterFarTicks(int id) => TryGetThicketMasterMemory(id, out var m) ? m.FarTicks : 0;
+
+        /// <summary>
+        /// Полоса героя сейчас (от кромки корпуса до его центра): ближняя до 1,4 м, средняя,
+        /// дальняя от 6,5 м. Дальняя и тогда, когда герой за поводком дальше лапы — пешком
+        /// босс его не достанет (стенд без поляны; на поляне 07.10 — и дальние углы пола, см. ThicketLeash).
+        /// </summary>
+        public ThicketBand ThicketHeroBand(int id)
+        {
+            if (!Entities.Alive[PlayerId] || (uint)id >= (uint)Entities.Count) return ThicketBand.Mid;
+            FixVec2 hero = Entities.Position[PlayerId];
+            Fix64 gap = ThicketHullGap(id, hero);
+            if (gap >= ThicketFarGap) return ThicketBand.Far;
+            if (_thicketMemory != null)
+            {
+                Fix64 foot = ThicketLeash + ThicketPawStartRange;
+                if (FixVec2.DistanceSq(hero, _thicketMemory[id].Home) > foot * foot) return ThicketBand.Far;
+            }
+            return gap <= ThicketNearGap ? ThicketBand.Near : ThicketBand.Mid;
+        }
+
+        /// <summary>Когда топот «за спиной» снова готов (90 от начала прошлого топота); 0 — готов.</summary>
+        public int ThicketRearStompReadyTick(int id)
+            => _thicketReady != null && (uint)id < (uint)Entities.Capacity ? _thicketReady[id * ThicketActionSlots + ThicketRearStompSlot] : 0;
+
         /// <summary>Когда действие action снова готово (перезарядка); 0 — готово.</summary>
         public int ThicketReadyTick(int id, ThicketMasterAction action)
             => _thicketReady != null && (uint)id < (uint)Entities.Capacity ? _thicketReady[id * ThicketActionSlots + (int)action] : 0;
@@ -495,33 +781,101 @@ namespace Game.Sim
             ThicketReady[id * ThicketActionSlots + (int)action] = tick;
         }
 
+        /// <summary>Сдвигает перезарядку топота «за спиной». Для стендов и тестов.</summary>
+        public void SetThicketRearStompReadyTick(int id, int tick)
+        {
+            if ((uint)id >= (uint)Entities.Count || Entities.Kind[id] != EnemyKind.ForestThicketMaster) return;
+            ThicketReady[id * ThicketActionSlots + ThicketRearStompSlot] = tick;
+        }
+
+        /// <summary>Срок нырка «под героя» (DiveNextTick); 0 — вступления ещё не было.</summary>
+        public int ThicketDiveDueTick(int id) => TryGetThicketMasterMemory(id, out var m) ? m.DiveNextTick : 0;
+
+        /// <summary>Сдвигает срок нырка «под героя». Для стендов и тестов (int.MaxValue / 2 — только сближение).</summary>
+        public void SetThicketDiveDueTick(int id, int tick)
+        {
+            if ((uint)id >= (uint)Entities.Count || Entities.Kind[id] != EnemyKind.ForestThicketMaster) return;
+            ThicketMemory[id].DiveNextTick = tick;
+        }
+
+        /// <summary>Когда топот снова может выпасть в жребии рядом с лапой (135 от начала прошлого топота); 0 — готов.</summary>
+        public int ThicketStompPickReadyTick(int id)
+            => _thicketReady != null && (uint)id < (uint)Entities.Capacity ? _thicketReady[id * ThicketActionSlots + ThicketStompPickSlot] : 0;
+
+        /// <summary>Сдвигает перезарядку топота в жребии. Для стендов и тестов (int.MaxValue / 2 — топот только по правилам).</summary>
+        public void SetThicketStompPickReadyTick(int id, int tick)
+        {
+            if ((uint)id >= (uint)Entities.Count || Entities.Kind[id] != EnemyKind.ForestThicketMaster) return;
+            ThicketReady[id * ThicketActionSlots + ThicketStompPickSlot] = tick;
+        }
+
         // ---- урон: всё — доля лапы (урона листа), глубина, «Сложно» и ярость растят разом ----
 
         public int ThicketPawDamageOf(int id) => Entities.Damage[id];
 
-        /// <summary>Удар серии stage (с 0): первый — лапа целиком, второй и третий — 60% (25 на арене 9).</summary>
+        /// <summary>Удар серии stage (с 0): первый — лапа целиком, второй и третий — 35% (7 на арене 9).</summary>
         public int ThicketPawStrikeDamageOf(int id, int stage)
             => stage == 0 ? ThicketPawDamageOf(id)
                 : EnemyArchetypes.Share(ThicketPawDamageOf(id), ThicketPawFollowUpDamagePercent, 100);
 
-        /// <summary>Замах лапы: 24, а при уроне больше 60 — 30 (ThicketPawHeavyDamage).</summary>
+        /// <summary>
+        /// Первый замах серии: 17 во всех фазах (проверка находок 03.10 — баланс 02.10, ночь, делал
+        /// 16 / 15 в фазах 2–3), а при уроне лапы больше 60 — 30 (ThicketPawHeavyDamage).
+        /// </summary>
         public int ThicketPawWindupOf(int id)
             => ThicketPawDamageOf(id) > ThicketPawHeavyDamage ? ThicketPawHeavyWindupTicks : ThicketPawWindupTicks;
         public int ThicketShareOf(int id, int authoredA9) => EnemyArchetypes.Share(Entities.Damage[id], authoredA9, ThicketPawDamageA9);
         public int ThicketStompDamageOf(int id) => ThicketShareOf(id, ThicketStompDamageA9);
 
-        /// <summary>Второе кольцо топота: ×0,75 топота (46 на арене 9).</summary>
+        /// <summary>Второе кольцо топота: ×0,75 топота (17 на арене 9).</summary>
         public int ThicketStompRingDamageOf(int id) => ThicketStompDamageOf(id) * ThicketStompRingDamagePercent / 100;
 
         // ---- фигуры: одна на метку и на попадание ----
 
+        /// <summary>Сектор лапы с вершиной в origin (бьющее плечо) по direction: ThicketPawReach, ±50°.</summary>
         public static EnemyTelegraph ThicketPawSector(FixVec2 origin, FixVec2 direction)
-            => EnemyTelegraph.Sector(origin, direction, ThicketPawRadius, ThicketPawArcCos);
+            => EnemyTelegraph.Sector(origin, direction, ThicketPawReach, ThicketPawArcCos);
+
+        /// <summary>Удар stage серии — правой лапой (чётный: П/Л/П).</summary>
+        public static bool ThicketPawIsRight(int stage) => (stage & 1) == 0;
+
+        /// <summary>
+        /// Бьющее плечо удара stage: от тела body ThicketPawShoulderForward вперёд по
+        /// направлению удара direction и ThicketPawShoulderSide вбок — вправо у
+        /// правой лапы, влево у левой.
+        /// </summary>
+        public static FixVec2 ThicketPawShoulder(FixVec2 body, FixVec2 direction, int stage)
+        {
+            FixVec2 forward = direction.Normalized();
+            var left = new FixVec2(-forward.Y, forward.X);
+            Fix64 side = ThicketPawIsRight(stage) ? -ThicketPawShoulderSide : ThicketPawShoulderSide;
+            return body + forward * ThicketPawShoulderForward + left * side;
+        }
+
+        /// <summary>Фигура удара stage серии (метка на земле и попадание): сектор от бьющего плеча.</summary>
+        public static EnemyTelegraph ThicketPawStrikeSector(FixVec2 body, FixVec2 direction, int stage)
+            => ThicketPawSector(ThicketPawShoulder(body, direction, stage), direction.Normalized());
+
+        /// <summary>Середина сектора удара stage (ThicketMasterState.Target лапы).</summary>
+        public static FixVec2 ThicketPawStrikeMiddle(FixVec2 body, FixVec2 direction, int stage)
+            => ThicketPawShoulder(body, direction, stage) + direction.Normalized() * (ThicketPawReach / 2);
 
         public static EnemyTelegraph ThicketStompCircle(FixVec2 center) => EnemyTelegraph.Circle(center, ThicketStompRadius);
 
         public static EnemyTelegraph ThicketStompRing(FixVec2 center)
             => EnemyTelegraph.Ring(center, ThicketStompRadius, ThicketStompRingOuterRadius);
+
+        /// <summary>
+        /// Попало ли кольцо топота: тело героя заходит за внешний край 7,5, а ЦЕНТР — снаружи
+        /// круга 5,2 (ревью 02.10, ночь: «шагнул обратно внутрь 5,2 до кольца — цел»; общая
+        /// метка кольца щадила только тело целиком внутри, 4,75 м).
+        /// </summary>
+        public static bool ThicketStompRingHits(FixVec2 center, FixVec2 hero, Fix64 body)
+        {
+            Fix64 outer = ThicketStompRingOuterRadius + body, inner = ThicketStompRadius;
+            Fix64 distanceSq = FixVec2.DistanceSq(hero, center);
+            return distanceSq <= outer * outer && distanceSq > inner * inner;
+        }
 
         public static EnemyTelegraph ThicketRoarRing(FixVec2 center)
             => EnemyTelegraph.Ring(center, ThicketRoarInnerRadius, ThicketRoarOuterRadius);
@@ -540,6 +894,7 @@ namespace Game.Sim
                 case ThicketMasterAction.Pollen: return EnemyActionKind.ThicketPollen;
                 case ThicketMasterAction.Rain: return EnemyActionKind.ThicketRain;
                 case ThicketMasterAction.Storm: return EnemyActionKind.ThicketStorm;
+                case ThicketMasterAction.Seeds: return EnemyActionKind.ThicketSeeds;
                 default: return EnemyActionKind.None;
             }
         }
@@ -611,7 +966,8 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, m.StormNextTick); Hashing.Mix(ref hash, m.DiveNextTick);
                 Hashing.Mix(ref hash, m.RngSeeded ? 1 : 0);
                 Hashing.Mix(ref hash, m.Rng.State); Hashing.Mix(ref hash, m.Rng.Increment);
-                Hashing.Mix(ref hash, m.QuietUntil);
+                Hashing.Mix(ref hash, m.QuietUntil); Hashing.Mix(ref hash, m.RearTicks);
+                Hashing.Mix(ref hash, m.HugTicks); Hashing.Mix(ref hash, m.FarTicks); Hashing.Mix(ref hash, m.OutOfReachTicks);
                 for (int k = 0; k < ThicketActionSlots; k++) Hashing.Mix(ref hash, ThicketReady[id * ThicketActionSlots + k]);
             }
             ThicketHashExtra(ref hash);
@@ -624,7 +980,10 @@ namespace Game.Sim
         /// SetupBossArena с включённым переключателем: то же, что у временного
         /// босса (комната перед выходом, пачка выхода в плане, подмога), но
         /// Хозяин Чащи с ThicketMasterHealth и без надбавки ×1,5 к удару: его
-        /// база уже своя (10 — лапа 16 на арене 9).
+        /// база уже своя (14 — лапа 23 на арене 9). На своей поляне (ревью 02.10,
+        /// вечер) он встаёт не посреди неё, а в дальнем верхнем правом углу
+        /// (ThicketSpawnPoint) лицом ко входу; центр поляны остаётся Home — центром
+        /// поводка.
         /// </summary>
         private EncounterPlan SetupThicketMasterArena(LayoutMap map, ulong spawnSeed, int healthPercent,
             EncounterSettings settings, int hardPercent, int arena)
@@ -632,12 +991,21 @@ namespace Game.Sim
             SetupRift(map, spawnSeed, 0, 0, 1);
             int module = map.GetPlaced(map.GetExit(0)).Parent;
             var radius = EnemyArchetypes.ThicketMasterBodyRadius;
-            var center = BossFloorPoint(map, map.CenterOf(module), radius);
+            // Центр поляны — центр поводка (Home): буря, вид и «К боссу» меряют поляну от него.
+            var home = BossFloorPoint(map, map.CenterOf(module), radius);
+            var center = ThicketSpawnPoint(map, home);
             var rng = new Pcg32(spawnSeed, 0x424F5353UL);
             var pack = settings.Pick(EncounterRole.ExitGuard, ref rng);
             int boss = Entities.Spawn(center,
                 EnemyArchetypes.ScaleHealth(EnemyArchetypes.ThicketMasterHealth, healthPercent, hardPercent), Faction.Orvill);
             ConfigureEnemy(boss, EnemyKind.ForestThicketMaster);
+            ThicketMemory[boss].Home = home;
+            // Из угла смотрит на вход: герой поднимается по тропе снизу.
+            if (!center.Equals(home))
+            {
+                FixVec2 look = map.EntryPoint - center;
+                if (look.LengthSq.Raw != 0) Entities.Facing[boss] = look.Normalized();
+            }
             // Спит, пока герой не ступит на пол этой поляны — вступление (Simulation.ForestBoss.Intro).
             MarkThicketClearing(boss, map);
             Entities.Stats[boss].SetBase(StatType.Damage, Entities.Damage[boss]
@@ -656,6 +1024,22 @@ namespace Game.Sim
                 _encounterPlan = plan;
             }
             return plan;
+        }
+
+        /// <summary>
+        /// Где встаёт босс (ревью 02.10, вечер: «босса надо ставить дальше в
+        /// противоположный угол»): на неизменной поляне босса — её дальний верхний
+        /// правый угол (GladeLayout.BossSpawnOffset от центра), напротив входа снизу
+        /// по центру; весь корпус (ThicketHullReach) там на полу. Карта без этой
+        /// поляны или угол не на полу — по-старому, home (центр комнаты перед выходом).
+        /// </summary>
+        private static FixVec2 ThicketSpawnPoint(LayoutMap map, FixVec2 home)
+        {
+            if (map == null || map.GladeCount != 1) return home;
+            var glade = map.GetGlade(0);
+            if (!glade.Radii.Equals(GladeLayout.BossClearingRadii) || glade.Shape != GladeShape.Rounded) return home;
+            FixVec2 corner = glade.Center + GladeLayout.BossSpawnOffset;
+            return glade.Field(corner) <= Fix64.One && map.IsWalkable(corner, ThicketHullReach) ? corner : home;
         }
 
         // ---- Песочные Часы ----
@@ -691,12 +1075,15 @@ namespace Game.Sim
                     if (a.LastImpactTick >= Tick) a.LastImpactTick += shift;
                     a.EndTick += shift;
                 }
-                // Свои ещё не сработавшие метки ждут вместе с боссом: заполнение тянется.
+                // Свои ещё не сработавшие метки ждут вместе с боссом: заполнение тянется. Метка, чей удар
+                // уже прошёл, а она ещё лежит (линия шипа терновника в полёте), удар не сдвигает — остаётся
+                // полной, — а живёт на столько же дольше: шип висит в воздухе (ShiftThicketSeeds).
                 for (int slot = 0; slot < _telegraphHighWater; slot++)
                 {
                     var t = _telegraphs[slot];
                     if (t.Serial == 0 || t.Source != id || !t.IsActive) continue;
-                    _telegraphs[slot] = new EnemyTelegraph(t.Serial, t.Source, t.StartTick, t.ImpactTick + shift,
+                    int impact = t.ImpactTick >= Tick ? t.ImpactTick + shift : t.ImpactTick;
+                    _telegraphs[slot] = new EnemyTelegraph(t.Serial, t.Source, t.StartTick, impact,
                         t.EndTick + shift, t.Shape, t.State, t.Flags, t.Origin, t.Direction, t.Radius,
                         t.InnerRadius, t.ArcCos, t.Width, t.Length);
                 }
@@ -719,6 +1106,8 @@ namespace Game.Sim
             if (a.Serial != 0 && a.Action != ThicketMasterAction.Wake && Tick <= a.LastImpactTick) return true;
             // Фоновая опасность (круги прорастания и ливня, падающая пыльца) — тоже его крупная атака.
             if (ThicketHazardHoldsToken(id)) return true;
+            // Терновник: кусты растут и шипы летят после жеста босса (Simulation.ForestBoss.Seeds).
+            if (ThicketSeedsHoldToken(id)) return true;
             bool holds = false;
             ThicketHoldsTokenExtra(id, ref holds);
             return holds;
@@ -765,6 +1154,14 @@ namespace Game.Sim
                 if (hazardStart > start) start = hazardStart;
                 if (impact == int.MinValue || (hazardImpact != int.MinValue && hazardImpact < impact)) impact = hazardImpact;
             }
+            // Терновник — 2 от жеста до последнего шипа (Simulation.ForestBoss.Seeds).
+            int seeds = ThicketSeedsMarkWeight(id, out int seedStart, out int seedImpact);
+            if (seeds > 0)
+            {
+                weight += seeds;
+                if (seedStart > start) start = seedStart;
+                if (seedImpact >= Tick && (impact == int.MinValue || seedImpact < impact)) impact = seedImpact;
+            }
             return weight;
         }
 
@@ -784,7 +1181,7 @@ namespace Game.Sim
                     case ThicketMasterAction.Paw:
                     {
                         int impact = a.ImpactTick;
-                        for (int k = a.Stage; k < a.Stages; k++, impact += ThicketPawSeriesGapTicks)
+                        for (int k = a.Stage; k < a.Stages; impact += ThicketPawGapOf(a, k), k++)
                         {
                             if (k == a.Stage && a.HitResolved) continue;
                             if (impact >= Tick) AddHeroContact(id, impact, impact, melee: true);
@@ -806,6 +1203,7 @@ namespace Game.Sim
                 }
             }
             AddThicketHazardContacts(id);
+            AddThicketSeedContacts(id);
         }
     }
 }

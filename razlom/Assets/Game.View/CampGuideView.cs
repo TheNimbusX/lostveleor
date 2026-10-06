@@ -9,8 +9,8 @@ using UnityEngine.InputSystem;
 namespace Game.View
 {
     /// <summary>
-    /// Ненавязчивые значки текущего дела: готовая часть главы или доступное улучшение места.
-    /// Старые профили сохраняют указатели заказов Лео и свежего товара Вена.
+    /// Ненавязчивые значки текущего дела: готовая часть главы или новый, ещё не увиденный ранг лагеря.
+    /// В песочнице без прогрессии остаётся указатель свежего товара Вена.
     /// При наведении короткая подпись поясняет дело; значок скрывается рядом с NPC или окном.
     /// Добавляется CampPlayerView; представление новых прибытий ведёт CampArrivalPresentation.
     /// </summary>
@@ -89,19 +89,10 @@ namespace Game.View
                 return resident == CampResident.Smith ? "Завершить первую часть главы «Наладить жизнь»"
                     : resident == CampResident.Trader ? "Завершить вторую часть главы «Наладить жизнь»"
                     : "Завершить главу «Наладить жизнь»";
-            if (camp.CanUpgradeResident(resident) == CampUpgradeResult.Success)
-                return "Улучшить рабочее место · ранг " + (camp.Rank(resident) + 1);
-            if (!camp.UsesCampProgression)
-            {
-                if (resident == CampResident.Trader && camp.TraderBossStock) return "В лавке появился свежий товар";
-                if (resident == CampResident.Alchemist)
-                {
-                    var resin = camp.AlchemyStatus(AlchemistOrder.Resin);
-                    var surge = camp.AlchemyStatus(AlchemistOrder.Surge);
-                    if (resin == AlchemistOrderStatus.Ready || surge == AlchemistOrderStatus.Ready) return "Заказ Лео готов — можно забрать награду";
-                    if (resin == AlchemistOrderStatus.Available || surge == AlchemistOrderStatus.Available) return "Лео предлагает новый заказ";
-                }
-            }
+            // Ранг открывается сам (босс + уровень); значок держится, пока игрок не заглянет
+            // в «Развитие лагеря» — там флаг и снимается (CampServicesView.Progression).
+            if ((camp.PendingUnlocks & CampServicesView.RankUnlocks) != 0) return "Новый ранг · загляни";
+            if (!camp.UsesCampProgression && resident == CampResident.Trader && camp.TraderBossStock) return "В лавке появился свежий товар";
             return null;
         }
 

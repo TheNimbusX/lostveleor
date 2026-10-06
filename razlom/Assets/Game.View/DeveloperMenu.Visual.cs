@@ -7,11 +7,13 @@ namespace Game.View
     /// Вкладка «Визуал»: отложенные пробы 01.10 — комикс-рисовка и свет арены по глубине. По умолчанию выключены,
     /// владелец: «пока не удаляй из F8». Переключатели запоминаются (PlayerPrefs ComicStyle/ArenaMood — ключи не
     /// трогать); принудительный режим света — до выхода из игры. Съёмка ставит своё через -capture-style/-capture-mood.
+    /// Ниже — A/B лунной кромки Хозяина Чащи и его лап на ходу (оба включены; до выхода из игры, не запоминаются).
     /// </summary>
     public sealed partial class DeveloperMenu
     {
         // Якорь: «Визуал · проба рисовки» цитируют STATE, ArenaMood, Bootstrap и память style-shift / light-arc.
         private const string StyleProbe = "Визуал · проба рисовки";
+        private const string BossLook = "Визуал · Хозяин Чащи";
         private static readonly string[] ArenaMoodLabels = { "Авто", "День", "Туман", "Сумерки", "Босс" };
         private static readonly ArenaMoodMode[] ArenaMoodModes =
             { ArenaMoodMode.Auto, ArenaMoodMode.Day, ArenaMoodMode.Mist, ArenaMoodMode.Dusk, ArenaMoodMode.Boss };
@@ -45,6 +47,17 @@ namespace Game.View
                     ? "Сейчас: арена " + state.Depth + (state.Boss ? " (босс)" : "") + " · " + ArenaMoodRules.AxisName(state.Axis)
                     : ArenaMood.Prepared ? "Свет ждёт конца сборки арены." : "Свет только на аренах — в лагере как всегда.");
             }, visible: c => ArenaMood.Enabled, order: 40);
+
+            // Лунная кромка Хозяина Чащи (находка 9 ревью 02.10) — A/B для владельца до его выбора (проверка находок 03.10).
+            DevMenu.Section(DevTab.Visual, BossLook, 20, DevColumn.Left,
+                hint: "Сравнить в бою с боссом: тёмная половина поляны, кромка вкл / выкл.");
+            DevMenu.Toggle("visual.boss-rim", DevTab.Visual, BossLook, "Хозяин Чащи: лунная кромка в тени",
+                c => ThicketMasterPhaseDressing.RimShown, (c, on) => ThicketMasterPhaseDressing.RimShown = on,
+                hint: "Холодный край силуэта только там, где тело тёмное. До выхода из игры.", order: 10);
+            // Лапы на ходу (владелец 08.10: «ноги немного проскальзывают») — A/B шага под поворот и замка стоп.
+            DevMenu.Toggle("visual.boss-feet", DevTab.Visual, BossLook, "Хозяин Чащи: лапы держат землю на ходу",
+                c => ThicketMasterAnimatorView.FootLock, (c, on) => ThicketMasterAnimatorView.FootLock = on,
+                hint: "Выкл — ход как до 08.10: на повороте стоящие лапы едут по земле. До выхода из игры.", order: 20);
         }
     }
 }

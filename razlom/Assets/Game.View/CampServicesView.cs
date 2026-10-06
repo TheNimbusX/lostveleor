@@ -92,15 +92,17 @@ namespace Game.View
             if(Time.unscaledTime<_errorUntil)return;
             // Подпись следует последнему активному устройству.
             bool near=focus.Near(_player.InteractionPosition);
-            string action=CampServiceText.Get(near?(focus.Kind==CampServiceKind.Tent?"action.open":"action.talk"):"action.approach");
+            bool board=focus.Kind==CampServiceKind.OathBoard;
+            string action=CampServiceText.Get(near?(focus.Kind==CampServiceKind.Tent||board?"action.open":"action.talk"):"action.approach");
             string key=TickDriver.GamepadLastUsed?(near?"A":"подойти"):(near?"E":"ПКМ");
-            string role=CampServiceText.Get("role."+focus.Kind.ToString().ToLowerInvariant());
+            // Подписи доски — с русским запасным у места вызова (CampWindowText): общий switch CampServiceText правят параллельно.
+            string role=board?CampWindowText.Get("role.oathboard","Клятвы за пепел"):CampServiceText.Get("role."+focus.Kind.ToString().ToLowerInvariant());
             if(near && TickDriver.GamepadLastUsed && (focus.Kind==CampServiceKind.Smith || focus.Kind==CampServiceKind.Trader || focus.Kind==CampServiceKind.Alchemist))
             {
                 var resident=focus.Kind==CampServiceKind.Smith?Game.Sim.CampResident.Smith:focus.Kind==CampServiceKind.Trader?Game.Sim.CampResident.Trader:Game.Sim.CampResident.Alchemist;
                 string task=CampGuideView.TaskHint(_driver.Session.Camp,resident);if(!string.IsNullOrEmpty(task))role=task;
             }
-            SetHint(focus.Title,role,key,action);
+            SetHint(board?CampWindowText.Get("npc.oathboard","Доска клятв"):focus.Title,role,key,action);
         }
         void SetHint(string title,string note)=>SetHint(title,"","",note);
         void SetHint(string title,string role,string key,string action)
@@ -148,6 +150,8 @@ namespace Game.View
             if(npc==null || !ServiceAvailable(npc.Kind) || !npc.Near(_player.InteractionPosition))return;
             _player.StopForService();Pending=null;Current=npc;Consume();
             if(npc.Kind==CampServiceKind.Tent){Current=null;HideHints();_player.OpenTent();return;}
+            // Доска клятв у палатки (06.10): та же палатка, но сразу на вкладке «Клятвы».
+            if(npc.Kind==CampServiceKind.OathBoard){Current=null;HideHints();GetComponent<CampInventoryView>()?.PreparePage(TentPage.Oaths);_player.OpenTent();return;}
             if(npc.Kind==CampServiceKind.TravelTable){Current=null;HideHints();CampPreparationView.Instance?.Open();return;}
             ShowSmith(npc.Kind==CampServiceKind.Smith);ShowTrader(npc.Kind==CampServiceKind.Trader);ShowAlchemist(npc.Kind==CampServiceKind.Alchemist);
             if(npc.Kind==CampServiceKind.Smith)_driver.Session.Camp.DiscussSmithFind();
@@ -155,8 +159,6 @@ namespace Game.View
             // Подтверждение открытия с геймпада не должно тем же нажатием отправить Submit кнопке закрытия.
             _openedFrame=Time.frameCount;if(_openGroup!=null)_openGroup.interactable=false;
             var group=PanelGroup;UiMotion.Stop(group);_closing=false;if(!_panel.activeSelf)group.alpha=0f;_panel.SetActive(true);group.blocksRaycasts=true;UiMotion.FadeTo(group,1f,.18f);HideHints();
-            // Временная панель AlchemyPlaytestOverlay больше не открывается с Лео: заказы и все
-            // шесть зелий теперь в его окне, а панель при открытии закрывала это окно.
         }
         void Consume(){ConsumedFrame=Time.frameCount;_driver.ClearCapturedInput();}
         public void Close()

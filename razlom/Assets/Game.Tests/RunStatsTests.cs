@@ -260,23 +260,18 @@ namespace Game.Tests
             return byKind;
         }
 
-        private static void SalvageIfReplacing(GameSession session, ref int steps)
-        {
-            if (session.Mode != GameMode.Rift || session.Run.Phase != RunPhase.ReplacingAbility) return;
-            session.Step(RunInput(RunCommand.SalvageAbility));
-            steps++;
-        }
-
         /// <summary>
         /// Приёмка: зелье, зачистка поджогом, каст у выхода, полминуты на экране
-        /// награды, награда, уход. Числа итогов сходятся с тем, что случилось,
+        /// награды, уход с него. Числа итогов сходятся с тем, что случилось,
         /// а время на экране награды идёт в общее, но не в боевое.
         /// </summary>
         [Test]
         public void ScriptedShortRun_ProducesTheExpectedTallies()
         {
             GameSession session = Session(out Camp camp);
-            camp.GainExperience(95);
+            // За 5 до уровня: кривая опыта меняется (06.10), опыт убийств перевалит порог при любой.
+            int startXp = camp.ExperienceToNextLevel - 5;
+            camp.GainExperience(startXp);
             Assert.AreSame(RunStats.Empty, session.LastRun.Stats, "до первого забега итоги пусты");
             Assert.AreSame(RunStats.Empty, session.CurrentRunStats);
 
@@ -286,7 +281,7 @@ namespace Game.Tests
             RunStats stats = session.CurrentRunStats;
             Assert.AreNotSame(RunStats.Empty, stats);
             Assert.AreEqual(1, stats.StartLevel);
-            Assert.AreEqual(95, stats.StartExperience);
+            Assert.AreEqual(startXp, stats.StartExperience);
             int steps = 0;
 
             // 1. Зелье в бою.
@@ -312,7 +307,7 @@ namespace Game.Tests
             Assert.AreEqual(0, stats.Hits, "горение — не попадания");
             Assert.AreEqual(xp, stats.ExperienceGained);
             Assert.AreEqual(camp.Level - 1, stats.LevelsGained);
-            Assert.GreaterOrEqual(stats.LevelsGained, 1, "95 + опыт убийств — новый уровень");
+            Assert.GreaterOrEqual(stats.LevelsGained, 1, "за 5 до порога + опыт убийств — новый уровень");
 
             // 3. Каст у выхода: последний тик боя перед экраном награды.
             sim.Entities.Position[Hero] = session.Run.Map.ExitPoint(0);
@@ -337,10 +332,8 @@ namespace Game.Tests
             Assert.AreEqual(dealt, stats.DamageDealt);
             Assert.AreEqual(taken, stats.DamageTaken);
 
-            // 5. Награда и уход. Ручной уровень разработчика в повышения не идёт.
-            session.Step(RunInput(RunCommand.ChooseReward1));
-            steps++;
-            SalvageIfReplacing(session, ref steps);
+            // 5. Уход прямо с экрана награды (06.10: «Уйти» — только между аренами).
+            // Ручной уровень разработчика в повышения не идёт.
             int levels = stats.LevelsGained;
             camp.DeveloperGrantLevel();
             session.Step(RunInput(RunCommand.Leave));
@@ -429,14 +422,17 @@ namespace Game.Tests
             SetAllFoesOnFire(session.Run.Sim, out int foes, out _);
             session.Run.Sim.Entities.Health[0]--;
             session.Step(Potion(PotionKind.SmallHealth));
-            session.Step(RunInput(RunCommand.Leave));
+            // «Уйти» в бою не действует (06.10): забег кончает смерть героя — ещё один шаг боя.
+            session.Run.Sim.Entities.Alive[0] = false;
+            session.Step(InputFrame.Empty);
 
             Assert.AreEqual(GameMode.Summary, session.Mode);
+            Assert.AreEqual(RunOutcome.Died, session.LastRun.Outcome);
             RunStats first = session.LastRun.Stats;
             Assert.AreEqual(foes, first.Kills);
             Assert.AreEqual(1, first.PotionsUsed);
             Assert.AreEqual(2, first.TotalTicks);
-            Assert.AreEqual(1, first.CombatTicks);
+            Assert.AreEqual(2, first.CombatTicks);
             long firstDamage = first.DamageDealt;
 
             session.Step(Command(CampCommand.RepeatRift));

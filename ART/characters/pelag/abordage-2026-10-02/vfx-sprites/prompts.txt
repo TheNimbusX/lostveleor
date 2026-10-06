@@ -1,0 +1,14 @@
+OPTIONAL (03.10 morning): painted VFX sprites for Quake and Geyser, cut out and used as textures in game instead of the procedural look.
+Attach: chatgpt-results/D-quake.png (for Q1/Q2) or chatgpt-results/F-geyser-seagreen.png (for G1/G2) as Image 1. One prompt per chat. Pure flat magenta background so we can cut it out.
+
+Q1-quake-topdown:
+Using Image 1 as the exact style reference, paint ONLY the water-and-mud splash effect from Image 1 as a separate game VFX sprite seen straight from above, centred, on a pure flat magenta #FF00FF background, with no characters, no anchor, no ground texture and no shadows outside the splash: an irregular radial splash of cobalt blue water #2D5BE3 with chunky white foam crests on the lobe tips, lobes of very different lengths, brown wet mud patches in the centre, round blue and white droplets flying outward, the same thin dark outline as Image 1, square 1:1, the splash filling about 90% of the canvas.
+
+Q2-quake-sequence:
+Using Image 1 as the exact style reference, paint a horizontal strip of 4 equal square frames on a pure flat magenta #FF00FF background showing ONLY the cobalt blue water-and-mud splash from Image 1 seen straight from above, growing over time: frame 1 a small dense burst with mud in the centre, frame 2 half size with lobes shooting out, frame 3 full size like Image 1, frame 4 the lobes breaking into foam and droplets and thinning out; no characters, no anchor, no ground texture, same thin dark outline and chunky white foam as Image 1.
+
+G1-geyser-column:
+Using Image 1 as the exact style reference, paint ONLY the sea-green water geyser from Image 1 as a separate game VFX sprite in the same three-quarter top-down game camera view, on a pure flat magenta #FF00FF background, no characters, no ground texture: one tall sea-green #1FB37E water column with bright vertical streaks, a fluffy merged white foam crown on top (big soft foam masses with a thin dark outline only on the outer edge), and a round splash rosette of foam and droplets at its base, square 1:1.
+
+G2-geyser-crown-and-fall:
+Using Image 1 as the exact style reference, paint on a pure flat magenta #FF00FF background, side by side in two equal squares: left, ONLY the fluffy merged white foam crown that sits on top of the geyser in Image 1 (soft foam masses with a thin dark outline only on the outer edge, a few sea-green droplets); right, a round top-down splash of sea-green water and white foam where something heavy has just fallen into it, droplets flying outward; no characters, no ground texture.
