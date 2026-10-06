@@ -68,7 +68,7 @@ namespace Game.View
                     // Квадрат максимальных габаритов учитывает поворот модели и вогнутые участки контура.
                     int push = 0;
                     while (BoundaryBlocksClearance(point, radius) && push++ < 8) point += normal * .15f;
-                    if (BoundaryBlocksClearance(point, radius) || NearLandmark(point.x, point.y, radius * .6f)) continue;
+                    if (BoundaryBlocksClearance(point, radius) || NearLandmark(point.x, point.y, radius * .6f) || OnForestTrail(point.x, point.y, radius * .6f)) continue;
                     bool overlap = false;
                     // В зарослях кусты смыкаются, в просветах стоят редко.
                     float stride = spacing * Mathf.Lerp(2.4f, .6f, thicket);
@@ -130,7 +130,7 @@ namespace Game.View
                             var outer = point + normal * (canopyRadius - radius + .35f + member * .65f)
                                 + tangent * ((member - (count - 1) * .5f) * canopyRadius * .85f);
                             // Проверяем всю крону, а не только ствол: она не закрывает боевой центр.
-                            if (BoundaryBlocksClearance(outer, canopyRadius) || NearPond(outer.x, outer.y, canopyRadius)
+                            if (BoundaryBlocksClearance(outer, canopyRadius) || OnForestTrail(outer.x, outer.y, canopyRadius * .8f) || NearPond(outer.x, outer.y, canopyRadius)
                                 || NearLandmark(outer.x, outer.y, canopyRadius * .35f) || ShadesLandmark(outer.x, outer.y, canopyRadius * .85f)) continue;
                             SpawnDecor(tree, outer.x, outer.y, canopyRng);
                             var instance = _decor[_decorCount - 1];
@@ -221,7 +221,7 @@ namespace Game.View
                 // Чаще у края, но часть кустов уходит на 1–2 м глубже в лес.
                 var point = edge + normal * (visible + .1f + depth * depth * 2.2f)
                     + tangent * ((float)rng.NextDouble() - .5f) * .5f;
-                if (BoundaryBlocksClearance(point, visible * .5f) || NearPond(point.x, point.y, visible)
+                if (BoundaryBlocksClearance(point, visible * .5f) || OnForestTrail(point.x, point.y, visible * .6f) || NearPond(point.x, point.y, visible)
                     || NearLandmark(point.x, point.y, visible)) continue;
                 if (!PlaceOffFloor(variant, point, normal, scale, !rock, rng)) continue;
                 var placed = _decor[_decorCount - 1];

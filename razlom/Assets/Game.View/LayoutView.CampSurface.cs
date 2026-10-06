@@ -92,7 +92,6 @@ namespace Game.View
                     inside.Wait();
                     Parallel.For(1, n - 1, y => EarthClearingRow(y, stones, lakes));
                     FilletEarth(2.4f);
-                    Parallel.For(1, n - 1, EarthGrassPatchRow);
                 }
                 FrameCost.Worker("маска земли", start);
             });

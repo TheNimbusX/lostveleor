@@ -171,6 +171,9 @@ namespace Game.View
             portal.name = exit ? "Проход дальше" : "Вход в луга";
             portal.position = new Vector3(point.X.ToFloat(), FloorLevel(point.X.ToFloat(), point.Y.ToFloat()), point.Y.ToFloat());
             portal.rotation = Quaternion.LookRotation(new Vector3(direction.X.ToFloat(), 0, direction.Y.ToFloat()));
+            // Порталы были заглушками (владелец, 5 октября): герой забегает и выбегает по тропе
+            // (TickDriver.ArenaRun). Точка остаётся — по ней трава и кусты держат проход чистым.
+            portal.gameObject.SetActive(!_shownMap.IsArena);
             SetGlow(portal, exit ? new Color(.8f, .42f, .1f) : new Color(.18f, .65f, .52f));
             _portals.Add(portal);
         }
@@ -464,7 +467,7 @@ namespace Game.View
                     float pz=z+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
                     // Лес подходит к самой воде: озеро — край арены, а не пруд на лугу (2 октября).
                     // NearPond держит ещё 30% радиуса — у озера в 11 м это 3 м пустого луга по берегу.
-                    if (NearRiver(px, pz, 3) || NearWaterEdge(px, pz, 1.2f)) continue;
+                    if (NearRiver(px, pz, 3) || NearWaterEdge(px, pz, 1.2f) || OnForestTrail(px, pz, 4f)) continue;
                     if (map.GladeCount > 0)
                     {
                         var character = CharacterOf(map, NearestGlade(map, px, pz));
@@ -1048,7 +1051,7 @@ namespace Game.View
             float radius = _decorRadii[variant] * scale;
             var kind = _style.DecorVariants[variant].Kind;
             bool understory = kind == DecorKind.Bush || kind == DecorKind.GrassTuft;
-            if (TouchesOutlinedFloor(point.x, point.y, radius + .2f)
+            if (TouchesOutlinedFloor(point.x, point.y, radius + .2f) || OnForestTrail(point.x, point.y, radius * .6f)
                 || NearPond(point.x, point.y, radius) || BlocksRoute(variant, point.x, point.y)
                 || NearLandmark(point.x, point.y, understory ? radius * .7f : radius)) return false;
             // Учитываем уже расставленный лес и соседние группы, а не только текущую композицию.

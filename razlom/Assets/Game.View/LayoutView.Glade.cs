@@ -59,7 +59,7 @@ namespace Game.View
                 float width = Mathf.Lerp(1.3f, .4f, atWater);
                 rim = Mathf.Lerp(rim, .05f, atWater);
                 float earth = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(rim, rim + width, dist[i]));
-                // Травяные островки — после сглаживания стыков (EarthGrassPatchRow), иначе оно их заливало.
+                // Травяных пятен на земле поляны нет (владелец, 6 октября: «убери это пятно»).
                 if (earth <= .01f) continue;
                 var pixel = _campSurfacePixels[i];
                 pixel.r = (byte)Mathf.Max(pixel.r, earth * 215);
@@ -121,25 +121,6 @@ namespace Game.View
                 }
             });
             return result;
-        }
-
-        // Редкие мягкие пятна травы на земле поляны: трава просвечивает, а не вырезана островом.
-        // Газон и смесь травы с землёй по всей поляне владелец пробовал 30 сентября и вернул землю.
-        private void EarthGrassPatchRow(int y)
-        {
-            const int n = TrailResolution;
-            for (int x = 1; x < n - 1; x++)
-            {
-                int i = y * n + x;
-                if (_clearingDistance[i] <= 2.5f) continue;
-                float px = _trailBounds.x + (x + .5f) / n * _trailBounds.z;
-                float pz = _trailBounds.y + (y + .5f) / n * _trailBounds.w;
-                float patch = .5f * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.7f, .84f, Mathf.PerlinNoise(px * .11f + 33, pz * .11f + 9)));
-                if (patch <= 0) continue;
-                var pixel = _campSurfacePixels[i];
-                pixel.r = (byte)(pixel.r * (1 - patch));
-                _campSurfacePixels[i] = pixel;
-            }
         }
 
         // Доля грунта в маске земли под точкой: 0 — трава, 1 — тропа или земля поляны.
@@ -335,7 +316,7 @@ namespace Game.View
                     foreach (var other in placed) crowded |= Vector2.Distance(other, point) < crown * 1.5f;
                     // Крона не нависает над полом (камера), ствол — не в воде и не в другом ориентире.
                     if (crowded || TouchesOutlinedFloor(point.x, point.y, crown * .55f) || NearWaterEdge(point.x, point.y, crown * .5f)
-                        || NearLandmark(point.x, point.y, crown * .45f)) continue;
+                        || NearLandmark(point.x, point.y, crown * .45f) || OnForestTrail(point.x, point.y, crown * .5f)) continue;
                     SpawnDecor(giant, point.x, point.y, rng);
                     var tree = _decor[_decorCount - 1];
                     tree.position = new Vector3(point.x, BackgroundHeight(map, point.x, point.y) - .3f, point.y);

@@ -245,7 +245,7 @@ namespace Game.View
         {
             var camera = Camera.main;
             if (camera == null || run.Map.Routes == null) return;
-            DrawLandmark(run.Map.EntryPoint, "ВХОД", camera, scale);
+            if (!run.Map.IsArena) DrawLandmark(run.Map.EntryPoint, "ВХОД", camera, scale);
             if (run.Encounters != null)
                 for (int i = 1; i < run.Sim.Entities.Count; i++)
                     if (run.Encounters.IsElite(i) && run.Sim.Entities.Alive[i])

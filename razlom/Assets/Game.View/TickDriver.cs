@@ -143,6 +143,8 @@ namespace Game.View
         {
             if (Session == null || Session.Mode != GameMode.Rift || Run == null) return;
 
+            // Пока герой выбегает с арены, экран награды закрыт — и выбор тоже.
+            if (ExitRunPlaying && command != RunCommand.Leave) return;
             bool validChoice = Run.Phase == RunPhase.ChoosingReward
                                && (command >= RunCommand.ChooseReward1 && command <= RunCommand.ChooseReward3
                                    || command == RunCommand.SkipReward && Run.ChoosingArtifact
@@ -375,6 +377,7 @@ namespace Game.View
                 if (Sim != null) SavePreviousPositions();
 
                 InputFrame frame = ConsumeInput();
+                ApplyArenaIntro(ref frame);
                 if (CaptureRig.TempoPreset >= 0) PrepareTempoCapture(ref frame);
                 CaptureDirectionalMovement(ref frame);
                 CampPlayerView.Instance?.PrepareInput(ref frame);
@@ -1137,7 +1140,7 @@ namespace Game.View
                     {
                         // Экран награды или арены только открылся — удар, пришедшийся на открытие, карточку
                         // не берёт (блок ввода RunHud.ChoiceLocked, владелец 29.09).
-                        if (RunHud.ChoiceLocked) continue;
+                        if (RunHud.ChoiceLocked || ExitRunPlaying) continue;
                         // Артефакт при уже занятом слоте — сначала вопрос «Заменить артефакт?».
                         RunHud runHud = Run.ChoosingArtifact ? GetComponent<RunHud>() : null;
                         if (runHud != null) runHud.RequestOffer(i);
@@ -1750,6 +1753,7 @@ namespace Game.View
             float z = Mathf.Lerp(prev.Y.ToFloat(), curr.Y.ToFloat(), Alpha);
             // В разломе — пол террасы арены (уступы между сегментами, LayoutView.FloorLevel).
             float height = CampPlayerView.Instance?.Active == true ? CampPlayerView.Instance.SurfaceHeight(x,z) : LayoutView.ShownFloorLevel(x, z);
+            if (entityId == Simulation.PlayerId) { var run = ExitRunOffset(); if (run.sqrMagnitude > 0) { x += run.x; z += run.z; height = LayoutView.ShownFloorLevel(x, z); } }
             return new Vector3(x, height, z);
         }
 
