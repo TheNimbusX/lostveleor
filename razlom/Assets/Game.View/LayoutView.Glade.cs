@@ -59,7 +59,7 @@ namespace Game.View
                 float width = Mathf.Lerp(1.3f, .4f, atWater);
                 rim = Mathf.Lerp(rim, .05f, atWater);
                 float earth = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(rim, rim + width, dist[i]));
-                // Травяные островки — после сглаживания стыков (EarthGrassPatchRow), иначе оно их заливало.
+                // Травяных пятен на земле поляны нет (владелец, 6 октября: «убери это пятно»).
                 if (earth <= .01f) continue;
                 var pixel = _campSurfacePixels[i];
                 pixel.r = (byte)Mathf.Max(pixel.r, earth * 215);
@@ -121,25 +121,6 @@ namespace Game.View
                 }
             });
             return result;
-        }
-
-        // Редкие мягкие пятна травы на земле поляны: трава просвечивает, а не вырезана островом.
-        // Газон и смесь травы с землёй по всей поляне владелец пробовал 30 сентября и вернул землю.
-        private void EarthGrassPatchRow(int y)
-        {
-            const int n = TrailResolution;
-            for (int x = 1; x < n - 1; x++)
-            {
-                int i = y * n + x;
-                if (_clearingDistance[i] <= 2.5f) continue;
-                float px = _trailBounds.x + (x + .5f) / n * _trailBounds.z;
-                float pz = _trailBounds.y + (y + .5f) / n * _trailBounds.w;
-                float patch = .5f * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.7f, .84f, Mathf.PerlinNoise(px * .11f + 33, pz * .11f + 9)));
-                if (patch <= 0) continue;
-                var pixel = _campSurfacePixels[i];
-                pixel.r = (byte)(pixel.r * (1 - patch));
-                _campSurfacePixels[i] = pixel;
-            }
         }
 
         // Доля грунта в маске земли под точкой: 0 — трава, 1 — тропа или земля поляны.
@@ -289,15 +270,16 @@ namespace Game.View
                         float reach = _decorRadii[root] * (.85f + (float)rng.NextDouble() * .5f);
                         if (TryForestDetail(map, fern, spot + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * reach, rng, .6f, .8f)) { n--; ferns++; }
                     }
-                // По кромке — купами по 2–4, со всех сторон, кроме ближней к камере дуги.
-                for (int clump = 0, attempt = 0; clump < 14 && attempt < 90; attempt++)
+                // По кромке — редкие купы по 2–4 (владелец, 6 октября: папоротник стоял неорганично), со всех
+                // сторон, кроме ближней к камере дуги.
+                for (int clump = 0, attempt = 0; clump < 7 && attempt < 60; attempt++)
                 {
                     float angle = Mathf.PI * (-.1f + (float)rng.NextDouble() * 1.2f);
                     float shoulder = .5f + (float)rng.NextDouble() * 2.5f;
                     var anchor = center + new Vector2(Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
                         Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
                     int placed = 0;
-                    for (int n = rng.Next(3, 6), tries = 0; n > 0 && tries < 14; tries++)
+                    for (int n = rng.Next(2, 5), tries = 0; n > 0 && tries < 14; tries++)
                     {
                         var jitter = new Vector2((float)rng.NextDouble() - .5f, (float)rng.NextDouble() - .5f) * 1.8f;
                         if (TryForestDetail(map, fern, anchor + jitter, rng, .6f, .75f)) { n--; placed++; ferns++; }
@@ -335,7 +317,7 @@ namespace Game.View
                     foreach (var other in placed) crowded |= Vector2.Distance(other, point) < crown * 1.5f;
                     // Крона не нависает над полом (камера), ствол — не в воде и не в другом ориентире.
                     if (crowded || TouchesOutlinedFloor(point.x, point.y, crown * .55f) || NearWaterEdge(point.x, point.y, crown * .5f)
-                        || NearLandmark(point.x, point.y, crown * .45f)) continue;
+                        || NearLandmark(point.x, point.y, crown * .45f) || OnForestTrail(point.x, point.y, crown * .5f)) continue;
                     SpawnDecor(giant, point.x, point.y, rng);
                     var tree = _decor[_decorCount - 1];
                     tree.position = new Vector3(point.x, BackgroundHeight(map, point.x, point.y) - .3f, point.y);

@@ -48,7 +48,9 @@ namespace Game.View
                 minX = Mathf.Min(minX, p.OriginX * cell); minZ = Mathf.Min(minZ, p.OriginY * cell);
                 maxX = Mathf.Max(maxX, (p.OriginX + p.Width) * cell); maxZ = Mathf.Max(maxZ, (p.OriginY + p.Height) * cell);
             }
-            _trailBounds = new Vector4(minX - 2, minZ - 2, maxX - minX + 4, maxZ - minZ + 4);
+            // У арены тропа уходит в лес за вход и выход (ForestTrailLength): маска шире пола.
+            float margin = map.IsArena ? ForestTrailLength + 4 : 2;
+            _trailBounds = new Vector4(minX - margin, minZ - margin, maxX - minX + margin * 2, maxZ - minZ + margin * 2);
             var routes = map.Routes;
             var anchors = new HashSet<int> { routes.CellAt(map.EntryPoint) };
             for (int e = 0; e < map.ExitCount; e++) anchors.Add(routes.CellAt(map.ExitPoint(e)));
@@ -105,6 +107,72 @@ namespace Game.View
                 PaintTrailCurve(map, start, (start + end) * .5f, end, .7f);
                 PaintTrailDisc(map, end, .75f);
             }
+            PaintForestTrails(map);
+        }
+
+        // Порталов нет (владелец, 6 октября): тропа не обрывается у края пола, а уходит в лес — оттуда
+        // герой забегает и туда выбегает (TickDriver.ArenaRun). Лес и кусты её не занимают (OnForestTrail).
+        private const float ForestTrailLength = 16;
+        private readonly List<Vector2> _forestTrail = new List<Vector2>();
+
+        private void PaintForestTrails(LayoutMap map)
+        {
+            _forestTrail.Clear();
+            if (!map.IsArena || map.Routes == null) return;
+            PaintForestTrail(TrailPoint(map.EntryPoint), -TrailPoint(map.Routes.EntryFacing).normalized, 0);
+            for (int e = 0; e < map.ExitCount; e++)
+            {
+                var exit = map.ExitPoint(e);
+                int cell = map.Routes.CellAt(exit), parent = cell >= 0 ? map.Routes.ParentCell(cell) : -1;
+                var direction = parent >= 0 ? TrailPoint(exit) - TrailPoint(map.Routes.GetCell(parent).Center) : TrailPoint(map.Routes.EntryFacing);
+                PaintForestTrail(TrailPoint(exit), direction.normalized, e + 1);
+            }
+        }
+
+        private void PaintForestTrail(Vector2 start, Vector2 direction, int index)
+        {
+            if (direction.sqrMagnitude < .5f) return;
+            var side = new Vector2(-direction.y, direction.x);
+            float phase = index * 2.3f + 1.1f;
+            for (float t = 0; t <= ForestTrailLength; t += .12f)
+            {
+                // Плавный изгиб: тропа петляет между стволами, а не идёт по линейке.
+                var point = start + direction * t + side * (Mathf.Sin(t * .22f + phase) - Mathf.Sin(phase)) * 1.6f;
+                float variation = .82f + .32f * Mathf.PerlinNoise(point.x * .13f + 17, point.y * .13f + 41);
+                // К дальнему концу тропа уже и тише: теряется в лесу.
+                float radius = _style.RouteWidth * .5f * variation * Mathf.Lerp(1f, .65f, t / ForestTrailLength);
+                PaintTrailDiscRaw(point, radius, Mathf.Lerp(1f, .55f, Mathf.SmoothStep(0, 1, t / ForestTrailLength)));
+                if (_forestTrail.Count == 0 || Vector2.Distance(_forestTrail[_forestTrail.Count - 1], point) > .8f) _forestTrail.Add(point);
+            }
+        }
+
+        /// <summary>Точка у тропы в лесу: деревья, кусты и камни туда не встают.</summary>
+        private bool OnForestTrail(float x, float z, float radius)
+        {
+            var p = new Vector2(x, z);
+            float reach = radius + _style.RouteWidth * .5f + .4f;
+            foreach (var point in _forestTrail)
+                if ((point - p).sqrMagnitude < reach * reach) return true;
+            return false;
+        }
+
+        // Тот же диск тропы, но без проверки пола: за краем поляны пола нет.
+        private void PaintTrailDiscRaw(Vector2 point, float radius, float strength)
+        {
+            int x0 = Mathf.Clamp(Mathf.FloorToInt((point.x - radius - _trailBounds.x) / _trailBounds.z * TrailResolution), 0, TrailResolution - 1);
+            int x1 = Mathf.Clamp(Mathf.CeilToInt((point.x + radius - _trailBounds.x) / _trailBounds.z * TrailResolution), 0, TrailResolution - 1);
+            int y0 = Mathf.Clamp(Mathf.FloorToInt((point.y - radius - _trailBounds.y) / _trailBounds.w * TrailResolution), 0, TrailResolution - 1);
+            int y1 = Mathf.Clamp(Mathf.CeilToInt((point.y + radius - _trailBounds.y) / _trailBounds.w * TrailResolution), 0, TrailResolution - 1);
+            for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                {
+                    var world = new Vector2(_trailBounds.x + (x + .5f) / TrailResolution * _trailBounds.z,
+                        _trailBounds.y + (y + .5f) / TrailResolution * _trailBounds.w);
+                    float distance = Vector2.Distance(world, point) / radius;
+                    byte value = (byte)Mathf.RoundToInt(Mathf.Clamp01((1 - distance) / .45f) * 255 * strength);
+                    int idx = y * TrailResolution + x;
+                    if (value > _trailPixels[idx]) _trailPixels[idx] = value;
+                }
         }
 
         private static Vector2 TrailPoint(FixVec2 point) => new Vector2(point.X.ToFloat(), point.Y.ToFloat());

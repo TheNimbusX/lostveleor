@@ -142,7 +142,8 @@ namespace Game.View
         void Landmarks(RiftRun run, Camera camera)
         {
             if (run.Map.Routes == null) return;
-            Place(camera, run.Map.EntryPoint, .6f, EntryIcon, "Вход");
+            // Вход — тропа из леса, герой забегает сам (TickDriver.ArenaRun): метка «Вход» не нужна.
+            if (!run.Map.IsArena) Place(camera, run.Map.EntryPoint, .6f, EntryIcon, "Вход");
             for (int e = 0; e < run.Map.ExitCount; e++)
                 Place(camera, run.Map.ExitPoint(e), .6f, ExitIcon, run.Phase == RunPhase.SeekingExit ? "Выход" : "Выход · после боя");
             for (int b = 0; b < run.Map.RewardBranchCount; b++)

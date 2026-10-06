@@ -78,6 +78,8 @@ namespace Game.View
             RiftRun run = _driver.Run;
             bool live = !_driver.GameplayPaused && _driver.Session != null && _driver.Session.Mode == GameMode.Rift && run != null;
             RunPhase phase = live ? run.Phase : (RunPhase)255;
+            // Выбег с арены (TickDriver.ArenaRun): экран награды открывается, когда герой убежал в лес.
+            if (live && _driver.ExitRunPlaying) phase = RunPhase.SeekingExit;
 
             // Выбор арены (ArenaFlow) — тот же экран с тремя карточками, что и награда.
             bool reward = phase == RunPhase.ChoosingReward, route = phase == RunPhase.ChoosingRoute;

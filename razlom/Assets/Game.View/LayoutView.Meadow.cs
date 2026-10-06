@@ -171,6 +171,9 @@ namespace Game.View
             portal.name = exit ? "Проход дальше" : "Вход в луга";
             portal.position = new Vector3(point.X.ToFloat(), FloorLevel(point.X.ToFloat(), point.Y.ToFloat()), point.Y.ToFloat());
             portal.rotation = Quaternion.LookRotation(new Vector3(direction.X.ToFloat(), 0, direction.Y.ToFloat()));
+            // Порталы были заглушками (владелец, 5 октября): герой забегает и выбегает по тропе
+            // (TickDriver.ArenaRun). Точка остаётся — по ней трава и кусты держат проход чистым.
+            portal.gameObject.SetActive(!_shownMap.IsArena);
             SetGlow(portal, exit ? new Color(.8f, .42f, .1f) : new Color(.18f, .65f, .52f));
             _portals.Add(portal);
         }
@@ -426,6 +429,13 @@ namespace Game.View
             var trees = new List<int>();
             for (int i = 0; i < _style.DecorVariants.Length; i++)
                 if (_style.DecorVariants[i].Kind == DecorKind.Tree && _style.DecorVariants[i].Weight > 0) trees.Add(i);
+            var spruces = new List<int>(); int broadleaf = -1;
+            foreach (int tree in trees)
+            {
+                string name = _style.DecorVariants[tree].Prefab != null ? _style.DecorVariants[tree].Prefab.name : "";
+                if (name.StartsWith("MeadowSpruce")) spruces.Add(tree);
+                else if (name == "MeadowBroadleaf") broadleaf = tree;
+            }
             var first = map.GetPlaced(0);
             float minX=first.OriginX*cell, maxX=(first.OriginX+first.Width)*cell;
             float minZ=first.OriginY*cell, maxZ=(first.OriginY+first.Height)*cell;
@@ -448,10 +458,12 @@ namespace Game.View
             float groveX = (float)groveRng.NextDouble() * 1000, groveZ = (float)groveRng.NextDouble() * 1000;
             float treeWeight = 0;
             foreach (int tree in trees) treeWeight += _style.DecorVariants[tree].Weight;
-            for (float x=minX-_style.ForestBandWidth;x<maxX+_style.ForestBandWidth;x+=_style.ForestSpacing)
+            // Сомкнутый лес тянется на 24 м дальше полосы: по углам кадра не видно голой земли.
+            float reach = _style.ForestBandWidth + (_style.ForestFill > 0 ? 24 : 0);
+            for (float x=minX-reach;x<maxX+reach;x+=_style.ForestSpacing)
             {
                 yield return null;
-                for (float z=minZ-_style.ForestBandWidth;z<maxZ+_style.ForestBandWidth;z+=_style.ForestSpacing)
+                for (float z=minZ-reach;z<maxZ+reach;z+=_style.ForestSpacing)
                 {
                     var rng=DecorRandom(unchecked((int)(x*73)+(int)(z*997)),91);
                     // Two spatial scales produce small copses, larger groves and persistent open gaps.
@@ -464,7 +476,7 @@ namespace Game.View
                     float pz=z+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
                     // Лес подходит к самой воде: озеро — край арены, а не пруд на лугу (2 октября).
                     // NearPond держит ещё 30% радиуса — у озера в 11 м это 3 м пустого луга по берегу.
-                    if (NearRiver(px, pz, 3) || NearWaterEdge(px, pz, 1.2f)) continue;
+                    if (NearRiver(px, pz, 3) || NearWaterEdge(px, pz, 1.2f) || OnForestTrail(px, pz, 4f)) continue;
                     if (map.GladeCount > 0)
                     {
                         var character = CharacterOf(map, NearestGlade(map, px, pz));
@@ -475,6 +487,11 @@ namespace Game.View
                     float pick = (float)rng.NextDouble() * treeWeight;
                     int variant = trees[trees.Count - 1];
                     foreach (int tree in trees) { pick -= _style.DecorVariants[tree].Weight; if (pick <= 0) { variant = tree; break; } }
+                    // Ярус леса (владелец, 6 октября: «всё выглядит плоско»): ели растут рощами, а не по
+                    // одной в ковре дубов, — пятна тёмной хвои рвут однотонную зелень.
+                    float spruceGrove = Mathf.PerlinNoise(x * .06f + groveZ + 31, z * .06f + groveX + 7);
+                    if (spruceGrove > .62f && spruces.Count > 0 && rng.NextDouble() < .8) variant = spruces[rng.Next(spruces.Count)];
+                    else if (spruceGrove < .45f && broadleaf >= 0) variant = broadleaf;
                     // Крона может нависать над ориентиром, ствол — нет.
                     if (NearLandmark(px, pz, _decorRadii[variant] * .35f) || ShadesLandmark(px, pz, _decorRadii[variant] * 1.1f)) continue;
                     float nearest=float.MaxValue;
@@ -495,17 +512,24 @@ namespace Game.View
                         }
                         if (TouchesOutlinedFloor(px, pz, _decorRadii[variant] * 1.45f)) continue;
                     }
-                    if (nearest<_decorRadii[variant]*1.45f+.5f || nearest>_style.ForestBandWidth) continue;
+                    if (nearest<_decorRadii[variant]*1.45f+.5f || nearest>reach) continue;
                     // Дальше 20 м от пола сомкнутый лес — только фон: вдвое реже и крупнее. Кроны так же
                     // закрывают землю до края кадра, а деревьев почти не прибавляется.
                     bool far = _style.ForestFill > 0 && nearest > 20;
                     if (far && ((Mathf.RoundToInt((x - minX) / _style.ForestSpacing) + Mathf.RoundToInt((z - minZ) / _style.ForestSpacing)) & 1) == 1) continue;
                     SpawnDecor(variant,px,pz,rng);
-                    _decor[_decorCount-1].localScale*=far ? 2.05f : 1.45f;
+                    // Разная высота крон: крупный шум — рощи великанов и низкий подрост, мелкий — соседи
+                    // разной высоты. Высокие кроны отбрасывают тень на низкие, и лес получает объём.
+                    float canopy = Mathf.Lerp(.72f, 1.38f, Mathf.PerlinNoise(x * .085f + groveX + 13, z * .085f + groveZ + 59))
+                        * (.85f + (float)rng.NextDouble() * .3f);
+                    var treeScale = _decor[_decorCount-1].localScale * ((far ? 2.05f : 1.45f) * canopy);
+                    // Ели вытянуты: островерхие макушки торчат над дубами.
+                    if (spruces.Contains(variant)) treeScale.y *= 1.3f;
+                    _decor[_decorCount-1].localScale = treeScale;
                     var treePosition = _decor[_decorCount-1].position;
                     treePosition.y = BackgroundHeight(map, px, pz) - .08f;
                     _decor[_decorCount-1].position = treePosition;
-                    if (++created>=Mathf.RoundToInt(Mathf.Lerp(420, 900, _style.ForestFill))) yield break;
+                    if (++created>=Mathf.RoundToInt(Mathf.Lerp(420, 1400, _style.ForestFill))) { Debug.Log($"[Луга] лес: бюджет {created} исчерпан"); yield break; }
                 }
             }
         }
@@ -576,6 +600,85 @@ namespace Game.View
 
         private float BackgroundHeight(LayoutMap map, float x, float z) => BackgroundRelief(map, x, z) + FloorLevel(x, z);
 
+        private float HillHeight(float x, float z, float distance)
+        {
+            float rise = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(5, 26, distance));
+            if (rise <= 0) return 0;
+            float hill = Mathf.PerlinNoise(x * .021f + _reliefOffset.y + 7, z * .021f + _reliefOffset.x + 3);
+            float ridge = Mathf.PerlinNoise(x * .06f + _reliefOffset.x + 19, z * .06f + _reliefOffset.y + 23);
+            var away = new Vector2(x, z) - _hillCenter;
+            float facing = away.sqrMagnitude > .01f ? Vector2.Dot(away.normalized, _hillAxis) : 0;
+            float side = Mathf.Lerp(.2f, 1f, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-.6f, .6f, facing)));
+            return rise * side * (3f + 5f * hill * hill + 1.2f * ridge);
+        }
+
+        private Vector2 _hillCenter, _hillAxis = Vector2.up;
+
+        /// <summary>Расстояние от точки до ближайшего модуля арены, метры (как у рельефа).</summary>
+        private float ModuleDistance(LayoutMap map, float x, float z)
+        {
+            float distance = float.MaxValue, cell = LayoutMap.CellSize.ToFloat();
+            for (int m = 0; m < map.PlacedCount; m++)
+            {
+                var room = map.GetPlaced(m);
+                float dx = Mathf.Max(0, Mathf.Max(room.OriginX * cell - x, x - (room.OriginX + room.Width) * cell));
+                float dz = Mathf.Max(0, Mathf.Max(room.OriginY * cell - z, z - (room.OriginY + room.Height) * cell));
+                distance = Mathf.Min(distance, Mathf.Sqrt(dx * dx + dz * dz));
+            }
+            return distance;
+        }
+
+        // Скальные выходы на холмах: группы крупных серых камней на вершинах, с прогалиной вокруг —
+        // лес их не закрывает (ориентир). Только далеко от арены, бою не мешают.
+        private void PlaceOutcrops(LayoutMap map)
+        {
+            if (!map.IsArena || map.Outline == null) return;
+            var rocks = new List<int>();
+            foreach (string name in new[] { "CreatingRock", "ArenaCreatingRockA", "ArenaCreatingRockB" })
+            {
+                int variant = VariantNamed(name);
+                if (variant >= 0) rocks.Add(variant);
+            }
+            if (rocks.Count == 0) return;
+            float cell = LayoutMap.CellSize.ToFloat(), minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;
+            for (int m = 0; m < map.PlacedCount; m++)
+            {
+                var p = map.GetPlaced(m);
+                minX = Mathf.Min(minX, p.OriginX * cell); minZ = Mathf.Min(minZ, p.OriginY * cell);
+                maxX = Mathf.Max(maxX, (p.OriginX + p.Width) * cell); maxZ = Mathf.Max(maxZ, (p.OriginY + p.Height) * cell);
+            }
+            var rng = DecorRandom(0, 1117);
+            var placed = new List<Vector2>();
+            for (int attempt = 0; attempt < 160 && placed.Count < 5; attempt++)
+            {
+                var point = new Vector2(Mathf.Lerp(minX - 34, maxX + 34, (float)rng.NextDouble()), Mathf.Lerp(minZ - 34, maxZ + 34, (float)rng.NextDouble()));
+                float distance = ModuleDistance(map, point.x, point.y);
+                if (distance < 11 || distance > 30) continue;
+                // Только на высоких местах.
+                float hill = Mathf.PerlinNoise(point.x * .021f + _reliefOffset.y + 7, point.y * .021f + _reliefOffset.x + 3);
+                if (hill < .45f || OnForestTrail(point.x, point.y, 5) || NearWaterEdge(point.x, point.y, 4)) continue;
+                bool crowded = false;
+                foreach (var other in placed) crowded |= (other - point).sqrMagnitude < 14 * 14;
+                if (crowded) continue;
+                placed.Add(point);
+                // Прогалина вокруг: ни ствол, ни крона её не закрывают (ShadesLandmark), скалы видно с камеры.
+                _landmarkSpots.Add(new Vector4(point.x, point.y, 7.5f, 1));
+                int count = rng.Next(3, 6);
+                for (int k = 0; k < count; k++)
+                {
+                    int variant = rocks[rng.Next(rocks.Count)];
+                    var at = point + new Vector2((float)rng.NextDouble() - .5f, (float)rng.NextDouble() - .5f) * (k == 0 ? 0 : 5f);
+                    SpawnDecor(variant, at.x, at.y, rng);
+                    var rock = _decor[_decorCount - 1];
+                    float size = k == 0 ? 5f + (float)rng.NextDouble() * 2f : 2f + (float)rng.NextDouble() * 1.8f;
+                    rock.localScale = new Vector3(rock.localScale.x * size, rock.localScale.y * size * (k == 0 ? 1.35f : .9f + (float)rng.NextDouble() * .5f), rock.localScale.z * size);
+                    rock.position = new Vector3(at.x, BackgroundHeight(map, at.x, at.y) - .4f, at.y);
+                    AddLandmark(.55f, false);
+                }
+            }
+            if (Application.isPlaying) Debug.Log($"[Луга] скальных выходов: {placed.Count}");
+        }
+
         private float BackgroundRelief(LayoutMap map, float x, float z)
         {
             float distance = float.MaxValue;
@@ -592,6 +695,9 @@ namespace Game.View
             float broad = Mathf.PerlinNoise(x * .035f + _reliefOffset.x, z * .035f + _reliefOffset.y);
             float detail = Mathf.PerlinNoise(x * .09f + _reliefOffset.y, z * .09f + _reliefOffset.x);
             float height = -_style.GroundFillDepthOffset + fade * (broad * 1.1f + detail * .25f);
+            // Холмы за лесом (владелец, 6 октября: «плоско»): дальше 12 м от арены земля поднимается на
+            // 3–8 м. Лес стоит на склонах, дальний — выше ближнего; рельеф даёт тени и даль.
+            if (map.IsArena) height += HillHeight(x, z, distance);
             // Русло — плавная ложбина по расстоянию до середины реки, как у прудов:
             // ступенька по сетке фона давала чёрные зубчатые берега.
             for (int r = 0; r < map.RiverCount; r++)
@@ -861,6 +967,7 @@ namespace Game.View
             if (!PlaceCenterCircle(map, runes) && (runes >= 0 || stone >= 0)) PlaceRuneCircle(map, runes, stone);
             PlaceAltar(map);
             PlaceLedgeCliffs(map);
+            PlaceOutcrops(map);
             PlaceGiantTrees(map);
             PlaceRootsAndFerns(map);
             if (fence >= 0)
@@ -1055,7 +1162,7 @@ namespace Game.View
             float radius = _decorRadii[variant] * scale;
             var kind = _style.DecorVariants[variant].Kind;
             bool understory = kind == DecorKind.Bush || kind == DecorKind.GrassTuft;
-            if (TouchesOutlinedFloor(point.x, point.y, radius + .2f)
+            if (TouchesOutlinedFloor(point.x, point.y, radius + .2f) || OnForestTrail(point.x, point.y, radius * .6f)
                 || NearPond(point.x, point.y, radius) || BlocksRoute(variant, point.x, point.y)
                 || NearLandmark(point.x, point.y, understory ? radius * .7f : radius)) return false;
             // Учитываем уже расставленный лес и соседние группы, а не только текущую композицию.
@@ -1088,8 +1195,12 @@ namespace Game.View
         {
             var rng = DecorRandom(0, 271);
             _reliefOffset = new Vector2((float)rng.NextDouble() * 1000, (float)rng.NextDouble() * 1000);
-            float width = Mathf.Max(_style.GroundFillSize, maxX - minX + 80);
-            float depth = Mathf.Max(_style.GroundFillSize, maxZ - minZ + 80);
+            // Холмы выше там, куда смотрит камера (верх кадра), и ниже у камеры: склон не закрывает арену.
+            _hillCenter = new Vector2((minX + maxX) * .5f, (minZ + maxZ) * .5f);
+            var view = Camera.main != null ? Camera.main.transform.forward : new Vector3(0, -1, 1);
+            _hillAxis = new Vector2(view.x, view.z).sqrMagnitude > .001f ? new Vector2(view.x, view.z).normalized : Vector2.up;
+            float width = Mathf.Max(_style.GroundFillSize, maxX - minX + 140);
+            float depth = Mathf.Max(_style.GroundFillSize, maxZ - minZ + 140);
             float originX = (minX + maxX - width) * .5f, originZ = (minZ + maxZ - depth) * .5f;
             // У арены с уступами — шаг 1 м: ступень обрыва иначе расплывалась в пологий скат.
             float gridStep = map.LedgeCount > 0 ? 1f : 2f;
