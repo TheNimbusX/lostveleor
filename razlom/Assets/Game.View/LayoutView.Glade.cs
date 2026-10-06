@@ -270,15 +270,16 @@ namespace Game.View
                         float reach = _decorRadii[root] * (.85f + (float)rng.NextDouble() * .5f);
                         if (TryForestDetail(map, fern, spot + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * reach, rng, .6f, .8f)) { n--; ferns++; }
                     }
-                // По кромке — купами по 2–4, со всех сторон, кроме ближней к камере дуги.
-                for (int clump = 0, attempt = 0; clump < 14 && attempt < 90; attempt++)
+                // По кромке — редкие купы по 2–4 (владелец, 6 октября: папоротник стоял неорганично), со всех
+                // сторон, кроме ближней к камере дуги.
+                for (int clump = 0, attempt = 0; clump < 7 && attempt < 60; attempt++)
                 {
                     float angle = Mathf.PI * (-.1f + (float)rng.NextDouble() * 1.2f);
                     float shoulder = .5f + (float)rng.NextDouble() * 2.5f;
                     var anchor = center + new Vector2(Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
                         Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
                     int placed = 0;
-                    for (int n = rng.Next(3, 6), tries = 0; n > 0 && tries < 14; tries++)
+                    for (int n = rng.Next(2, 5), tries = 0; n > 0 && tries < 14; tries++)
                     {
                         var jitter = new Vector2((float)rng.NextDouble() - .5f, (float)rng.NextDouble() - .5f) * 1.8f;
                         if (TryForestDetail(map, fern, anchor + jitter, rng, .6f, .75f)) { n--; placed++; ferns++; }

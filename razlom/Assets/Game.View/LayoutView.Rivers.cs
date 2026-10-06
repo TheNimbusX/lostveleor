@@ -146,7 +146,7 @@ namespace Game.View
             }
             var rng = DecorRandom(index, 877);
             float length = river.HalfLength.ToFloat() - 4, width = river.HalfWidth.ToFloat();
-            for (float t = -length; t <= length; t += .7f + (float)rng.NextDouble() * .6f)
+            for (float t = -length; t <= length; t += .9f + (float)rng.NextDouble() * .9f)
                 for (int side = -1; side <= 1; side += 2)
                 for (int row = 0; row < 2; row++)
                 {
@@ -154,20 +154,21 @@ namespace Game.View
                     if (Mathf.Abs(t) < river.BridgeHalfWidth.ToFloat() + 3) continue;
                     var at = TrailPoint(river.Point(Fix64.FromDouble(t)));
                     float clump = Mathf.PerlinNoise(at.x * .23f + side * 17, at.y * .23f + 41);
-                    // Куртины: в густых местах оба ряда, в просветах — редкие кусты; второй ряд — только в куртинах.
-                    float dense = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.3f, .65f, clump));
-                    if (rng.NextDouble() > (row == 0 ? Mathf.Lerp(.35f, 1f, dense) : dense * .8f)) continue;
+                    // Куртины по 2–5 с просветами в несколько метров (владелец, 6 октября: вдоль реки папоротник
+                    // стоял сплошной изгородью). Второй ряд — только в середине густой куртины.
+                    float dense = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.5f, .7f, clump));
+                    if (rng.NextDouble() > (row == 0 ? Mathf.Lerp(.08f, .9f, dense) : dense * dense * .45f)) continue;
                     double roll = rng.NextDouble();
-                    int variant = row == 0 && roll < .18 && stones.Count > 0 ? stones[rng.Next(stones.Count)] : roll < .78 && fern >= 0 ? fern
+                    int variant = row == 0 && roll < .3 && stones.Count > 0 ? stones[rng.Next(stones.Count)] : roll < .72 && fern >= 0 ? fern
                         : tufts.Count > 0 ? tufts[rng.Next(tufts.Count)] : -1;
                     if (variant < 0) continue;
                     bool stone = stones.Contains(variant);
-                    float size = stone ? .7f + (float)rng.NextDouble() * .6f : variant == fern ? .95f + (float)rng.NextDouble() * .5f
+                    float size = stone ? .7f + (float)rng.NextDouble() * .6f : variant == fern ? .6f + (float)rng.NextDouble() * .75f
                         : 1.2f + (float)rng.NextDouble() * .6f;
                     float reach = _decorRadii[variant] / Mathf.Max(.01f, _style.DecorVariants[variant].ScaleRange.y) * size * .5f;
                     var normal = TrailPoint(river.Along);
                     // Камни — у самой воды и чуть в ней, растения — на сухом краю берега.
-                    var point = at + normal * side * (width + (stone ? -.1f : .2f) + reach + row * 1.4f + (float)rng.NextDouble() * .6f)
+                    var point = at + normal * side * (width + (stone ? -.1f : -.15f) + reach * .7f + row * 1.2f + (float)rng.NextDouble() * .5f)
                         + new Vector2(normal.y, -normal.x) * (((float)rng.NextDouble() - .5f) * .6f);
                     if (TouchesOutlinedFloor(point.x, point.y, reach + .2f) || NearLandmark(point.x, point.y, reach)) continue;
                     SpawnDecor(variant, point.x, point.y, rng);

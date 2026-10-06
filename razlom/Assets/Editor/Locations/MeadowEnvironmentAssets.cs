@@ -699,6 +699,9 @@ namespace Game.LocationEditor
             { balance.temperature.Override(2); EditorUtility.SetDirty(balance); }
             if (style.PostProcessingOverride.TryGet(out UnityEngine.Rendering.Universal.ShadowsMidtonesHighlights tones))
             { tones.shadows.Override(new Vector4(.92f, .97f, 1, .03f)); EditorUtility.SetDirty(tones); }
+            // Глубина кадра (владелец, 6 октября: «плоско»): края темнее и холоднее, поляна в середине светлее.
+            if (style.PostProcessingOverride.TryGet(out UnityEngine.Rendering.Universal.Vignette vignette))
+            { vignette.color.Override(new Color(.05f, .12f, .14f)); vignette.intensity.Override(.3f); vignette.smoothness.Override(.55f); EditorUtility.SetDirty(vignette); }
             style.CampSunScale = 1.1f;
             style.CampSunColorBlend = .75f;
             style.SunColor = new Color(1, .9f, .62f);

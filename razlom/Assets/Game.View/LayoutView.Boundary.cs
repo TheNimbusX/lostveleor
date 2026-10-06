@@ -186,6 +186,10 @@ namespace Game.View
             var character = _shownMap.IsArena ? CharacterOf(_shownMap, 0) : GladeCharacter.Rocky;
             float rockShare = rocks.Count == 0 ? 0 : bushes.Count == 0 ? 1 : character == GladeCharacter.Rocky ? .3f : .12f;
             int fern = VariantNamed(FernPrefab);
+            var edgeTufts = new List<int>();
+            for (int i = 0; i < _style.DecorVariants.Length; i++)
+                if (_style.DecorVariants[i].Kind == DecorKind.GrassTuft && _style.DecorVariants[i].Weight > 0 && _style.DecorVariants[i].Prefab != null
+                    && _style.DecorVariants[i].Prefab.name.Contains("CreatingGrass")) edgeTufts.Add(i);
             foreach (var (edge, normal) in OutlineEdges())
             {
                 yield return null;
@@ -200,7 +204,19 @@ namespace Game.View
                 var rng = DecorRandom(unchecked(Mathf.RoundToInt(edge.x * 4) * 486187739 + Mathf.RoundToInt(edge.y * 4) * 290797), 641);
                 if (nearest < reach && fern >= 0)
                 {
-                    float fernScale = .7f + (float)rng.NextDouble() * .5f;
+                    // Просвет держат то папоротник, то высокая трава: одинаковые папоротники через шаг
+                    // читались шеренгой (владелец, 6 октября).
+                    int tuft = edgeTufts.Count > 0 && rng.NextDouble() < .5 ? edgeTufts[rng.Next(edgeTufts.Count)] : -1;
+                    if (tuft >= 0)
+                    {
+                        float tuftScale = 1.2f + (float)rng.NextDouble() * .8f;
+                        var tuftPoint = edge + normal * (.3f + (float)rng.NextDouble() * .5f);
+                        if (NearPond(tuftPoint.x, tuftPoint.y, .5f) || NearLandmark(tuftPoint.x, tuftPoint.y, .3f)) continue;
+                        if (PlaceOffFloor(tuft, tuftPoint, normal, tuftScale, false, rng))
+                            cover.Add(new Vector3(_decor[_decorCount - 1].position.x, _decor[_decorCount - 1].position.z, VisibleRadius(_decorCount - 1)));
+                        continue;
+                    }
+                    float fernScale = .55f + (float)rng.NextDouble() * .7f;
                     float fernVisible = _decorRadii[fern] * fernScale / Mathf.Max(.01f, _style.DecorVariants[fern].ScaleRange.y) * .7f;
                     var fernPoint = edge + normal * (fernVisible * .6f + (float)rng.NextDouble() * .3f);
                     if (NearPond(fernPoint.x, fernPoint.y, fernVisible) || NearLandmark(fernPoint.x, fernPoint.y, fernVisible * .5f)) continue;
