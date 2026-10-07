@@ -723,6 +723,13 @@ namespace Game.LocationEditor
             variants.RemoveAll(v => v.Prefab != null && v.Prefab.name == "CreatingGiantTree");
             variants.Add(Variant(PrepareTripoProp("CreatingGiantTree", "arena_giant_tree", 30f, false, 24000, new Color(.95f, 1f, .9f)),
                 DecorKind.Rock, 0f, false, .9f, 1.15f));
+            // Каменная платформа и арка из дерева (владелец, 7 октября). Нулевой вес: платформа — круг в
+            // центре сегмента (PlaceCenterCircle), арка — ворота над тропой входа и выхода (PlaceTrailArches).
+            variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingStonePlatform" || v.Prefab.name == "CreatingTreeArch"));
+            variants.Add(Variant(PrepareTripoProp("CreatingStonePlatform", "arena_stone_platform", 5f, true, 16000, new Color(.92f, .92f, .88f)),
+                DecorKind.Rock, 0f, false, 1f, 1f));
+            variants.Add(Variant(PrepareTripoProp("CreatingTreeArch", "arena_tree_arch", 5.5f, false, 20000, new Color(.9f, .92f, .86f)),
+                DecorKind.Rock, 0f, false, 1f, 1f));
             var fern = PrepareTripoProp("CreatingFern", "arena_fern", 1.45f, false, 3000, new Color(1f, 1.04f, .92f));
             variants.Add(Variant(AddBreeze(fern, .1f), DecorKind.Bush, 0f, false, .8f, 1.3f));
             style.DecorVariants = variants.ToArray();

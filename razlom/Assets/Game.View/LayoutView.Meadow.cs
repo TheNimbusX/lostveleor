@@ -959,7 +959,8 @@ namespace Game.View
                 else if (name == "CreatingStoneRuin") runes = i;
                 else if (name == "CreatingRuneStone") stone = i;
                 else if (name == "CreatingFence" && variant.Weight > 0) fence = i;
-                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab || name == RootPrefab || name == GiantTreePrefab;
+                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab || name == RootPrefab || name == GiantTreePrefab
+                    || name == PlatformPrefab || name == ArchPrefab;
             }
             if (map.Outline == null || _style.ForestBandWidth <= 0 || map.GladeCount == 0) return;
             // Рунный круг — один на арену: в центре сегмента, а если там не встал — ориентиром у края.
@@ -968,6 +969,7 @@ namespace Game.View
             PlaceAltar(map);
             PlaceLedgeCliffs(map);
             PlaceOutcrops(map);
+            PlaceTrailArches(map);
             PlaceGiantTrees(map);
             PlaceRootsAndFerns(map);
             if (fence >= 0)

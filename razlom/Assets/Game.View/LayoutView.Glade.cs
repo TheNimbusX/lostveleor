@@ -13,7 +13,10 @@ namespace Game.View
     {
         private const string LeavesPath = "Environment/Camp/GroundDetails/";
         private const float AltarMass = 2f;
-        private const string AltarPrefab = "CreatingAltar", PebblesPrefab = "MeadowPebbles", RootPrefab = "CreatingRoots", FernPrefab = "CreatingFern", GiantTreePrefab = "CreatingGiantTree";
+        private const string AltarPrefab = "CreatingAltar", PebblesPrefab = "MeadowPebbles", RootPrefab = "CreatingRoots", FernPrefab = "CreatingFern", GiantTreePrefab = "CreatingGiantTree",
+            PlatformPrefab = "CreatingStonePlatform", ArchPrefab = "CreatingTreeArch";
+        // Платформа утоплена: над землёй — только верхняя ступень, по ней ходят.
+        private const float PlatformSink = .25f;
         private float[] _clearingDistance;
         private readonly List<Matrix4x4>[] _pebbleField = { new List<Matrix4x4>(), new List<Matrix4x4>() };
         private Mesh[] _pebbleMeshes;
@@ -135,8 +138,83 @@ namespace Game.View
 
         // Рунный круг в центре поляны: кольцо-руина сплюснуто по высоте и лежит вровень с землёй,
         // по нему ходят. Растения пола из середины убираются, трава и листья его обходят.
+        // Арка из дерева (владелец, 7 октября) — природные ворота: стоит над тропой в лес у входа и у
+        // выхода, герой забегает и выбегает сквозь неё (TickDriver.ArenaRun). Проём модели — вдоль тропы.
+        private void PlaceTrailArches(LayoutMap map)
+        {
+            int arch = VariantNamed(ArchPrefab);
+            if (arch < 0 || !map.IsArena) return;
+            var prefab = _style.DecorVariants[arch].Prefab;
+            Bounds bounds = default; bool any = false;
+            foreach (var renderer in prefab.GetComponentsInChildren<Renderer>(true))
+            {
+                var b = renderer.bounds;
+                if (!any) { bounds = b; any = true; } else bounds.Encapsulate(b);
+            }
+            // Проём — вдоль короткой оси модели: ворота шире, чем толще.
+            float yaw = any && bounds.size.x < bounds.size.z ? 90 : 0;
+            int tree = VariantNamed("MeadowBroadleaf");
+            var undergrowth = new List<int>();
+            int fernVariant = VariantNamed(FernPrefab);
+            if (fernVariant >= 0) undergrowth.Add(fernVariant);
+            for (int i = 0; i < _style.DecorVariants.Length; i++)
+                if (_style.DecorVariants[i].Kind == DecorKind.Bush && _style.DecorVariants[i].Weight > 0) undergrowth.Add(i);
+            if (undergrowth.Count == 0) return;
+            var rng = DecorRandom(0, 1123);
+            foreach (var gate in _trailGates)
+            {
+                var start = new Vector2(gate.x, gate.y); var direction = new Vector2(gate.z, gate.w);
+                // Чуть за краем пола: с поляны видна вся арка, тропа уходит под неё в лес.
+                var point = start + direction * ArchOffset;
+                SpawnDecor(arch, point.x, point.y, rng);
+                var placed = _decor[_decorCount - 1];
+                placed.rotation = Quaternion.LookRotation(new Vector3(direction.x, 0, direction.y)) * Quaternion.Euler(0, yaw, 0);
+                placed.position = new Vector3(point.x, BackgroundHeight(map, point.x, point.y) - .15f, point.y);
+                // Арка — часть леса (владелец, 7 октября: «корень должен быть вместе с другими корнями и
+                // деревьями»): занят только след её корней, лес подходит вплотную; над тропой просвет держит
+                // сама тропа (OnForestTrail). У каждой «ноги» — своё дерево, у корней — подлесок.
+                // Небо над самой аркой открыто (кроны не закрывают её свод), вокруг — лес вплотную.
+                AddLandmark(.5f, true);
+                // Между аркой и камерой кроны не встают: высокий лес перед ней закрывал её целиком.
+                _landmarkSpots.Add(new Vector4(point.x - _hillAxis.x * 4, point.y - _hillAxis.y * 4, 4.5f, 1));
+                float half = any ? Mathf.Max(bounds.size.x, bounds.size.z) * .5f : 5;
+                var side = new Vector2(-direction.y, direction.x);
+                for (int s = -1; s <= 1; s += 2)
+                {
+                    var foot = point + side * s * half * .8f;
+                    if (tree >= 0)
+                    {
+                        // Дерево — за аркой со стороны, дальней от камеры: ближе к камере его крона закрыла бы свод.
+                        var trunkAt = foot + side * s * 1.8f + _hillAxis * (1.5f + (float)rng.NextDouble());
+                        SpawnDecor(tree, trunkAt.x, trunkAt.y, rng);
+                        var trunk = _decor[_decorCount - 1];
+                        trunk.localScale *= 1.35f + (float)rng.NextDouble() * .3f;
+                        trunk.position = new Vector3(trunkAt.x, BackgroundHeight(map, trunkAt.x, trunkAt.y) - .08f, trunkAt.y);
+                    }
+                    for (int n = 0, tries = 0; n < 4 && tries < 16; tries++)
+                    {
+                        int detail = undergrowth[rng.Next(undergrowth.Count)];
+                        float angle = (float)rng.NextDouble() * Mathf.PI * 2;
+                        var at = foot + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * (1f + (float)rng.NextDouble() * 2.2f);
+                        if (OnForestTrail(at.x, at.y, .3f)) continue;
+                        SpawnDecor(detail, at.x, at.y, rng);
+                        var bush = _decor[_decorCount - 1];
+                        bush.localScale *= .8f + (float)rng.NextDouble() * .6f;
+                        bush.position = new Vector3(at.x, BackgroundHeight(map, at.x, at.y) - .03f, at.y);
+                        n++;
+                    }
+                }
+            }
+        }
+
+        private const float ArchOffset = 3.5f;
+
         private bool PlaceCenterCircle(LayoutMap map, int ring)
         {
+            // Круг в центре — каменная платформа владельца (7 октября), если она есть; иначе прежний круг рун.
+            int platform = VariantNamed(PlatformPrefab);
+            bool usePlatform = platform >= 0;
+            if (usePlatform) ring = platform;
             if (ring < 0 || !map.IsArena || (_shownEncounters != null && _shownEncounters.BossId >= 0)) return false;
             // У арены из сегментов — в последнем: ориентир у сундука и выхода.
             var center = TrailPoint(map.GetGlade(map.GladeCount - 1).Center);
@@ -164,11 +242,12 @@ namespace Game.View
             }
             SpawnDecor(ring, center.x, center.y, DecorRandom(0, 1021));
             var placed = _decor[_decorCount - 1];
-            placed.localScale = new Vector3(scale, scale * .35f, scale);
-            placed.position = new Vector3(center.x, FloorLevel(center.x, center.y), center.y);
+            // Платформа — своей высоты, чуть утоплена; старый круг рун сплюснут вровень с землёй.
+            placed.localScale = usePlatform ? Vector3.one * scale : new Vector3(scale, scale * .35f, scale);
+            placed.position = new Vector3(center.x, FloorLevel(center.x, center.y) - (usePlatform ? PlatformSink : 0), center.y);
             AddLandmark(.72f, false);
             var renderer = placed.GetComponentInChildren<MeshRenderer>();
-            if (renderer != null) _runes.Add((renderer, renderer.sharedMaterial.GetColor("_EmissionColor")));
+            if (renderer != null && !usePlatform) _runes.Add((renderer, renderer.sharedMaterial.GetColor("_EmissionColor")));
             return true;
         }
 

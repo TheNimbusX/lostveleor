@@ -222,6 +222,18 @@ MonoBehaviour:
       Weight: 0
       ScaleRange: {x: 0.9, y: 1.15}
       UseAsBoundary: 0
+    - Kind: 1
+      Prefab: {fileID: 2780981031466135389, guid: 2427684fff556df47b408818776545f1, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 1, y: 1}
+      UseAsBoundary: 0
+    - Kind: 1
+      Prefab: {fileID: 3481162564202359297, guid: c1e13ab854e91094b877b734a44189db, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 1, y: 1}
+      UseAsBoundary: 0
     - Kind: 0
       Prefab: {fileID: 7858057300559219692, guid: 76531f0fff4edea4e95ec35d8b20f283, type: 3}
       ResourcePath: 
