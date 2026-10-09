@@ -345,7 +345,7 @@ namespace Game.View
                 for (int i = 0; i <= 64; i++)
                 {
                     float angle = i * Mathf.PI / 32;
-                    float irregular = 1 + .07f * Mathf.Sin(angle * 3 + pond.x);
+                    float irregular = PondWobble(pond, angle);
                     var direction = new Vector2(Mathf.Cos(angle) * pond.z, Mathf.Sin(angle) * pond.w);
                     // Узкий откос отмечает место остановки, а его нижняя часть уходит под воду.
                     var outer = new Vector2(pond.x, pond.y) + direction * (1.08f + .02f * Mathf.Sin(angle * 7));

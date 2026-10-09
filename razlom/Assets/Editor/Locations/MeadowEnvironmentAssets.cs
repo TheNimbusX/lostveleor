@@ -719,10 +719,28 @@ namespace Game.LocationEditor
             // владелец снял 2 октября («вообще не смотрится») — до модели гигантского дерева.
             variants = new List<DecorVariant>(style.DecorVariants);
             variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingRoots" || v.Prefab.name == "CreatingFern"));
+            // Корни вернулись 8 октября — как основание арки из дерева (PlaceTrailArches), не сами по себе.
+            variants.Add(Variant(PrepareTripoProp("CreatingRoots", "arena_root", 6.2f, true, 14000, new Color(.66f, .6f, .52f)),
+                DecorKind.Rock, 0f, false, 1f, 1f));
             // Гигантское дерево владельца (2 октября): фон за поляной, ставится явно (PlaceGiantTrees).
             variants.RemoveAll(v => v.Prefab != null && v.Prefab.name == "CreatingGiantTree");
             variants.Add(Variant(PrepareTripoProp("CreatingGiantTree", "arena_giant_tree", 30f, false, 24000, new Color(.95f, 1f, .9f)),
                 DecorKind.Rock, 0f, false, .9f, 1.15f));
+            // Крона Tripo салатовая — на кадре в полтора раза ярче и сочнее дубов (8 октября): зелень текстуры
+            // приглушена к оливковой листве опушки, ствол не тронут.
+            // Серые камни выпадали из тёплой палитры (8 октября): теплее и в пятнах мха и лишайника.
+            foreach (var (rockName, rockCategory) in new[] { ("CreatingRock", "rock"), ("ArenaCreatingRockA", "arena_smallRock_v1"),
+                         ("ArenaCreatingRockB", "arena_smallRock_v2") })
+            {
+                var rockSurface = AssetDatabase.LoadAssetAtPath<Material>(Folder + "/" + rockName + "_Surface.mat");
+                if (rockSurface == null) continue;
+                rockSurface.SetTexture("_BaseMap", MossRock(rockCategory, Folder + "/" + rockName + "_Moss.png"));
+                rockSurface.SetColor("_BaseColor", new Color(.9f, .84f, .7f));
+                EditorUtility.SetDirty(rockSurface);
+            }
+            var giantSurface = AssetDatabase.LoadAssetAtPath<Material>(Folder + "/CreatingGiantTree_Surface.mat");
+            giantSurface.SetTexture("_BaseMap", MuteFoliage("arena_giant_tree", Folder + "/CreatingGiantTree_Foliage.png"));
+            EditorUtility.SetDirty(giantSurface);
             // Каменная платформа и арка из дерева (владелец, 7 октября). Нулевой вес: платформа — круг в
             // центре сегмента (PlaceCenterCircle), арка — ворота над тропой входа и выхода (PlaceTrailArches).
             variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingStonePlatform" || v.Prefab.name == "CreatingTreeArch"));
@@ -1231,6 +1249,65 @@ namespace Game.LocationEditor
             foreach (var component in profile.components) EditorUtility.SetDirty(component);
             EditorUtility.SetDirty(profile);
             return profile;
+        }
+
+        // Мох пятнами по шуму текстуры: у камней Tripo яркость ровная (104–156), тёмных трещин для мха нет.
+        private static Texture2D MossRock(string category, string output)
+        {
+            var files = Directory.GetFiles("Assets/Art/Meadow/Creating/" + category, "*.jpg", SearchOption.AllDirectories);
+            Array.Sort(files, StringComparer.Ordinal);
+            var texture = new Texture2D(2, 2);
+            try
+            {
+                texture.LoadImage(File.ReadAllBytes(files[0]));
+                int width = texture.width, height = texture.height;
+                var pixels = texture.GetPixels32();
+                var moss = new Color(.36f, .42f, .17f);
+                for (int y = 0; y < height; y++)
+                    for (int x = 0; x < width; x++)
+                    {
+                        int i = y * width + x;
+                        var p = pixels[i];
+                        float u = (float)x / width, v = (float)y / height;
+                        float patch = .65f * Mathf.PerlinNoise(u * 9 + 3.1f, v * 9 + 7.7f) + .35f * Mathf.PerlinNoise(u * 31 + 11, v * 31 + 5);
+                        float lum = (p.r + p.g + p.b) / 765f;
+                        // Мох гуще в тёмных местах камня и рвётся мелким шумом по краю пятна.
+                        float amount = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.5f, .66f, patch + (.48f - lum) * .4f)) * .7f;
+                        pixels[i] = new Color32((byte)Mathf.Lerp(p.r, moss.r * 255 * (lum + .5f), amount),
+                            (byte)Mathf.Lerp(p.g, moss.g * 255 * (lum + .5f), amount), (byte)Mathf.Lerp(p.b, moss.b * 255 * (lum + .5f), amount), 255);
+                    }
+                texture.SetPixels32(pixels);
+                File.WriteAllBytes(output, texture.EncodeToPNG());
+            }
+            finally { UnityEngine.Object.DestroyImmediate(texture); }
+            AssetDatabase.ImportAsset(output);
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(output);
+        }
+
+        private static Texture2D MuteFoliage(string category, string output)
+        {
+            var files = Directory.GetFiles("Assets/Art/Meadow/Creating/" + category, "*.jpg", SearchOption.AllDirectories);
+            Array.Sort(files, StringComparer.Ordinal);
+            var texture = new Texture2D(2, 2);
+            try
+            {
+                texture.LoadImage(File.ReadAllBytes(files[0]));
+                var pixels = texture.GetPixels32();
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    var p = pixels[i];
+                    // Листва — зелёный канал выше красного и синего (в среднем 89/132/36), кора бурая (104/87/43).
+                    float leaf = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0, 25, p.g - p.r))
+                        * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(10, 40, p.g - p.b));
+                    pixels[i] = new Color32((byte)(p.r * Mathf.Lerp(1, .82f, leaf)), (byte)(p.g * Mathf.Lerp(1, .64f, leaf)),
+                        (byte)(p.b * Mathf.Lerp(1, .8f, leaf)), 255);
+                }
+                texture.SetPixels32(pixels);
+                File.WriteAllBytes(output, texture.EncodeToPNG());
+            }
+            finally { UnityEngine.Object.DestroyImmediate(texture); }
+            AssetDatabase.ImportAsset(output);
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(output);
         }
 
         private static Texture2D BuildRuneEmission(string category, string output)

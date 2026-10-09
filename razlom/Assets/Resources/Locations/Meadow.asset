@@ -217,6 +217,12 @@ MonoBehaviour:
       ScaleRange: {x: 1, y: 1}
       UseAsBoundary: 0
     - Kind: 1
+      Prefab: {fileID: 9055115851127504259, guid: d5710d5f30f14334ca7046d732fd9578, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 1, y: 1}
+      UseAsBoundary: 0
+    - Kind: 1
       Prefab: {fileID: 8353262044873952192, guid: d5618cb905b422441bff95ee76746551, type: 3}
       ResourcePath: 
       Weight: 0

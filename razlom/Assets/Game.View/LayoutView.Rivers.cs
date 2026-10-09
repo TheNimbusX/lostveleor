@@ -40,7 +40,7 @@ namespace Game.View
 
         private void BuildRivers(LayoutMap map)
         {
-            if (map.RiverCount == 0) return;
+            if (map.RiverCount == 0) { if (_style.BoundaryDecorChance > 0) DressLakeShores(map); return; }
             if (_riverObject == null)
             {
                 _riverObject = RiverObject("Лесные реки", _water.GetComponent<Renderer>().sharedMaterial, out _riverMesh);
@@ -127,6 +127,69 @@ namespace Game.View
                             DressDetail(map, center, _decorRadii[variant], bushes, grass, rng);
                     }
                 DressWaterline(map, river, r);
+            }
+            DressLakeShores(map);
+        }
+
+        // Берега озёр (владелец, 8 октября: «красивые берега»): у воды камни, наполовину в воде, и
+        // камыш (высокие пучки), со стороны леса — куртины папоротника и валуны. Со стороны поляны —
+        // только камни и камыш в самой воде: пол боя остаётся чистым. Куртины с просветами.
+        private void DressLakeShores(LayoutMap map)
+        {
+            int fern = VariantNamed(FernPrefab);
+            var stones = new List<int>(); var reeds = new List<int>(); var boulders = new List<int>();
+            for (int i = 0; i < _style.DecorVariants.Length; i++)
+            {
+                var variant = _style.DecorVariants[i];
+                if (variant.Prefab == null) continue;
+                string name = variant.Prefab.name;
+                if (name.StartsWith("ArenaCreatingRock")) stones.Add(i);
+                else if (name == "CreatingRock") boulders.Add(i);
+                else if (name.Contains("CreatingGrass") && variant.Kind == DecorKind.GrassTuft && variant.Weight > 0) reeds.Add(i);
+            }
+            if (stones.Count == 0 && reeds.Count == 0) return;
+            for (int w = 0; w < map.WaterCount; w++)
+            {
+                var water = map.GetWater(w);
+                var pond = new Vector4(water.Center.X.ToFloat(), water.Center.Y.ToFloat(), water.Radius.ToFloat(), water.Radius.ToFloat());
+                var center = new Vector2(pond.x, pond.y);
+                var rng = DecorRandom(w, 1129);
+                float step = .7f / pond.z;
+                for (float angle = 0; angle < Mathf.PI * 2; angle += step * (.7f + (float)rng.NextDouble() * .8f))
+                {
+                    float wobble = PondWobble(pond, angle);
+                    var outward = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+                    var edge = center + outward * pond.z * .85f * wobble;
+                    float clump = Mathf.PerlinNoise(edge.x * .21f + 5, edge.y * .21f + 61);
+                    if (rng.NextDouble() > Mathf.Lerp(.3f, 1f, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.35f, .65f, clump)))) continue;
+                    if (NearRiver(edge.x, edge.y, 1.5f)) continue;
+                    // Сторона поляны: суша у кромки — пол боя.
+                    var land = edge + outward * 1.6f;
+                    bool floorSide = TouchesOutlinedFloor(land.x, land.y, .4f);
+                    double roll = rng.NextDouble();
+                    int variant; float size, offset, sink;
+                    if (roll < .35 && stones.Count > 0)
+                    { variant = stones[rng.Next(stones.Count)]; size = .6f + (float)rng.NextDouble() * .7f; offset = -.2f - (float)rng.NextDouble() * .5f; sink = .15f; }
+                    else if (roll < .7 && reeds.Count > 0)
+                    { variant = reeds[rng.Next(reeds.Count)]; size = 1.7f + (float)rng.NextDouble() * .9f; offset = -.3f + (float)rng.NextDouble() * .5f; sink = .05f; }
+                    else if (!floorSide && roll < .9 && fern >= 0)
+                    { variant = fern; size = .6f + (float)rng.NextDouble() * .6f; offset = .6f + (float)rng.NextDouble() * .8f; sink = .03f; }
+                    else if (!floorSide && boulders.Count > 0)
+                    { variant = boulders[rng.Next(boulders.Count)]; size = 1.1f + (float)rng.NextDouble() * .8f; offset = .1f; sink = .35f; }
+                    else continue;
+                    var at = edge + outward * offset;
+                    if (floorSide && offset > 0) continue;
+                    if (NearLandmark(at.x, at.y, .3f) || OnForestTrail(at.x, at.y, .4f)) continue;
+                    SpawnDecor(variant, at.x, at.y, rng);
+                    var placed = _decor[_decorCount - 1];
+                    var scale = placed.localScale * size;
+                    // Камыш вытянут вверх.
+                    if (reeds.Contains(variant)) scale.y *= 1.9f;
+                    placed.localScale = scale;
+                    // Кромка воды: уровень воды пруда (у камней и камыша в воде) или береговой откос.
+                    float y = offset < 0 ? FloorLevel(pond.x, pond.y) - .12f : BackgroundHeight(map, at.x, at.y);
+                    placed.position = new Vector3(at.x, y - sink, at.y);
+                }
             }
         }
 

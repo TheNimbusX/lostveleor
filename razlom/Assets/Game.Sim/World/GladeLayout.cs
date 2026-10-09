@@ -10,15 +10,63 @@ namespace Game.Sim
         public readonly FixVec2 Center, Radii;
         public readonly GladeShape Shape;
         public readonly int Turn;
+        // Живой край (владелец, 9 октября: «органичность форм полян»): гармоники 3, 5 и 7 по углу дают
+        // мысы и заливы, карманы — небольшие овалы сбоку от основной фигуры. Нули — прежняя чистая фигура
+        // (босс, боковые карманы старых уровней).
+        private readonly Fix64 _c3, _s3, _c5, _s5, _c7, _s7;
+        private readonly FixVec2 _lobeA, _lobeB;
+        private readonly Fix64 _lobeSizeA, _lobeSizeB;
+        private readonly bool _organic;
+
         public GladeRegion(FixVec2 center, FixVec2 radii, GladeShape shape = GladeShape.Oval, int turn = 0)
-        { Center = center; Radii = radii; Shape = shape; Turn = turn; }
+        {
+            Center = center; Radii = radii; Shape = shape; Turn = turn;
+            _c3 = _s3 = _c5 = _s5 = _c7 = _s7 = _lobeSizeA = _lobeSizeB = Fix64.Zero;
+            _lobeA = _lobeB = FixVec2.Zero; _organic = false;
+        }
+
+        private GladeRegion(in GladeRegion source, Fix64[] edge, FixVec2 lobeA, Fix64 lobeSizeA, FixVec2 lobeB, Fix64 lobeSizeB)
+        {
+            Center = source.Center; Radii = source.Radii; Shape = source.Shape; Turn = source.Turn;
+            _c3 = edge[0]; _s3 = edge[1]; _c5 = edge[2]; _s5 = edge[3]; _c7 = edge[4]; _s7 = edge[5];
+            _lobeA = lobeA; _lobeSizeA = lobeSizeA; _lobeB = lobeB; _lobeSizeB = lobeSizeB;
+            _organic = true;
+        }
+
+        /// <summary>
+        /// Та же поляна с живым краем: edge — шесть коэффициентов (cos/sin гармоник 3, 5, 7, доли радиуса),
+        /// карманы — центры в долях полуосей (мировые оси, до поворота фигуры) и радиусы; нулевой — нет кармана.
+        /// </summary>
+        public GladeRegion WithOrganicEdge(Fix64[] edge, FixVec2 lobeA, Fix64 lobeSizeA, FixVec2 lobeB, Fix64 lobeSizeB)
+            => new GladeRegion(this, edge, lobeA, lobeSizeA, lobeB, lobeSizeB);
 
         // Shared implicit contour for simulation and ground painting: <= 1 is inside.
         public Fix64 Field(FixVec2 point)
         {
             var delta = point - Center;
             var x = delta.X / Radii.X; var y = delta.Y / Radii.Y;
-            if (Fix64.Abs(x) > Fix64.One || Fix64.Abs(y) > Fix64.One) return Fix64.FromInt(2);
+            // Живой край и карманы выходят за полуоси (до 1,2) — внутри блока модулей арены (полуоси — 85% блока).
+            var limit = _organic ? Fix64.Ratio(125, 100) : Fix64.One;
+            if (Fix64.Abs(x) > limit || Fix64.Abs(y) > limit) return Fix64.FromInt(2);
+            var field = Base(x, y);
+            if (!_organic) return field;
+            if (_lobeSizeA > Fix64.Zero) field = Fix64.Min(field, Lobe(x, y, _lobeA, _lobeSizeA));
+            if (_lobeSizeB > Fix64.Zero) field = Fix64.Min(field, Lobe(x, y, _lobeB, _lobeSizeB));
+            var r2 = x * x + y * y;
+            if (r2 < Fix64.Ratio(1, 100)) return field;
+            // cos/sin kθ рекуррентно от направления: без Atan2 и синусов на каждую точку.
+            var r = Fix64.Sqrt(r2);
+            var c1 = x / r; var s1 = y / r;
+            var c2 = c1 * c1 - s1 * s1; var s2 = Fix64.FromInt(2) * c1 * s1;
+            var c3 = c1 * c2 - s1 * s2; var s3 = s1 * c2 + c1 * s2;
+            var c5 = c3 * c2 - s3 * s2; var s5 = s3 * c2 + c3 * s2;
+            var c7 = c5 * c2 - s5 * s2; var s7 = s5 * c2 + c5 * s2;
+            var scale = Fix64.One + _c3 * c3 + _s3 * s3 + _c5 * c5 + _s5 * s5 + _c7 * c7 + _s7 * s7;
+            return field / (scale * scale);
+        }
+
+        private Fix64 Base(Fix64 x, Fix64 y)
+        {
             var oldX = x;
             if (Turn == 1) { x = -y; y = oldX; }
             else if (Turn == 2) { x = -x; y = -y; }
@@ -41,6 +89,12 @@ namespace Game.Sim
                     return Oval(x, y, 64, 94);
                 default: return Oval(x, y, 76, 96);
             }
+        }
+
+        private static Fix64 Lobe(Fix64 x, Fix64 y, FixVec2 center, Fix64 size)
+        {
+            var dx = (x - center.X) / size; var dy = (y - center.Y) / size;
+            return dx * dx + dy * dy;
         }
 
         public static GladeRegion ForBranch(LayoutMap map, int placement)
@@ -181,6 +235,9 @@ namespace Game.Sim
                 // Different neighbouring silhouettes, selected independently of layout and spawns.
                 regions[g] = new GladeRegion(center, worldRadii,
                     (GladeShape)((firstShape + g) % 6), shapeRng.NextInt(0, 4));
+                // Живой край и карманы — своим потоком на поляну: формы прочих бросков не сдвигаются.
+                if (singleArena) regions[g] = OrganicEdge(regions[g], new Pcg32(seed, 0x4F5247414E4943UL + (ulong)g),
+                    Rotate(new FixVec2(Fix64.One, Fix64.Zero), turn));
                 links.Add((previousCenter, center, Fix64.Ratio(22, 10)));
                 previousCenter = center;
                 previous = body[across / 2, across - 1];
@@ -236,10 +293,10 @@ namespace Game.Sim
                     Fix64 radius; FixVec2 point; bool clear;
                     if (lake)
                     {
-                        // Озеро — край арены (владелец, 29 сентября): крупное, по размеру поляны. Центр за
+                        // Озеро — край арены (владелец, 29 сентября; 8 октября — ещё крупнее): по размеру поляны. Центр за
                         // настоящей кромкой пола (форма поляны уже её радиусов), вода заходит на пол на 60–85%
                         // своего радиуса — берег забирает у поляны длинную дугу, остальное в лесу (2 октября: крупнее).
-                        radius = Fix64.Min(region.Radii.X, region.Radii.Y) * waterRng.NextFix(Fix64.Ratio(62, 100), Fix64.Ratio(78, 100));
+                        radius = Fix64.Min(region.Radii.X, region.Radii.Y) * waterRng.NextFix(Fix64.Ratio(82, 100), Fix64.Ratio(98, 100));
                         var angle = waterRng.NextFix(Fix64.Zero, Fix64.TwoPi);
                         var outside = waterRng.NextFix(Fix64.Ratio(15, 100), Fix64.Ratio(40, 100));
                         var direction = new FixVec2(Fix64.Cos(angle), Fix64.Sin(angle));
@@ -392,6 +449,34 @@ namespace Game.Sim
             while (leave < 200 && regions[i].Field(a + step * Fix64.FromInt(leave)) <= Fix64.One) leave++;
             while (enter > 0 && regions[i + 1].Field(a + step * Fix64.FromInt(enter)) <= Fix64.One) enter--;
             return a + step * Fix64.FromInt((leave + enter) / 2);
+        }
+
+        // Край: три гармоники (3 — крупные мысы, 5 и 7 — мелкие изгибы), в сумме до 12,5% радиуса. Карманы —
+        // 0–2 овала сбоку от оси входа и выхода (поперёк, ±50°): тропы входа и выхода не упираются в залив,
+        // а карман не выходит за блок модулей (центр + радиус не дальше 0,98 полуоси, с краем — до 1,1).
+        private static GladeRegion OrganicEdge(GladeRegion region, Pcg32 rng, FixVec2 across)
+        {
+            var edge = new Fix64[6];
+            int[] low = { 35, 20, 10 }, high = { 60, 38, 25 };
+            for (int h = 0; h < 3; h++)
+            {
+                var amplitude = rng.NextFix(Fix64.Ratio(low[h], 1000), Fix64.Ratio(high[h], 1000));
+                var phase = rng.NextFix(Fix64.Zero, Fix64.TwoPi);
+                edge[h * 2] = amplitude * Fix64.Cos(phase); edge[h * 2 + 1] = amplitude * Fix64.Sin(phase);
+            }
+            int roll = rng.NextInt(0, 10), count = roll < 2 ? 0 : roll < 7 ? 1 : 2;
+            var lobes = new FixVec2[2]; var sizes = new Fix64[2];
+            int side = rng.NextInt(0, 2) * 2 - 1;
+            for (int i = 0; i < count; i++)
+            {
+                if (i == 1 && rng.NextInt(0, 2) == 0) side = -side;
+                var angle = rng.NextFix(-Fix64.Ratio(87, 100), Fix64.Ratio(87, 100));
+                var cos = Fix64.Cos(angle); var sin = Fix64.Sin(angle);
+                var direction = new FixVec2(across.X * cos - across.Y * sin, across.X * sin + across.Y * cos) * Fix64.FromInt(side);
+                sizes[i] = rng.NextFix(Fix64.Ratio(28, 100), Fix64.Ratio(40, 100));
+                lobes[i] = direction * (Fix64.Ratio(98, 100) - sizes[i] - rng.NextFix(Fix64.Zero, Fix64.Ratio(8, 100)));
+            }
+            return region.WithOrganicEdge(edge, lobes[0], sizes[0], lobes[1], sizes[1]);
         }
 
         private static FixVec2 Rotate(FixVec2 p, int q)
