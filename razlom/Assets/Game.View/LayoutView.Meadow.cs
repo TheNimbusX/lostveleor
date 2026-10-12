@@ -37,6 +37,8 @@ namespace Game.View
         private void ClearMeadow()
         {
             RestoreForestBreeze(); RestoreClouds();
+            _vista = false; if (_valley != null) _valley.SetActive(false);
+            if (_fallSpray != null) _fallSpray.gameObject.SetActive(false);
             ClearRivers();
             foreach (var portal in _portals) _portalPool?.Release(portal.gameObject);
             foreach (var cache in _caches) _cachePool?.Release(cache.gameObject);
@@ -55,7 +57,7 @@ namespace Game.View
         }
         private void DisposeMeadow()
         {
-            ClearMeadow(); DisposeAmbience();
+            ClearMeadow(); DisposeAmbience(); DisposeVista();
             _meadowLighting.Dispose();
             foreach (var mesh in _meadowMeshes) DestroyOwned(mesh);
             _meadowMeshes.Clear();
@@ -495,6 +497,8 @@ namespace Game.View
                     else if (spruceGrove < .45f && broadleaf >= 0) variant = broadleaf;
                     // Крона может нависать над ориентиром, ствол — нет.
                     if (NearLandmark(px, pz, _decorRadii[variant] * .35f) || ShadesLandmark(px, pz, _decorRadii[variant] * 1.1f)) continue;
+                    // Балкон у обрыва открыт: редкие деревья обрамляют вид, сплошной лес закрыл бы долину.
+                    if (_vista && VistaOffset(px, pz) > -11 && rng.NextDouble() > .18) continue;
                     float nearest=float.MaxValue;
                     for (int m=0;m<map.PlacedCount;m++)
                     {
@@ -599,7 +603,18 @@ namespace Game.View
             return level;
         }
 
-        private float BackgroundHeight(LayoutMap map, float x, float z) => BackgroundRelief(map, x, z) + FloorLevel(x, z);
+        private float BackgroundHeight(LayoutMap map, float x, float z)
+        {
+            float height = BackgroundRelief(map, x, z) + FloorLevel(x, z);
+            if (!_vista) return height;
+            // За краем обрыва земля уходит под плоскость долины (LayoutView.Vista): склон крутой, с камеры не виден.
+            float beyond = VistaOffset(x, z);
+            if (beyond <= 0) return height;
+            // Плечо обрыва скруглено: первые полтора метра земля сходит полого (осыпь кромки видна с камеры),
+            // дальше — крутая стена.
+            float shoulder = height - Mathf.Min(beyond, 1.5f) * .55f;
+            return Mathf.Lerp(shoulder, _vistaFloor - 2, Mathf.SmoothStep(0, 1, (beyond - 1.5f) / 2.5f));
+        }
 
         private float HillHeight(float x, float z, float distance)
         {
@@ -655,6 +670,8 @@ namespace Game.View
                 var point = new Vector2(Mathf.Lerp(minX - 34, maxX + 34, (float)rng.NextDouble()), Mathf.Lerp(minZ - 34, maxZ + 34, (float)rng.NextDouble()));
                 float distance = ModuleDistance(map, point.x, point.y);
                 if (distance < 11 || distance > 30) continue;
+                // У обрыва скалам нужен запас: группа шириной до 8 м не свешивается за край.
+                if (_vista && VistaOffset(point.x, point.y) > -9) continue;
                 // Только на высоких местах.
                 float hill = Mathf.PerlinNoise(point.x * .021f + _reliefOffset.y + 7, point.y * .021f + _reliefOffset.x + 3);
                 if (hill < .45f || OnForestTrail(point.x, point.y, 5) || NearWaterEdge(point.x, point.y, 4)) continue;
@@ -698,7 +715,8 @@ namespace Game.View
             float height = -_style.GroundFillDepthOffset + fade * (broad * 1.1f + detail * .25f);
             // Холмы за лесом (владелец, 6 октября: «плоско»): дальше 12 м от арены земля поднимается на
             // 3–8 м. Лес стоит на склонах, дальний — выше ближнего; рельеф даёт тени и даль.
-            if (map.IsArena) height += HillHeight(x, z, distance);
+            // К обрыву холмы сходят на нет: край — ровный уступ, а не гребень.
+            if (map.IsArena) height += HillHeight(x, z, distance) * (_vista ? Mathf.Clamp01(Mathf.InverseLerp(-6, -22, VistaOffset(x, z))) : 1);
             // Русло — плавная ложбина по расстоянию до середины реки, как у прудов:
             // ступенька по сетке фона давала чёрные зубчатые берега.
             for (int r = 0; r < map.RiverCount; r++)
@@ -984,6 +1002,7 @@ namespace Game.View
             PlaceOutcrops(map);
             PlaceTrailArches(map);
             PlaceGiantTrees(map);
+            PlaceVistaRim(map);
             PlaceRootsAndFerns(map);
             if (fence >= 0)
                 for (int g = 0; g < map.GladeCount; g++)
@@ -1010,6 +1029,9 @@ namespace Game.View
 
         private bool TouchesLandmark(float x, float z, float radius, bool openSkyOnly)
         {
+            // У края обрыва и за ним ничего не растёт и не стоит: всё, что проверяет место по ориентирам
+            // (лес, подлесок, гиганты, скалы), держится на плато.
+            if (_vista && VistaOffset(x, z) > -radius) return true;
             foreach (var spot in _landmarkSpots)
             {
                 if (openSkyOnly && spot.w < .5f) continue;
@@ -1273,11 +1295,12 @@ namespace Game.View
             _hillCenter = new Vector2((minX + maxX) * .5f, (minZ + maxZ) * .5f);
             var view = Camera.main != null ? Camera.main.transform.forward : new Vector3(0, -1, 1);
             _hillAxis = new Vector2(view.x, view.z).sqrMagnitude > .001f ? new Vector2(view.x, view.z).normalized : Vector2.up;
+            SetupVista(map);
             float width = Mathf.Max(_style.GroundFillSize, maxX - minX + 140);
             float depth = Mathf.Max(_style.GroundFillSize, maxZ - minZ + 140);
             float originX = (minX + maxX - width) * .5f, originZ = (minZ + maxZ - depth) * .5f;
             // У арены с уступами — шаг 1 м: ступень обрыва иначе расплывалась в пологий скат.
-            float gridStep = map.LedgeCount > 0 ? 1f : 2f;
+            float gridStep = map.LedgeCount > 0 || _vista ? 1f : 2f;
             int columns = Mathf.CeilToInt(width / gridStep), rows = Mathf.CeilToInt(depth / gridStep);
             var vertices = new Vector3[(columns + 1) * (rows + 1)];
             var triangles = new int[columns * rows * 6];

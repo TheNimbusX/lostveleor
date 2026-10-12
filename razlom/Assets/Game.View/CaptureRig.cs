@@ -551,6 +551,22 @@ namespace Game.View
                 else Debug.Log("[capture-ledge] уступа нет");
                 yield return null;
             }
+            // Съёмка обрыва с долиной (-capture-vista): герой на краю поляны со стороны обрыва.
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), LayoutView.VistaCaptureFlag) >= 0)
+            {
+                // Арена достраивается по кадрам: обрыв появляется вместе с рельефом.
+                FixVec2 vistaPoint = default;
+                for (int wait = 0; wait < 900 && (LayoutView.Shown == null || !LayoutView.Shown.VistaViewpoint(out vistaPoint)); wait++) yield return null;
+                if (LayoutView.Shown == null || !LayoutView.Shown.VistaViewpoint(out vistaPoint)) Debug.Log("[capture-vista] обрыва нет");
+                else
+                {
+                    var driver = FindAnyObjectByType<TickDriver>();
+                    driver.Sim.Entities.Position[Simulation.PlayerId] = vistaPoint;
+                    driver.Sim.StopPlayerMovement();
+                    Debug.Log($"[capture-vista] герой у обрыва: {vistaPoint}");
+                }
+                yield return null;
+            }
             if (ActiveEnemies && IsCombatFeelShowcase)
             {
                 TickDriver driver = FindAnyObjectByType<TickDriver>();

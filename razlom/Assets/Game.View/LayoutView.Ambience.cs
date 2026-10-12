@@ -24,6 +24,7 @@ namespace Game.View
             if (arena && !ArenaMood.Enabled) DriftClouds();
             else RestoreClouds();
             UpdatePollen(arena);
+            UpdateVistaBirds();
         }
 
         private void DriftClouds()

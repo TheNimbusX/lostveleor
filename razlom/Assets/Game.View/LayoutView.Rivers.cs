@@ -74,6 +74,13 @@ namespace Game.View
                 {
                     float t0 = -length + segment * length / 84, t1 = -length + (segment + 1) * length / 84;
                     var a = RiverPoint(river, t0) + level; var b = RiverPoint(river, t1) + level;
+                    // У обрыва (LayoutView.Vista) река кончается: лента обрезана по краю, дальше — водопад.
+                    if (_vista)
+                    {
+                        bool beyondA = VistaOffset(a.x, a.z) > .4f, beyondB = VistaOffset(b.x, b.z) > .4f;
+                        if (beyondA != beyondB) _vistaFalls.Add(beyondA ? b : a);
+                        if (beyondA || beyondB) continue;
+                    }
                     Quad(water, waterIndices, a - along * width, b - along * width, b + along * width, a + along * width);
                     for (int side = -1; side <= 1 && Mathf.Abs((t0 + t1) * .5f) < length - 6; side += 2)
                     {
@@ -96,6 +103,7 @@ namespace Game.View
             _riverMesh.SetUVs(0, riverUv);
             FillRiverMesh(_riverBankMesh, banks, bankIndices);
             _riverObject.SetActive(true); _riverBanks.SetActive(true);
+            BuildFallSpray();
             ScatterRiverBanks(map);
         }
 
