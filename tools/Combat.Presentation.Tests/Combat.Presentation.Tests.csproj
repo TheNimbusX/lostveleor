@@ -111,6 +111,9 @@
     <Compile Include="../../razlom/Assets/Game.View/PelagAbordageVfxRules.cs" Link="PelagAbordageVfxRules.cs" />
     <!-- Вид Броска якоря (03.10): голова полосы по формуле Sim, фазы рига, высота и дёрг, сеть Невода, призраки Веера — без Unity. -->
     <Compile Include="../../razlom/Assets/Game.View/PelagAnchorThrowVfxRules.cs" Link="PelagAnchorThrowVfxRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagThrowFormLook.cs" Link="PelagThrowFormLook.cs" />
+    <!-- База Броска якоря «холодное железо» (08.10): струна вдоль цепи, импульс и шевроны рывка, борозда, знаки — числа без Unity. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagAnchorThrowIronLook.cs" Link="PelagAnchorThrowIronLook.cs" />
     <!-- Вид Шквала v2 (02.10): распад полосы Пенного следа, ход воды, последний удар, кольцо пены — без Unity. -->
     <Compile Include="../../razlom/Assets/Game.View/PelagSquallFoamRules.cs" Link="PelagSquallFoamRules.cs" />
     <Compile Include="../../razlom/Assets/Game.View/PelagWreckVfxRules.cs" Link="PelagWreckVfxRules.cs" />
@@ -127,6 +130,12 @@
     <Compile Include="../../razlom/Assets/Game.View/PelagWreckComboLook.cs" Link="PelagWreckComboLook.cs" />
     <!-- Выпад Крушения на стеке серии сабли (06.10 поздно): профиль стоячего гребня, высоты форм, размеры всплеска. -->
     <Compile Include="../../razlom/Assets/Game.View/PelagWreckComboLungeLook.cs" Link="PelagWreckComboLungeLook.cs" />
+    <!-- Крушение · Призрачный якорь (07.10): падение по тикам Sim, сплющивание, кольцо ровно до круга Sim, палитра. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckGhostLook.cs" Link="PelagWreckGhostLook.cs" />
+    <!-- Крушение · Девятый вал (07.10): заряды по доле урона Sim, сужение вала вперёд от полуширины Sim, размеры по зарядам. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckNinthLook.cs" Link="PelagWreckNinthLook.cs" />
+    <!-- Крушение · Волнорез (07.10): плиты внутри стены Sim, выход по фронту Sim с перелётом, распад хвоста и обрушение по тику Sim. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWreckBreakwaterLook.cs" Link="PelagWreckBreakwaterLook.cs" />
     <Compile Include="../../razlom/Assets/Game.View/PelagWreckSwingSweep.cs" Link="PelagWreckSwingSweep.cs" />
     <!-- Шквал v2 (02.10): кадр клипа по тикам полёта, лента каста из событий Sim, поворот вокруг лодыжки. -->
     <Compile Include="../../razlom/Assets/Game.View/PelagSquallClipRules.cs" Link="PelagSquallClipRules.cs" />

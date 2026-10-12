@@ -68,6 +68,7 @@ namespace Game.View
             if (!Claim("line")) return false;
             _wreckOwned = false; _catching = false; _hasFist = false;
             _line = new LineState { Active = true, Serial = serial };
+            _throwStow = false; _hasFistHead = false;
             return true;
         }
 
@@ -85,7 +86,7 @@ namespace Game.View
             {
                 case AnchorLinePhase.Windup:
                     AnchorBake bake = f.WindupClip != null ? _library.Find(f.WindupClip, 0, -1, out _) : null;
-                    if (bake == null) return FistDirective(dt);
+                    if (bake == null) return ThrowFistDirective(dt, "throw-fist", draw: true);
                     AnchorPose local = bake.Sample(f.WindupFrame, out bool taut, out _);
                     return new Directive
                     {
@@ -104,11 +105,13 @@ namespace Game.View
                         _core.Kick(N(-f.Direction.normalized * _core.KickSpeedFor(JerkAmplitude * _bodyScale)));
                     }
                     d.Note = f.Phase.ToString();
+                    if (f.Phase == AnchorLinePhase.Return) d.Target = CatchApproach(f, d.Target);
                     return d;
                 case AnchorLinePhase.Catch:
                 case AnchorLinePhase.Exit:
                     _lineDoneSerial = _line.Serial;
-                    _line.Active = false; _catching = true; _caughtAge = 0f; _catchFromAbordage = false;
+                    _line.Active = false; _catching = true; _caughtAge = 0f; _catchFromAbordage = false; _hasFist = false;
+                    _throwStow = false; _hasFistHead = false;
                     return new Directive { Mode = AnchorRigMode.Caught, Note = "caught" };
                 default:
                     _line.Active = false;
@@ -146,11 +149,22 @@ namespace Game.View
             return new AnchorPose(N(ring + dir * eyeDistance), rotation, N(dir * f.AlongSpeed), NV.Zero);
         }
 
-        /// <summary>Поймал: живой маятник, цепь выбирается до L; через CaughtSeconds — уборка.</summary>
+        /// <summary>
+        /// Бросок якоря 07.10 (лист поз, позы 6–7 «ловля», «готов»): пойманный якорь — в правом кулаке, как на замахе
+        /// (FistDirective), до кадра «якорь на спину» клипа ловли (CueThrowStow) или CaughtSeconds. false — прежний живой
+        /// маятник от рукояти в левой.
+        /// </summary>
+        public static bool ThrowCatchInRightHand = true;
+
+        /// <summary>Поймал: якорь в правом кулаке (Бросок) или живой маятник, цепь выбирается до L; через CaughtSeconds — уборка.</summary>
         private Directive CatchDirective()
         {
             _caughtAge += Time.deltaTime;
+            // animfix: закидка на спину по кадру клипа (CueThrowStow) — без маятника и сматывания цепи.
+            if (_throwStow && !_catchFromAbordage) return ThrowStowDirective(Time.deltaTime);
             float limit = _catchFromAbordage ? AbordageCatchSeconds : CaughtSeconds;
+            if (_caughtAge < limit && !_catchFromAbordage && ThrowCatchInRightHand)
+                return ThrowFistDirective(Time.deltaTime, "throw-catch-hand", settle: true);
             if (_caughtAge < limit) return new Directive { Mode = AnchorRigMode.Caught, Note = "caught" };
             _catching = false; _catchFromAbordage = false;
             return new Directive { Mode = AnchorRigMode.Stow, Note = "caught-stow" };

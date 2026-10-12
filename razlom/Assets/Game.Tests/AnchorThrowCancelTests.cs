@@ -63,15 +63,15 @@ namespace Game.Tests
             {
                 Simulation sim = Arena();
                 sim.SetAbility(1, AbilityDefinition.Whirlwind(), new AbilityNode[0], 0);
-                int press = 18 - early;
+                int press = 17 - early;   // ловля — тик 17 (07.10 владелец: тайминг Броска 25 тиков)
                 List<Frame> frames = Run(sim, 32, t => t == 0 ? Press(7, 0) : t == press ? Press(7, 0, slot: 1) : InputFrame.Empty);
                 var casts = Of(frames, SimEventType.AbilityCast).FindAll(c => c.ev.Amount == 1);
                 if (early == 5)
                 {
                     Assert.AreEqual(1, casts.Count, "из буфера");
-                    Assert.AreEqual(19, casts[0].frame.Tick, "тиком после ловли");
+                    Assert.AreEqual(18, casts[0].frame.Tick, "тиком после ловли");
                     Assert.AreEqual(AnchorThrowEnd.Done, EndOf(frames, out int tick), "после ловли — Done, не срыв");
-                    Assert.AreEqual(19, tick);
+                    Assert.AreEqual(18, tick);
                 }
                 else Assert.AreEqual(0, casts.Count, "буфер 6 тиков — за 6 до ловли не доживает");
             }
@@ -85,7 +85,7 @@ namespace Game.Tests
             List<Frame> frames = Run(sim, 32, t => t == 0 ? Press(7, 0) : t == 5 ? Press(7, 0, slot: 1) : InputFrame.Empty);
             Assert.AreEqual(0, Of(frames, SimEventType.AbilityCast).FindAll(c => c.ev.Amount == 1).Count);
             Assert.AreEqual(AnchorThrowEnd.Done, EndOf(frames, out int tick));
-            Assert.AreEqual(27, tick);
+            Assert.AreEqual(25, tick);
         }
 
         [Test]
@@ -95,7 +95,7 @@ namespace Game.Tests
             List<Frame> frames = Run(sim, 32, t =>
             {
                 if (t == 0) return Press(7, 0);
-                if (t < 20) return InputFrame.Empty;
+                if (t < 18) return InputFrame.Empty;
                 var walk = InputFrame.Empty;
                 walk.Flags = (byte)InputFlags.MoveOrder;
                 walk.Aim = At(-5, 0);
@@ -104,8 +104,8 @@ namespace Game.Tests
                 return walk;
             });
             Assert.AreEqual(AnchorThrowEnd.WalkedOut, EndOf(frames, out int tick));
-            Assert.AreEqual(23, tick);
-            Assert.IsTrue(frames[22].Positions[0].Equals(FixVec2.Zero), "до второго тика выхода — держит");
+            Assert.AreEqual(21, tick);
+            Assert.IsTrue(frames[20].Positions[0].Equals(FixVec2.Zero), "удержание и первые тики выхода — держит");
         }
     }
 }

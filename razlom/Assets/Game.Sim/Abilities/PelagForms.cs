@@ -74,10 +74,10 @@ namespace Game.Sim
         /// </summary>
         WreckShell = WreckGhostAnchor,
 
-        /// <summary>Бросок якоря · Невод: в натяг сеть пены на всю длину полёта, полоса 3 м (Simulation.AnchorThrow.Forms).</summary>
+        /// <summary>Бросок якоря · Невод: в натяг сеть из цепей на всю длину полёта, полоса 3 м (Simulation.AnchorThrow.Forms; кадр form-net-v1, 07.10).</summary>
         AnchorThrowNet = 14,
 
-        /// <summary>Бросок якоря · Веер: три полосы — якорь и два водяных призрака под ±30°.</summary>
+        /// <summary>Бросок якоря · Веер: три полосы — железный якорь и два призрачных под ±25° (кадр form-fan-ghost-v1, 07.10).</summary>
         AnchorThrowFan = 15,
 
         /// <summary>Бросок якоря · Гарпун: вонзается в первого задетого, ×2, тянет с оглушением.</summary>

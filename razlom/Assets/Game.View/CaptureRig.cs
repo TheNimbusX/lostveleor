@@ -1106,6 +1106,7 @@ namespace Game.View
                 case "fire-flask": return PelagVfxShowcase.FireFlask;
                 case "skewer": return PelagVfxShowcase.Skewer;
                 case "backblast": return PelagVfxShowcase.Backblast;
+                case "anchor-throw": return PelagVfxShowcase.AnchorThrow;
                 case "rotation": return PelagVfxShowcase.Rotation;
                 default:
                     Debug.LogWarning("[capture] Неизвестный VFX showcase: " + raw);

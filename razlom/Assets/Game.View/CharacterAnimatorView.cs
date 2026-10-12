@@ -568,6 +568,7 @@ namespace Game.View
                 if (!IsDead && !HasCommittedAction)
                     stanceWeight = Mathf.MoveTowards(_animator.GetLayerWeight(_saberStanceLayer),
                         stanceWeight, Time.deltaTime / .15f);
+                stanceWeight = AnchorThrowStanceWeight(stanceWeight);
                 _animator.SetLayerWeight(_saberStanceLayer, stanceWeight);
                 UpdateStanceFootwork(phase);
             }

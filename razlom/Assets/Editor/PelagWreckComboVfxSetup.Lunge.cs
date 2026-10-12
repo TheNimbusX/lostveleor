@@ -21,7 +21,7 @@ using UnityEngine;
 /// </summary>
 public static partial class PelagWreckComboVfxSetup
 {
-    private const int LungeVersion = 6;
+    private const int LungeVersion = 7;
     private static readonly string LungeRevision = "PelagWreckComboLungeV" + LungeVersion;
     public const string LungeName = "VFX_Pelag_WreckComboLunge";
     private const string CrestShaderName = "Razlom/Wreck Combo Crest";

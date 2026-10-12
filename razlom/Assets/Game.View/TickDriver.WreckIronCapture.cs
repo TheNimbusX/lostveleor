@@ -53,7 +53,14 @@ namespace Game.View
         /// влево), назад (180°); у остальных — 0.
         /// </summary>
         private static float WreckCapturePressYaw(int press, int series)
-            => WreckCaptureTempoKind(series) == "turn" ? new[] { 0f, -90f, 180f }[Mathf.Clamp(press, 0, 2)] : 0f;
+        {
+            string kind = WreckCaptureTempoKind(series);
+            if (kind == "turn") return new[] { 0f, -90f, 180f }[Mathf.Clamp(press, 0, 2)];
+            // Девятый вал (07.10): темп fast, но махи назад мимо врагов — miss2: оба маха (0 зарядов), miss1: мах 1 (1 заряд).
+            if (kind == "miss2") return press < 2 ? 180f : 0f;
+            if (kind == "miss1") return press == 0 ? 180f : 0f;
+            return 0f;
+        }
 
         private static string WreckCaptureTempoKind(int series)
         {
@@ -65,6 +72,40 @@ namespace Game.View
             }
             if (_wreckCaptureTempo.Length == 0) return null;
             return _wreckCaptureTempo[Mathf.Min(series, _wreckCaptureTempo.Length - 1)].Trim();
+        }
+
+        private static int _wreckCaptureFormRead = -1;
+        private static PelagForm _wreckCaptureForm;
+
+        /// <summary>
+        /// -capture-wreck-form Breakwater|NinthWave|GhostAnchor (07.10, VFX форм Крушения): форма в слоте Крушения стенда —
+        /// узел формы в сборке слота (PelagForms.AppendFormNodes, как у набора забега). Без ключа или с незнакомым именем —
+        /// без формы, стенд прежний. Регистр не важен; можно и короче: breakwater, ninth, ghost.
+        /// </summary>
+        internal static PelagForm WreckCaptureForm
+        {
+            get
+            {
+                if (_wreckCaptureFormRead >= 0) return _wreckCaptureForm;
+                _wreckCaptureFormRead = 1;
+                string[] args = Environment.GetCommandLineArgs();
+                int at = Array.IndexOf(args, "-capture-wreck-form");
+                string raw = at >= 0 && at + 1 < args.Length ? args[at + 1].Trim().ToLowerInvariant() : "";
+                if (raw.StartsWith("wreck")) raw = raw.Substring(5);
+                _wreckCaptureForm = raw == "breakwater" ? PelagForm.WreckBreakwater
+                    : raw == "ninthwave" || raw == "ninth" ? PelagForm.WreckNinthWave
+                    : raw == "ghostanchor" || raw == "ghost" ? PelagForm.WreckGhostAnchor : PelagForm.None;
+                if (at >= 0) Debug.Log($"[wreck-capture] form {_wreckCaptureForm} (key '{raw}')");
+                return _wreckCaptureForm;
+            }
+        }
+
+        /// <summary>Узлы слота Крушения на стенде: форма -capture-wreck-form или ничего.</summary>
+        private static int WreckCaptureNodes(out AbilityNode[] nodes)
+        {
+            PelagForm form = WreckCaptureForm;
+            nodes = form != PelagForm.None ? new AbilityNode[4] : Array.Empty<AbilityNode>();
+            return form != PelagForm.None ? PelagForms.AppendFormNodes(form, nodes, 0) : 0;
         }
 
         private static bool WreckCaptureLane

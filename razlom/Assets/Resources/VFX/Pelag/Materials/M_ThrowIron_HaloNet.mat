@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_ThrowIron_HaloNet
+  m_Shader: {fileID: 4800000, guid: 34faaa4343042034dab6cebf31ef7911, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _FacetTex:
+        m_Texture: {fileID: 2800000, guid: 895a907c47b33e445a620c6c353da305, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CameraPush: -0.16
+    - _ChevronRate: 9
+    - _ChevronSlope: 0.55
+    - _ChevronWidth: 0.12
+    - _Chevrons: 6
+    - _EdgePx: 0
+    - _EdgeRag: 0.22
+    - _EdgeTeeth: 0.3
+    - _ErodeBias: 0.05
+    - _ErodeFrom: 0.02
+    - _ErodeGain: 1.6
+    - _ErodeTo: 0.2
+    - _FadeFrom: 0.14
+    - _FadeTo: 0.24
+    - _FlowSpeed: 1.2
+    - _Glow: 0.18
+    - _HaloMode: 1
+    - _Opacity: 0.88
+    - _PulseGain: 0.9
+    - _Sheen: 0
+    - _SheenRate: 6
+    - _SheenRepeat: 2.2
+    - _SheenWidth: 0.06
+    - _Streaks: 0
+    - _TeethCount: 9
+    m_Colors:
+    - _Bands: {r: 0, g: 0.22, b: 0.66, a: 0}
+    - _Deep: {r: 0.078431375, g: 0.627451, b: 0.49411765, a: 1}
+    - _Edge: {r: 0.05490196, g: 0.47843137, b: 0.38431373, a: 0.92}
+    - _FacetScale: {r: 1.4, g: 1.2, b: 0.9, a: 0.6}
+    - _Hot: {r: 1.0370098, g: 1.2382354, b: 1.1936274, a: 1}
+    - _HotShade: {r: 0.4531765, g: 1.0122353, b: 0.9232942, a: 1}
+    - _Light: {r: 0.38431373, g: 0.9019608, b: 0.8, a: 1}
+    - _Mid: {r: 0.13333334, g: 0.70980394, b: 0.58431375, a: 1}
+    - _SliverScale: {r: 0.55, g: 3, b: 0.8, a: 1.6}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -27,11 +27,15 @@ namespace Game.View
             float shown = PelagWreckVfxRules.ShownTick(sim.Tick, _driver.Alpha);
             float dt = Time.deltaTime;
             while (_wkQueued > 0 && _wkQueue[0].Tick <= shown) RunWreckCue(0, false);
+            UpdateWreckCombo(shown);   // .WreckComboSchedule: заход махов с входа головы Sim, знаки маха — по голове волны
             UpdateWreckBodies(shown);
             UpdateWreckWaves(sim, shown, dt);
             UpdateWreckCraters(shown);
             UpdateWreckShell(sim, shown, dt);
             UpdateWreckIron(shown);
+            UpdateWreckGhost(shown);
+            UpdateWreckNinthLunge(shown);   // .WreckNinthLunge: веер Девятого вала
+            UpdateWreckBreakwater(shown);   // .WreckBreakwater: стена плит Волнореза
         }
 
         /// <summary>Поздний кадр (PelagWreckLateHook, после рига якоря): путь головы и дуга.</summary>
@@ -42,6 +46,7 @@ namespace Game.View
             if (sim == null || sim != _wkSim || !WreckVfxReady) return;
             UpdateWreckArcs(sim, PelagWreckVfxRules.ShownTick(sim.Tick, _driver.Alpha), Time.deltaTime);
             UpdateWreckSwings(sim, PelagWreckVfxRules.ShownTick(sim.Tick, _driver.Alpha), Time.deltaTime);
+            LateWreckNinth();   // .WreckNinth: заряд и ореол на голове якоря
         }
 
         private void ResetWreckVfx()
@@ -56,6 +61,10 @@ namespace Game.View
             ForgetWreckBodies();
             ForgetWreckIron();
             ForgetWreckSwings();
+            ForgetWreckGhost();
+            ForgetWreckNinth();
+            ForgetWreckBreakwater();
+            ForgetWreckCombo();   // .WreckComboSchedule
         }
 
         private void RunWreckCue(int index, bool force)
@@ -63,6 +72,7 @@ namespace Game.View
             WkPending p = _wkQueue[index];
             for (int i = index + 1; i < _wkQueued; i++) _wkQueue[i - 1] = _wkQueue[i];
             _wkQueued--;
+            NoteWreckNinthCue(ref p);   // .WreckNinth: заряды Девятого вала; выпад без зарядов — как база
             if (CaptureRig.HasEnemyOverride)
             {
                 // shown — тик показа в миг рождения знака (приёмка: shown ≥ tick и shown − tick < 1, иначе знак раньше тела).

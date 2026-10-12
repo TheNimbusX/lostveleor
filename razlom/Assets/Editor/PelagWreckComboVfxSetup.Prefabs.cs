@@ -81,7 +81,12 @@ public static partial class PelagWreckComboVfxSetup
         m.SetFloat("_SheenSeconds", .16f);
         m.SetFloat("_Glow", .30f);
         m.SetFloat("_Opacity", 1f);
-        m.SetFloat("_LifeSeconds", life);
+        // 07.10: заход до контакта — частица живёт lead + life, раскадровка после контакта прежняя (шейдер вычитает заход).
+        m.SetFloat("_LifeSeconds", PelagWreckComboLook.LeadSeconds + life);
+        m.SetFloat("_LeadSeconds", PelagWreckComboLook.LeadSeconds);
+        m.SetFloat("_LeadFrom", PelagWreckComboLook.LeadFrom);
+        // V13: заход въездом — весь полумесяц въезжает с края входа (контроллер поворачивает корень), голова уже своя.
+        m.SetFloat("_LeadSlide", 1f);
         m.SetFloat("_HeadFrom", headFrom);
         m.SetFloat("_HeadSeconds", headSeconds);
         m.SetFloat("_ErodeFrom", erodeFrom);
@@ -130,22 +135,36 @@ public static partial class PelagWreckComboVfxSetup
         var root = new GameObject(name);
         try
         {
-            AddElement(root, id, life + .32f);
+            // 07.10: заход — волна рождается в тик входа головы Sim в сектор (за 3 тика до контакта, контроллер), голова идёт
+            // от края входа к середине к контакту; хлопок перелёта, доворот, искры и сколы — с контакта, как были.
+            float lead = PelagWreckComboLook.LeadSeconds;
+            int k = heavy ? 1 : 0;
+            AddElement(root, id, lead + life + .32f);
             // Основная волна: хлопок масштаба тяжелее сабельного и доворот по ходу якоря.
-            ParticleSystem wave = MeshLayer(root, "Wave", mesh, main, life, 0f, 1f, 1f);
-            Pop(wave, .82f, heavy ? 1.06f : 1.05f, .09f, life);
-            Spin(wave, heavy ? -14f : -12f, .26f, life, 0f);
+            ParticleSystem wave = MeshLayer(root, "Wave", mesh, main, lead + life, 0f, 1f, 1f);
+            Pop(wave, .82f, heavy ? 1.06f : 1.05f, .09f, life, lead);
+            Spin(wave, -PelagWreckComboLook.SpinDegrees[k], PelagWreckComboLook.SpinSeconds, life, 0f, lead);
             // Эхо: шире, ниже, отстаёт, глубже по цвету и рассыпается первым — толщина металла.
-            ParticleSystem echoLayer = MeshLayer(root, "Echo", mesh, echo, life, .035f, .62f, 1.06f);
+            ParticleSystem echoLayer = MeshLayer(root, "Echo", mesh, echo, lead + life, .035f, .62f, 1.06f);
             echoLayer.transform.localPosition = new Vector3(0f, 0f, -.07f);
-            Pop(echoLayer, .88f, 1.03f, .09f, life);
-            Spin(echoLayer, -9f, .26f, life, 8f);
+            Pop(echoLayer, .88f, 1.03f, .09f, life, lead);
+            Spin(echoLayer, -9f, .26f, life, 8f, lead);
+            // V14: мах 2 (и «Четвёртый») рисуется поверх ещё живого маха 1 — его заход идёт в том же кольце, и без этого
+            // полумесяц маха 2 до контакта целиком прятался под рассыпающимся махом 1 (вспышка знака −20 — всё равно сверху).
+            if (heavy)
+            {
+                wave.GetComponent<ParticleSystemRenderer>().sortingFudge = -12f;
+                echoLayer.GetComponent<ParticleSystemRenderer>().sortingFudge = -10f;
+            }
             // Искры с наружного края веером наружу: вытянуты по скорости, короткие, горячие.
             ParticleSystem sparks = Sparks(root, "Sparks", spark, heavy ? 22 : 16, .12f, .26f, 3f, 11f, .035f, .06f, .9f, .8f);
             ArcShape(sparks, 1f, 180f - SpanDegrees * .5f, SpanDegrees);
-            // Сколы железа с края: тяжёлые, вертятся, падают.
-            ParticleSystem chips = Chips(root, "Chips", chip, heavy ? 6 : 5, .40f, .62f, 2f, 4.5f, .17f, .28f, 2.4f, 2.2f, IronFace, IronSteel);
+            // Сколы железа с края: тяжёлые, вертятся, падают. 07.10: «чёрное конфетти» — реже, крупнее, грань и скос светлее.
+            ParticleSystem chips = Chips(root, "Chips", chip, PelagWreckComboLook.ChipCount[k], .40f, .62f, 2f, 4.5f,
+                PelagWreckComboLook.ChipSizeMin, PelagWreckComboLook.ChipSizeMax, 2.4f, 2.2f, Linear(PelagWreckComboLook.ChipFaceDark),
+                Linear(PelagWreckComboLook.ChipFaceLight));
             ArcShape(chips, .97f, 180f - SpanDegrees * .5f, SpanDegrees);
+            foreach (var layer in new[] { sparks, chips }) { var lm = layer.main; lm.startDelay = lead; }
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath(name));
         }
         finally { Object.DestroyImmediate(root); }
@@ -176,13 +195,18 @@ public static partial class PelagWreckComboVfxSetup
             // Искры конусом по ходу маха и чуть вверх.
             ParticleSystem sparks = Sparks(root, "Sparks", spark, 14, .12f, .22f, 5f, 10f, .035f, .06f, .8f, 0f);
             Cone(sparks, 26f, .06f, -14f);
-            // Сколы железа — по ходу и вверх, с тяжестью.
-            ParticleSystem chips = Chips(root, "Chips", chip, 3, .40f, .60f, 3f, 5.5f, .15f, .24f, 2.4f, 0f, IronFace, IronSteel);
+            // Сколы железа — по ходу и вверх, с тяжестью. Префаб — принятый знак (выпад); знаку маха контроллер ставит
+            // светлый скол края (07.10, PelagWreckComboLook.Hit*), выпаду возвращает этот.
+            ParticleSystem chips = Chips(root, "Chips", chip, PelagWreckComboLook.MarkChipCount, .40f, .60f, 3f, 5.5f,
+                PelagWreckComboLook.MarkChipSizeMin, PelagWreckComboLook.MarkChipSizeMax, 2.4f, 0f, Linear(PelagWreckComboLook.MarkChipDark),
+                Linear(PelagWreckComboLook.MarkChipLight));
             Cone(chips, 50f, .25f, -30f);
             // Сколы и комья — под вспышкой (V2: чёрные куски поверх белого ядра читались дырами).
             chips.GetComponent<ParticleSystemRenderer>().sortingFudge = 20f;
             // Комья земли из-под ног задетого.
-            ParticleSystem clods = Chips(root, "Clods", clod, 3, .45f, .65f, 2f, 3.6f, .16f, .26f, 2.6f, 0f, Clod, ClodLight);
+            ParticleSystem clods = Chips(root, "Clods", clod, PelagWreckComboLook.MarkClodCount, .45f, .65f, 2f, 3.6f,
+                PelagWreckComboLook.MarkClodSizeMin, PelagWreckComboLook.MarkClodSizeMax, 2.6f, 0f, Linear(PelagWreckComboLook.MarkClodDark),
+                Linear(PelagWreckComboLook.MarkClodLight));
             clods.transform.localPosition = new Vector3(0f, -.85f, .05f);
             Cone(clods, 35f, .15f, -55f);
             clods.GetComponent<ParticleSystemRenderer>().sortingFudge = 20f;
@@ -191,6 +215,9 @@ public static partial class PelagWreckComboVfxSetup
         }
         finally { Object.DestroyImmediate(root); }
     }
+
+    /// <summary>Цвет частицы из тройки чисел PelagWreckComboLook (вершинный: шейдер его не переводит).</summary>
+    private static Color Linear(float[] rgb) => new Color(rgb[0], rgb[1], rgb[2], 1f);
 
     private static void AddElement(GameObject root, PelagVfxId id, float lifetime)
     {

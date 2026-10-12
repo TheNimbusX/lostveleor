@@ -46,7 +46,10 @@ Material:
     - _HeadHot: 0.2
     - _HeadRound: 0.1
     - _HeadSeconds: 0.11
-    - _LifeSeconds: 0.38
+    - _LeadFrom: 0
+    - _LeadSeconds: 0.1
+    - _LeadSlide: 1
+    - _LifeSeconds: 0.48
     - _Opacity: 1
     - _OutlinePx: 2.4
     - _Sheen: 0.9

@@ -161,10 +161,14 @@ namespace Game.View
         private void PlayWreckSlam(in WkPending p)
         {
             WkWave wave = p.Wave;
+            // Призрачный якорь (07.10, .WreckGhost): над точкой выпада проявляется якорь и падает к тику события 77.
+            BeginWreckGhost(p);
             // 06.10 поздно: выпад всех форм — стек серии сабли (.WreckComboLunge: стоячий всплеск, стоячий гребень по полосе,
             // камни, искры, след); формы — другой краской. Ловля, обрушение стены и заряд Девятого вала — свои, как были.
             if (PlayWreckComboLunge(p))
             {
+                PlayWreckNinthLunge(p);   // .WreckNinthLunge: веер гребней Девятого вала с зарядами
+                PlayWreckBreakwaterWall(p);   // .WreckBreakwater: стена 3D-плит Волнореза вместо гребня базы
                 if (!CaptureRig.NoVfx) _juice?.PunchCamera(.30f, .06f);
                 foreach (WreckWaveRun charged in _wkWaves)
                     if (charged.Active && charged.Hump && charged.Serial == p.Serial) ReleaseWreckWave(charged);

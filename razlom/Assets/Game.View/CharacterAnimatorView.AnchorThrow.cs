@@ -30,7 +30,13 @@ namespace Game.View
     /// </summary>
     public sealed partial class CharacterAnimatorView
     {
-        private const float AnchorThrowEnterBlend = .035f;
+        private const float AnchorThrowEnterBlend = .05f;
+        /// <summary>
+        /// animfix 07.10: Throw 0 = стойка боя (Pelag_KnifeIdle_Grounded, слой Saber Stance). Из стойки базовый слой входит
+        /// за кадр (под слоем стойки его не видно), а слой стойки гаснет за AnchorThrowStanceFadeSeconds уже поверх клипа —
+        /// прежде слой обрывался в 0 в кадр каста и на 1–2 кадра показывался Pelag_MX_Idle (таз 60°, рука 58°).
+        /// </summary>
+        private const float AnchorThrowEnterFromStanceBlend = .02f, AnchorThrowStanceFadeSeconds = .06f;
         private const float AnchorThrowExitBlend = .10f;
         private const float AnchorThrowCancelBlend = .08f;
         private const float AnchorThrowFacingRecoverySeconds = .28f;
@@ -47,6 +53,7 @@ namespace Game.View
         private float _anchorThrowRecoverUntil, _anchorThrowReleaseAt = -1f, _anchorThrowReleaseSeconds = .1f;
         private Vector3 _anchorThrowLastFacing, _anchorThrowLastShift, _anchorThrowReleaseShift;
         private bool _anchorThrowEntryPin;
+        private float _anchorThrowStanceFrom, _anchorThrowStanceFadeAt;
         private Vector3 _anchorThrowEntryFoot, _anchorThrowEntryOffset;
 
         /// <summary>Голова якоря на риге: кадр «якорь на спину» клипа ловли (тело — CharacterAnimatorView.AnchorThrowRig.cs, ставится с ригом).</summary>
@@ -110,7 +117,9 @@ namespace Game.View
             // Всё тело, как у рывка, Шквала и Абордажа: слои удара и стойки иначе держат руки и ноги.
             if (_upperBodyLayer >= 0) _animator.SetLayerWeight(_upperBodyLayer, 0f);
             if (_lowerBodyLayer >= 0) _animator.SetLayerWeight(_lowerBodyLayer, 0f);
-            if (_saberStanceLayer >= 0) _animator.SetLayerWeight(_saberStanceLayer, 0f);
+            // Слой стойки не обрывается: гаснет поверх клипа (AnchorThrowStanceWeight), Throw 0 = эта же стойка.
+            _anchorThrowStanceFrom = _saberStanceLayer >= 0 ? _animator.GetLayerWeight(_saberStanceLayer) : 0f;
+            _anchorThrowStanceFadeAt = Time.time;
             if (_saberFootworkLayer >= 0) _animator.SetLayerWeight(_saberFootworkLayer, 0f);
             if (_recoveryFootworkLayer >= 0) _animator.SetLayerWeight(_recoveryFootworkLayer, 0f);
 
@@ -173,7 +182,8 @@ namespace Game.View
             if (pose.Clip != _anchorThrowClip)
             {
                 int hash = AnchorThrowStates[id];
-                if (_anchorThrowClip == PelagAnchorThrowClip.None) _animator.CrossFadeInFixedTime(hash, AnchorThrowEnterBlend, 0, 0f);
+                if (_anchorThrowClip == PelagAnchorThrowClip.None)
+                    _animator.CrossFadeInFixedTime(hash, _anchorThrowStanceFrom > .01f ? AnchorThrowEnterFromStanceBlend : AnchorThrowEnterBlend, 0, 0f);
                 else if (!PelagAnchorThrowClipRules.IsSeam(_anchorThrowClip, pose.Clip))
                     _animator.CrossFadeInFixedTime(hash, AnchorThrowCancelBlend, 0, 0f);
                 else _animator.Play(hash, 0, 0f);
@@ -339,6 +349,18 @@ namespace Game.View
             return _anchorThrowReleaseAt >= 0f ? _anchorThrowReleaseSeconds : 0f;
         }
 
+        /// <summary>
+        /// Вес слоя Saber Stance в кадр (зовёт общий Update перед SetLayerWeight): первые AnchorThrowStanceFadeSeconds каста —
+        /// гаснет от веса в кадр каста (SmoothStep), дальше — как решил общий код (в броске 0).
+        /// </summary>
+        private float AnchorThrowStanceWeight(float weight)
+        {
+            if (!_anchorThrowDriven || _anchorThrowStanceFrom <= 0f) return weight;
+            float u = (Time.time - _anchorThrowStanceFadeAt) / AnchorThrowStanceFadeSeconds;
+            if (u >= 1f) { _anchorThrowStanceFrom = 0f; return weight; }
+            return Mathf.Max(weight, _anchorThrowStanceFrom * (1f - Mathf.SmoothStep(0f, 1f, u)));
+        }
+
         /// <summary>Базовый слой в клипе Броска или идёт в него.</summary>
         private bool BaseInAnchorThrow()
         {
@@ -368,6 +390,7 @@ namespace Game.View
             _anchorThrowBaseCheckFrame = -1;
             _anchorThrowLastShift = Vector3.zero;
             _anchorThrowEntryPin = false;
+            _anchorThrowStanceFrom = 0f;
         }
     }
 }

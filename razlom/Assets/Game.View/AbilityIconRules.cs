@@ -69,7 +69,7 @@ namespace Game.View
                 case PelagForm.AbordageBreach: return "Breach";
                 case PelagForm.WreckBreakwater: return "Breakwater";
                 case PelagForm.WreckNinthWave: return "NinthWave";
-                case PelagForm.WreckGhostAnchor: return "Shell";   // файл иконки пока прежний (Icon_Wreck_Shell): «Якорная броня» → Призрачный якорь 06.10
+                case PelagForm.WreckGhostAnchor: return "GhostAnchor";   // иконка v2 выбрана владельцем 07.10 (ART/UI/icons-anchor-family-2026-10-06/ghost-anchor)
                 case PelagForm.AnchorThrowNet: return "Net";
                 case PelagForm.AnchorThrowFan: return "Fan";
                 case PelagForm.AnchorThrowHarpoon: return "Harpoon";

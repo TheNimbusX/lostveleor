@@ -65,8 +65,8 @@ namespace Game.View
         {
             if (s.Serial == 0) return AnchorThrowRigPhase.None;
             if (shown < s.ReleaseTick) return AnchorThrowRigPhase.Windup;
-            if (shown < s.TautTick) return AnchorThrowRigPhase.Fly;
-            if (shown < s.TautTick + 1) return AnchorThrowRigPhase.Hold;
+            if (shown < s.HoldTick) return AnchorThrowRigPhase.Fly;
+            if (shown < s.TautTick + 1) return AnchorThrowRigPhase.Hold;   // натяг Sim — 2 тика (07.10)
             if (shown < s.CatchTick) return AnchorThrowRigPhase.Yank;
             return AnchorThrowRigPhase.Done;
         }

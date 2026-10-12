@@ -72,8 +72,8 @@ namespace Game.View
                 case PelagForm.WreckBreakwater: return "Стена воды на 8 м несёт врагов и обрушивается.";
                 case PelagForm.WreckNinthWave: return "Мах по врагу заряжает выпад: полоса и урон до ×2, +2 м.";
                 case PelagForm.WreckGhostAnchor: return "За выпадом падает призрачный якорь: круг 3 м, оглушение.";
-                case PelagForm.AnchorThrowNet: return "За якорем сеть пены 3 м: ловит и тянет всю полосу.";
-                case PelagForm.AnchorThrowFan: return "Три якоря веером: настоящий и два водяных под ±30°.";
+                case PelagForm.AnchorThrowNet: return "За якорем сеть из цепей 3 м: ловит и тянет всю полосу.";
+                case PelagForm.AnchorThrowFan: return "Три якоря веером: железный и два призрачных под ±25°.";
                 case PelagForm.AnchorThrowHarpoon: return "Вонзается в первого: ×2 урона, тянет даже элиту.";
                 default: return string.Empty;
             }
@@ -123,7 +123,7 @@ namespace Game.View
                 case PelagForm.WreckNinthWave: return "до ×2 · +2 м";
                 case PelagForm.WreckGhostAnchor: return "3 м · ×1,5";
                 case PelagForm.AnchorThrowNet: return "3 м · 50%";
-                case PelagForm.AnchorThrowFan: return "3 · ±30°";
+                case PelagForm.AnchorThrowFan: return "3 · ±25°";
                 case PelagForm.AnchorThrowHarpoon: return "×2";
                 default: return string.Empty;
             }

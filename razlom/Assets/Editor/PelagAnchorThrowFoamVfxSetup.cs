@@ -120,17 +120,14 @@ public static partial class PelagAnchorThrowFoamVfxSetup
 
         // Bind ставит dirty, только если запись поменялась; библиотека пишется только тогда.
         bool ok = true;
-        ok &= PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.AnchorThrowNet, PrefabPath(NetName), 2);
-        ok &= PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.AnchorThrowGhost, PrefabPath(GhostName), 3);
-        // Принятые префабы семьи — под своими id (свои пулы), без правки самих префабов. Прогрев — по слотам вида:
-        // лента — вода на цепи, росчерк, тень-линия, две цепи призраков и до 8 струек к цепи.
-        ok &= PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.AnchorThrowRibbon, RibbonPrefab, 14);
-        ok &= PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.AnchorThrowSplash, SabreSplashPrefab, 8);
-        ok &= PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.AnchorThrowCrown, DashSplashPrefab, 3);
-        ok &= PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.AnchorThrowKnock, CrownSplashPrefab, 12);
-        ok &= PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.AnchorThrowBurst, WaveSplashPrefab, 2);
-        ok &= PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.AnchorThrowWake, DashWakePrefab, 2);
-        ok &= PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.AnchorThrowDrag, MaelstromDragPrefab, 8);
+        // 07.10: сеть-вода Невода и водяной призрак Веера отвязаны — формы Броска рисует PelagWreckComboVfxSetup.ThrowForm
+        // (сеть из цепей, призрачный якорь); префабы 03.10 остаются на диске.
+        PelagWreckComboVfxSetup.Unbind(library, PelagVfxId.AnchorThrowNet, PelagVfxId.AnchorThrowGhost);
+        // 08.10: пена базы (вода на цепи, всплески, короны, веер укуса, вспаханная пена, борозда-водоворот) отвязана — базу
+        // Броска рисует «холодное железо» PelagWreckComboVfxSetup.ThrowIron (кадры base-hit-v1 / base-yank-v1); код и префабы
+        // остаются. Голова и цепь временного пути (без рига) — снаряжение, не пена: остаются.
+        PelagWreckComboVfxSetup.Unbind(library, PelagVfxId.AnchorThrowRibbon, PelagVfxId.AnchorThrowSplash, PelagVfxId.AnchorThrowCrown,
+            PelagVfxId.AnchorThrowKnock, PelagVfxId.AnchorThrowBurst, PelagVfxId.AnchorThrowWake, PelagVfxId.AnchorThrowDrag);
         ok &= PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.AnchorThrowAnchor, AnchorHeadPrefab, 2);
         ok &= PelagWhirlwindVfxSetup.Bind(library, PelagVfxId.AnchorThrowChain, AnchorChainPrefab, 2);
         if (!ok) Debug.LogWarning("[anchor-throw-setup] Не все префабы Броска якоря нашлись — недостающие записи библиотеки не созданы.");

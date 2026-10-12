@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_ThrowForm_GhostChain
+  m_Shader: {fileID: 4800000, guid: b1fbfd00a420bcf4daddc1ed97a7d570, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3039
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _FacetTex:
+        m_Texture: {fileID: 2800000, guid: 895a907c47b33e445a620c6c353da305, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BodyAlpha: 0.92
+    - _BodyW: 0.46
+    - _CameraPush: 0.05
+    - _ChevronRate: 9
+    - _Chevrons: 1.8
+    - _CoreW: 0.2
+    - _CoreW0: 0.07
+    - _ErodeFrom: 0.03
+    - _ErodeTo: 0.22
+    - _FadeFrom: 0.16
+    - _FadeTo: 0.3
+    - _FlowSpeed: 2.5
+    - _GlowAlpha: 0
+    - _HaloAlpha: 0.28
+    - _HaloGain: 1
+    - _LinkGlass: 0.85
+    - _LinkHalf: 0.042
+    - _LinkPitch: 0.105
+    - _LinkThick: 0.02
+    - _Links: 1
+    - _Opacity: 1
+    - _PulseGain: 0.9
+    - _Rag: 0.3
+    - _Sparkle: 0.6
+    m_Colors:
+    - _Deep: {r: 0.01, g: 0.09999997, b: 0.059999965, a: 1}
+    - _Hot: {r: 0.8, g: 1.1, b: 0.92, a: 1}
+    - _Light: {r: 0.15999997, g: 0.86, b: 0.53, a: 1}
+    - _LinkBody: {r: 0.5840785, g: 0.5149178, b: 1, a: 1}
+    - _LinkRim: {r: 1.05, g: 1.02, b: 1.5, a: 1}
+    - _LinkShadow: {r: 0.04231141, g: 0.012983031, b: 0.32314324, a: 1}
+    - _Mid: {r: 0.012, g: 0.45, b: 0.20999995, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

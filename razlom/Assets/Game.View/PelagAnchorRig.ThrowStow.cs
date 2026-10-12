@@ -12,8 +12,8 @@ namespace Game.View
     public sealed partial class PelagAnchorRig
     {
         /// <summary>
-        /// Кадр «якорь на спину» клипа ловли (Catch 3, timing.json keys.stow_handoff) обрывает маятник ловли и сразу
-        /// начинает уборку (рукоять на спину скольжением, цепь сматывается). false — риг сам: Caught 0,3 с, потом Stow.
+        /// Кадр «якорь на спину» клипа ловли (Catch 3, timing.json keys.stow_handoff): с ThrowFistGrip — закидка через плечо
+        /// (голова из кулака на крепление, рукоять скольжением); без него — прежняя уборка сматыванием. false — риг сам: Caught 0,3 с, потом Stow.
         /// </summary>
         public static bool ThrowStowAtClipHandoff = true;
 
@@ -26,6 +26,13 @@ namespace Game.View
         public void CueThrowStow(int serial)
         {
             if (!ThrowStowAtClipHandoff || !_owned || !_catching || _catchFromAbordage || _lineDoneSerial != serial) return;
+            if (ThrowFistGrip)
+            {
+                // animfix 07.10: закидка через плечо по клипу (PelagAnchorRig.ThrowHand) — без маятника и сматывания.
+                BeginThrowStow();
+                if (CaptureRig.LiveSkill) Debug.Log($"{Log} throw stow cue (toss) serial={serial} caughtAge={_caughtAge:F2}");
+                return;
+            }
             _catching = false;
             _stow = StowStep.Hand;
             _stowAge = StowTimeout;

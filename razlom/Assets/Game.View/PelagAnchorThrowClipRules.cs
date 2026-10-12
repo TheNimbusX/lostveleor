@@ -1,8 +1,9 @@
 using System;
+using Game.Sim;
 
 namespace Game.View
 {
-    /// <summary>Клипы Броска якоря (03.10). Значения — только дописывать: идут в имена состояний и параметров.</summary>
+    /// <summary>Клипы Броска якоря. Значения — только дописывать: идут в имена состояний и параметров.</summary>
     public enum PelagAnchorThrowClip : byte
     {
         None = 0,
@@ -15,41 +16,48 @@ namespace Game.View
 
     /// <summary>
     /// Чистые правила показа Броска якоря — без Unity, проверяются тестами представления
-    /// (tools/Combat.Presentation.Tests/AnchorThrowClipRulesTests.cs). Источник чисел —
-    /// ART/characters/pelag/anchor-throw-2026-10-03/animation/timing.json: кадр = тик при самой
-    /// длинной раскладке (W = 2, F = 10, R = 8), 30 к/с, корень клипа стоит (таз по XY постоянен),
-    /// Sim героя не двигает, поворот к Dir — вид (вокруг левой лодыжки, как Абордаж v2).
-    /// Руки (лист B): сабля за кушаком, рукоять цепи в ЛЕВОМ кулаке, якорь бросает и ловит ПРАВАЯ.
+    /// (tools/Combat.Presentation.Tests/AnchorThrowClipRulesTests.cs). Клипы 07.10 — Pelag_AN_AnchorThrow2_* по листу поз
+    /// pose-sheet-v1 (ART/characters/pelag/anchor-throw-2026-10-07/animation, timing.json): кадр = тик при броске на 7 м
+    /// (W = 2, F = 7, натяг 2, R = 6 — 25 тиков Sim, контракт AGENTS/specs/anchor-throw-view-contract.md §0), 30 к/с.
+    /// Sim героя не двигает, поворот к Dir — вид (вокруг левой лодыжки: левая стопа стоит весь бросок, правая шагает
+    /// назад на выпуске и обратно на выходе). Руки: сабля за кушаком, рукоять цепи в ЛЕВОМ кулаке, якорь бросает и ловит
+    /// ПРАВАЯ. Клипы 03.10 (Pelag_AN_AnchorThrow_*) лежат на диске и в контроллер больше не идут.
     ///
-    /// * Throw [0..5] — замах 0→2 (W = 2, курсор за спиной — 3; выпуск — кадр 2 в тик выпуска), проводка 2→5.
-    /// * Fly [0..3] — остаток полёта растянут на F − 2 тиков (flight table), кадр 3 = Yank 0.
-    /// * Yank [0..2] — натяг T, рывок T+1, тянет T+2 (1:1); кадр 2 = Haul 0 = Haul 3.
-    /// * Haul [0..6] — возврат k = 2..R (haul table; R ≤ 5 входит с кадра 3), кадр 6 = Catch 0 в тик ловли.
-    /// * Catch [0..9] — удержание 3 + выход 6, 1:1; кадр 3 — якорь на спину, 5 — можно идти, 9 — стойка серии сабли.
+    /// * Throw [0..5] — 0 стойка, 1 замах (поза 1), 2 выпуск в тик выпуска (поза 2), 3–5 выпад, правая по линии (поза 3).
+    /// * Fly [0..5] — полёт после проводки: 1:1 при F = 7, иначе растянут/сжат на F − 2 тиков; кадр 5 = Yank 0.
+    /// * Yank [0..2] — HoldTick: кадр 0 (поза 4 «держит», обе руки на цепи); TautTick (рывок): кадр 1; кадр 2 = Haul 0.
+    /// * Haul [0..5] — возврат y = 1..R после рывка (кадр 1 — пик рывка, поза 5); кадр 5 = Catch 0 в тик ловли.
+    /// * Catch [0..8] — ловля у плеча (поза 6), удержание 2 + выход 6, 1:1; кадр 3 — закидка через плечо на спину, 4 —
+    ///   можно идти, 6–8 — «готов» (поза 7) = Pelag_MX_Idle (CombatIdle_v5, в него выходит вид — без скачка).
+    /// * Throw 0 = Pelag_KnifeIdle_Grounded (слой Saber Stance — стойка героя в бою): вход из неё без скачка (animfix 07.10).
     ///
-    /// Между тиками кадр идёт по прямой по ЦЕПОЧКЕ клипов (стыки — одна поза, 0°): тик, который
-    /// проходит шов, проходит и все кадры до него — как проверял at_check.py (путь кости за тик ≤ 35°).
-    /// Цепочка — одно число c: Throw [0,5], Fly [5,8], Yank [8,10], Haul [10, 16 − e], Catch [16 − e, 25 − e],
-    /// где e — кадр входа в Haul (0 или 3 при коротком возврате).
+    /// Между тиками кадр идёт по прямой по ЦЕПОЧКЕ клипов (стыки — одна поза): c — Throw [0,5], Fly [5,10],
+    /// Yank [10,12], Haul [12,17], Catch [17,25].
     /// </summary>
     public static class PelagAnchorThrowClipRules
     {
-        public const string BindReference = "Pelag_AN_AnchorThrowBind";
+        public const string BindReference = "Pelag_AN_AnchorThrow2Bind";
 
-        /// <summary>Предел таза сборки: замер Blender 0,387 длины корпуса (timing.json view_requirements), запас как у Абордажа.</summary>
-        public const float HipLimit = .45f;
+        /// <summary>Предел таза сборки: выпад и откидка рывка — 0,77 длины корпуса в Blender (сдвиг 0,24 м и присед), запас.</summary>
+        public const float HipLimit = .85f;
 
         public const float ReleaseFrame = 2f;
-        public const int ThrowLast = 5, FlyLast = 3, YankLast = 2, HaulLast = 6, CatchLast = 9;
+        public const int ThrowLast = 5, FlyLast = 5, YankLast = 2, HaulLast = 5, CatchLast = 8;
 
-        /// <summary>Кадр Catch, где якорь уходит на спину (timing.json keys.stow_handoff): риг кончает маятник и убирает.</summary>
+        /// <summary>
+        /// Кадр Catch, где якорь уходит на спину (timing.json keys.stow_handoff): animfix 07.10 — Catch 3, кулак с якорем над
+        /// плечом (закидка через плечо, кисть отпускает в Catch 3,75), а не Catch 7 (уборка сматыванием ~1,4 с с провисом).
+        /// </summary>
         public const float StowHandoffFrame = 3f;
 
-        /// <summary>Кадр Catch, с которого Sim пускает ходьбу (keys.walk_from = ловля + 5).</summary>
-        public const float WalkFromFrame = 5f;
+        /// <summary>Ключей в секунду в клипах AnchorThrow2 (animfix 07.10: 4 на тик; было 30 — скорость ступенькой на тиках).</summary>
+        public const int SamplesPerSecond = 120;
 
         /// <summary>Удержание (Simulation.AnchorThrowHoldTicks) и выход (AnchorThrowExitTicks) — кадры Catch 1:1.</summary>
-        public const int HoldTicks = 3, ExitTicks = 6;
+        public const int HoldTicks = Simulation.AnchorThrowHoldTicks, ExitTicks = Simulation.AnchorThrowExitTicks;
+
+        /// <summary>Кадр Catch, с которого Sim пускает ходьбу: ловля + удержание + 2.</summary>
+        public const float WalkFromFrame = HoldTicks + Simulation.AnchorThrowExitLockedTicks;
 
         public static readonly PelagAnchorThrowClip[] Clips =
         {
@@ -67,9 +75,10 @@ namespace Game.View
             _ => "",
         };
 
-        /// <summary>Имя FBX и клипа (.anim) — Assets/Resources/Characters/Pelag_v5/Mixamo/{имя}.fbx.</summary>
-        public static string ClipName(PelagAnchorThrowClip clip) => "Pelag_AN_AnchorThrow_" + Suffix(clip);
+        /// <summary>Имя FBX и клипа (.anim) — Assets/Resources/Characters/Pelag_v5/Mixamo/{имя}.fbx (07.10 — AnchorThrow2).</summary>
+        public static string ClipName(PelagAnchorThrowClip clip) => "Pelag_AN_AnchorThrow2_" + Suffix(clip);
 
+        /// <summary>Состояния и параметры — прежние (03.10): сборщик меняет в них клип, вид не трогается.</summary>
         public static string StateName(PelagAnchorThrowClip clip) => "AnchorThrow_" + Suffix(clip) + "_v5";
 
         public static string StatePath(PelagAnchorThrowClip clip) => "Base Layer." + StateName(clip);
@@ -88,34 +97,27 @@ namespace Game.View
             _ => 1,
         };
 
-        /// <summary>Стык без смешивания: конец одного — та же поза, что начало (вход) другого (timing.json seams, 0°).</summary>
+        /// <summary>Стык без смешивания: конец одного — та же поза, что начало другого (timing.json chain).</summary>
         public static bool IsSeam(PelagAnchorThrowClip from, PelagAnchorThrowClip to)
             => (from == PelagAnchorThrowClip.Throw && to == PelagAnchorThrowClip.Fly)
-               || (from == PelagAnchorThrowClip.Throw && to == PelagAnchorThrowClip.Yank)   // F ≤ 2: проводка и упор за тик
+               || (from == PelagAnchorThrowClip.Throw && to == PelagAnchorThrowClip.Yank)   // F ≤ 3: полёт за тик
                || (from == PelagAnchorThrowClip.Fly && to == PelagAnchorThrowClip.Yank)
                || (from == PelagAnchorThrowClip.Yank && to == PelagAnchorThrowClip.Haul)
                || (from == PelagAnchorThrowClip.Haul && to == PelagAnchorThrowClip.Catch);
 
         // ---- цепочка клипов ----
 
-        public const float FlyStart = 5f, YankStart = 8f, HaulStart = 10f;
-
-        /// <summary>Кадр входа в Haul: R ≥ 6 — 0 (два перехвата), R ≤ 5 — 3 (та же поза, один перехват).</summary>
-        public static int HaulEntry(int returnTicks) => returnTicks <= 5 ? 3 : 0;
-
-        public static float CatchStart(int returnTicks) => HaulStart + HaulLast - HaulEntry(returnTicks);
-
-        public static float ChainEnd(int returnTicks) => CatchStart(returnTicks) + CatchLast;
+        public const float FlyStart = ThrowLast, YankStart = FlyStart + FlyLast, HaulStart = YankStart + YankLast;
+        public const float CatchStart = HaulStart + HaulLast, ChainEnd = CatchStart + CatchLast;
 
         /// <summary>Клип и кадр точки цепочки c. На шве — следующий клип (кадр 0 = последний кадр прежнего).</summary>
-        public static PelagAnchorThrowClip ClipAt(float c, int returnTicks, out float frame)
+        public static PelagAnchorThrowClip ClipAt(float c, out float frame)
         {
             if (c < FlyStart) { frame = Math.Max(0f, c); return PelagAnchorThrowClip.Throw; }
             if (c < YankStart) { frame = c - FlyStart; return PelagAnchorThrowClip.Fly; }
             if (c < HaulStart) { frame = c - YankStart; return PelagAnchorThrowClip.Yank; }
-            float catchStart = CatchStart(returnTicks);
-            if (c < catchStart) { frame = HaulEntry(returnTicks) + (c - HaulStart); return PelagAnchorThrowClip.Haul; }
-            frame = Math.Min(CatchLast, c - catchStart);
+            if (c < CatchStart) { frame = c - HaulStart; return PelagAnchorThrowClip.Haul; }
+            frame = Math.Min(CatchLast, c - CatchStart);
             return PelagAnchorThrowClip.Catch;
         }
 
@@ -131,8 +133,8 @@ namespace Game.View
 
         /// <summary>
         /// Полёт: тик выпуска + u (0…F+1) — точка цепочки (timing.json retime.flight.table).
-        /// F ≥ 3: проводка Throw 2..5 1:1 (u ≤ 3), затем Fly растянут на F − 2 тиков до Yank 0 в натяг.
-        /// F ≤ 2: Throw 2, 3, затем по прямой до Yank 0 за F тиков (F = 2: Fly 0,5; F = 1: сразу Yank 0).
+        /// F ≥ 3: проводка Throw 2..5 1:1 (u ≤ 3), затем Fly растянут на F − 2 тиков до Yank 0 в HoldTick.
+        /// F ≤ 2: Throw 2, 3, затем по прямой до Yank 0 за F тиков.
         /// </summary>
         public static float FlightChain(int flightTicks, int u)
         {
@@ -144,42 +146,37 @@ namespace Game.View
             return u <= 1 ? ReleaseFrame + 1f : ReleaseFrame + 1f + (u - 1) * (YankStart - ReleaseFrame - 1f) / f;
         }
 
-        /// <summary>Возврат: тики натяга + k (2…R) — кадр Haul (timing.json retime.haul.table).</summary>
-        public static float HaulKey(int returnTicks, int k)
+        /// <summary>
+        /// Возврат: тик рывка + y (1…R) — кадр Haul (timing.json retime.haul.table). Пик рывка (кадр 1) — всегда на втором
+        /// тике возврата; y = R — ловля (кадр 5 = Catch 0). R ≥ 6 — равномерно (при 6 — 1:1).
+        /// </summary>
+        public static float HaulKey(int returnTicks, int y)
         {
-            int r = Math.Max(4, Math.Min(8, returnTicks));
-            float[] table = r switch
-            {
-                4 => HaulR4,
-                5 => HaulR5,
-                6 => HaulR6,
-                7 => HaulR7,
-                _ => HaulR8,
-            };
-            int i = Math.Max(0, Math.Min(table.Length - 1, k - 2));
-            return table[i];
+            int r = Math.Max(4, returnTicks);
+            int i = Math.Max(1, Math.Min(r, y));
+            if (r == 4) return HaulR4[i - 1];
+            if (r == 5) return HaulR5[i - 1];
+            return HaulLast * (i - 1) / (float)(r - 1);
         }
 
-        private static readonly float[] HaulR4 = { 3f, 4.5f, 6f };
-        private static readonly float[] HaulR5 = { 3f, 4f, 5f, 6f };
-        private static readonly float[] HaulR6 = { 0f, 1.5f, 3f, 4.5f, 6f };
-        private static readonly float[] HaulR7 = { 0f, 1f, 2f, 3f, 4.5f, 6f };
-        private static readonly float[] HaulR8 = { 0f, 1f, 2f, 3f, 4f, 5f, 6f };
+        private static readonly float[] HaulR4 = { 0f, 1f, 3f, 5f };
+        private static readonly float[] HaulR5 = { 0f, 1f, 7f / 3f, 11f / 3f, 5f };
 
         /// <summary>
-        /// Точка цепочки на целом тике n по расписанию Sim (каст, замах, выпуск, F, натяг, R, ловля).
-        /// До каста — стойка (0); после ловли + 9 — конец Catch.
+        /// Точка цепочки на целом тике n по расписанию Sim. Натяг — с HoldTick (= TautTick − AnchorThrowTautTicks + 1):
+        /// HoldTick — Yank 0 («держит»), TautTick — Yank 1 (рывок). До каста — стойка (0); после ловли + 8 — конец Catch.
         /// </summary>
         public static float KeyChain(int castTick, int windupTicks, int releaseTick, int flightTicks, int tautTick,
             int returnTicks, int catchTick, int n)
         {
             if (n <= castTick) return 0f;
             if (n <= releaseTick) return WindupChain(Math.Max(1, releaseTick - castTick), n - castTick);
-            if (n <= tautTick) return FlightChain(flightTicks, n - releaseTick);
-            int y = n - tautTick;
-            if (n < catchTick && y <= YankLast) return YankStart + y;
-            if (n < catchTick) return HaulStart + HaulKey(returnTicks, y) - HaulEntry(returnTicks);
-            return CatchStart(returnTicks) + Math.Min(CatchLast, n - catchTick);
+            if (n >= catchTick) return CatchStart + Math.Min(CatchLast, n - catchTick);
+            int hold = Math.Max(releaseTick + 1, tautTick - Simulation.AnchorThrowTautTicks + 1);
+            if (n < hold) return FlightChain(flightTicks, n - releaseTick);
+            if (n <= tautTick)
+                return tautTick > hold ? YankStart + (n - hold) / (float)(tautTick - hold) : YankStart + 1f;
+            return HaulStart + HaulKey(returnTicks, n - tautTick);
         }
 
         // ---- выход ----

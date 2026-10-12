@@ -5,10 +5,10 @@ using Game.View;
 using NUnit.Framework;
 
 // Бросок якоря на живой Sim: лента тела собирается из снимка и событий ровно как в
-// CharacterAnimatorView.AnchorThrow (PelagAnchorThrowFeed). Выпуск — Throw 2 в тик выпуска, натяг —
-// Yank 0 в тик натяга, ловля — Catch 0 в тик ловли, конец — Catch 9 в тик конца Sim; укороченный
-// полёт (Гарпун) дотягивается без скачка позы; левая лодыжка стоит, пока корень доворачивает к Dir;
-// рывок и ходьба обрывают показ в свой тик; кадр «якорь на спину» — Catch 3.
+// CharacterAnimatorView.AnchorThrow (PelagAnchorThrowFeed). Клипы 07.10 (Pelag_AN_AnchorThrow2_*): выпуск — Throw 2 в
+// тик выпуска, «держит» — Yank 0 в HoldTick, рывок — Yank 1 в TautTick, пик рывка — Haul 1 на втором тике возврата,
+// ловля — Catch 0 в тик ловли, конец — Catch 8 в тик конца Sim; укороченный полёт (Гарпун) дотягивается без скачка позы;
+// левая лодыжка стоит, пока корень доворачивает к Dir; рывок и ходьба обрывают показ в свой тик; «якорь на спину» — Catch 7.
 public sealed class AnchorThrowTimelineSimTests
 {
     private const int Slot = 0;
@@ -132,22 +132,27 @@ public sealed class AnchorThrowTimelineSimTests
         Simulation sim = Arena();
         Run run = Play(sim, 3.5, 6.06, 32);
         int c = run.CastTick;
+        // 07.10 владелец: тайминг Броска 25 тиков — натяг 2 (C+10, C+11), возврат 6, удержание 2.
         Assert.That(run.ReleaseTick, Is.EqualTo(c + 2));
-        Assert.That(run.YankTick, Is.EqualTo(c + 10));
-        Assert.That(run.CatchTick, Is.EqualTo(c + 18));
-        Assert.That(run.EndTick, Is.EqualTo(c + 27));
+        Assert.That(run.YankTick, Is.EqualTo(c + 11));
+        Assert.That(run.CatchTick, Is.EqualTo(c + 17));
+        Assert.That(run.EndTick, Is.EqualTo(c + 25));
         Assert.That(run.EndReason, Is.EqualTo(AnchorThrowEnd.Done));
         AssertPose(run, c, PelagAnchorThrowClip.Throw, 0f, "каст — стойка");
         AssertPose(run, c + 2, PelagAnchorThrowClip.Throw, 2f, "выпуск — Throw 2");
-        AssertPose(run, c + 6, PelagAnchorThrowClip.Fly, .6f, "полёт F = 7 — Fly 0,6");
-        AssertPose(run, c + 10, PelagAnchorThrowClip.Yank, 0f, "натяг — Yank 0");
-        AssertPose(run, c + 12, PelagAnchorThrowClip.Haul, 0f, "T+2 — Haul 0 (= Yank 2)");
-        AssertPose(run, c + 18, PelagAnchorThrowClip.Catch, 0f, "ловля — Catch 0");
-        AssertPose(run, c + 26.5f, PelagAnchorThrowClip.Catch, 8.5f, "выход");
-        Assert.That(run.Line.Sample(c + 26.9f, 1f).Finished, Is.False);
-        Assert.That(run.Line.Sample(c + 27f, 1f).Finished, Is.True, "конец — тик конца Sim");
-        Assert.That(run.Line.Sample(c + 20.9f, 1f).StowCue, Is.False);
-        Assert.That(run.Line.Sample(c + 21f, 1f).StowCue, Is.True, "якорь на спину — Catch 3");
+        AssertPose(run, c + 5, PelagAnchorThrowClip.Fly, 0f, "выпад — Throw 5 = Fly 0");
+        AssertPose(run, c + 6, PelagAnchorThrowClip.Fly, 1f, "полёт F = 7 — Fly 1:1");
+        AssertPose(run, c + 10, PelagAnchorThrowClip.Yank, 0f, "натяг 1 (держит) — Yank 0");
+        AssertPose(run, c + 11, PelagAnchorThrowClip.Yank, 1f, "натяг 2 (рывок) — Yank 1");
+        AssertPose(run, c + 12, PelagAnchorThrowClip.Haul, 0f, "T+1 — Haul 0 (= Yank 2)");
+        AssertPose(run, c + 13, PelagAnchorThrowClip.Haul, 1f, "T+2 — пик рывка, Haul 1");
+        AssertPose(run, c + 17, PelagAnchorThrowClip.Catch, 0f, "ловля — Catch 0");
+        // animfix 07.10: между тиками — монотонная кубика по ключам тиков; на последнем тике выхода кадр доходит до 8 с торможением.
+        AssertPose(run, c + 24.5f, PelagAnchorThrowClip.Catch, 7.625f, "выход");
+        Assert.That(run.Line.Sample(c + 24.9f, 1f).Finished, Is.False);
+        Assert.That(run.Line.Sample(c + 25f, 1f).Finished, Is.True, "конец — тик конца Sim");
+        Assert.That(run.Line.Sample(c + 19.9f, 1f).StowCue, Is.False, "ловля (поза 6) — якорь ещё в правой");
+        Assert.That(run.Line.Sample(c + 20f, 1f).StowCue, Is.True, "animfix 07.10: закидка через плечо на спину — Catch 3");
         Assert.That(run.MaxSeam, Is.LessThan(.01f), "события и снимок не сдвигают показанную позу");
     }
 
@@ -165,7 +170,7 @@ public sealed class AnchorThrowTimelineSimTests
         Assert.That(run.Line.YawAt(c + 20), Is.EqualTo(target).Within(.01f));
         const float scale = 1.82f / 1.8f;
         PelagSquallClipRules.LeftAnkle(StartYaw, scale, out float ax, out float ay);
-        foreach (float t in new[] { c + 1f, c + 2f, c + 10f, c + 18f, c + 26.5f })
+        foreach (float t in new[] { c + 1f, c + 2f, c + 10f, c + 17f, c + 24.5f })
         {
             PelagAnchorThrowPose pose = run.Line.Sample(t, scale);
             PelagSquallClipRules.LeftAnkle(pose.Yaw, scale, out float bx, out float by);
@@ -184,19 +189,21 @@ public sealed class AnchorThrowTimelineSimTests
         AssertPose(run, c + 1, PelagAnchorThrowClip.Throw, 2f / 3f, "замах растянут на 3 тика");
         AssertPose(run, c + 3, PelagAnchorThrowClip.Throw, 2f, "выпуск C+3");
         AssertPose(run, c + 11, PelagAnchorThrowClip.Yank, 0f, "натяг C+11");
-        AssertPose(run, c + 19, PelagAnchorThrowClip.Catch, 0f, "ловля C+19");
+        Assert.That(run.YankTick, Is.EqualTo(c + 12), "рывок C+12");
+        AssertPose(run, c + 18, PelagAnchorThrowClip.Catch, 0f, "ловля C+18");
         Assert.That(run.MaxSeam, Is.LessThan(.01f));
     }
 
     [Test]
-    public void WallAtFiveMetres_CatchAt14_ThrowIntoAWall_ShortHaul()
+    public void WallAtFiveMetres_CatchAt13_ThrowIntoAWall_ShortHaul()
     {
         Simulation sim = Arena(map: Map(6, 0, .5));
         Run run = Play(sim, 7, 0, 30);
         int c = run.CastTick;
-        Assert.That(run.CatchTick, Is.EqualTo(c + 14));
+        Assert.That(run.CatchTick, Is.EqualTo(c + 13), "F = 5, натяг 2, R = 4");
         AssertPose(run, c + 8, PelagAnchorThrowClip.Yank, 0f, "натяг C+8 (F = 5)");
-        AssertPose(run, c + 14, PelagAnchorThrowClip.Catch, 0f, "ловля C+14");
+        AssertPose(run, c + 9, PelagAnchorThrowClip.Yank, 1f, "рывок C+9");
+        AssertPose(run, c + 13, PelagAnchorThrowClip.Catch, 0f, "ловля C+13");
 
         sim = Arena(map: Map(1.2, 0, .5));
         run = Play(sim, 7, 0, 24);
@@ -205,8 +212,10 @@ public sealed class AnchorThrowTimelineSimTests
         Assert.That(run.Line.ReturnTicks, Is.EqualTo(4));
         AssertPose(run, c + 3, PelagAnchorThrowClip.Throw, 3f, "F = 1: проводка за тик");
         AssertPose(run, c + 4, PelagAnchorThrowClip.Yank, 0f, "упор в натяг");
-        AssertPose(run, c + 6, PelagAnchorThrowClip.Haul, 3f, "R = 4: Haul с кадра 3");
-        AssertPose(run, c + 8, PelagAnchorThrowClip.Catch, 0f, "ловля C+8");
+        AssertPose(run, c + 5, PelagAnchorThrowClip.Yank, 1f, "рывок");
+        AssertPose(run, c + 7, PelagAnchorThrowClip.Haul, 1f, "R = 4: пик рывка — Haul 1 на втором тике");
+        AssertPose(run, c + 8, PelagAnchorThrowClip.Haul, 3f, "R = 4: Haul 3");
+        AssertPose(run, c + 9, PelagAnchorThrowClip.Catch, 0f, "ловля C+9");
         Assert.That(run.MaxSeam, Is.LessThan(.01f));
     }
 
@@ -217,10 +226,11 @@ public sealed class AnchorThrowTimelineSimTests
         Enemy(sim, 4000, 0);
         Run run = Play(sim, 7, 0, 30);
         int c = run.CastTick;
-        Assert.That(run.YankTick, Is.EqualTo(c + 6), "укус C+5, натяг C+6");
-        Assert.That(run.CatchTick, Is.EqualTo(c + 10));
+        Assert.That(run.YankTick, Is.EqualTo(c + 7), "укус C+5, натяг C+6, рывок C+7");
+        Assert.That(run.CatchTick, Is.EqualTo(c + 11));
         AssertPose(run, c + 6, PelagAnchorThrowClip.Yank, 0f, "натяг в тик Sim");
-        AssertPose(run, c + 10, PelagAnchorThrowClip.Catch, 0f, "ловля в тик Sim");
+        AssertPose(run, c + 7, PelagAnchorThrowClip.Yank, 1f, "рывок в тик Sim");
+        AssertPose(run, c + 11, PelagAnchorThrowClip.Catch, 0f, "ловля в тик Sim");
         Assert.That(run.MaxSeam, Is.LessThan(.01f), "укус известен раньше показа: полёт дотягивается без скачка");
         float previous = 0f;
         for (float t = c; t <= c + 19f; t += .25f)
@@ -243,18 +253,19 @@ public sealed class AnchorThrowTimelineSimTests
     }
 
     [Test]
-    public void WalkingOut_FromCatchPlusFive_FinishesThere()
+    public void WalkingOut_FromCatchPlusFour_FinishesThere()
     {
         Simulation sim = Arena();
-        Run run = Play(sim, 7, 0, 32, t => t < 20 ? InputFrame.Empty : Walk(-5, 0));
+        Run run = Play(sim, 7, 0, 32, t => t < 18 ? InputFrame.Empty : Walk(-5, 0));
         int c = run.CastTick;
         Assert.That(run.EndReason, Is.EqualTo(AnchorThrowEnd.WalkedOut));
-        Assert.That(run.EndTick, Is.EqualTo(c + 23));
-        PelagAnchorThrowPose pose = run.Line.Sample(c + 22.9f, 1f);
+        Assert.That(run.EndTick, Is.EqualTo(c + 21), "07.10: ходьба с C+21 (было C+23)");
+        PelagAnchorThrowPose pose = run.Line.Sample(c + 20.9f, 1f);
         Assert.That(pose.Finished, Is.False);
         Assert.That(pose.Clip, Is.EqualTo(PelagAnchorThrowClip.Catch));
-        Assert.That(pose.Frame, Is.GreaterThanOrEqualTo(PelagAnchorThrowClipRules.WalkFromFrame - .2f), "ходьба — с кадра 5 клипа ловли");
-        Assert.That(run.Line.Sample(c + 23f, 1f).Finished, Is.True);
+        Assert.That(PelagAnchorThrowClipRules.WalkFromFrame, Is.EqualTo(4f));
+        Assert.That(pose.Frame, Is.GreaterThanOrEqualTo(PelagAnchorThrowClipRules.WalkFromFrame - .2f), "ходьба — с кадра 4 клипа ловли");
+        Assert.That(run.Line.Sample(c + 21f, 1f).Finished, Is.True);
     }
 
     [Test]

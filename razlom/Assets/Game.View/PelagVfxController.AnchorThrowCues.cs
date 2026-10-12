@@ -41,6 +41,8 @@ namespace Game.View
         private void PlayAnchorThrowHit(in AtPending p)
         {
             bool ours = AtOurs(p.Serial);
+            // 08.10: база и формы — знак «холодного железа» в краске формы (PelagVfxController.AnchorThrowIronHits).
+            if (AnchorThrowIronReady) { PlayAnchorThrowIronHit(p); return; }
             PelagForm form = ours ? _atRun.Form : PelagForm.None;
             bool bite = form == PelagForm.AnchorThrowHarpoon && p.Lane == 0;
             if (bite) _atRun.HarpoonPulled = p.Flag;
@@ -86,6 +88,7 @@ namespace Game.View
             bool ours = AtOurs(p.Serial);
             if (!ours) return;
             AnchorThrowRun run = _atRun;
+            if (AnchorThrowIronReady) { PlayAnchorThrowIronYank(p); return; }
             StartAnchorThrowDrags();
             StartAnchorThrowHeadWake();
             if (CaptureRig.NoVfx) return;
@@ -106,6 +109,7 @@ namespace Game.View
             if (!ours) return;
             AnchorThrowRun run = _atRun;
             run.Caught = true;
+            if (AnchorThrowIronReady) { PlayAnchorThrowIronCatch(p); return; }
             CatchAnchorThrowForms();
             CatchAnchorThrowTows();
             if (CaptureRig.NoVfx) return;
@@ -132,6 +136,7 @@ namespace Game.View
         {
             if (CaptureRig.NoVfx) return;
             PelagForm form = AtOurs(p.Serial) ? _atRun.Form : PelagForm.None;
+            if (AnchorThrowIronReady) { PlayAnchorThrowIronLand(p); return; }
             Vector3 body = EntityPosition(p.Target, p.At);
             float scale = Mathf.Clamp(.55f + .6f * AtBodyRadius(p.Target), .7f, 1.3f);
             AtSpawn(PelagVfxId.AnchorThrowKnock, AtFeet(body), Quaternion.LookRotation(FlatDirection(PlayerPosition(), body), Vector3.up),
@@ -158,6 +163,7 @@ namespace Game.View
             run.RetractFrom = run.Head;
             DropAnchorThrowForms();
             DropAnchorThrowTows();
+            DropAnchorThrowIronVfx(p.Tick);
             if (!CaptureRig.NoVfx && AtStill(run.SleeveFx, run.SleeveObject))
                 EmitAnchorThrowDrops(run.SleeveDrops, run.Form, run.Grip, run.Head, Vector3.up, 12, 1.2f);
         }

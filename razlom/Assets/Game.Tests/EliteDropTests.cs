@@ -119,6 +119,28 @@ namespace Game.Tests
             Assert.AreEqual(.65f, items / (float)runs, .08f);
         }
 
+        /// <summary>
+        /// 07.10: элиты не роняют «Ладно смазал» (пул 2) и Отбой (9) — только навыки наград
+        /// (PelagKit.InRewardPool), и с пустой панелью, и когда оба уже в слотах.
+        /// </summary>
+        [Test]
+        public void EliteAbilityDropsNeverBlazeOrBackblast()
+        {
+            int abilities = 0;
+            for (int layout = 0; layout < 2; layout++)
+                for (ulong seed = 1; seed <= 300; seed++)
+                {
+                    var run = NewRun(seed, layout == 0 ? null : (Action<RunLoadout>)(l => { l.Put(1, 2); l.Put(2, 9); }));
+                    KillElite(run);
+                    Assert.AreEqual(1, run.DropCount, $"сид {seed}");
+                    RewardOffer offer = run.GetDrop(0).Offer;
+                    if (offer.Kind != RewardKind.Ability) continue;
+                    abilities++;
+                    Assert.IsTrue(PelagKit.InRewardPool(offer.PoolIndex), $"сид {seed}: уронен убранный {offer.PoolIndex}");
+                }
+            Assert.Greater(abilities, 100, "дропов способностей слишком мало для проверки");
+        }
+
         // ---- подбор ----
 
         [Test]

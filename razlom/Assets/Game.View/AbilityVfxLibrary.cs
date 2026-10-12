@@ -163,6 +163,46 @@ namespace Game.View
         // (полузвезда от земли, звезда и эхо), кольцо и трещины, камни и искры; по полосе — стоячий гребень кобальта
         // (лента к камере, эхо), искры, сколы, камни, пыль и тонкий след. Рисованный выпад от библиотеки отвязан.
         WreckComboLunge,
+        // Крушение · Призрачный якорь (07.10, PelagWreckComboVfxSetup.Ghost): падающий 3D якорь Пелага на призрачном
+        // шейдере (тело, обвод, следы падения, осколки распада) и удар в точке выпада (кольцо до круга Sim с шипами,
+        // стоячая полузвезда, трещины со светом, камни, комья, искры, фиолетовый свет).
+        WreckGhostAnchor,
+        WreckGhostLand,
+        // Крушение · Девятый вал (07.10, PelagWreckComboVfxSetup.Ninth): веер гребней выпада с шипами по ширине полосы Sim,
+        // шипы-звёзды по земле, крупные камни; вспышка и кольцо заряда на голове якоря; свечение головы до выпада.
+        WreckNinthLunge,
+        WreckNinthCharge,
+        WreckNinthGlow,
+        // Крушение · Волнорез (07.10, PelagWreckComboVfxSetup.Breakwater): стена освещённых 3D-плит по фронту Sim со светом
+        // морской зелени из трещин и щелей, пыль, комья, обломки; гребень под несомыми; обрушение и удар о преграду.
+        WreckBreakWall,
+        // Бросок якоря · ФОРМЫ на стеке базы (08.10, PelagWreckComboVfxSetup.ThrowForm; кадры form-net-v1, form-fan-ghost-v1,
+        // form-harpoon-v2): перекраски префабов базы «холодное железо» (струна, знак, оглушение, ловля) в краске формы, сеть из
+        // цепей Невода, призрачный якорь Веера (меш якоря Пелага на призрачном шейдере Крушения). Числа слотов 07.10 сохранены
+        // (библиотека хранит число): часть слотов первой попытки форм переименована, новые — в конце перечня.
+        AnchorThrowFormChainNet,
+        AnchorThrowFormNet,
+        AnchorThrowFormGhost,
+        AnchorThrowFormHitNet,
+        AnchorThrowFormHitFan,
+        AnchorThrowFormHitHarpoon,
+        AnchorThrowFormStunHarpoon,
+        AnchorThrowFormChainFan,
+        // Бросок якоря · БАЗА «холодное железо» (07–08.10, PelagWreckComboVfxSetup.ThrowIron; кадры base-hit-v1, base-yank-v1):
+        // струна кобальта и стали вдоль цепи (комета в полёте, натяг, импульс и шевроны рывка), искры и вспышки головы; знак
+        // на каждом задетом (стек знака Крушения, освещённые камни); борозда волока с комьями и камнями; ловля; оглушение.
+        AnchorThrowIronChain,
+        AnchorThrowIronHit,
+        AnchorThrowIronFurrow,
+        AnchorThrowIronCatch,
+        AnchorThrowIronStun,
+        // Формы Броска на стеке базы (08.10) — продолжение: струна Гарпуна, оглушение и ловля Невода/Веера/Гарпуна.
+        AnchorThrowFormChainHarpoon,
+        AnchorThrowFormStunNet,
+        AnchorThrowFormStunFan,
+        AnchorThrowFormCatchNet,
+        AnchorThrowFormCatchFan,
+        AnchorThrowFormCatchHarpoon,
         Count
     }
 
@@ -181,7 +221,8 @@ namespace Game.View
         Wreck,
         FireFlask,
         Skewer,
-        Backblast
+        Backblast,
+        AnchorThrow
     }
 
     /// <summary>

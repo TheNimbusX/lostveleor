@@ -27,27 +27,31 @@ namespace Game.Tests
     /// чисел бит в бит (карточки, потоки Loot/Affix и наборы не сдвинулись); новые сняты
     /// двумя прогонами, совпали. PrototypeTrails, TalentTrail, LoadoutHashes, BuildHashes
     /// не менялись: прототип без маршрутов золото в хеш не кладёт.
+    ///
+    /// ПЕРЕСНЯТО 07.10 — «07.10 владелец: Ладно смазал и Отбой убраны из наград» (пул 2 и 9 вне
+    /// PelagKit.InRewardPool, усилений убранных — PelagKit.OffersTalents) — ArenaTrails, PrototypeTrails,
+    /// TalentTrail. Контроль: прежний признак дал прежние числа бит в бит; новые — два прогона, совпали.
     /// </summary>
     public sealed class FormPinTests
     {
         // Восемь арен Location(boss): карточки, потоки Loot/Affix и набор после каждого выбора.
         private static readonly ulong[] ArenaTrails =
         {
-            0x7DC8E5F490A761A3UL, 0x0420EA19230A0F6CUL, 0x831C7BC4EF631B81UL, 0xB71B4915AB8951ABUL,
-            0x1A5F90935E718FF2UL, 0x77DD768AE0732C10UL, 0x72E3499538745EC9UL, 0x2C9E5E395D4C6A80UL,
-            0xCBF70946E28F1486UL, 0x45A6A1B06A1C998CUL, 0x19EF6E7237002049UL, 0x76FC4139D79E0F1AUL,
+            0xD1BDCC48B82897C4UL, 0xA6670E33D6A530C9UL, 0x29472C105606C13FUL, 0x7B704FBA2147C190UL,
+            0xADD8514F7B29654EUL, 0x04B09E1C2CCB14CCUL, 0x2074D07ED5EADFF1UL, 0x2ADDAB9FF7B053A5UL,
+            0x0F0FCD4AFE7F2189UL, 0x511642B7DF4D0536UL, 0x8ACC0013E17AF030UL, 0x15A6E26811F503EEUL,
         };
 
         // Восемь прототипных Разломов подряд — то же без маршрутов.
         private static readonly ulong[] PrototypeTrails =
         {
-            0x4F96F705B75B44A3UL, 0x5170B0158F05DBBBUL, 0xE763B0AE849861E8UL, 0xAAC5440CEA1242D0UL,
-            0xE44FF00F6C827B6DUL, 0x695C4718EED3C2C1UL, 0x9CCF30674D284CCFUL, 0x483B1B3C0EBC6761UL,
-            0xDB89E9908B133671UL, 0x719AD91988272B4BUL, 0x315A89DC72A8D233UL, 0x85F54A46FA14E5ADUL,
+            0xDE371A050AC4757BUL, 0x90637BC367D09A2AUL, 0xE108E4995C3723B5UL, 0x7A3B3B60DCA91B45UL,
+            0xA62498D2CADC0E5BUL, 0x2A5E5C63C85A3F26UL, 0x78FD187B42BF2995UL, 0x0E55359A5455C212UL,
+            0xAA46D7AAED4C986CUL, 0x557F47FAC57B114AUL, 0x75241F88BB6808BFUL, 0x5F2EE8F847B7FF86UL,
         };
 
         // 50 сидов × 2 набора × 2 экрана: карточки талантов у линий без форм.
-        private const ulong TalentTrail = 0x7C2B3415CD5A4C70UL;
+        private const ulong TalentTrail = 0xFC031647CB270ADCUL;
 
         // Стартовый, A, B, A после замены слота с усилениями.
         private static readonly ulong[] LoadoutHashes =

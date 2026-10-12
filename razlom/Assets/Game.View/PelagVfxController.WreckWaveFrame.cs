@@ -166,6 +166,7 @@ namespace Game.View
             Vector3 body = EntityPosition(p.Target, p.At);
             Vector3 dir = _wkHasWave && _wkWave.Dir.sqrMagnitude > .01f ? _wkWave.Dir : FlatDirection(PlayerPosition(), body);
             if (p.Flag) WreckCarry(p.Target, p.Tick, p.Tick + Mathf.Max(1, p.Amount), dir);
+            if (PlayWreckBreakwaterCatch(p, body)) return;   // .WreckBreakwaterBits: гребень плит вместо пенной короны
             if (CaptureRig.NoVfx) return;
             Vector3 foot = new Vector3(body.x, WreckGroundAt(body) + .02f, body.z);
             WreckCrown(foot, dir, p.Flag ? .9f : .7f, PelagForm.WreckBreakwater);
@@ -174,6 +175,7 @@ namespace Game.View
         /// <summary>Обрушение стены: всплеск радиуса Sim (2 м) и белая пена, о преграду — выше и шире.</summary>
         private void PlayWreckCrash(in WkPending p)
         {
+            if (PlayWreckBreakwaterCrash(p)) return;   // .WreckBreakwaterCrash: плиты рушатся вместо пены
             float radius = p.Extra > 0 ? p.Extra / 100f : Simulation.WreckBreakwaterCrashRadius.ToFloat();
             float scale = PelagWreckVfxRules.CrashSplashScale(p.Flag);
             BeginWreckCrater(p.At, radius, p.Tick, PelagForm.WreckBreakwater, false, scale);

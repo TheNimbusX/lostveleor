@@ -64,17 +64,20 @@ namespace Game.Tests
         }
 
         /// <summary>
-        /// Убранные индексы (03.10): 4 — Удар якорем (влит в Крушение), 8 — «На вылет»
-        /// (убран владельцем). Номер держат (PoolDefinition прежний), но наградой не приходят.
+        /// Убранные индексы: 4 — Удар якорем (влит в Крушение, 03.10), 8 — «На вылет»
+        /// (03.10), 2 — «Ладно смазал» и 9 — Отбой (07.10, идеи уйдут в таланты). Номер
+        /// держат (PoolDefinition прежний), но наградой не приходят.
         /// </summary>
         [Test]
         public void RetiredPoolIndices_AreNeverOffered()
         {
             for (int i = 0; i < PelagKit.PoolSize; i++)
                 // 10 — Бросок якоря (03.10): не убран, но в награды — только по слову владельца (пока F8).
-                Assert.AreEqual(i != 4 && i != 8 && i != 10, PelagKit.InRewardPool(i), "пул " + i);
+                Assert.AreEqual(i != 2 && i != 4 && i != 8 && i != 9 && i != 10, PelagKit.InRewardPool(i), "пул " + i);
+            Assert.AreEqual(AbilityDefinition.BlazeId, PelagKit.PoolDefinition(2).Id, "номер не переиспользован");
             Assert.AreEqual(AbilityDefinition.AnchorSlamId, PelagKit.PoolDefinition(4).Id, "номер не переиспользован");
             Assert.AreEqual(AbilityDefinition.SkewerId, PelagKit.PoolDefinition(8).Id);
+            Assert.AreEqual(AbilityDefinition.BackblastId, PelagKit.PoolDefinition(9).Id);
 
             for (ulong seed = 1; seed <= 12; seed++)
             {
@@ -87,11 +90,145 @@ namespace Game.Tests
                     {
                         RewardOffer offer = run.GetOffer(card);
                         if (offer.Kind != RewardKind.Ability) continue;
-                        Assert.IsTrue(offer.PoolIndex != 4 && offer.PoolIndex != 8 && offer.PoolIndex != 10, "сид " + seed + ": предложен убранный " + offer.PoolIndex);
+                        Assert.IsTrue(PelagKit.InRewardPool(offer.PoolIndex), "сид " + seed + ": предложен убранный " + offer.PoolIndex);
                     }
                     FormBaselineScenarios.Choose(run, 0, screen);
                 }
             }
+        }
+
+        /// <summary>
+        /// Набор владельца 07.10 (DESIGN, «Навыки»): Вихрь, Шквал, Абордаж, Крушение,
+        /// Взрывная смесь, Бросок якоря, Рассекающий. Награды дают шесть из них; Бросок
+        /// якоря — пока только F8, в награды — по слову владельца.
+        /// </summary>
+        [Test]
+        public void RewardPool_IsTheOwnersSevenSkills_AnchorThrowStillF8Only()
+        {
+            var owners = new[]
+            {
+                AbilityDefinition.WhirlwindId, AbilityDefinition.ChainStepId, AbilityDefinition.AnchorLeapId,
+                AbilityDefinition.WreckId, AbilityDefinition.FireFlaskId, AbilityDefinition.AnchorThrowId,
+                AbilityDefinition.CleaveId,
+            };
+            var offered = new System.Collections.Generic.List<int>();
+            for (int i = 0; i < PelagKit.PoolSize; i++)
+                if (PelagKit.InRewardPool(i)) offered.Add(PelagKit.PoolDefinition(i).Id);
+
+            Assert.AreEqual(6, offered.Count, "в наградах шесть навыков");
+            Assert.IsFalse(PelagKit.InRewardPool(PelagKit.PoolIndexOf(AbilityDefinition.AnchorThrowId)), "Бросок якоря — пока F8");
+            offered.Add(AbilityDefinition.AnchorThrowId);
+            CollectionAssert.AreEquivalent(owners, offered);
+        }
+
+        /// <summary>
+        /// 07.10: сотни бросков карточек на аренах и в прототипе — ни «Ладно смазал», ни
+        /// Отбоя, ни их усилений; зато каждый навык наград, кроме стартового, выпадает.
+        /// </summary>
+        [Test]
+        public void SeededRewardRolls_NeverOfferBlazeOrBackblast()
+        {
+            var seen = new bool[PelagKit.PoolSize];
+            int screens = 0;
+            for (ulong seed = 1; seed <= 40; seed++)
+                for (int kind = 0; kind < 2; kind++)
+                {
+                    RiftRun run = kind == 0 ? FormBaselineScenarios.NewArenaRun(seed) : FormBaselineScenarios.NewPrototypeRun(seed);
+                    run.StartRun();
+                    for (int depth = 1; depth <= 6; depth++)
+                    {
+                        if (run.Phase != RunPhase.Clearing || !FormBaselineScenarios.ClearToReward(run)) break;
+                        screens++;
+                        for (int card = 0; card < RiftRun.RewardChoices; card++)
+                        {
+                            RewardOffer offer = run.GetOffer(card);
+                            if (offer.Kind != RewardKind.Ability && offer.Kind != RewardKind.Talent) continue;
+                            Assert.IsTrue(offer.PoolIndex != 2 && offer.PoolIndex != 9,
+                                "сид " + seed + ", арена " + depth + ": предложен убранный " + offer.PoolIndex + " (" + offer.Kind + ")");
+                            if (offer.Kind == RewardKind.Ability) seen[offer.PoolIndex] = true;
+                        }
+                        FormBaselineScenarios.Choose(run, (int)((seed + (ulong)depth) % RiftRun.RewardChoices), depth);
+                        if (run.Phase == RunPhase.ChoosingRoute)
+                            run.Step(FormBaselineScenarios.Command((RunCommand)((int)RunCommand.ChooseRoute1 + depth % 3)));
+                    }
+                }
+
+            Assert.Greater(screens, 200, "экранов наград слишком мало для проверки");
+            for (int i = 0; i < PelagKit.PoolSize; i++)
+                if (PelagKit.InRewardPool(i) && i != PelagKit.StarterPoolIndex)
+                    Assert.IsTrue(seen[i], "навык наград " + i + " ни разу не выпал");
+        }
+
+        /// <summary>
+        /// Набор, где «Ладно смазал» и Отбой уже лежат (старое состояние, F8): забег идёт,
+        /// оба в слотах и в симуляции и жмутся; карточек их и их усилений нет, пустой слот
+        /// заполняется обычной наградой.
+        /// </summary>
+        [Test]
+        public void RunAlreadyHoldingBlazeAndBackblast_KeepsWorking()
+        {
+            for (ulong seed = 1; seed <= 12; seed++)
+            {
+                RiftRun run = FormBaselineScenarios.NewArenaRun(seed);
+                run.StartRun();
+                Assert.IsTrue(run.Loadout.Put(1, 2));
+                Assert.IsTrue(run.Loadout.Put(2, 9));
+                run.Loadout.TakeTalent(2, 0);
+                run.ApplyLoadout();
+                Assert.AreEqual(AbilityDefinition.BlazeId, run.Sim.GetAbility(1).DefinitionId);
+                Assert.AreEqual(AbilityDefinition.BackblastId, run.Sim.GetAbility(2).DefinitionId);
+
+                for (int depth = 1; depth <= 4; depth++)
+                {
+                    Assert.AreEqual(RunPhase.Clearing, run.Phase, "сид " + seed + ", арена " + depth);
+                    Assert.IsTrue(FormBaselineScenarios.ClearToReward(run), "сид " + seed + ", арена " + depth);
+                    int pick = 0;
+                    for (int card = RiftRun.RewardChoices - 1; card >= 0; card--)
+                    {
+                        RewardOffer offer = run.GetOffer(card);
+                        if (offer.Kind == RewardKind.Ability || offer.Kind == RewardKind.Talent)
+                            Assert.IsTrue(offer.PoolIndex != 2 && offer.PoolIndex != 9,
+                                "сид " + seed + ": предложен убранный " + offer.PoolIndex + " (" + offer.Kind + ")");
+                        if (offer.Kind != RewardKind.Ability || !run.Loadout.IsFull) pick = card;
+                    }
+                    run.Step(FormBaselineScenarios.Choice(pick));
+                    if (run.Phase == RunPhase.ReplacingAbility) run.Step(FormBaselineScenarios.Command(RunCommand.SalvageAbility));
+                    Assert.AreEqual(RunPhase.ChoosingRoute, run.Phase, "сид " + seed + ", арена " + depth);
+                    run.Step(FormBaselineScenarios.Command((RunCommand)((int)RunCommand.ChooseRoute1 + depth % 3)));
+
+                    Assert.AreEqual(1, run.Loadout.SlotOf(2), "«Ладно смазал» ушёл из слота");
+                    Assert.AreEqual(2, run.Loadout.SlotOf(9), "Отбой ушёл из слота");
+                    Assert.IsTrue(run.Loadout.HasTalent(2, 0), "взятое усиление пропало");
+                    Assert.AreEqual(AbilityDefinition.BlazeId, run.Sim.GetAbility(1).DefinitionId);
+                    Assert.AreEqual(AbilityDefinition.BackblastId, run.Sim.GetAbility(2).DefinitionId);
+                }
+            }
+
+            // Оба жмутся из слотов забега (враги сняты — бою не мешают).
+            RiftRun cast = FormBaselineScenarios.NewArenaRun(1);
+            cast.StartRun();
+            cast.Loadout.Put(1, 2);
+            cast.Loadout.Put(2, 9);
+            cast.ApplyLoadout();
+            for (int guard = 0; guard < 200 && cast.Phase == RunPhase.Clearing; guard++)
+            {
+                EntityStore e = cast.Sim.Entities;
+                for (int i = 0; i < e.Count; i++)
+                    if (e.Side[i] != Faction.Wole) e.Alive[i] = false;
+                cast.Step(InputFrame.Empty);
+            }
+            Assert.AreEqual(RunPhase.SeekingExit, cast.Phase);
+            cast.Step(Press(1));
+            Assert.IsTrue(cast.Sim.BlazeCasting || cast.Sim.BlazeActive, "«Ладно смазал» в слоте не жмётся");
+            for (int i = 0; i < 90; i++) cast.Step(InputFrame.Empty);
+            bool burst = false;
+            cast.Step(Press(2));
+            for (int i = 0; i < 8 && !burst; i++)
+            {
+                foreach (SimEvent ev in cast.Sim.Events) burst |= ev.Type == SimEventType.BackblastBurst;
+                cast.Step(InputFrame.Empty);
+            }
+            Assert.IsTrue(burst, "Отбой в слоте не жмётся");
         }
 
         // ---- набор забега ----

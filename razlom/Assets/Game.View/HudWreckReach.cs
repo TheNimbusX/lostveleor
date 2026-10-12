@@ -7,10 +7,12 @@ namespace Game.View
     /// <summary>
     /// Подсказки Крушения на полу (ритм v4, владелец 06.10): что рисовать — HudWreckReachRules (без Unity), чем —
     /// тонкий штрих HudRangePreview. До первого нажатия — один контур следа всей серии (сектор махов — Radius и
-    /// ArcCosine сборки, круг и полоса выпада — WreckLanePreview по курсору, у Волнореза — круг обрушения
-    /// WreckBreakwaterCrashRadius); в серии — ничего, кроме тонкой линии полосы между третьим нажатием и контактом
-    /// (направление держит Sim, у Девятого вала Sim сам ведёт его за курсором). Фигуры кладутся от рисуемого тела
-    /// героя (center), направления и расстояния — Sim.
+    /// ArcCosine сборки, круг и полоса выпада — WreckLanePreview по курсору, у Волнореза — полоса стены и круг
+    /// обрушения WreckBreakwaterCrashRadius, у Призрачного якоря вместо полосы — круг падения WreckGhostRadius у
+    /// точки выпада, у Девятого вала поверх — бледный контур полосы полного заряда); в серии — ничего, кроме тонкой
+    /// линии полосы между третьим нажатием и контактом (направление держит Sim, длина — по форме и зарядам Sim; у
+    /// Призрачного якоря вместо линии — тонкий круг падения у точки выпада).
+    /// Фигуры кладутся от рисуемого тела героя (center), направления и расстояния — Sim.
     /// </summary>
     internal static class HudWreckReach
     {
@@ -53,6 +55,13 @@ namespace Game.View
             HudWreckHint hint = HudWreckReachRules.Hint(wreck, sim.WreckActive && wreck.Slot == slot);
             if (hint == HudWreckHint.LungeLine)
             {
+                // Призрачный якорь: вала нет — вместо линии тот же тонкий штрих кругом, куда упадёт якорь.
+                if (HudWreckReachRules.LungeDropOf(sim, slot, cursor, out FixVec2 dropAxis, out float impact, out float radius))
+                {
+                    HudWreckReachRules.DropOutline(impact, radius, Pieces);
+                    preview.WreckOutline(center, Flat(dropAxis, AimDirection(sim, cursor)), Pieces, HudWreckReachRules.LungeLineStrength);
+                    return;
+                }
                 // С третьего нажатия до контакта — направление, которое взял Sim; от руки до конца полосы, без круга.
                 if (!HudWreckReachRules.LungeLineOf(sim, slot, cursor, out FixVec2 axis, out float from, out float to)) return;
                 Vector3 along = Flat(axis, AimDirection(sim, cursor));
@@ -62,8 +71,12 @@ namespace Game.View
             if (hint != HudWreckHint.Footprint) return;
             // До первого нажатия — по курсору: один контур сектора махов, круга и полосы выпада.
             if (!HudWreckReachRules.FootprintOf(sim, slot, cursor, out HudWreckFootprint footprint, out FixVec2 direction)) return;
+            Vector3 forward = Flat(direction, AimDirection(sim, cursor));
             HudWreckReachRules.Outline(footprint, Pieces);
-            preview.WreckOutline(center, Flat(direction, AimDirection(sim, cursor)), Pieces, HudWreckReachRules.FootprintStrength);
+            preview.WreckOutline(center, forward, Pieces, HudWreckReachRules.FootprintStrength);
+            // Девятый вал до двух зарядов: полоса полного заряда — тем же штрихом, бледнее, снаружи следа.
+            HudWreckReachRules.FullChargeOutline(footprint, Pieces);
+            preview.WreckOutline(center, forward, Pieces, HudWreckReachRules.FullChargeStrength);
         }
 
         // От героя Sim к курсору; курсор на герое — взгляд Sim (как BeginWreckStage).

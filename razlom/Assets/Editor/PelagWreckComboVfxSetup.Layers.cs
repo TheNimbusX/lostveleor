@@ -45,32 +45,55 @@ public static partial class PelagWreckComboVfxSetup
         return particles;
     }
 
-    /// <summary>Хлопок масштаба: недолёт → перелёт → размер за <paramref name="seconds"/>.</summary>
-    private static void Pop(ParticleSystem layer, float from, float peak, float seconds, float life)
+    /// <summary>
+    /// Хлопок масштаба: недолёт → перелёт → размер за <paramref name="seconds"/>. С заходом <paramref name="lead"/> (07.10)
+    /// волна проявляется недолётом и к середине захода — в размер, перелёт — в контакт (жизнь частицы — lead + life).
+    /// </summary>
+    private static void Pop(ParticleSystem layer, float from, float peak, float seconds, float life, float lead = 0f)
     {
-        float end = Mathf.Clamp01(seconds / life);
         var size = layer.sizeOverLifetime; size.enabled = true;
         size.separateAxes = false;
+        if (lead <= 0f)
+        {
+            float end = Mathf.Clamp01(seconds / life);
+            size.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
+                new Keyframe(0f, from), new Keyframe(end * .5f, peak), new Keyframe(end, 1f), new Keyframe(1f, 1f)));
+            return;
+        }
+        float total = lead + life, c = lead / total, s = seconds / total;
         size.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
-            new Keyframe(0f, from), new Keyframe(end * .5f, peak), new Keyframe(end, 1f), new Keyframe(1f, 1f)));
+            new Keyframe(0f, from), new Keyframe(c * .5f, 1f), new Keyframe(c, 1f), new Keyframe(c + s * .5f, peak),
+            new Keyframe(c + s, 1f), new Keyframe(1f, 1f)));
     }
 
-    /// <summary>Доворот вокруг нормали: старт <paramref name="startDegrees"/>, ещё <paramref name="degrees"/> за <paramref name="seconds"/> с ease-out.</summary>
-    private static void Spin(ParticleSystem layer, float degrees, float seconds, float life, float startDegrees)
+    /// <summary>
+    /// Доворот вокруг нормали: старт <paramref name="startDegrees"/>, ещё <paramref name="degrees"/> за <paramref name="seconds"/>
+    /// с ease-out; с заходом <paramref name="lead"/> (07.10) — после контакта, в заходе волна не вертится.
+    /// </summary>
+    private static void Spin(ParticleSystem layer, float degrees, float seconds, float life, float startDegrees, float lead = 0f)
     {
         var main = layer.main;
         main.startRotation3D = true;
         main.startRotationX = new ParticleSystem.MinMaxCurve(0f);
         main.startRotationY = new ParticleSystem.MinMaxCurve(0f);
         main.startRotationZ = new ParticleSystem.MinMaxCurve(startDegrees * Mathf.Deg2Rad);
-        float end = Mathf.Clamp01(seconds / life);
+        float total = lead + life;
+        float end = Mathf.Clamp01(seconds / total);
         float peak = degrees * Mathf.Deg2Rad / (seconds * .45f);
         var rotation = layer.rotationOverLifetime; rotation.enabled = true;
         rotation.separateAxes = true;
         rotation.x = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Constant(0f, 1f, 0f));
         rotation.y = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Constant(0f, 1f, 0f));
-        rotation.z = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
-            new Keyframe(0f, peak), new Keyframe(end * .5f, peak * .33f), new Keyframe(end, 0f), new Keyframe(1f, 0f)));
+        if (lead <= 0f)
+            rotation.z = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
+                new Keyframe(0f, peak), new Keyframe(end * .5f, peak * .33f), new Keyframe(end, 0f), new Keyframe(1f, 0f)));
+        else
+        {
+            float c = lead / total;
+            rotation.z = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
+                new Keyframe(0f, 0f), new Keyframe(c, 0f), new Keyframe(c + .004f / total, peak), new Keyframe(c + end * .5f, peak * .33f),
+                new Keyframe(c + end, 0f), new Keyframe(1f, 0f)));
+        }
     }
 
     /// <summary>

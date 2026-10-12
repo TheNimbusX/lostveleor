@@ -148,6 +148,10 @@ namespace Game.Tests
 
         // ---------- 1. таймлайн ----------
 
+        /// <summary>
+        /// 07.10 владелец: тайминг Броска 25 тиков — натяг 2 тика (было 1), возврат 6 (было 8),
+        /// удержание ловли 2 (было 3); ходьба с 21-го тика (было 23), всего 25 (было 27).
+        /// </summary>
         [Test]
         public void Timeline_SevenMetresIntoTheVoid()
         {
@@ -159,24 +163,49 @@ namespace Game.Tests
             Assert.AreEqual(7, release.ev.Amount, "F = 7");
             Assert.IsFalse(release.ev.Flag);
             var yank = Of(frames, SimEventType.AnchorThrowYank)[0];
-            Assert.AreEqual(c + 10, yank.frame.Tick, "натяг");
-            Assert.AreEqual(8, yank.ev.Amount, "R = 8");
+            Assert.AreEqual(c + 11, yank.frame.Tick, "рывок — второй тик натяга");
+            Assert.AreEqual(6, yank.ev.Amount, "R = 6");
             Assert.IsFalse(yank.ev.Flag, "полёт не оборван");
-            Assert.AreEqual(c + 18, TickOf(frames, SimEventType.AnchorThrowCatch), "ловля");
+            Assert.AreEqual(c + 17, TickOf(frames, SimEventType.AnchorThrowCatch), "ловля");
             var ended = Of(frames, SimEventType.AnchorThrowEnded)[0];
-            Assert.AreEqual(c + 27, ended.frame.Tick, "конец");
+            Assert.AreEqual(c + 25, ended.frame.Tick, "конец");
             Assert.AreEqual((int)AnchorThrowEnd.Done, ended.ev.Amount);
-            Assert.AreEqual(c + 23, frames[21].State.ExitWalkTick, "ходьба");
-            Assert.AreEqual(AnchorThrowPhase.Exit, frames[21].State.Phase);
+            Assert.AreEqual(c + 21, frames[19].State.ExitWalkTick, "ходьба");
+            Assert.AreEqual(AnchorThrowPhase.Exit, frames[19].State.Phase);
+            Assert.AreEqual(AnchorThrowPhase.Catch, frames[18].State.Phase, "удержание 2 тика");
+
+            Assert.AreEqual(AnchorThrowPhase.Flight, frames[9].State.Phase, "голова пришла — последний тик полёта");
+            Assert.AreEqual(AnchorThrowPhase.Taut, frames[10].State.Phase, "натяг 1 — держит");
+            Assert.AreEqual(AnchorThrowPhase.Taut, frames[11].State.Phase, "натяг 2 — рывок");
+            Assert.AreEqual(AnchorThrowPhase.Return, frames[12].State.Phase);
+            Assert.AreEqual(c + 10, frames[10].State.HoldTick, "HoldTick — первый тик натяга");
+            Assert.AreEqual(c + 11, frames[10].State.TautTick, "TautTick известен с выпуска");
 
             AnchorThrowState s = sim.AnchorThrow;
             Assert.AreEqual(7.0, s.Reach0.ToDouble(), 1e-6);
             Assert.AreEqual(AnchorThrowStop.Full, s.StopKind0);
+            Assert.AreEqual(c + 10, s.HoldTick);
+            Assert.AreEqual(c + 11, s.TautTick);
+            Assert.AreEqual(c + 17, s.CatchTick);
             FixVec2 end = s.Center + s.Dir * s.Reach0;
-            Assert.AreEqual(end, Simulation.AnchorThrowHead(s, 0, c + 9), "голова в конце — тик 9");
+            for (int t = c + 9; t <= c + 11; t++)
+                Assert.AreEqual(end, Simulation.AnchorThrowHead(s, 0, t), "голова в конце, тик " + t);
+            Assert.Less(Dist(Simulation.AnchorThrowHead(s, 0, c + 12), s.Center), 7.0 - 1e-3, "рывок — с тика 12");
             Assert.Less(Dist(Simulation.AnchorThrowHead(s, 0, c + 8), s.Center), 6.9);
-            for (int t = 0; t < 27; t++)
+            for (int t = 0; t < 25; t++)
                 Assert.IsTrue(frames[t].Positions[0].Equals(FixVec2.Zero), "герой стоит, тик " + (c + t));
+        }
+
+        [Test]
+        public void ReturnTicks_StepOnePointOne_FourToSix()
+        {
+            Assert.AreEqual(2, Simulation.AnchorThrowTautTicks);
+            Assert.AreEqual(2, Simulation.AnchorThrowHoldTicks);
+            Assert.AreEqual(4, Simulation.AnchorThrowReturnTicks(Fix64.One), "бросок в стену");
+            Assert.AreEqual(4, Simulation.AnchorThrowReturnTicks(Fix64.FromInt(5)), "5 м: 4,1");
+            Assert.AreEqual(5, Simulation.AnchorThrowReturnTicks(Fix64.FromInt(6)), "6 м: 5,0");
+            Assert.AreEqual(6, Simulation.AnchorThrowReturnTicks(Fix64.FromInt(7)), "7 м: 5,9");
+            Assert.AreEqual(6, Simulation.AnchorThrowReturnTicks(Fix64.FromInt(10)), "потолок 6");
         }
 
         [Test]
@@ -185,14 +214,14 @@ namespace Game.Tests
             Simulation sim = Arena();
             List<Frame> frames = Cast(sim, -7, 0);
             Assert.AreEqual(3, TickOf(frames, SimEventType.AnchorThrowRelease));
-            Assert.AreEqual(11, TickOf(frames, SimEventType.AnchorThrowYank));
-            Assert.AreEqual(19, TickOf(frames, SimEventType.AnchorThrowCatch));
-            Assert.AreEqual(28, TickOf(frames, SimEventType.AnchorThrowEnded));
+            Assert.AreEqual(12, TickOf(frames, SimEventType.AnchorThrowYank));
+            Assert.AreEqual(18, TickOf(frames, SimEventType.AnchorThrowCatch));
+            Assert.AreEqual(26, TickOf(frames, SimEventType.AnchorThrowEnded));
             Assert.AreEqual(-1.0, sim.Entities.Facing[0].X.ToDouble(), 1e-6, "взгляд Sim — на Dir");
         }
 
         [Test]
-        public void Timeline_WallAtFiveMetres_CatchAt14_ThrowIntoAWall_F1_R4_Nobody()
+        public void Timeline_WallAtFiveMetres_CatchAt13_ThrowIntoAWall_F1_R4_Nobody()
         {
             Simulation sim = Arena(map: Map(6, 0, 0.5));
             List<Frame> frames = Cast(sim, 7, 0);
@@ -200,8 +229,9 @@ namespace Game.Tests
             Assert.AreEqual(5.0, s.Reach0.ToDouble(), 1e-6, "последняя проходимая проба");
             Assert.AreEqual(AnchorThrowStop.Wall, s.StopKind0);
             Assert.AreEqual(5, s.Flight0);
-            Assert.AreEqual(6, s.ReturnTicks);
-            Assert.AreEqual(14, TickOf(frames, SimEventType.AnchorThrowCatch));
+            Assert.AreEqual(4, s.ReturnTicks);
+            Assert.AreEqual(9, TickOf(frames, SimEventType.AnchorThrowYank), "выпуск 2 + F 5 + натяг 2");
+            Assert.AreEqual(13, TickOf(frames, SimEventType.AnchorThrowCatch));
             Assert.IsTrue(Of(frames, SimEventType.AnchorThrowYank)[0].ev.Flag, "полёт оборван стеной");
 
             sim = Arena(map: Map(1.2, 0, 0.5));
@@ -210,7 +240,7 @@ namespace Game.Tests
             s = sim.AnchorThrow;
             Assert.AreEqual(1, s.Flight0, "бросок в стену: F = 1");
             Assert.AreEqual(4, s.ReturnTicks, "R = 4");
-            Assert.AreEqual(8, TickOf(frames, SimEventType.AnchorThrowCatch));
+            Assert.AreEqual(9, TickOf(frames, SimEventType.AnchorThrowCatch));
             Assert.AreEqual(0, Of(frames, SimEventType.AnchorThrowHit).Count, "никого");
             Assert.AreEqual(0, DamageTo(frames, near));
         }

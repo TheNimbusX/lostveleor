@@ -44,6 +44,9 @@ Shader "Razlom/Wreck Combo Wave"
         _LifeSeconds ("Particle lifetime (s)", Float) = .34
         _HeadFrom ("Head start fraction", Float) = .40
         _HeadSeconds ("Head seconds", Float) = .10
+        _LeadSeconds ("Lead-in before the contact, s (0 = none)", Float) = 0
+        _LeadFrom ("Head fraction at the lead-in start", Float) = 0
+        _LeadSlide ("Lead-in slides the whole crescent in (controller turns it), 0/1", Float) = 0
         _ErodeFrom ("Erode from (s)", Float) = .12
         _ErodeTo ("Erode to (s)", Float) = .30
         _ErodeAlong ("Erosion follows u (tail first)", Range(0,1)) = .7
@@ -76,7 +79,7 @@ Shader "Razlom/Wreck Combo Wave"
             float4 _FacetTex_ST, _FacetScale, _Bands, _SliverScale;
             float _CameraPush, _EdgeRag, _EdgeTeeth, _TeethCount, _HeadHot, _HeadRound, _OutlinePx, _Aspect, _ErodeGain;
             float _Streaks, _Sheen, _SheenWidth, _SheenSeconds, _Glow, _Opacity;
-            float _LifeSeconds, _HeadFrom, _HeadSeconds, _ErodeFrom, _ErodeTo, _ErodeAlong, _ErodeBias, _FadeFrom, _FadeTo, _FlowSpeed;
+            float _LifeSeconds, _HeadFrom, _HeadSeconds, _LeadSeconds, _LeadFrom, _LeadSlide, _ErodeFrom, _ErodeTo, _ErodeAlong, _ErodeBias, _FadeFrom, _FadeTo, _FlowSpeed;
             CBUFFER_END
             TEXTURE2D(_FacetTex); SAMPLER(sampler_FacetTex);
 
@@ -96,9 +99,17 @@ Shader "Razlom/Wreck Combo Wave"
             half4 Frag(Varyings i) : SV_Target
             {
                 float u = i.uv.x, v = i.uv.y;
-                float age = saturate(i.uv.z) * _LifeSeconds;
+                // 07.10: заход до контакта (_LeadSeconds) — голова идёт от края сектора, откуда входит голова Sim, к
+                // середине (_HeadFrom) ровно к тику контакта; age — время после контакта, вся раскадровка после него прежняя.
+                float age = saturate(i.uv.z) * _LifeSeconds - _LeadSeconds;
+                float lead = saturate(1 + age / max(.001, _LeadSeconds));
                 float headT = 1 - pow(1 - saturate(age / max(.01, _HeadSeconds)), 2.2);
-                float headP = lerp(_HeadFrom, 1.02, headT);
+                // _LeadSlide (07.10, V13): в заходе голова уже своя (_HeadFrom), а весь полумесяц въезжает с края входа —
+                // контроллер поворачивает его назад на (_HeadFrom − _LeadFrom)·размах и ведёт к контакту; хвост срезан клином
+                // на краю входа (uMin). Голова по азимуту — та же прямая, что без въезда; тело идёт сквозь цель, а не растёт из неё.
+                float slide = age < 0 && _LeadSlide > .5 ? 1 : 0;
+                float headP = age < 0 ? lerp(_LeadFrom, _HeadFrom, lerp(lead, 1, slide)) : lerp(_HeadFrom, 1.02, headT);
+                float uMin = slide * (_HeadFrom - _LeadFrom) * (1 - lead);
                 float erodeP = 1.05 * smoothstep(_ErodeFrom, max(_ErodeFrom + .01, _ErodeTo), age);
                 float fade = _Opacity * (1 - smoothstep(_FadeFrom, max(_FadeFrom + .01, _FadeTo), age));
                 float flow = age * _FlowSpeed;
@@ -124,6 +135,9 @@ Shader "Razlom/Wreck Combo Wave"
                 float dOuter = (1 - _EdgeRag * (1 - coarse) - _EdgeTeeth * tooth) - v;
                 float across = abs(v - .5) * 2;
                 float dHead = (headP - u - _HeadRound * across * across) * _Aspect;
+                // Срез въезда: острый клин назад (середина полосы — кончик), к контакту клин сходит на нет.
+                float dTail = slide > 0 ? (u - uMin - (.10 * (1 - lead) + .001) * across) * _Aspect : 1e4;
+                dHead = min(dHead, dTail);
                 // Поле распада: у граней льда тёмных ячеек меньше, чем у пузырьков сабли, — сдвиг вниз, чтобы дыры в
                 // середине открывались так же рано, как у волны сабли.
                 float field = lerp(coarse, u * .62 + coarse * .38, _ErodeAlong) - _ErodeBias;

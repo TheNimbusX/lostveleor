@@ -43,7 +43,7 @@ namespace Game.Sim
             return new FixVec2(Fix64.One, Fix64.Zero);
         }
 
-        /// <summary>Натяг, возврат и ловля по самой длинной полосе: T = выпуск + max F + 1, R по max дальности.</summary>
+        /// <summary>Натяг, возврат и ловля по самой длинной полосе: T = выпуск + max F + AnchorThrowTautTicks, R по max дальности.</summary>
         private void AnchorThrowSchedule()
         {
             int flight = _anchorThrow.Flight0;
@@ -54,7 +54,7 @@ namespace Game.Sim
                 if (_anchorThrow.LaneReach(lane) > reach) reach = _anchorThrow.LaneReach(lane);
             }
             _anchorThrow.FlightTicks = flight;
-            _anchorThrow.TautTick = _anchorThrow.ReleaseTick + flight + 1;
+            _anchorThrow.TautTick = _anchorThrow.ReleaseTick + flight + AnchorThrowTautTicks;
             _anchorThrow.ReturnTicks = AnchorThrowReturnTicks(reach);
             _anchorThrow.CatchTick = _anchorThrow.TautTick + _anchorThrow.ReturnTicks;
         }
@@ -98,7 +98,13 @@ namespace Game.Sim
                 case AnchorThrowPhase.Flight:
                     AnchorThrowFace();
                     if (Tick >= _anchorThrow.TautTick) AnchorThrowTaut(build);
+                    else if (Tick - _anchorThrow.ReleaseTick > _anchorThrow.FlightTicks) _anchorThrow.Phase = AnchorThrowPhase.Taut;
                     else SweepAnchorThrowFlight(build, Tick - _anchorThrow.ReleaseTick);
+                    break;
+                case AnchorThrowPhase.Taut when Tick <= _anchorThrow.TautTick:
+                    // Натяг до рывка (HoldTick…): голова в конце, цепь прямая, тела стоят; в TautTick — рывок.
+                    AnchorThrowFace();
+                    if (Tick == _anchorThrow.TautTick) AnchorThrowTaut(build);
                     break;
                 case AnchorThrowPhase.Taut:
                 case AnchorThrowPhase.Return:
@@ -132,8 +138,9 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Натяг — тик после полёта самой длинной полосы: голова стоит, цепь прямая.
-        /// Сеть Невода ловит свою полосу; задетые «на тягу» живые едут на полукольцо
+        /// Рывок — последний тик натяга (AnchorThrowTautTicks тиков после полёта самой длинной
+        /// полосы): голова стоит, цепь прямая. Событие AnchorThrowYank; сеть Невода ловит
+        /// свою полосу; задетые «на тягу» живые едут на полукольцо
         /// (Reeled, R тиков, со следующего тика). Часы — по фактической ловле.
         /// </summary>
         private void AnchorThrowTaut(AbilityBuild build)

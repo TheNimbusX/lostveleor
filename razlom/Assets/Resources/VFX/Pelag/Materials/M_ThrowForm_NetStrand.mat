@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_ThrowForm_NetStrand
+  m_Shader: {fileID: 4800000, guid: b1fbfd00a420bcf4daddc1ed97a7d570, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _FacetTex:
+        m_Texture: {fileID: 2800000, guid: 895a907c47b33e445a620c6c353da305, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BodyAlpha: 0.7
+    - _BodyW: 0.2
+    - _CameraPush: 0
+    - _ChevronRate: 9
+    - _Chevrons: 1.8
+    - _CoreW: 0.07
+    - _CoreW0: 0.04
+    - _ErodeFrom: 0.03
+    - _ErodeTo: 0.22
+    - _FadeFrom: 0.16
+    - _FadeTo: 0.3
+    - _FlowSpeed: 1.2
+    - _GlowAlpha: 1
+    - _HaloAlpha: 0.55
+    - _HaloGain: 1.6
+    - _LinkGlass: 1
+    - _LinkHalf: 0.052
+    - _LinkPitch: 0.18
+    - _LinkThick: 0.036
+    - _Links: 1
+    - _Opacity: 1
+    - _PulseGain: 0.9
+    - _Rag: 0.3
+    - _Sparkle: 0.35
+    m_Colors:
+    - _Deep: {r: 0.004391442, g: 0.19461781, b: 0.1221388, a: 1}
+    - _Hot: {r: 0.8308629, g: 1.05, b: 0.98562014, a: 1}
+    - _Light: {r: 0.14702728, g: 0.8631573, b: 0.701102, a: 1}
+    - _LinkBody: {r: 0.06, g: 0.07, b: 0.08, a: 1}
+    - _LinkRim: {r: 0.24, g: 0.34, b: 0.34, a: 1}
+    - _LinkShadow: {r: 0.001517635, g: 0.019382361, b: 0.012983031, a: 1}
+    - _Mid: {r: 0.025594069, g: 0.7393233, b: 0.48087016, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

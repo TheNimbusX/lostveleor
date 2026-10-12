@@ -1,0 +1,2679 @@
+{
+ "rows": [
+  {
+   "lean": -5.2,
+   "pelvis_yaw": -59.3,
+   "chest_yaw": -57.4,
+   "twist": 1.9,
+   "relP": 9.33,
+   "head_relY": -40.1,
+   "face_yaw": -16.89,
+   "hips_z": 0.808,
+   "forearm_twist": {
+    "Left": 23.9,
+    "Right": -44.6
+   },
+   "fistL": [
+    0.2774,
+    -0.1078,
+    0.6339
+   ],
+   "fistR": [
+    0.1644,
+    0.0109,
+    0.7176
+   ],
+   "ring": [
+    0.216,
+    -0.0433,
+    0.6794
+   ],
+   "grip_axis": [
+    -0.614,
+    0.645,
+    0.4549
+   ],
+   "hand_gap": 0.184,
+   "axis_err": {
+    "Left": 85.3,
+    "Right": 76.4
+   },
+   "Left": {
+    "ankle": [
+     0.5054,
+     0.1482,
+     0.1505
+    ],
+    "toe_z": 0.008
+   },
+   "Right": {
+    "ankle": [
+     -0.1836,
+     -0.2103,
+     0.1425
+    ],
+    "toe_z": 0.0163
+   },
+   "tick": 0,
+   "faceP": 4.07,
+   "hip_ratio": 0.415,
+   "relP_over_stance": -0.42,
+   "feet_low": {
+    "Left": 0.0023,
+    "Right": 0.0004
+   },
+   "contacts": [
+    [
+     "RightHand",
+     "LeftThigh",
+     1,
+     90,
+     0.0597
+    ],
+    [
+     "LeftHand+LeftForeArm",
+     "LeftThigh",
+     87,
+     177,
+     0.0598
+    ],
+    [
+     "RightHand+RightForeArm",
+     "torso",
+     45,
+     245,
+     0.0598
+    ],
+    [
+     "LeftHand+LeftForeArm",
+     "torso",
+     44,
+     83,
+     0.0586
+    ]
+   ]
+  },
+  {
+   "lean": 23.2,
+   "pelvis_yaw": -70.2,
+   "chest_yaw": -77.7,
+   "twist": -7.5,
+   "relP": 4.53,
+   "head_relY": -70.59,
+   "face_yaw": -9.88,
+   "hips_z": 0.751,
+   "forearm_twist": {
+    "Left": -54.6,
+    "Right": 13.9
+   },
+   "fistL": [
+    0.1969,
+    0.1122,
+    0.7918
+   ],
+   "fistR": [
+    -0.5529,
+    -0.3558,
+    0.6873
+   ],
+   "ring": [
+    0.1127,
+    0.0596,
+    0.7801
+   ],
+   "grip_axis": [
+    -0.8425,
+    -0.5258,
+    -0.1174
+   ],
+   "hand_gap": 0.89,
+   "axis_err": {
+    "Left": 28.1,
+    "Right": 48.2
+   },
+   "Left": {
+    "ankle": [
+     0.477,
+     0.1623,
+     0.1496
+    ],
+    "toe_z": 0.0458
+   },
+   "Right": {
+    "ankle": [
+     -0.1829,
+     -0.2103,
+     0.1407
+    ],
+    "toe_z": 0.0104
+   },
+   "tick": 1,
+   "faceP": -7.25,
+   "hip_ratio": 0.422,
+   "relP_over_stance": -5.22,
+   "feet_low": {
+    "Left": 0.0025,
+    "Right": -0.0003
+   },
+   "contacts": [
+    [
+     "LeftHand+LeftForeArm",
+     "torso",
+     18,
+     2,
+     0.0097
+    ]
+   ]
+  },
+  {
+   "lean": -2.7,
+   "pelvis_yaw": 6.8,
+   "chest_yaw": 15.5,
+   "twist": 8.7,
+   "relP": -0.87,
+   "head_relY": 12.6,
+   "face_yaw": -0.38,
+   "hips_z": 0.736,
+   "forearm_twist": {
+    "Left": -66.5,
+    "Right": 47.1
+   },
+   "fistL": [
+    0.3792,
+    0.1531,
+    0.8515
+   ],
+   "fistR": [
+    0.7343,
+    -0.2115,
+    1.2388
+   ],
+   "ring": [
+    0.4347,
+    0.0961,
+    0.9121
+   ],
+   "grip_axis": [
+    0.5552,
+    -0.5701,
+    0.6056
+   ],
+   "hand_gap": 0.64,
+   "axis_err": {
+    "Left": 40.1,
+    "Right": 78.0
+   },
+   "Left": {
+    "ankle": [
+     0.4762,
+     0.1629,
+     0.1494
+    ],
+    "toe_z": 0.0471
+   },
+   "Right": {
+    "ankle": [
+     -0.2602,
+     -0.1976,
+     0.1952
+    ],
+    "toe_z": 0.0706
+   },
+   "tick": 2,
+   "faceP": -2.93,
+   "hip_ratio": 0.492,
+   "relP_over_stance": -10.62,
+   "feet_low": {
+    "Left": 0.0026,
+    "Right": 0.0533
+   },
+   "contacts": []
+  },
+  {
+   "lean": 6.0,
+   "pelvis_yaw": 10.9,
+   "chest_yaw": 17.3,
+   "twist": 6.3,
+   "relP": 5.72,
+   "head_relY": 13.46,
+   "face_yaw": 3.16,
+   "hips_z": 0.701,
+   "forearm_twist": {
+    "Left": -66.7,
+    "Right": 47.1
+   },
+   "fistL": [
+    0.5337,
+    0.1812,
+    0.8633
+   ],
+   "fistR": [
+    0.9042,
+    0.0536,
+    0.9513
+   ],
+   "ring": [
+    0.626,
+    0.1494,
+    0.8852
+   ],
+   "grip_axis": [
+    0.9225,
+    -0.3178,
+    0.219
+   ],
+   "hand_gap": 0.402,
+   "axis_err": {
+    "Left": 31.4,
+    "Right": 76.6
+   },
+   "Left": {
+    "ankle": [
+     0.4763,
+     0.163,
+     0.1471
+    ],
+    "toe_z": 0.0447
+   },
+   "Right": {
+    "ankle": [
+     -0.4033,
+     -0.1531,
+     0.1612
+    ],
+    "toe_z": 0.0454
+   },
+   "tick": 3,
+   "faceP": -5.97,
+   "hip_ratio": 0.662,
+   "relP_over_stance": -4.03,
+   "feet_low": {
+    "Left": 0.0025,
+    "Right": 0.0228
+   },
+   "contacts": []
+  },
+  {
+   "lean": 17.0,
+   "pelvis_yaw": 12.0,
+   "chest_yaw": 15.4,
+   "twist": 3.4,
+   "relP": 17.98,
+   "head_relY": 11.28,
+   "face_yaw": 5.84,
+   "hips_z": 0.676,
+   "forearm_twist": {
+    "Left": -66.8,
+    "Right": 47.0
+   },
+   "fistL": [
+    0.6313,
+    0.1925,
+    0.8523
+   ],
+   "fistR": [
+    0.995,
+    0.1705,
+    0.8648
+   ],
+   "ring": [
+    0.731,
+    0.1865,
+    0.8557
+   ],
+   "grip_axis": [
+    0.9976,
+    -0.0605,
+    0.0344
+   ],
+   "hand_gap": 0.365,
+   "axis_err": {
+    "Left": 44.0,
+    "Right": 55.4
+   },
+   "Left": {
+    "ankle": [
+     0.4763,
+     0.163,
+     0.1451
+    ],
+    "toe_z": 0.0428
+   },
+   "Right": {
+    "ankle": [
+     -0.379,
+     -0.147,
+     0.1735
+    ],
+    "toe_z": 0.0577
+   },
+   "tick": 4,
+   "faceP": -5.98,
+   "hip_ratio": 0.767,
+   "relP_over_stance": 8.23,
+   "feet_low": {
+    "Left": 0.0025,
+    "Right": 0.0411
+   },
+   "contacts": []
+  },
+  {
+   "lean": 21.9,
+   "pelvis_yaw": 10.0,
+   "chest_yaw": 11.7,
+   "twist": 1.7,
+   "relP": 24.03,
+   "head_relY": 7.12,
+   "face_yaw": 6.62,
+   "hips_z": 0.673,
+   "forearm_twist": {
+    "Left": -66.9,
+    "Right": 47.0
+   },
+   "fistL": [
+    0.6443,
+    0.1843,
+    0.845
+   ],
+   "fistR": [
+    1.0069,
+    0.1723,
+    0.8492
+   ],
+   "ring": [
+    0.7443,
+    0.181,
+    0.8461
+   ],
+   "grip_axis": [
+    0.9994,
+    -0.0331,
+    0.0115
+   ],
+   "hand_gap": 0.363,
+   "axis_err": {
+    "Left": 47.1,
+    "Right": 54.7
+   },
+   "Left": {
+    "ankle": [
+     0.4763,
+     0.163,
+     0.1449
+    ],
+    "toe_z": 0.0426
+   },
+   "Right": {
+    "ankle": [
+     -0.3899,
+     -0.1495,
+     0.1667
+    ],
+    "toe_z": 0.051
+   },
+   "tick": 5,
+   "faceP": -6.06,
+   "hip_ratio": 0.758,
+   "relP_over_stance": 14.28,
+   "feet_low": {
+    "Left": 0.0025,
+    "Right": 0.0347
+   },
+   "contacts": []
+  },
+  {
+   "lean": 21.2,
+   "pelvis_yaw": 8.2,
+   "chest_yaw": 8.2,
+   "twist": 0.1,
+   "relP": 22.43,
+   "head_relY": 3.94,
+   "face_yaw": 6.17,
+   "hips_z": 0.677,
+   "forearm_twist": {
+    "Left": -66.8,
+    "Right": 47.0
+   },
+   "fistL": [
+    0.6368,
+    0.1714,
+    0.8442
+   ],
+   "fistR": [
+    0.9665,
+    0.1562,
+    0.8515
+   ],
+   "ring": [
+    0.7367,
+    0.1668,
+    0.8464
+   ],
+   "grip_axis": [
+    0.9987,
+    -0.0459,
+    0.0221
+   ],
+   "hand_gap": 0.33,
+   "axis_err": {
+    "Left": 46.1,
+    "Right": 54.1
+   },
+   "Left": {
+    "ankle": [
+     0.4763,
+     0.163,
+     0.1454
+    ],
+    "toe_z": 0.0431
+   },
+   "Right": {
+    "ankle": [
+     -0.4069,
+     -0.1535,
+     0.1562
+    ],
+    "toe_z": 0.0405
+   },
+   "tick": 6,
+   "faceP": -6.03,
+   "hip_ratio": 0.721,
+   "relP_over_stance": 12.68,
+   "feet_low": {
+    "Left": 0.0025,
+    "Right": 0.0241
+   },
+   "contacts": []
+  },
+  {
+   "lean": 18.5,
+   "pelvis_yaw": 6.0,
+   "chest_yaw": 5.4,
+   "twist": -0.6,
+   "relP": 17.37,
+   "head_relY": 0.84,
+   "face_yaw": 5.89,
+   "hips_z": 0.681,
+   "forearm_twist": {
+    "Left": -66.7,
+    "Right": 47.0
+   },
+   "fistL": [
+    0.6245,
+    0.1546,
+    0.8423
+   ],
+   "fistR": [
+    0.909,
+    0.1366,
+    0.8542
+   ],
+   "ring": [
+    0.7242,
+    0.1483,
+    0.8465
+   ],
+   "grip_axis": [
+    0.9971,
+    -0.0632,
+    0.0417
+   ],
+   "hand_gap": 0.285,
+   "axis_err": {
+    "Left": 43.8,
+    "Right": 53.3
+   },
+   "Left": {
+    "ankle": [
+     0.4763,
+     0.1629,
+     0.146
+    ],
+    "toe_z": 0.0437
+   },
+   "Right": {
+    "ankle": [
+     -0.4265,
+     -0.1579,
+     0.1428
+    ],
+    "toe_z": 0.0271
+   },
+   "tick": 7,
+   "faceP": -6.01,
+   "hip_ratio": 0.68,
+   "relP_over_stance": 7.62,
+   "feet_low": {
+    "Left": 0.0024,
+    "Right": 0.0105
+   },
+   "contacts": []
+  },
+  {
+   "lean": 15.7,
+   "pelvis_yaw": 2.6,
+   "chest_yaw": 3.3,
+   "twist": 0.8,
+   "relP": 12.41,
+   "head_relY": -1.65,
+   "face_yaw": 5.66,
+   "hips_z": 0.686,
+   "forearm_twist": {
+    "Left": -66.6,
+    "Right": 47.0
+   },
+   "fistL": [
+    0.6021,
+    0.1336,
+    0.8389
+   ],
+   "fistR": [
+    0.8395,
+    0.1163,
+    0.8528
+   ],
+   "ring": [
+    0.7016,
+    0.1263,
+    0.8447
+   ],
+   "grip_axis": [
+    0.9957,
+    -0.0723,
+    0.0581
+   ],
+   "hand_gap": 0.238,
+   "axis_err": {
+    "Left": 41.1,
+    "Right": 52.4
+   },
+   "Left": {
+    "ankle": [
+     0.4763,
+     0.1629,
+     0.1467
+    ],
+    "toe_z": 0.0444
+   },
+   "Right": {
+    "ankle": [
+     -0.4514,
+     -0.1633,
+     0.1343
+    ],
+    "toe_z": 0.0188
+   },
+   "tick": 8,
+   "faceP": -6.0,
+   "hip_ratio": 0.63,
+   "relP_over_stance": 2.66,
+   "feet_low": {
+    "Left": 0.0023,
+    "Right": 0.0025
+   },
+   "contacts": []
+  },
+  {
+   "lean": 12.9,
+   "pelvis_yaw": -2.0,
+   "chest_yaw": 1.1,
+   "twist": 3.1,
+   "relP": 7.66,
+   "head_relY": -4.2,
+   "face_yaw": 5.42,
+   "hips_z": 0.691,
+   "forearm_twist": {
+    "Left": -66.5,
+    "Right": 46.9
+   },
+   "fistL": [
+    0.5758,
+    0.114,
+    0.8367
+   ],
+   "fistR": [
+    0.7672,
+    0.0985,
+    0.8511
+   ],
+   "ring": [
+    0.6752,
+    0.106,
+    0.8441
+   ],
+   "grip_axis": [
+    0.994,
+    -0.0804,
+    0.0748
+   ],
+   "hand_gap": 0.192,
+   "axis_err": {
+    "Left": 38.4,
+    "Right": 51.4
+   },
+   "Left": {
+    "ankle": [
+     0.4763,
+     0.1629,
+     0.1474
+    ],
+    "toe_z": 0.045
+   },
+   "Right": {
+    "ankle": [
+     -0.4563,
+     -0.1644,
+     0.1334
+    ],
+    "toe_z": 0.018
+   },
+   "tick": 9,
+   "faceP": -5.98,
+   "hip_ratio": 0.585,
+   "relP_over_stance": -2.09,
+   "feet_low": {
+    "Left": 0.0022,
+    "Right": 0.0025
+   },
+   "contacts": []
+  },
+  {
+   "lean": 10.3,
+   "pelvis_yaw": -8.0,
+   "chest_yaw": -2.2,
+   "twist": 5.8,
+   "relP": 3.07,
+   "head_relY": -7.53,
+   "face_yaw": 5.12,
+   "hips_z": 0.696,
+   "forearm_twist": {
+    "Left": -66.5,
+    "Right": 46.9
+   },
+   "fistL": [
+    0.5519,
+    0.1014,
+    0.8386
+   ],
+   "fistR": [
+    0.6993,
+    0.0882,
+    0.8522
+   ],
+   "ring": [
+    0.6511,
+    0.0925,
+    0.8478
+   ],
+   "grip_axis": [
+    0.9918,
+    -0.0892,
+    0.0914
+   ],
+   "hand_gap": 0.149,
+   "axis_err": {
+    "Left": 36.2,
+    "Right": 50.3
+   },
+   "Left": {
+    "ankle": [
+     0.4763,
+     0.1629,
+     0.1479
+    ],
+    "toe_z": 0.0455
+   },
+   "Right": {
+    "ankle": [
+     -0.4561,
+     -0.1644,
+     0.1331
+    ],
+    "toe_z": 0.0177
+   },
+   "tick": 10,
+   "faceP": -5.89,
+   "hip_ratio": 0.554,
+   "relP_over_stance": -6.68,
+   "feet_low": {
+    "Left": 0.0021,
+    "Right": 0.0025
+   },
+   "contacts": []
+  },
+  {
+   "lean": 7.5,
+   "pelvis_yaw": -11.0,
+   "chest_yaw": -3.6,
+   "twist": 7.4,
+   "relP": -0.74,
+   "head_relY": -9.19,
+   "face_yaw": 5.11,
+   "hips_z": 0.701,
+   "forearm_twist": {
+    "Left": -66.6,
+    "Right": 46.9
+   },
+   "fistL": [
+    0.4952,
+    0.0892,
+    0.8824
+   ],
+   "fistR": [
+    0.647,
+    0.0781,
+    0.8925
+   ],
+   "ring": [
+    0.5947,
+    0.0819,
+    0.889
+   ],
+   "grip_axis": [
+    0.9952,
+    -0.0726,
+    0.0663
+   ],
+   "hand_gap": 0.153,
+   "axis_err": {
+    "Left": 42.7,
+    "Right": 54.6
+   },
+   "Left": {
+    "ankle": [
+     0.4763,
+     0.1628,
+     0.1484
+    ],
+    "toe_z": 0.046
+   },
+   "Right": {
+    "ankle": [
+     -0.456,
+     -0.1645,
+     0.133
+    ],
+    "toe_z": 0.0177
+   },
+   "tick": 11,
+   "faceP": -4.79,
+   "hip_ratio": 0.522,
+   "relP_over_stance": -10.49,
+   "feet_low": {
+    "Left": 0.002,
+    "Right": 0.0026
+   },
+   "contacts": []
+  },
+  {
+   "lean": -6.6,
+   "pelvis_yaw": -28.0,
+   "chest_yaw": -17.8,
+   "twist": 10.2,
+   "relP": -30.9,
+   "head_relY": -35.14,
+   "face_yaw": 11.52,
+   "hips_z": 0.696,
+   "forearm_twist": {
+    "Left": -66.6,
+    "Right": 64.8
+   },
+   "fistL": [
+    0.2834,
+    0.0535,
+    0.9394
+   ],
+   "fistR": [
+    0.3736,
+    0.01,
+    0.9605
+   ],
+   "ring": [
+    0.3715,
+    0.011,
+    0.96
+   ],
+   "grip_axis": [
+    0.881,
+    -0.4255,
+    0.2066
+   ],
+   "hand_gap": 0.102,
+   "axis_err": {
+    "Left": 45.4,
+    "Right": 35.5
+   },
+   "Left": {
+    "ankle": [
+     0.4763,
+     0.163,
+     0.1501
+    ],
+    "toe_z": 0.0477
+   },
+   "Right": {
+    "ankle": [
+     -0.4562,
+     -0.1645,
+     0.1333
+    ],
+    "toe_z": 0.018
+   },
+   "tick": 12,
+   "faceP": -5.23,
+   "hip_ratio": 0.537,
+   "relP_over_stance": -40.65,
+   "feet_low": {
+    "Left": 0.0019,
+    "Right": 0.0024
+   },
+   "contacts": []
+  },
+  {
+   "lean": -13.3,
+   "pelvis_yaw": -34.0,
+   "chest_yaw": -23.9,
+   "twist": 10.1,
+   "relP": -46.17,
+   "head_relY": -79.84,
+   "face_yaw": 34.02,
+   "hips_z": 0.691,
+   "forearm_twist": {
+    "Left": -66.5,
+    "Right": 64.7
+   },
+   "fistL": [
+    0.2056,
+    0.028,
+    0.9651
+   ],
+   "fistR": [
+    0.2503,
+    -0.0319,
+    0.9748
+   ],
+   "ring": [
+    0.2649,
+    -0.0514,
+    0.978
+   ],
+   "grip_axis": [
+    0.5933,
+    -0.7945,
+    0.1292
+   ],
+   "hand_gap": 0.075,
+   "axis_err": {
+    "Left": 66.8,
+    "Right": 28.0
+   },
+   "Left": {
+    "ankle": [
+     0.4632,
+     0.1604,
+     0.1501
+    ],
+    "toe_z": 0.0478
+   },
+   "Right": {
+    "ankle": [
+     -0.4563,
+     -0.1645,
+     0.1338
+    ],
+    "toe_z": 0.0185
+   },
+   "tick": 13,
+   "faceP": -5.58,
+   "hip_ratio": 0.595,
+   "relP_over_stance": -55.92,
+   "feet_low": {
+    "Left": 0.0017,
+    "Right": 0.0024
+   },
+   "contacts": [
+    [
+     "RightHand+RightForeArm",
+     "torso",
+     13,
+     5,
+     0.0105
+    ]
+   ]
+  },
+  {
+   "lean": -15.4,
+   "pelvis_yaw": -36.0,
+   "chest_yaw": -24.1,
+   "twist": 11.9,
+   "relP": -43.96,
+   "head_relY": -98.79,
+   "face_yaw": 45.4,
+   "hips_z": 0.691,
+   "forearm_twist": {
+    "Left": -66.5,
+    "Right": 64.7
+   },
+   "fistL": [
+    0.1893,
+    0.0217,
+    0.9658
+   ],
+   "fistR": [
+    0.2239,
+    -0.0412,
+    0.9718
+   ],
+   "ring": [
+    0.2373,
+    -0.0657,
+    0.9741
+   ],
+   "grip_axis": [
+    0.4803,
+    -0.8732,
+    0.0828
+   ],
+   "hand_gap": 0.072,
+   "axis_err": {
+    "Left": 74.3,
+    "Right": 28.8
+   },
+   "Left": {
+    "ankle": [
+     0.4558,
+     0.1588,
+     0.1502
+    ],
+    "toe_z": 0.0479
+   },
+   "Right": {
+    "ankle": [
+     -0.4563,
+     -0.1644,
+     0.134
+    ],
+    "toe_z": 0.0187
+   },
+   "tick": 14,
+   "faceP": -4.22,
+   "hip_ratio": 0.61,
+   "relP_over_stance": -53.71,
+   "feet_low": {
+    "Left": 0.0017,
+    "Right": 0.0023
+   },
+   "contacts": [
+    [
+     "RightHand+RightForeArm",
+     "torso",
+     13,
+     7,
+     0.019
+    ]
+   ]
+  },
+  {
+   "lean": -14.3,
+   "pelvis_yaw": -35.0,
+   "chest_yaw": -23.6,
+   "twist": 11.4,
+   "relP": -46.02,
+   "head_relY": -85.09,
+   "face_yaw": 36.9,
+   "hips_z": 0.694,
+   "forearm_twist": {
+    "Left": -66.5,
+    "Right": 64.8
+   },
+   "fistL": [
+    0.196,
+    0.0244,
+    0.9684
+   ],
+   "fistR": [
+    0.2482,
+    -0.0618,
+    0.9616
+   ],
+   "ring": [
+    0.2477,
+    -0.061,
+    0.9617
+   ],
+   "grip_axis": [
+    0.5162,
+    -0.8538,
+    -0.0671
+   ],
+   "hand_gap": 0.101,
+   "axis_err": {
+    "Left": 79.6,
+    "Right": 38.0
+   },
+   "Left": {
+    "ankle": [
+     0.4573,
+     0.1592,
+     0.1503
+    ],
+    "toe_z": 0.0479
+   },
+   "Right": {
+    "ankle": [
+     -0.4563,
+     -0.1644,
+     0.1339
+    ],
+    "toe_z": 0.0186
+   },
+   "tick": 15,
+   "faceP": -4.91,
+   "hip_ratio": 0.599,
+   "relP_over_stance": -55.77,
+   "feet_low": {
+    "Left": 0.0018,
+    "Right": 0.0023
+   },
+   "contacts": [
+    [
+     "RightHand+RightForeArm",
+     "torso",
+     11,
+     1,
+     0.0086
+    ]
+   ]
+  },
+  {
+   "lean": -9.5,
+   "pelvis_yaw": -33.0,
+   "chest_yaw": -22.2,
+   "twist": 10.8,
+   "relP": -39.05,
+   "head_relY": -55.36,
+   "face_yaw": 19.77,
+   "hips_z": 0.706,
+   "forearm_twist": {
+    "Left": -66.7,
+    "Right": 64.1
+   },
+   "fistL": [
+    0.1838,
+    0.0485,
+    0.9651
+   ],
+   "fistR": [
+    0.0895,
+    -0.3947,
+    1.0534
+   ],
+   "ring": [
+    0.1634,
+    -0.0475,
+    0.9842
+   ],
+   "grip_axis": [
+    -0.2044,
+    -0.96,
+    0.1913
+   ],
+   "hand_gap": 0.462,
+   "axis_err": {
+    "Left": 89.8,
+    "Right": 85.3
+   },
+   "Left": {
+    "ankle": [
+     0.4655,
+     0.1609,
+     0.1504
+    ],
+    "toe_z": 0.048
+   },
+   "Right": {
+    "ankle": [
+     -0.4563,
+     -0.1644,
+     0.1339
+    ],
+    "toe_z": 0.0186
+   },
+   "tick": 16,
+   "faceP": -4.84,
+   "hip_ratio": 0.552,
+   "relP_over_stance": -48.8,
+   "feet_low": {
+    "Left": 0.002,
+    "Right": 0.0023
+   },
+   "contacts": []
+  },
+  {
+   "lean": 1.3,
+   "pelvis_yaw": -32.0,
+   "chest_yaw": -19.8,
+   "twist": 12.2,
+   "relP": -13.3,
+   "head_relY": -28.73,
+   "face_yaw": 5.1,
+   "hips_z": 0.721,
+   "forearm_twist": {
+    "Left": -66.9,
+    "Right": 63.8
+   },
+   "fistL": [
+    0.1325,
+    0.1343,
+    0.8834
+   ],
+   "fistR": [
+    0.0067,
+    -0.4765,
+    1.1637
+   ],
+   "ring": [
+    0.1141,
+    0.0449,
+    0.9244
+   ],
+   "grip_axis": [
+    -0.1839,
+    -0.8933,
+    0.41
+   ],
+   "hand_gap": 0.684,
+   "axis_err": {
+    "Left": 89.6,
+    "Right": 88.2
+   },
+   "Left": {
+    "ankle": [
+     0.4761,
+     0.1609,
+     0.1505
+    ],
+    "toe_z": 0.048
+   },
+   "Right": {
+    "ankle": [
+     -0.438,
+     -0.1596,
+     0.1782
+    ],
+    "toe_z": 0.0626
+   },
+   "tick": 17,
+   "faceP": -2.93,
+   "hip_ratio": 0.491,
+   "relP_over_stance": -23.05,
+   "feet_low": {
+    "Left": 0.0023,
+    "Right": 0.0474
+   },
+   "contacts": []
+  },
+  {
+   "lean": 3.7,
+   "pelvis_yaw": -32.6,
+   "chest_yaw": -17.4,
+   "twist": 15.2,
+   "relP": -8.48,
+   "head_relY": -24.94,
+   "face_yaw": 4.45,
+   "hips_z": 0.723,
+   "forearm_twist": {
+    "Left": -39.8,
+    "Right": 63.7
+   },
+   "fistL": [
+    0.1971,
+    0.1593,
+    0.9257
+   ],
+   "fistR": [
+    0.0778,
+    -0.4646,
+    1.148
+   ],
+   "ring": [
+    0.1794,
+    0.0666,
+    0.9587
+   ],
+   "grip_axis": [
+    -0.1774,
+    -0.927,
+    0.3303
+   ],
+   "hand_gap": 0.673,
+   "axis_err": {
+    "Left": 84.3,
+    "Right": 89.8
+   },
+   "Left": {
+    "ankle": [
+     0.4785,
+     0.1251,
+     0.1489
+    ],
+    "toe_z": 0.0424
+   },
+   "Right": {
+    "ankle": [
+     -0.1017,
+     -0.0943,
+     0.2383
+    ],
+    "toe_z": 0.1171
+   },
+   "tick": 18,
+   "faceP": -4.43,
+   "hip_ratio": 0.469,
+   "relP_over_stance": -18.23,
+   "feet_low": {
+    "Left": 0.0023,
+    "Right": 0.1064
+   },
+   "contacts": [
+    [
+     "LeftHand+LeftForeArm",
+     "torso",
+     74,
+     50,
+     0.041
+    ]
+   ]
+  },
+  {
+   "lean": 4.0,
+   "pelvis_yaw": -26.1,
+   "chest_yaw": -13.9,
+   "twist": 12.2,
+   "relP": -4.72,
+   "head_relY": -19.97,
+   "face_yaw": 4.57,
+   "hips_z": 0.787,
+   "forearm_twist": {
+    "Left": -31.0,
+    "Right": 63.8
+   },
+   "fistL": [
+    0.2909,
+    0.138,
+    1.0427
+   ],
+   "fistR": [
+    0.2153,
+    -0.4755,
+    1.2362
+   ],
+   "ring": [
+    0.2792,
+    0.0433,
+    1.0726
+   ],
+   "grip_axis": [
+    -0.1167,
+    -0.9472,
+    0.2987
+   ],
+   "hand_gap": 0.648,
+   "axis_err": {
+    "Left": 76.2,
+    "Right": 85.7
+   },
+   "Left": {
+    "ankle": [
+     0.4835,
+     0.1057,
+     0.1474
+    ],
+    "toe_z": 0.038
+   },
+   "Right": {
+    "ankle": [
+     0.102,
+     -0.0698,
+     0.1369
+    ],
+    "toe_z": 0.0096
+   },
+   "tick": 19,
+   "faceP": -4.78,
+   "hip_ratio": 0.401,
+   "relP_over_stance": -14.47,
+   "feet_low": {
+    "Left": 0.0025,
+    "Right": 0.0022
+   },
+   "contacts": [
+    [
+     "LeftHand+LeftForeArm",
+     "torso",
+     50,
+     44,
+     0.04
+    ]
+   ]
+  },
+  {
+   "lean": 2.3,
+   "pelvis_yaw": -12.7,
+   "chest_yaw": -9.3,
+   "twist": 3.4,
+   "relP": -1.53,
+   "head_relY": -10.12,
+   "face_yaw": 3.72,
+   "hips_z": 0.872,
+   "forearm_twist": {
+    "Left": -34.2,
+    "Right": 63.8
+   },
+   "fistL": [
+    0.4077,
+    0.1524,
+    1.1812
+   ],
+   "fistR": [
+    0.2125,
+    -0.4109,
+    1.4906
+   ],
+   "ring": [
+    0.3786,
+    0.0686,
+    1.2272
+   ],
+   "grip_axis": [
+    -0.2906,
+    -0.8387,
+    0.4607
+   ],
+   "hand_gap": 0.672,
+   "axis_err": {
+    "Left": 62.8,
+    "Right": 62.2
+   },
+   "Left": {
+    "ankle": [
+     0.4835,
+     0.1058,
+     0.1466
+    ],
+    "toe_z": 0.0372
+   },
+   "Right": {
+    "ankle": [
+     0.1019,
+     -0.0695,
+     0.1365
+    ],
+    "toe_z": 0.0101
+   },
+   "tick": 20,
+   "faceP": -4.16,
+   "hip_ratio": 0.562,
+   "relP_over_stance": -11.28,
+   "feet_low": {
+    "Left": 0.0026,
+    "Right": 0.002
+   },
+   "contacts": [
+    [
+     "LeftHand+LeftForeArm",
+     "torso",
+     46,
+     54,
+     0.04
+    ]
+   ]
+  },
+  {
+   "lean": 1.1,
+   "pelvis_yaw": -2.2,
+   "chest_yaw": -4.7,
+   "twist": -2.4,
+   "relP": 6.64,
+   "head_relY": -2.48,
+   "face_yaw": 1.96,
+   "hips_z": 0.929,
+   "forearm_twist": {
+    "Left": -24.3,
+    "Right": 63.0
+   },
+   "fistL": [
+    0.5378,
+    0.1095,
+    0.9642
+   ],
+   "fistR": [
+    0.2932,
+    -0.4184,
+    1.3981
+   ],
+   "ring": [
+    0.5041,
+    0.0368,
+    1.024
+   ],
+   "grip_axis": [
+    -0.337,
+    -0.7273,
+    0.5979
+   ],
+   "hand_gap": 0.726,
+   "axis_err": {
+    "Left": 80.9,
+    "Right": 81.0
+   },
+   "Left": {
+    "ankle": [
+     0.4835,
+     0.1058,
+     0.1469
+    ],
+    "toe_z": 0.0376
+   },
+   "Right": {
+    "ankle": [
+     0.1089,
+     -0.0735,
+     0.1497
+    ],
+    "toe_z": 0.0231
+   },
+   "tick": 21,
+   "faceP": 2.14,
+   "hip_ratio": 0.755,
+   "relP_over_stance": -3.11,
+   "feet_low": {
+    "Left": 0.0029,
+    "Right": 0.0134
+   },
+   "contacts": [
+    [
+     "LeftHand+LeftForeArm",
+     "LeftThigh",
+     0,
+     5,
+     0.0584
+    ],
+    [
+     "RightHand+RightForeArm",
+     "torso",
+     0,
+     1,
+     0.0541
+    ],
+    [
+     "LeftHand+LeftForeArm",
+     "torso",
+     77,
+     106,
+     0.0598
+    ]
+   ]
+  },
+  {
+   "lean": 0.9,
+   "pelvis_yaw": -0.5,
+   "chest_yaw": -5.1,
+   "twist": -4.6,
+   "relP": 6.56,
+   "head_relY": -1.27,
+   "face_yaw": 1.99,
+   "hips_z": 0.937,
+   "forearm_twist": {
+    "Left": -2.4,
+    "Right": 31.9
+   },
+   "fistL": [
+    0.5518,
+    -0.201,
+    0.866
+   ],
+   "fistR": [
+    0.4157,
+    -0.4203,
+    1.1518
+   ],
+   "ring": [
+    0.5165,
+    -0.2579,
+    0.9402
+   ],
+   "grip_axis": [
+    -0.3535,
+    -0.5694,
+    0.7422
+   ],
+   "hand_gap": 0.385,
+   "axis_err": {
+    "Left": 72.6,
+    "Right": 43.2
+   },
+   "Left": {
+    "ankle": [
+     0.4835,
+     0.1058,
+     0.1471
+    ],
+    "toe_z": 0.0377
+   },
+   "Right": {
+    "ankle": [
+     0.1149,
+     -0.0767,
+     0.1649
+    ],
+    "toe_z": 0.0385
+   },
+   "tick": 22,
+   "faceP": 1.8,
+   "hip_ratio": 0.787,
+   "relP_over_stance": -3.19,
+   "feet_low": {
+    "Left": 0.003,
+    "Right": 0.0287
+   },
+   "contacts": [
+    [
+     "LeftHand",
+     "RightThigh",
+     0,
+     12,
+     0.0576
+    ],
+    [
+     "LeftHand+LeftForeArm",
+     "torso",
+     62,
+     129,
+     0.0599
+    ]
+   ]
+  },
+  {
+   "lean": 0.8,
+   "pelvis_yaw": -0.5,
+   "chest_yaw": -3.5,
+   "twist": -3.0,
+   "relP": 6.56,
+   "head_relY": -1.27,
+   "face_yaw": 1.99,
+   "hips_z": 0.937,
+   "forearm_twist": {
+    "Left": 9.2,
+    "Right": 6.5
+   },
+   "fistL": [
+    0.4461,
+    -0.3388,
+    0.8722
+   ],
+   "fistR": [
+    0.4762,
+    -0.1873,
+    0.8326
+   ],
+   "ring": [
+    0.465,
+    -0.2437,
+    0.8474
+   ],
+   "grip_axis": [
+    0.1889,
+    0.9501,
+    -0.2481
+   ],
+   "hand_gap": 0.159,
+   "axis_err": {
+    "Left": 65.6,
+    "Right": 58.6
+   },
+   "Left": {
+    "ankle": [
+     0.4835,
+     0.1058,
+     0.1471
+    ],
+    "toe_z": 0.0377
+   },
+   "Right": {
+    "ankle": [
+     0.1149,
+     -0.0767,
+     0.1649
+    ],
+    "toe_z": 0.0384
+   },
+   "tick": 23,
+   "faceP": 1.8,
+   "hip_ratio": 0.787,
+   "relP_over_stance": -3.19,
+   "feet_low": {
+    "Left": 0.003,
+    "Right": 0.0287
+   },
+   "contacts": [
+    [
+     "RightHand",
+     "LeftThigh",
+     0,
+     24,
+     0.0597
+    ],
+    [
+     "LeftHand",
+     "RightThigh",
+     8,
+     26,
+     0.0593
+    ],
+    [
+     "RightHand+RightForeArm",
+     "RightThigh",
+     6,
+     107,
+     0.0598
+    ],
+    [
+     "RightHand+RightForeArm",
+     "torso",
+     129,
+     163,
+     0.0595
+    ],
+    [
+     "LeftHand+LeftForeArm",
+     "torso",
+     31,
+     180,
+     0.0594
+    ]
+   ]
+  },
+  {
+   "lean": 0.8,
+   "pelvis_yaw": -0.5,
+   "chest_yaw": -2.4,
+   "twist": -1.9,
+   "relP": 6.56,
+   "head_relY": -1.27,
+   "face_yaw": 1.99,
+   "hips_z": 0.937,
+   "forearm_twist": {
+    "Left": 9.7,
+    "Right": -10.1
+   },
+   "fistL": [
+    0.4407,
+    -0.3425,
+    0.873
+   ],
+   "fistR": [
+    0.4684,
+    0.0939,
+    0.8414
+   ],
+   "ring": [
+    0.447,
+    -0.2429,
+    0.8658
+   ],
+   "grip_axis": [
+    0.0633,
+    0.9954,
+    -0.0721
+   ],
+   "hand_gap": 0.438,
+   "axis_err": {
+    "Left": 71.9,
+    "Right": 85.3
+   },
+   "Left": {
+    "ankle": [
+     0.4835,
+     0.1058,
+     0.1471
+    ],
+    "toe_z": 0.0377
+   },
+   "Right": {
+    "ankle": [
+     0.1149,
+     -0.0767,
+     0.1649
+    ],
+    "toe_z": 0.0384
+   },
+   "tick": 24,
+   "faceP": 1.8,
+   "hip_ratio": 0.787,
+   "relP_over_stance": -3.19,
+   "feet_low": {
+    "Left": 0.003,
+    "Right": 0.0287
+   },
+   "contacts": [
+    [
+     "RightHand",
+     "LeftThigh",
+     129,
+     61,
+     0.0585
+    ],
+    [
+     "RightForeArm",
+     "LeftThigh",
+     0,
+     3,
+     0.06
+    ],
+    [
+     "LeftHand",
+     "RightThigh",
+     6,
+     23,
+     0.0588
+    ],
+    [
+     "RightHand+RightForeArm",
+     "torso",
+     12,
+     118,
+     0.0592
+    ],
+    [
+     "LeftHand+LeftForeArm",
+     "torso",
+     29,
+     184,
+     0.0594
+    ]
+   ]
+  },
+  {
+   "lean": 0.8,
+   "pelvis_yaw": -0.5,
+   "chest_yaw": -2.3,
+   "twist": -1.8,
+   "relP": 6.56,
+   "head_relY": -1.27,
+   "face_yaw": 1.99,
+   "hips_z": 0.937,
+   "forearm_twist": {
+    "Left": 9.7,
+    "Right": -12.0
+   },
+   "fistL": [
+    0.4407,
+    -0.3425,
+    0.873
+   ],
+   "fistR": [
+    0.4639,
+    0.1173,
+    0.8538
+   ],
+   "ring": [
+    0.4457,
+    -0.2427,
+    0.8688
+   ],
+   "grip_axis": [
+    0.0504,
+    0.9979,
+    -0.0417
+   ],
+   "hand_gap": 0.461,
+   "axis_err": {
+    "Left": 72.4,
+    "Right": 89.5
+   },
+   "Left": {
+    "ankle": [
+     0.4835,
+     0.1058,
+     0.1471
+    ],
+    "toe_z": 0.0377
+   },
+   "Right": {
+    "ankle": [
+     0.1149,
+     -0.0767,
+     0.1649
+    ],
+    "toe_z": 0.0384
+   },
+   "tick": 25,
+   "faceP": 1.8,
+   "hip_ratio": 0.787,
+   "relP_over_stance": -3.19,
+   "feet_low": {
+    "Left": 0.003,
+    "Right": 0.0287
+   },
+   "contacts": [
+    [
+     "RightHand",
+     "LeftThigh",
+     53,
+     37,
+     0.0484
+    ],
+    [
+     "RightForeArm",
+     "LeftThigh",
+     0,
+     5,
+     0.0569
+    ],
+    [
+     "LeftHand",
+     "RightThigh",
+     6,
+     23,
+     0.0588
+    ],
+    [
+     "RightHand+RightForeArm",
+     "torso",
+     23,
+     116,
+     0.0594
+    ],
+    [
+     "LeftHand+LeftForeArm",
+     "torso",
+     29,
+     180,
+     0.0594
+    ]
+   ]
+  }
+ ],
+ "summary": {
+  "worst": "(144.8, '1\u21922 RightArm (\u0443\u0434\u0430\u0440)')",
+  "n_bad": "96",
+  "slide": "(0.0532, 'Left f17\u219218')",
+  "sub": "{'low': (-0.0159, 'Right x3.50'), 'slide': (0.0115, 'Left x4.00')}",
+  "lean": "(-15.4, 23.2)",
+  "twist": "15.2",
+  "fore": "66.9",
+  "relP": "55.92",
+  "hip": "0.787",
+  "low": "-0.0003",
+  "gap": "(9.0, 0.0)",
+  "contacts": "31"
+ },
+ "violations": [
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'Neck', 38.5, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftArm', 104.7, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftForeArm', 90.1, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandThumb1', 62.9, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandIndex1', 66.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandIndex2', 66.2, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandIndex3', 51.8, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandMiddle1', 64.1, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandMiddle2', 71.7, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandMiddle3', 49.7, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandRing1', 90.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandRing2', 74.4, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandRing3', 74.1, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandPinky1', 59.0, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandPinky2', 69.1, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'LeftHandPinky3', 44.8, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'RightArm', 92.0, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'RightForeArm', 61.7, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'RightHandThumb1', 58.5, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'RightHandThumb2', 38.7, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'RightHandIndex3', 66.8, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'RightHandMiddle3', 61.1, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'RightHandRing3', 46.8, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('0\u21921', 'RightUpLeg', 49.5, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('1\u21922', 'Hips', 76.7, 70.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('1\u21922', 'LeftArm', 94.6, 70.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('1\u21922', 'RightArm', 144.8, 70.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('1\u21922', 'RightUpLeg', 75.2, 70.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('1\u21922', 'RightFoot', 74.8, 70.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('2\u21923', 'RightLeg', 71.8, 70.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightArm', 82.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightForeArm', 54.7, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandIndex1', 46.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandIndex2', 48.6, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandIndex3', 48.6, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandMiddle1', 48.6, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandMiddle2', 48.6, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandMiddle3', 48.6, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandRing1', 48.6, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandRing2', 47.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandRing3', 48.6, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandPinky1', 48.6, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandPinky2', 47.0, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('15\u219216', 'RightHandPinky3', 46.1, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightArm', 63.9, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandIndex1', 40.0, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandIndex2', 42.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandIndex3', 42.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandMiddle1', 42.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandMiddle2', 42.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandMiddle3', 42.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandRing1', 42.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandRing2', 41.0, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandRing3', 42.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandPinky1', 42.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandPinky2', 40.7, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('16\u219217', 'RightHandPinky3', 39.8, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('17\u219218', 'LeftArm', 42.4, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('17\u219218', 'LeftHand', 60.0, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('17\u219218', 'RightFoot', 41.9, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('19\u219220', 'RightArm', 64.6, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('19\u219220', 'RightUpLeg', 35.8, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'LeftArm', 37.1, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'LeftForeArm', 50.4, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'LeftHandIndex1', 61.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'LeftHandIndex2', 68.5, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'LeftHandMiddle1', 57.0, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'LeftHandMiddle2', 67.7, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'LeftHandRing1', 52.5, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'LeftHandRing2', 73.8, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'LeftHandPinky1', 48.9, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'LeftHandPinky2', 58.0, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightArm', 92.8, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightHandIndex2', 35.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightHandIndex3', 35.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightHandMiddle1', 35.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightHandMiddle2', 35.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightHandMiddle3', 35.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightHandRing1', 35.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightHandRing2', 35.1, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightHandRing3', 35.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightHandPinky1', 35.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightHandPinky2', 35.0, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightUpLeg', 36.2, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('20\u219221', 'RightLeg', 48.8, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('21\u219222', 'LeftForeArm', 45.8, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('21\u219222', 'LeftHandRing1', 72.2, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('21\u219222', 'LeftHandRing2', 45.1, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('21\u219222', 'RightArm', 141.3, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('21\u219222', 'RightForeArm', 37.6, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('21\u219222', 'RightHand', 43.2, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('22\u219223', 'LeftHandRing1', 46.2, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('22\u219223', 'RightArm', 51.0, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('22\u219223', 'RightForeArm', 67.0, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('23\u219224', 'RightArm', 39.1, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c",
+   "('23\u219224', 'RightForeArm', 38.5, 35.0)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f0",
+   "('RightHand', 'LeftThigh', 1, 90, 0.0597)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f0",
+   "('LeftHand+LeftForeArm', 'LeftThigh', 87, 177, 0.0598)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f0",
+   "('RightHand+RightForeArm', 'torso', 45, 245, 0.0598)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f0",
+   "('LeftHand+LeftForeArm', 'torso', 44, 83, 0.0586)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f1",
+   "('LeftHand+LeftForeArm', 'torso', 18, 2, 0.0097)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f3",
+   "0.662"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f4",
+   "0.767"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f5",
+   "0.758"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f6",
+   "0.721"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f7",
+   "0.68"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f8",
+   "0.63"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 f7\u21928",
+   "('Right', 0.026, 12)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f9",
+   "0.585"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f10",
+   "0.554"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f11",
+   "0.522"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f12",
+   "0.537"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f13",
+   "0.595"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f13",
+   "('RightHand+RightForeArm', 'torso', 13, 5, 0.0105)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 f12\u219213",
+   "('Left', 0.012, 30)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f14",
+   "0.61"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f14",
+   "('RightHand+RightForeArm', 'torso', 13, 7, 0.019)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f15",
+   "0.599"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f15",
+   "('RightHand+RightForeArm', 'torso', 11, 1, 0.0086)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f16",
+   "0.552"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f18",
+   "('LeftHand+LeftForeArm', 'torso', 74, 50, 0.041)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 f17\u219218",
+   "('Left', 0.053, 30)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f19",
+   "('LeftHand+LeftForeArm', 'torso', 50, 44, 0.04)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 f18\u219219",
+   "('Left', 0.029, 36)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f20",
+   "0.562"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f20",
+   "('LeftHand+LeftForeArm', 'torso', 46, 54, 0.04)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f21",
+   "0.755"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f21",
+   "('LeftHand+LeftForeArm', 'LeftThigh', 0, 5, 0.0584)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f21",
+   "('RightHand+RightForeArm', 'torso', 0, 1, 0.0541)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f21",
+   "('LeftHand+LeftForeArm', 'torso', 77, 106, 0.0598)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f22",
+   "0.787"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f22",
+   "('LeftHand', 'RightThigh', 0, 12, 0.0576)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f22",
+   "('LeftHand+LeftForeArm', 'torso', 62, 129, 0.0599)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f23",
+   "0.787"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f23",
+   "('RightHand', 'LeftThigh', 0, 24, 0.0597)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f23",
+   "('LeftHand', 'RightThigh', 8, 26, 0.0593)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f23",
+   "('RightHand+RightForeArm', 'RightThigh', 6, 107, 0.0598)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f23",
+   "('RightHand+RightForeArm', 'torso', 129, 163, 0.0595)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f23",
+   "('LeftHand+LeftForeArm', 'torso', 31, 180, 0.0594)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f24",
+   "0.787"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f24",
+   "('RightHand', 'LeftThigh', 129, 61, 0.0585)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f24",
+   "('RightForeArm', 'LeftThigh', 0, 3, 0.06)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f24",
+   "('LeftHand', 'RightThigh', 6, 23, 0.0588)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f24",
+   "('RightHand+RightForeArm', 'torso', 12, 118, 0.0592)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f24",
+   "('LeftHand+LeftForeArm', 'torso', 29, 184, 0.0594)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0442\u0430\u0437 f25",
+   "0.787"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f25",
+   "('RightHand', 'LeftThigh', 53, 37, 0.0484)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f25",
+   "('RightForeArm', 'LeftThigh', 0, 5, 0.0569)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f25",
+   "('LeftHand', 'RightThigh', 6, 23, 0.0588)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f25",
+   "('RightHand+RightForeArm', 'torso', 23, 116, 0.0594)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u0435\u0440\u0435\u0441\u0435\u0447\u0435\u043d\u0438\u0435 f25",
+   "('LeftHand+LeftForeArm', 'torso', 29, 180, 0.0594)"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u043f\u043e\u0434 \u0437\u0435\u043c\u043b\u0451\u0439 \u043c\u0435\u0436\u0434\u0443 \u043a\u0430\u0434\u0440\u0430\u043c\u0438",
+   "(-0.0159, 'Right x3.50')"
+  ],
+  [
+   "Pelag_AN_AnchorThrow2_Master",
+   "\u0441\u043a\u043e\u043b\u044c\u0436\u0435\u043d\u0438\u0435 \u043c\u0435\u0436\u0434\u0443 \u043a\u0430\u0434\u0440\u0430\u043c\u0438",
+   "(0.0115, 'Left x4.00')"
+  ]
+ ]
+}

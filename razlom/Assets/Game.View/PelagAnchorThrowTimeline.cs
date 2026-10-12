@@ -21,7 +21,7 @@ namespace Game.View
         /// <summary>Левая стопа стоит (весь бросок: клипы держат её в одной точке, timing.json planted_ankles).</summary>
         public bool Planted;
 
-        /// <summary>Клип ловли дошёл до кадра «якорь на спину» (Catch 3): риг кончает маятник и убирает голову.</summary>
+        /// <summary>Клип ловли дошёл до кадра «якорь на спину» (Catch 3, закидка через плечо): риг убирает голову на спину.</summary>
         public bool StowCue;
 
         /// <summary>Показ кончился: тело отдаётся стойке или бегу.</summary>
@@ -49,6 +49,10 @@ namespace Game.View
         public int ReleaseTick { get; private set; }
         public int FlightTicks { get; private set; }
         public int TautTick { get; private set; }
+
+        /// <summary>Первый тик натяга (Yank 0): натяг Sim — AnchorThrowTautTicks тиков, последний — рывок TautTick.</summary>
+        public int HoldTick => Math.Max(ReleaseTick + 1, TautTick - Simulation.AnchorThrowTautTicks + 1);
+
         public int ReturnTicks { get; private set; }
         public int CatchTick { get; private set; }
         public bool Released { get; private set; }
@@ -76,7 +80,7 @@ namespace Game.View
             ReleaseTick = Math.Max(castTick + 1, releaseTick);
             FlightTicks = Math.Max(1, flightTicks);
             TautTick = Math.Max(ReleaseTick + 1, tautTick);
-            ReturnTicks = Math.Max(4, Math.Min(8, returnTicks));
+            ReturnTicks = Math.Max(Simulation.AnchorThrowMinReturnTicks, Math.Min(8, returnTicks));
             CatchTick = Math.Max(TautTick + 1, catchTick);
             _targetYaw = targetYaw;
             _startYaw = float.NaN;
@@ -104,10 +108,10 @@ namespace Game.View
             releaseTick = Math.Max(CastTick + 1, releaseTick);
             flightTicks = Math.Max(1, flightTicks);
             tautTick = Math.Max(releaseTick + 1, tautTick);
-            returnTicks = Math.Max(4, Math.Min(8, returnTicks));
+            returnTicks = Math.Max(Simulation.AnchorThrowMinReturnTicks, Math.Min(8, returnTicks));
             catchTick = Math.Max(tautTick + 1, catchTick);
             bool flightMoved = releaseTick != ReleaseTick || flightTicks != FlightTicks || tautTick != TautTick;
-            if (flightMoved && now > ReleaseTick && now < TautTick)
+            if (flightMoved && now > ReleaseTick && now < HoldTick)
             {
                 _flightFromChain = ChainAt(now);
                 _flightFrom = now;
@@ -125,14 +129,19 @@ namespace Game.View
             if (!Active || Released) return;
             Released = true;
             if (tick != ReleaseTick)
-                Schedule(tick, FlightTicks, tick + FlightTicks + 1, ReturnTicks, tick + FlightTicks + 1 + ReturnTicks, now);
+                Schedule(tick, FlightTicks, tick + FlightTicks + Simulation.AnchorThrowTautTicks, ReturnTicks,
+                    tick + FlightTicks + Simulation.AnchorThrowTautTicks + ReturnTicks, now);
         }
 
-        /// <summary>Натяг (AnchorThrowYank): тик натяга и тики возврата — окончательные.</summary>
+        /// <summary>
+        /// Рывок (AnchorThrowYank, последний тик натяга): тик рывка и тики возврата — окончательные.
+        /// Натяг — AnchorThrowTautTicks тиков после полёта (07.10: 2), весь он — Yank 0.
+        /// </summary>
         public void Yank(int tick, int returnTicks, float now)
         {
             if (!Active || Yanked) return;
-            Schedule(ReleaseTick, Math.Max(1, tick - ReleaseTick - 1), tick, returnTicks, tick + Math.Max(4, returnTicks), now);
+            Schedule(ReleaseTick, Math.Max(1, tick - ReleaseTick - Simulation.AnchorThrowTautTicks), tick, returnTicks,
+                tick + Math.Max(4, returnTicks), now);
             Yanked = true;
         }
 
@@ -152,20 +161,32 @@ namespace Game.View
             EndReason = reason;
         }
 
-        /// <summary>Точка цепочки клипов в дробный тик показа: по прямой между ключами целых тиков.</summary>
+        /// <summary>
+        /// Точка цепочки клипов в дробный тик показа: монотонная кубика (Фрич–Карлсон) по ключам целых тиков. При равном шаге
+        /// цепочки (бросок на 7 м) — та же прямая; где шаг меняется (замах 3, полёт ≠ 7, возврат 4–5, начало и конец) — кадр
+        /// клипа идёт без ступеньки скорости (animfix 07.10: «кривые переходы»). Ключи целых тиков те же — позы на тиках Sim.
+        /// </summary>
         public float ChainAt(float t)
         {
-            if (_flightFrom >= 0f && t >= _flightFrom && t < TautTick)
+            if (_flightFrom >= 0f && t >= _flightFrom && t < HoldTick)
             {
-                float span = Math.Max(.5f, TautTick - _flightFrom);
+                float span = Math.Max(.5f, HoldTick - _flightFrom);
                 return _flightFromChain + (PelagAnchorThrowClipRules.YankStart - _flightFromChain)
                        * PelagAnchorThrowClipRules.Clamp((t - _flightFrom) / span, 0f, 1f);
             }
             int a = (int)Math.Floor(t);
             float u = t - a;
-            float from = Key(a), to = Key(a + 1);
-            return from + (to - from) * u;
+            float k0 = Key(a), k1 = Key(a + 1);
+            if (u <= 0f) return k0;
+            float d1 = k1 - k0;
+            float m0 = MonotoneSlope(k0 - Key(a - 1), d1), m1 = MonotoneSlope(d1, Key(a + 2) - k1);
+            float u2 = u * u, u3 = u2 * u;
+            return (2f * u3 - 3f * u2 + 1f) * k0 + (u3 - 2f * u2 + u) * m0 + (3f * u2 - 2f * u3) * k1 + (u3 - u2) * m1;
         }
+
+        /// <summary>Наклон в узле по соседним шагам (равный шаг по тикам): гармоническое среднее, 0 при смене знака/покое.</summary>
+        private static float MonotoneSlope(float before, float after)
+            => before * after <= 0f ? 0f : 2f * before * after / (before + after);
 
         private float Key(int n) => PelagAnchorThrowClipRules.KeyChain(CastTick, WindupTicks, ReleaseTick, FlightTicks,
             TautTick, ReturnTicks, CatchTick, n);
@@ -176,7 +197,7 @@ namespace Game.View
             if (!Active) { pose.Finished = true; return pose; }
             float c = ChainAt(t);
             pose.Chain = c;
-            pose.Clip = PelagAnchorThrowClipRules.ClipAt(c, ReturnTicks, out pose.Frame);
+            pose.Clip = PelagAnchorThrowClipRules.ClipAt(c, out pose.Frame);
             pose.StowCue = pose.Clip == PelagAnchorThrowClip.Catch && pose.Frame >= PelagAnchorThrowClipRules.StowHandoffFrame;
             if (scale > 0f)
             {

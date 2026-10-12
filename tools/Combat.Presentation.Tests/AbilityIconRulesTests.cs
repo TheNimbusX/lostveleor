@@ -79,7 +79,7 @@ public sealed class AbilityIconRulesTests
         int wreck = AbilityDefinition.WreckId;
         Assert.That(AbilityIconRules.FormFile(wreck, PelagForm.WreckBreakwater), Is.EqualTo("Icon_Wreck_Breakwater"));
         Assert.That(AbilityIconRules.FormFile(wreck, PelagForm.WreckNinthWave), Is.EqualTo("Icon_Wreck_NinthWave"));
-        Assert.That(AbilityIconRules.FormFile(wreck, PelagForm.WreckGhostAnchor), Is.EqualTo("Icon_Wreck_Shell"), "файл иконки пока прежний");
+        Assert.That(AbilityIconRules.FormFile(wreck, PelagForm.WreckGhostAnchor), Is.EqualTo("Icon_Wreck_GhostAnchor"));
         // Номер формы без своей строки всё равно получает свой файл — две формы не делят одну картинку.
         Assert.That(AbilityIconRules.FormSuffix((PelagForm)200), Is.EqualTo("Form200"));
     }

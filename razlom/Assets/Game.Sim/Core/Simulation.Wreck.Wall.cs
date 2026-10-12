@@ -129,6 +129,15 @@ namespace Game.Sim
         /// </summary>
         public bool WreckLanePreview(int slot, FixVec2 aim, out FixVec2 origin, out FixVec2 direction, out Fix64 from,
             out Fix64 to, out Fix64 halfWidth, out FixVec2 impact, out Fix64 impactRadius)
+            => WreckLanePreview(slot, aim, -1, out origin, out direction, out from, out to, out halfWidth, out impact, out impactRadius);
+
+        /// <summary>
+        /// То же превью с явным числом зарядов Девятого вала <paramref name="ninthCharges"/> (HUD: бледный контур
+        /// полной полосы до серии — ширина ×2 и +2 м, преграды оси те же); −1 — заряды этой серии, как выше.
+        /// У других форм заряды не действуют (WreckSlamGeometry). Состояние Sim не меняет.
+        /// </summary>
+        public bool WreckLanePreview(int slot, FixVec2 aim, int ninthCharges, out FixVec2 origin, out FixVec2 direction,
+            out Fix64 from, out Fix64 to, out Fix64 halfWidth, out FixVec2 impact, out Fix64 impactRadius)
         {
             AbilityBuild build = (uint)slot < (uint)AbilitySlots ? _abilityBuilds[slot] : null;
             origin = Entities.Position[PlayerId];
@@ -145,7 +154,8 @@ namespace Game.Sim
             }
             // Выпад v4 сам везёт героя на 0,6 м (Simulation.Wreck.Lunge): след считается от места удара.
             Fix64 lunge = WreckLungeAhead(origin, direction, locked);
-            int charges = _wreck.Slot == slot && _wreck.Phase != WreckPhase.None ? _wreck.NinthCharges : 0;
+            int charges = ninthCharges >= 0 ? ninthCharges
+                : _wreck.Slot == slot && _wreck.Phase != WreckPhase.None ? _wreck.NinthCharges : 0;
             WreckSlamGeometry(build, FormAt(slot), charges, origin + direction * lunge, direction, out _, out from,
                 out impactRadius, out _, out halfWidth, out to, out _);
             from += lunge;

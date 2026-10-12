@@ -19,8 +19,12 @@ namespace Game.View
                     mode==PelagVfxShowcase.ChainStep?3:mode==PelagVfxShowcase.Cleave?1:
                     mode==PelagVfxShowcase.Blaze?2:mode==PelagVfxShowcase.Wreck?5:
                     mode==PelagVfxShowcase.FireFlask?7:mode==PelagVfxShowcase.Skewer?8:
-                    mode==PelagVfxShowcase.Backblast?9:0;
-                Sim.SetAbility(0,PelagKit.PoolDefinition(pool),Array.Empty<AbilityNode>(),0);
+                    mode==PelagVfxShowcase.Backblast?9:mode==PelagVfxShowcase.AnchorThrow?10:0;
+                // Крушение: -capture-wreck-form — форма в слоте (TickDriver.WreckIronCapture.WreckCaptureNodes).
+                AbilityNode[] nodes=Array.Empty<AbilityNode>();
+                int count=mode==PelagVfxShowcase.Wreck?WreckCaptureNodes(out nodes)
+                    :mode==PelagVfxShowcase.AnchorThrow?ThrowCaptureNodes(out nodes):0;
+                Sim.SetAbility(0,PelagKit.PoolDefinition(pool),nodes,count);
             }
             Sim.SetAbility(PelagKit.DashSlot,AbilityDefinition.Dash(),Array.Empty<AbilityNode>(),0);
         }

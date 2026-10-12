@@ -123,6 +123,8 @@ namespace Game.View
             run.StreakTail = fist;
             if (!run.Rig)
                 run.ChainFx = AtSpawnPart(PelagVfxId.AnchorThrowChain, fist, Quaternion.identity, out run.ChainObject, out run.ChainElement);
+            // 08.10: база «холодное железо» и формы на ней в своей краске (PelagVfxController.AnchorThrowIron) вместо пены 03.10.
+            if (AnchorThrowIronReady) { BeginAnchorThrowIronVfx(run, shown); return; }
             run.SleeveFx = AtSpawnRibbon(run.Form, fist, out run.SleeveObject, out run.SleeveFilter, out run.SleeveDrops);
             run.Sleeve.Begin();
             run.StreakFx = AtSpawnRibbon(run.Form, fist, out run.StreakObject, out run.StreakFilter, out run.StreakDrops);

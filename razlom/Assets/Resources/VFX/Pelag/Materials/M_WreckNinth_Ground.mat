@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_WreckNinth_Ground
+  m_Shader: {fileID: 4800000, guid: 8cf05b3d347d790498639c994697e7d0, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _FacetTex:
+        m_Texture: {fileID: 2800000, guid: 895a907c47b33e445a620c6c353da305, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CameraPush: 0.02
+    - _ErodeBias: 0.02
+    - _ErodeFrom: 0.16
+    - _ErodeGain: 1.6
+    - _ErodeTo: 0.46
+    - _FadeFrom: 0.4
+    - _FadeTo: 0.52
+    - _FlowSpeed: 1.2
+    - _Glow: 0.3
+    - _OutlinePx: 1.5
+    - _SpikeLean: 0.1
+    - _SpikeSharp: 1.3
+    - _Streaks: 0.6
+    m_Colors:
+    - _Body: {r: 0.42, g: 0.1, b: 0, a: 0}
+    - _Core: {r: 0.07, g: 0.17, b: 0.8, a: 0}
+    - _Deep: {r: 0.16470589, g: 0.10980392, b: 0.6117647, a: 1}
+    - _Hot: {r: 0.97, g: 0.95, b: 1.22, a: 1}
+    - _Light: {r: 0.5411765, g: 0.41960785, b: 1, a: 1}
+    - _Mid: {r: 0.29411766, g: 0.24705882, b: 0.8156863, a: 1}
+    - _Outline: {r: 0.078431375, g: 0.03529412, b: 0.24705882, a: 0.9}
+    - _SmallSpikes: {r: 26, g: 0.08, b: 0.24, a: 0.5}
+    - _Spikes: {r: 12, g: 0.24, b: 0.62, a: 0.26}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

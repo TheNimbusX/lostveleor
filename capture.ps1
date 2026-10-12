@@ -53,7 +53,7 @@ param(
     [string] $Quality = '',
     [ValidateSet(0, 60, 120, 144, 240, -1)]
     [int]    $FrameCap = 0,
-    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'anchor-slam', 'chain-cyclone', 'squall', 'anchor-sweep', 'chain-step', 'rotation', 'cleave', 'blaze', 'dash', 'wreck', 'fire-flask', 'skewer', 'backblast')]
+    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'anchor-slam', 'chain-cyclone', 'squall', 'anchor-sweep', 'chain-step', 'rotation', 'cleave', 'blaze', 'dash', 'wreck', 'fire-flask', 'skewer', 'backblast', 'anchor-throw')]
     [string] $Skill = '',
     [switch] $LiveSkill,
     [switch] $AudioProbe,

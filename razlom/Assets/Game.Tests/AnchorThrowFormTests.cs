@@ -49,15 +49,15 @@ namespace Game.Tests
         {
             Simulation sim = Arena(PelagForm.AnchorThrowFan);
             int main = Enemy(sim, 3000, 0);
-            int left = Enemy(sim, 3464, 2000);           // +30°, 4 м
-            int right = Enemy(sim, 4330, -2500);         // −30°, 5 м
+            int left = Enemy(sim, 3625, 1690);           // +25°, 4 м (от оси якоря 1,69 > 0,45 + 0,85)
+            int right = Enemy(sim, 4532, -2113);         // −25°, 5 м
             List<Frame> frames = Cast(sim, 7, 0);
             var release = Of(frames, SimEventType.AnchorThrowRelease)[0];
             Assert.IsTrue(release.ev.Flag, "Веер — три полосы");
             Assert.AreEqual(3, release.frame.State.Lanes);
             Assert.AreEqual(0, HitsOf(frames, main)[0].ev.Amount);
-            Assert.AreEqual(1, HitsOf(frames, left)[0].ev.Amount, "призрак +30°");
-            Assert.AreEqual(2, HitsOf(frames, right)[0].ev.Amount, "призрак −30°");
+            Assert.AreEqual(1, HitsOf(frames, left)[0].ev.Amount, "призрак +25°");
+            Assert.AreEqual(2, HitsOf(frames, right)[0].ev.Amount, "призрак −25°");
             foreach (int id in new[] { main, left, right })
             {
                 Assert.AreEqual(1, HitsOf(frames, id).Count, "один раз на все полосы");
@@ -66,8 +66,10 @@ namespace Game.Tests
             Assert.AreEqual(3, Of(frames, SimEventType.AnchorThrowYank)[0].frame.State.ReeledCount);
             Assert.AreEqual(3, Of(frames, SimEventType.AnchorThrowCatch)[0].ev.Amount);
             AnchorThrowState s = sim.AnchorThrow;
-            Assert.AreEqual(30.0, System.Math.Atan2(s.Dir1.Y.ToDouble(), s.Dir1.X.ToDouble()) * 180 / System.Math.PI, 0.1);
-            Assert.AreEqual(System.Math.PI / 6, s.GhostAngle.ToDouble(), 1e-6);
+            // Кадр form-fan-ghost-v1 (07.10): ±17…21° на экране при камере 48° — ±25° на полу.
+            Assert.AreEqual(25.0, System.Math.Atan2(s.Dir1.Y.ToDouble(), s.Dir1.X.ToDouble()) * 180 / System.Math.PI, 0.1);
+            Assert.AreEqual(-25.0, System.Math.Atan2(s.Dir2.Y.ToDouble(), s.Dir2.X.ToDouble()) * 180 / System.Math.PI, 0.1);
+            Assert.AreEqual(25.0 * System.Math.PI / 180, s.GhostAngle.ToDouble(), 1e-4);
         }
 
         // ---------- Гарпун ----------
@@ -86,15 +88,18 @@ namespace Game.Tests
             Assert.IsTrue(bite[0].ev.Flag, "тянется");
             Assert.AreEqual(120, DamageTo(frames, first), "×2");
             Assert.AreEqual(0, HitsOf(frames, second).Count, "дальше не летит");
+            // 07.10 владелец: тайминг Броска 25 тиков — натяг 2 тика: укус C+5, держит C+6, рывок C+7.
+            Assert.AreEqual(AnchorThrowPhase.Taut, frames[6].State.Phase, "держит");
+            Assert.AreEqual(6, frames[6].State.HoldTick);
             var yank = Of(frames, SimEventType.AnchorThrowYank)[0];
-            Assert.AreEqual(6, yank.frame.Tick);
+            Assert.AreEqual(7, yank.frame.Tick);
             Assert.AreEqual(first, yank.ev.Target);
             Assert.IsTrue(yank.ev.Flag);
             Assert.IsTrue(yank.frame.State.Stuck);
-            Assert.AreEqual(10, TickOf(frames, SimEventType.AnchorThrowCatch), "R по дальности укуса, мин. 4");
-            Assert.IsTrue(sim.Statuses.IsStunned(first, 39), "оглушён до C+40");
-            Assert.IsFalse(sim.Statuses.IsStunned(first, 40));
-            Frame atCatch = frames[10];
+            Assert.AreEqual(11, TickOf(frames, SimEventType.AnchorThrowCatch), "R по дальности укуса, мин. 4");
+            Assert.IsTrue(sim.Statuses.IsStunned(first, 40), "оглушён до ловли + 1 с (C+41)");
+            Assert.IsFalse(sim.Statuses.IsStunned(first, 41));
+            Frame atCatch = frames[11];
             Assert.AreEqual(0.45 + 0.3 + 0.85, Dist(atCatch.Positions[first], atCatch.Positions[0]), 0.02, "в центр полукольца");
         }
 
@@ -113,6 +118,11 @@ namespace Game.Tests
                 int damage = DamageTo(frames, mob);
                 Assert.Greater(damage, 0);
                 Assert.IsTrue(sim.Statuses.IsStunned(mob, bite[0].frame.Tick + 20), kind + ": оглушён");
+                // Правило прежнее (×2 + оглушение, без тяги); оглушение — до ловли + 1 с по новому таймингу.
+                int caught = TickOf(frames, SimEventType.AnchorThrowCatch);
+                Assert.AreEqual(bite[0].frame.Tick + Simulation.AnchorThrowTautTicks + sim.AnchorThrow.ReturnTicks, caught, kind + ": ловля");
+                Assert.IsTrue(sim.Statuses.IsStunned(mob, caught + Simulation.AnchorThrowHarpoonStunTailTicks - 1), kind + ": до ловли + 1 с");
+                Assert.IsFalse(sim.Statuses.IsStunned(mob, caught + Simulation.AnchorThrowHarpoonStunTailTicks), kind + ": ловля + 1 с — уже нет");
                 Assert.Less(Dist(sim.Entities.Position[mob], at), 0.02, kind + ": стоит");
             }
         }
@@ -123,10 +133,10 @@ namespace Game.Tests
             Simulation sim = Arena(PelagForm.AnchorThrowHarpoon);
             List<Frame> frames = Cast(sim, 7, 0);
             var yank = Of(frames, SimEventType.AnchorThrowYank)[0];
-            Assert.AreEqual(10, yank.frame.Tick);
+            Assert.AreEqual(11, yank.frame.Tick);
             Assert.AreEqual(-1, yank.ev.Target);
             Assert.IsFalse(yank.ev.Flag);
-            Assert.AreEqual(18, TickOf(frames, SimEventType.AnchorThrowCatch));
+            Assert.AreEqual(17, TickOf(frames, SimEventType.AnchorThrowCatch));
         }
     }
 }

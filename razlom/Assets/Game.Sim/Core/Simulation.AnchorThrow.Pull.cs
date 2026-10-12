@@ -34,6 +34,7 @@ namespace Game.Sim
                 _throwReeled[i] = true;
                 _throwPullLength[i] = FixVec2.Distance(spot, Entities.Position[i]);
                 _throwSlotAt[i] = spot;
+                _throwPullFrom[i] = Entities.Position[i];
                 reeled++;
             }
             _anchorThrow.ReeledCount = reeled;
@@ -167,6 +168,7 @@ namespace Game.Sim
             _throwReeled = new bool[capacity];
             _throwPullLength = new Fix64[capacity];
             _throwSlotAt = new FixVec2[capacity];
+            _throwPullFrom = new FixVec2[capacity];
             _ringIds = new int[capacity];
             _ringPositions = new FixVec2[capacity];
             _ringSpots = new FixVec2[capacity];
@@ -181,6 +183,7 @@ namespace Game.Sim
             System.Array.Clear(_throwReeled, 0, _throwReeled.Length);
             System.Array.Clear(_throwPullLength, 0, _throwPullLength.Length);
             System.Array.Clear(_throwSlotAt, 0, _throwSlotAt.Length);
+            System.Array.Clear(_throwPullFrom, 0, _throwPullFrom.Length);
         }
 
         /// <summary>

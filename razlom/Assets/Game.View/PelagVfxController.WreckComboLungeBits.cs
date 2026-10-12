@@ -146,7 +146,9 @@ namespace Game.View
         private static void WreckComboLungeColors(WreckComboLungeRun run, PelagForm form)
         {
             PelagWreckComboLook.Palette c = PelagWreckComboLook.For(form);
-            if (form == PelagForm.None || form == PelagForm.WreckShell)
+            // 07.10: WreckShell — псевдоним WreckGhostAnchor (форма 13), «Якорной брони» больше нет; проверка на неё красила
+            // Призрачный якорь в базовый кобальт. Базу (None) не трогает.
+            if (form == PelagForm.None)
             {
                 run.Cobalt = new Color(.12f, .36f, 1.0f, 1f);
                 run.Deep = new Color(.035f, .12f, .55f, 1f);
@@ -178,7 +180,7 @@ namespace Game.View
             }
             ParticleSystem sparks = root.Find("Sparks")?.GetComponent<ParticleSystem>();
             if (sparks != null) { var main = sparks.main; main.startColor = new ParticleSystem.MinMaxGradient(run.Hot, WclSparkBlue(run)); }
-            bool tinted = run.Form != PelagForm.None && run.Form != PelagForm.WreckShell;
+            bool tinted = run.Form != PelagForm.None;
             PelagWreckComboLook.Palette c = PelagWreckComboLook.For(run.Form);
             if (_wclBlock == null) _wclBlock = new MaterialPropertyBlock();
             foreach (string name in new[] { "Crest", "CrestEcho" })
@@ -210,7 +212,8 @@ namespace Game.View
         private bool PlayWreckComboLungeMark(in WkPending p, Vector3 body, Vector3 dir)
         {
             if (!WreckComboReady || !WreckComboLungeReady) return false;
-            if (p.Hit != WreckVfxHit.Circle && p.Hit != WreckVfxHit.Wave && p.Hit != WreckVfxHit.Wall) return false;
+            // Обрушение Волнореза (07.10) — тот же знак в зелени вместо пенного всплеска (Crash бывает только у этой формы).
+            if (p.Hit != WreckVfxHit.Circle && p.Hit != WreckVfxHit.Wave && p.Hit != WreckVfxHit.Wall && p.Hit != WreckVfxHit.Crash) return false;
             if (CaptureRig.NoVfx) return true;
             Simulation sim = _driver.Sim;
             float radius = sim != null && (uint)p.Target < (uint)sim.Entities.Count
@@ -222,8 +225,8 @@ namespace Game.View
             dir.y = 0f;
             dir = dir.sqrMagnitude > 1e-4f ? dir.normalized : PlayerFacing();
             if (!TryAcquire(PelagVfxId.WreckComboHit, out GameObject go, out PelagVfxElement element)) return true;
-            PelagForm form = p.Hit == WreckVfxHit.Wall ? PelagForm.WreckBreakwater : p.Wave.Look != PelagForm.None ? p.Wave.Look : p.Form;
-            TintWreckComboHit(go.transform, form);
+            PelagForm form = p.Hit == WreckVfxHit.Wall || p.Hit == WreckVfxHit.Crash ? PelagForm.WreckBreakwater : p.Wave.Look != PelagForm.None ? p.Wave.Look : p.Form;
+            TintWreckComboHit(go.transform, form, false);
             // Звезда знака у задетых выпадом — белое только в сердцевине (L1: кремовые звёзды ×1,35 перекрывали гребень).
             Renderer star = go.transform.Find("Burst")?.GetComponent<Renderer>();
             if (star != null)
@@ -233,6 +236,9 @@ namespace Game.View
                 _wclBlock.SetFloat(WclCoreWidthId, .56f);
                 star.SetPropertyBlock(_wclBlock);
             }
+            TintWreckGhostBits(go.transform, form == PelagForm.WreckGhostAnchor, true);   // .WreckGhost: звезда знака в краске призрака
+            TintWreckNinthBits(go.transform, form, true);   // .WreckNinth: знак в индиго
+            TintWreckBreakMark(go.transform, form);   // .WreckBreakwaterBits: белое звезды Волнореза — мятой и только в сердцевине
             int index = ReserveActive();
             element.Begin(position, Quaternion.LookRotation(dir, Vector3.up));
             go.transform.localScale = Vector3.one * (p.Hit == WreckVfxHit.Circle ? PelagWreckComboLungeLook.CircleHitScale : PelagWreckComboLungeLook.WaveHitScale);

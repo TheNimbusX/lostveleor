@@ -26,7 +26,7 @@ using UnityEngine;
 public static partial class PelagWreckComboVfxSetup
 {
     /// <summary>Версия сборки: любая правка ассетов — поднять.</summary>
-    private const int Version = 8;
+    private const int Version = 14;
     private static readonly string Revision = "PelagWreckComboV" + Version;
 
     private const string Root = "Assets/Resources/VFX/Pelag";
@@ -174,17 +174,22 @@ public static partial class PelagWreckComboVfxSetup
         Material clod = BitMaterial(bitShader, "M_WreckCombo_Clod", DebrisTexture, 1f, 0f, 0f, 1f, 0f, 0f, 2f);
         clod.SetFloat("_ShapeAlpha", 1f);
         clod.SetColor("_BevelAdd", new Color(.46f, .34f, .22f, 1f));
-        foreach (var m in new[] { spark, burst, chip, clod }) m.SetFloat("_CameraPush", .6f);
+        // 07.10: сколы с края полумесяца — свой материал со светлым стальным скосом (знак и выпад держат прежний).
+        Material swingChip = BitMaterial(bitShader, "M_WreckCombo_SwingChip", DebrisTexture, 1f, 0f, 0f, 1f, 0f, 0f, 2f);
+        swingChip.SetFloat("_ShapeAlpha", 1f);
+        float[] bevel = PelagWreckComboLook.ChipBevelAdd;
+        swingChip.SetColor("_BevelAdd", new Color(bevel[0], bevel[1], bevel[2], 1f));
+        foreach (var m in new[] { spark, burst, chip, clod, swingChip }) m.SetFloat("_CameraPush", .6f);
 
-        foreach (var m in new[] { main, echo, heavy, heavyEcho, spark, burst, chip, clod })
+        foreach (var m in new[] { main, echo, heavy, heavyEcho, spark, burst, chip, clod, swingChip })
         {
             EditorUtility.SetDirty(m);
             AssetDatabase.SaveAssetIfDirty(m);
         }
         AssetDatabase.SaveAssetIfDirty(wave);
 
-        SaveSwingPrefab(SwingName, PelagVfxId.WreckComboSwing, wave, main, echo, spark, chip, SwingLife, false);
-        SaveSwingPrefab(HeavyName, PelagVfxId.WreckComboSwingHeavy, wave, heavy, heavyEcho, spark, chip, HeavyLife, true);
+        SaveSwingPrefab(SwingName, PelagVfxId.WreckComboSwing, wave, main, echo, spark, swingChip, SwingLife, false);
+        SaveSwingPrefab(HeavyName, PelagVfxId.WreckComboSwingHeavy, wave, heavy, heavyEcho, spark, swingChip, HeavyLife, true);
         SaveHitPrefab(burst, spark, chip, clod);
 
         var importer = AssetImporter.GetAtPath(PrefabPath(SwingName));

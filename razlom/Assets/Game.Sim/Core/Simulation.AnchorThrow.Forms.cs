@@ -8,8 +8,9 @@ namespace Game.Sim
     /// * НЕВОД — в натяг за якорем ложится сеть пены на всю длину полёта (полоса 3 м):
     ///   бьёт 50 % один раз (кто задет якорем — нет), лёгких тянет на то же полукольцо,
     ///   тяжёлых и элиту оглушает. Босс в полосе — только урон.
-    /// * ВЕЕР — три полосы: якорь к курсору и два водяных призрака под ±30°; у каждой
-    ///   своя дальность; урон призрака 100 %, враг задет один раз на все полосы.
+    /// * ВЕЕР — три полосы: железный якорь к курсору и два призрака под ±25° (кадр
+    ///   form-fan-ghost-v1, 07.10); у каждой своя дальность; урон призрака 100 %, враг
+    ///   задет один раз на все полосы.
     /// * ГАРПУН — якорь вонзается в первого задетого: ×2 урона, полёт кончается в точке
     ///   касания, тянется любой с весом > 0, кроме босса (Вендиго, Шипомёт, манекен —
     ///   вес 0: только ×2 и оглушение). Оглушение — вся тяга и ещё 1 с.
@@ -28,9 +29,13 @@ namespace Game.Sim
 
         // ---- Веер ----
 
-        /// <summary>Поворот призраков: cos 30° и sin 30° — как «Три направления» Удара якорем.</summary>
-        public static readonly Fix64 AnchorThrowFanCos = Fix64.Ratio(866, 1000);
-        public static readonly Fix64 AnchorThrowFanSin = Fix64.Half;
+        /// <summary>
+        /// Поворот призраков: cos 25° и sin 25° (AnchorThrowFanAngle). Кадр Веера, одобренный
+        /// 07.10 (form-fan-ghost-v1), — ±17…21° на экране; при наклоне камеры 48° (CameraFollow.
+        /// CombatPitch) это ≈ ±25° на полу. Было 30° — заглушка от «Трёх направлений» Удара якорем.
+        /// </summary>
+        public static readonly Fix64 AnchorThrowFanCos = Fix64.Ratio(9063, 10000);
+        public static readonly Fix64 AnchorThrowFanSin = Fix64.Ratio(4226, 10000);
 
         /// <summary>Урон призрака — доля урона якоря: 100 %.</summary>
         public const int AnchorThrowFanGhostDamagePercent = 100;
@@ -43,7 +48,7 @@ namespace Game.Sim
         /// <summary>Оглушение цели Гарпуна после ловли: ещё 1 с (вся тяга — сверх него).</summary>
         public const int AnchorThrowHarpoonStunTailTicks = TicksPerSecond;
 
-        /// <summary>Призрак Веера: dir, повёрнутый на ±30° (sign +1 — против часовой).</summary>
+        /// <summary>Призрак Веера: dir, повёрнутый на ±25° (sign +1 — против часовой).</summary>
         private static FixVec2 AnchorThrowFanTurn(FixVec2 dir, int sign)
         {
             Fix64 s = sign > 0 ? AnchorThrowFanSin : -AnchorThrowFanSin;
@@ -117,8 +122,8 @@ namespace Game.Sim
             Fix64 reach = firstAt > AbordageHandReach ? firstAt : AbordageHandReach;
             AnchorThrowSetLane(ref _anchorThrow, lane, reach, _anchorThrow.LaneStep(lane), k, AnchorThrowStop.Harpoon);
             _anchorThrow.HarpoonTarget = first;
-            // Натяг — следующий тик (одна полоса), возврат — по дальности укуса.
-            int stun = 1 + AnchorThrowReturnTicks(reach) + AnchorThrowHarpoonStunTailTicks;
+            // Рывок — через AnchorThrowTautTicks тиков (одна полоса), возврат — по дальности укуса.
+            int stun = AnchorThrowTautTicks + AnchorThrowReturnTicks(reach) + AnchorThrowHarpoonStunTailTicks;
             bool pull = Entities.Kind[first] != EnemyKind.ForestThicketMaster && Entities.PushWeight[first].Raw > 0;
             int damage = (build.Get(AbilityStatType.Damage).ToInt() * AnchorThrowHarpoonDamagePercent + 50) / 100;
             AnchorThrowHit(first, lane, center + dir * firstAt, damage, pull, stun);

@@ -50,7 +50,8 @@ namespace Game.View
             ReleaseWreckComboLunge(run);
             System.Func<float, float, float> ground = WreckIronGroundAt(wave.Impact.y);
             var root = new Vector3(wave.Impact.x, ground(wave.Impact.x, wave.Impact.z), wave.Impact.z);
-            bool lane = wave.Travel > 0 || wave.Stopped;
+            // Призрачный якорь: вала нет (Sim шлёт WreckSlam с Amount 0) — ни ленты, ни кусков по полосе, даже у преграды.
+            bool lane = wave.Look != PelagForm.WreckGhostAnchor && (wave.Travel > 0 || wave.Stopped);
             int travel = lane ? Mathf.Max(1, wave.Travel) : 0;
             Vector3 dir = wave.Dir.sqrMagnitude > .01f ? new Vector3(wave.Dir.x, 0f, wave.Dir.z).normalized : PlayerFacing();
             if (!TryAcquire(PelagVfxId.WreckComboLunge, out GameObject go, out PelagVfxElement element)) return true;
@@ -70,6 +71,8 @@ namespace Game.View
             run.EndHalf = t.Find("EndHalf")?.GetComponent<ParticleSystem>();
             // Краска формы — до старта систем: залп удара рождается уже в цвете формы.
             TintWreckComboLunge(t, run);
+            TintWreckGhostBits(t, form == PelagForm.WreckGhostAnchor, false);   // .WreckGhost: краска призрака, у прочих — материал
+            TintWreckNinthBits(t, form, false);   // .WreckNinth: индиго, у прочих — материал
             float life = Mathf.Max(PelagWreckComboLungeLook.AfterSeconds + 1.3f, PelagWreckVfxRules.Seconds(travel) + 1.5f);
             int index = ReserveActive();
             element.Begin(root, Quaternion.LookRotation(dir, Vector3.up));

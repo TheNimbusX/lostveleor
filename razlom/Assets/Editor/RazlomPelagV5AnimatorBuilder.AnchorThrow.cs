@@ -6,14 +6,14 @@ using UnityEditor.Animations;
 using UnityEngine;
 
 /// <summary>
-/// Бросок якоря (03.10) в контроллере Пелага: пять клипов Pelag_AN_AnchorThrow_* из
-/// ART/characters/pelag/anchor-throw-2026-10-03/animation (timing.json: кадр = тик при W = 2,
-/// F = 10, R = 8), по состоянию на клип, у каждого своё время (AnchorThrowPhase*), переходов в
-/// графе нет — вход, стыки и выход задаёт CharacterAnimatorView.AnchorThrow. Имена — PelagAnchorThrowClipRules.
+/// Бросок якоря в контроллере Пелага: пять клипов Pelag_AN_AnchorThrow2_* (07.10, по листу поз pose-sheet-v1) из
+/// ART/characters/pelag/anchor-throw-2026-10-07/animation (timing.json: кадр = тик при броске на 7 м, 25 тиков Sim), по
+/// состоянию на клип, у каждого своё время (AnchorThrowPhase*), переходов в графе нет — вход, стыки и выход задаёт
+/// CharacterAnimatorView.AnchorThrow. Имена — PelagAnchorThrowClipRules: состояния AnchorThrow_*_v5 прежние, клипы в них
+/// новые (03.10 Pelag_AN_AnchorThrow_* остаются на диске, в контроллер не идут).
 ///
-/// Привязка — Pelag_AN_AnchorThrowBind (покой v6 стоя, объект +90° по X, как у Абордажа v2); предел
-/// таза 0,45 (замер Blender 0,387). Нет FBX или клип не собрался — состояния не добавляются, остальной
-/// контроллер собирается как прежде.
+/// Привязка — Pelag_AN_AnchorThrow2Bind (= Pelag_AN_Wreck4Bind: покой v6 стоя); предел таза 0,85 (Blender 0,77: выпад и
+/// откидка рывка). Нет FBX или клип не собрался — состояния не трогаются, остальной контроллер собирается как прежде.
 ///
 /// ДВА ВХОДА. Полная сборка Build() зовёт AddAnchorThrowParameters/AddAnchorThrowStates (правка
 /// RazlomPelagV5AnimatorBuilder.cs). Чтобы не пересобирать весь контроллер ради пяти состояний, свой ключ
@@ -23,19 +23,20 @@ using UnityEngine;
 /// </summary>
 public static partial class RazlomPelagV5AnimatorBuilder
 {
-    private const string AnchorThrowSessionKey = "Razlom.PelagV5Animator.AnchorThrow.v1";
+    private const string AnchorThrowSessionKey = "Razlom.PelagV5Animator.AnchorThrow.v3";
 
     /// <summary>
-    /// Кадры, где стопа стоит плашмя (timing.json planted_ankles, contact = flat): [0] — левая, [1] — правая.
-    /// По ним считается, на сколько перенос с рига Blender поднял стопы.
+    /// Кадры, где стопа стоит (timing.json planted): [0] — левая, [1] — правая (правая в воздухе — шаг назад на выпуске,
+    /// Throw 2, и обратно на выходе, Catch 3–4). По ним считается, на сколько перенос с рига Blender поднял стопы.
     /// </summary>
     private static readonly Dictionary<PelagAnchorThrowClip, int[][]> AnchorThrowContacts = new Dictionary<PelagAnchorThrowClip, int[][]>
     {
-        [PelagAnchorThrowClip.Throw] = new[] { new[] { 0, 1, 2, 3, 4, 5 }, new[] { 0, 2 } },
-        [PelagAnchorThrowClip.Fly] = new[] { new[] { 0, 1, 2, 3 }, new[] { 1, 2, 3 } },
-        [PelagAnchorThrowClip.Yank] = new[] { new[] { 0, 1, 2 }, new[] { 0, 2 } },
-        [PelagAnchorThrowClip.Haul] = new[] { new[] { 0, 1, 2, 3, 4, 5, 6 }, new[] { 0, 1, 2, 3, 4, 5, 6 } },
-        [PelagAnchorThrowClip.Catch] = new[] { new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }, new[] { 0, 1, 2, 3, 6, 7, 8, 9 } },
+        [PelagAnchorThrowClip.Throw] = new[] { new[] { 0, 1, 2, 3, 4, 5 }, new[] { 0, 1, 3, 4, 5 } },
+        [PelagAnchorThrowClip.Fly] = new[] { new[] { 0, 1, 2, 3, 4, 5 }, new[] { 0, 1, 2, 3, 4, 5 } },
+        [PelagAnchorThrowClip.Yank] = new[] { new[] { 0, 1, 2 }, new[] { 0, 1, 2 } },
+        // animfix 07.10: правая подшагивает к левой с ловли (16,6–19: Haul 4,6 → Catch 2), обратно в стойку серии не шагает.
+        [PelagAnchorThrowClip.Haul] = new[] { new[] { 0, 1, 2, 3, 4, 5 }, new[] { 0, 1, 2, 3, 4 } },
+        [PelagAnchorThrowClip.Catch] = new[] { new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 }, new[] { 2, 3, 4, 5, 6, 7, 8 } },
     };
 
     /// <summary>FBX Броска и привязка — в Folder, рядом с остальными клипами.</summary>
@@ -70,8 +71,9 @@ public static partial class RazlomPelagV5AnimatorBuilder
         try
         {
             foreach (PelagAnchorThrowClip clip in PelagAnchorThrowClipRules.Clips)
-                clips[clip] = RazlomPelagAuthoredClips.Build(PelagAnchorThrowClipRules.ClipName(clip), false,
-                    PelagAnchorThrowClipRules.BindReference, PelagAnchorThrowClipRules.HipLimit);
+                // animfix 07.10: ключи 4 на тик (FBX 120 к/с) — плотный перенос, а не по 30 к/с (скорость ступенькой на тиках).
+                clips[clip] = RazlomAnchorThrowDenseClips.Build(PelagAnchorThrowClipRules.ClipName(clip),
+                    PelagAnchorThrowClipRules.BindReference, PelagAnchorThrowClipRules.HipLimit, PelagAnchorThrowClipRules.SamplesPerSecond);
         }
         catch (System.Exception error)
         {
@@ -100,8 +102,10 @@ public static partial class RazlomPelagV5AnimatorBuilder
     private static bool HasAnchorThrowStates(AnimatorController controller)
     {
         if (controller == null || controller.layers.Length == 0) return false;
-        var names = new HashSet<string>(controller.layers[0].stateMachine.states.Select(s => s.state.name));
-        return PelagAnchorThrowClipRules.Clips.All(clip => names.Contains(PelagAnchorThrowClipRules.StateName(clip))
+        // 07.10: состояние считается готовым, только если в нём клип AnchorThrow2 (а не 03.10 Pelag_AN_AnchorThrow_*).
+        var states = controller.layers[0].stateMachine.states.Select(s => s.state).GroupBy(s => s.name).ToDictionary(g => g.Key, g => g.First());
+        return PelagAnchorThrowClipRules.Clips.All(clip => states.TryGetValue(PelagAnchorThrowClipRules.StateName(clip), out var state)
+                                                          && state.motion != null && state.motion.name == PelagAnchorThrowClipRules.ClipName(clip)
                                                           && controller.parameters.Any(p => p.name == PelagAnchorThrowClipRules.PhaseParameter(clip)));
     }
 

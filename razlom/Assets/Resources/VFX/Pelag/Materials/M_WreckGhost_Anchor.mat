@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_WreckGhost_Anchor
+  m_Shader: {fileID: 4800000, guid: da844b0225d0620429b10812ce30041a, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _FacetTex:
+        m_Texture: {fileID: 2800000, guid: 895a907c47b33e445a620c6c353da305, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Age: 0
+    - _Appear: 1
+    - _BandFreq: 3.5
+    - _BandSpeed: 1.6
+    - _BandWarp: 0.18
+    - _BandWidth: 0.24
+    - _Dissolve: 0
+    - _EdgeHot: 0.07
+    - _FacetLineWidth: 0.18
+    - _FacetLines: 0.85
+    - _Flash: 0
+    - _HotFrom: 0.58
+    - _InnerAlpha: 0.9
+    - _LitStep: 0.55
+    - _RimFrom: 0.4
+    m_Colors:
+    - _Band: {r: 0.15896086, g: 0.13286833, b: 0.8713672, a: 1}
+    - _Core: {r: 0.5775805, g: 0.5520115, b: 1, a: 1}
+    - _FacetTones: {r: 0.86, g: 1.42, b: 0.64, a: 0.28}
+    - _Hot: {r: 1.1, g: 1.1, b: 1.65, a: 1}
+    - _Inner: {r: 0.33245158, g: 0.30498737, b: 1, a: 1}
+    - _LightDir: {r: -0.45, g: 0.75, b: -0.48, a: 0}
+    - _NoiseScale: {r: 0.65, g: 0.9, b: 1.1, a: 1.4}
+    - _Rim: {r: 0.8, g: 0.78, b: 1.25, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

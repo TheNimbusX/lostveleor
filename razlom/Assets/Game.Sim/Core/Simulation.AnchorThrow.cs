@@ -14,13 +14,17 @@ namespace Game.Sim
         /// <summary>Якорь летит по прямой от руки (шаг Step на тик) и бьёт всех на полосе.</summary>
         Flight = 2,
 
-        /// <summary>Натяг — один тик TautTick: голова в конце, цепь прямая, задетые трогаются (ForcedMotionKind.Reeled).</summary>
+        /// <summary>
+        /// Натяг — Simulation.AnchorThrowTautTicks (2) тика HoldTick…TautTick: голова в конце, цепь прямая
+        /// (поза «держит»). В TautTick — рывок: событие AnchorThrowYank, сеть Невода, задетые трогаются
+        /// (ForcedMotionKind.Reeled, едут со следующего тика).
+        /// </summary>
         Taut = 3,
 
         /// <summary>Возврат: голова и тела по кривой Водоворота (MaelstromPullProgress) к ловле.</summary>
         Return = 4,
 
-        /// <summary>Ловля в CatchTick и удержание AnchorThrowHoldTicks.</summary>
+        /// <summary>Ловля в CatchTick и удержание AnchorThrowHoldTicks (2).</summary>
         Catch = 5,
 
         /// <summary>Выход в стойку сабли; с ExitWalkTick ходьба срывает выход.</summary>
@@ -75,7 +79,8 @@ namespace Game.Sim
 
         /// <summary>
         /// Каст; замах этого каста; выпуск (= CastTick + WindupTicks); тики полёта самой
-        /// длинной полосы; натяг; тики возврата; ловля (= TautTick + ReturnTicks); конец
+        /// длинной полосы; рывок — последний тик натяга (= выпуск + полёт + AnchorThrowTautTicks);
+        /// тики возврата; ловля (= TautTick + ReturnTicks); конец
         /// стоячей фазы; с какого тика ходьба срывает выход.
         /// </summary>
         public int CastTick, WindupTicks, ReleaseTick, FlightTicks, TautTick, ReturnTicks, CatchTick, PhaseEndTick, ExitWalkTick;
@@ -83,7 +88,7 @@ namespace Game.Sim
         /// <summary>Центр героя в каст (от него меряются полосы) и рука в выпуск (Center + Dir · 0,5).</summary>
         public FixVec2 Center, Origin;
 
-        /// <summary>Главная полоса — к курсору; Веер — ещё Dir1 (+30°) и Dir2 (−30°).</summary>
+        /// <summary>Главная полоса — к курсору; Веер — ещё Dir1 (+25°, против часовой) и Dir2 (−25°).</summary>
         public FixVec2 Dir, Dir1, Dir2;
 
         /// <summary>Полос: 1 или 3 (Веер).</summary>
@@ -115,13 +120,19 @@ namespace Game.Sim
 
         public int ReachTick => TautTick;
         public int YankStartTick => TautTick;
+
+        /// <summary>
+        /// Первый тик натяга (поза «держит»; фаза уже Taut): TautTick − AnchorThrowTautTicks + 1.
+        /// Голова в конце с LaneArriveTick главной полосы, тела стоят до TautTick включительно.
+        /// </summary>
+        public int HoldTick => TautTick - Simulation.AnchorThrowTautTicks + 1;
         public int YankEndTick => CatchTick;
         public FixVec2 Direction => Dir;
         public Fix64 Range => Reach0;
         public bool Stuck => StopKind0 == AnchorThrowStop.Harpoon;
         public int Target => HarpoonTarget;
 
-        /// <summary>Угол призраков Веера, радианы (π/6); не Веер — 0.</summary>
+        /// <summary>Угол призраков Веера, радианы (5π/36 = 25°); не Веер — 0.</summary>
         public Fix64 GhostAngle => Lanes == 3 ? Simulation.AnchorThrowFanAngle : Fix64.Zero;
 
         public FixVec2 LaneDir(int lane) => lane == 1 ? Dir1 : lane == 2 ? Dir2 : Dir;
@@ -129,6 +140,20 @@ namespace Game.Sim
         public Fix64 LaneStep(int lane) => lane == 1 ? Step1 : lane == 2 ? Step2 : Step0;
         public int LaneFlight(int lane) => lane == 1 ? Flight1 : lane == 2 ? Flight2 : Flight0;
         public AnchorThrowStop LaneStop(int lane) => lane == 1 ? StopKind1 : lane == 2 ? StopKind2 : StopKind0;
+
+        // ---- для вида (AGENTS/specs/anchor-throw-view-contract.md), только чтение ----
+
+        /// <summary>Конец полосы lane: Center + LaneDir · LaneReach (стена, корпус, укус уже учтены).</summary>
+        public FixVec2 LaneEnd(int lane) => Center + LaneDir(lane) * LaneReach(lane);
+
+        /// <summary>Тик последнего шага полёта полосы lane: голова в конце (ReleaseTick + LaneFlight).</summary>
+        public int LaneArriveTick(int lane) => ReleaseTick + LaneFlight(lane);
+
+        /// <summary>Тик укуса Гарпуна (= тик события AnchorThrowHit цели); −1 — укуса нет.</summary>
+        public int BiteTick => StopKind0 == AnchorThrowStop.Harpoon ? ReleaseTick + Flight0 : -1;
+
+        /// <summary>Невод лёг (или ляжет в натяг): форма с сетью и бросок не в стену.</summary>
+        public bool HasNet => NetHalfWidth.Raw > 0 && Reach0 >= Simulation.AnchorThrowWallMinReach;
 
         public void HashInto(ref ulong hash)
         {
@@ -162,10 +187,13 @@ namespace Game.Sim
     /// * ПОЛЁТ по прямой от руки (0,5 м) до дальности R (7 м; короче — стена, корпус
     ///   босса, укус Гарпуна): F = clamp(⌈(R − 0,5) / 1⌉, 1, 10) тиков; тик полёта k
     ///   бьёт отрезок [0,5 + s(k−1), 0,5 + s·k] (первый — с 0) полосой 0,9 м.
-    /// * НАТЯГ тиком после полёта: задетые лёгкие едут (ForcedMotionKind.Reeled) на
-    ///   полукольцо перед героем (AnchorThrowRing), без наложений.
-    /// * ВОЗВРАТ R = clamp(round((R − 0,5) / 0,8), 4, 8) тиков по кривой Водоворота.
-    /// * ЛОВЛЯ: доехавшим в своей тяге — оглушение 15; удержание 3, выход 6 (2 без ходьбы).
+    /// * НАТЯГ 2 тика после полёта (голова в конце, цепь прямая, поза «держит»); во втором
+    ///   (TautTick) — рывок: задетые лёгкие едут (ForcedMotionKind.Reeled) на полукольцо
+    ///   перед героем (AnchorThrowRing), без наложений.
+    /// * ВОЗВРАТ R = clamp(round((R − 0,5) / 1,1), 4, 6) тиков по кривой Водоворота.
+    /// * ЛОВЛЯ: доехавшим в своей тяге — оглушение 15; удержание 2, выход 6 (2 без ходьбы).
+    /// * 7 м в пустоту — 25 тиков, ходьба с 21-го. 07.10 владелец: тайминг Броска 25 тиков
+    ///   (натяг 1 → 2, возврат 8 → 6, удержание 3 → 2; было 27 и 23).
     ///
     /// Формы (владелец 03.10) — Simulation.AnchorThrow.Forms: Невод, Веер, Гарпун.
     /// Все числа — именованные ЗАГЛУШКИ под приёмку и общий проход баланса.
@@ -177,14 +205,25 @@ namespace Game.Sim
         /// <summary>Полёт: путь от руки делится на тики по 1 м (≈ 28 м/с при 7 м).</summary>
         public static readonly Fix64 AnchorThrowFlightStep = Fix64.One;
 
-        /// <summary>Возврат: тиков = round((дальность − 0,5) / 0,8), в пределах 4…8.</summary>
-        public static readonly Fix64 AnchorThrowReturnStep = Fix64.Ratio(8, 10);
+        /// <summary>
+        /// Возврат: тиков = round((дальность − 0,5) / 1,1), в пределах 4…6 (7 м — 6, рывок резче).
+        /// 07.10 владелец: тайминг Броска 25 тиков; было 0,8 м и потолок 8.
+        /// </summary>
+        public static readonly Fix64 AnchorThrowReturnStep = Fix64.Ratio(11, 10);
 
-        public const int AnchorThrowMinReturnTicks = 4, AnchorThrowMaxReturnTicks = 8;
+        public const int AnchorThrowMinReturnTicks = 4, AnchorThrowMaxReturnTicks = 6;
         public const int AnchorThrowMinFlightTicks = 1, AnchorThrowMaxFlightTicks = 10;
 
-        /// <summary>Удержание ловли, выход, первые тики выхода без ходьбы — числа Абордажа и Шквала.</summary>
-        public const int AnchorThrowHoldTicks = AbordageHoldTicks;
+        /// <summary>
+        /// Натяг: тиков, когда голова стоит в конце и цепь прямая (поза «держит»), — от тика после
+        /// полёта до рывка TautTick включительно. 07.10 владелец: 1 → 2, чтобы поза читалась.
+        /// </summary>
+        public const int AnchorThrowTautTicks = 2;
+
+        /// <summary>Удержание ловли: 2 тика (07.10 владелец: 3 → 2; у Абордажа и Шквала — 3).</summary>
+        public const int AnchorThrowHoldTicks = 2;
+
+        /// <summary>Выход и первые тики выхода без ходьбы — числа Абордажа и Шквала.</summary>
         public const int AnchorThrowExitTicks = AbordageExitTicks;
         public const int AnchorThrowExitLockedTicks = AbordageExitLockedTicks;
 
@@ -220,6 +259,7 @@ namespace Game.Sim
         private bool[] _throwReeled;         // в своей тяге (натяг…ловля)
         private Fix64[] _throwPullLength;    // путь тела по плану тяги
         private FixVec2[] _throwSlotAt;      // место на полукольце
+        private FixVec2[] _throwPullFrom;    // где тело стояло в натяг — начало пути (только для вида, в хеш не идёт)
         private int[] _ringIds;              // черновики полукольца
         private FixVec2[] _ringPositions, _ringSpots;
         private Fix64[] _ringRadii;
@@ -247,13 +287,16 @@ namespace Game.Sim
         /// <summary>Голова главной полосы на последнем шагнувшем тике (между тиками — Tick − 1).</summary>
         public FixVec2 AnchorThrowAnchorAt => AnchorThrowHead(_anchorThrow, 0, Tick - 1);
 
-        /// <summary>Угол призраков Веера: 30° (как «Три направления» Удара якорем).</summary>
-        public static readonly Fix64 AnchorThrowFanAngle = Fix64.Pi / 6;
+        /// <summary>
+        /// Угол призраков Веера: 25° = 5π/36 (кадр form-fan-ghost-v1, 07.10; см. AnchorThrowFanCos).
+        /// Меняется вместе с AnchorThrowFanCos/Sin и текстами PelagFormTexts.
+        /// </summary>
+        public static readonly Fix64 AnchorThrowFanAngle = Fix64.Pi * Fix64.Ratio(5, 36);
 
         /// <summary>
         /// Голова полосы lane на тике tick — одна формула для Sim, вида и тестов (вид
         /// держит её во float). До выпуска — рука; полёт — Center + dir · (0,5 + s·k),
-        /// в последнем тике полёта — ровно дальность; до натяга ждёт в конце; возврат —
+        /// в последнем тике полёта — ровно дальность; весь натяг (HoldTick…TautTick) ждёт в конце; возврат —
         /// от конца к руке полосы по MaelstromPullProgress(тик − натяг, R); после ловли — рука.
         /// </summary>
         public static FixVec2 AnchorThrowHead(in AnchorThrowState s, int lane, int tick)
@@ -285,7 +328,7 @@ namespace Game.Sim
                 : ticks > AnchorThrowMaxFlightTicks ? AnchorThrowMaxFlightTicks : ticks;
         }
 
-        /// <summary>Тики возврата с дальности reach: clamp(round((reach − 0,5) / 0,8), 4, 8).</summary>
+        /// <summary>Тики возврата с дальности reach: clamp(round((reach − 0,5) / 1,1), 4, 6).</summary>
         public static int AnchorThrowReturnTicks(Fix64 reach)
         {
             Fix64 path = (reach - AbordageHandReach) / AnchorThrowReturnStep;

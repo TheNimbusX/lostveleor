@@ -179,6 +179,9 @@ public static partial class PelagWreckComboVfxSetup
         renderer.SetMeshes(m.Rocks);
         renderer.alignment = ParticleSystemRenderSpace.World;
         renderer.sharedMaterial = m.Rock;
+        // 07.10: с GPU-инстансингом мешевые частицы «Particles/Simple Lit» рисуют 2–3 камня из десятков (проба Призрачного
+        // якоря) — выпад базы терял камни так же.
+        renderer.enableGPUInstancing = false;
         renderer.shadowCastingMode = ShadowCastingMode.On;
         renderer.receiveShadows = true;
         renderer.SetActiveVertexStreams(new List<ParticleSystemVertexStream>

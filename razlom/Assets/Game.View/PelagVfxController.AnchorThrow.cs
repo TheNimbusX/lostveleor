@@ -32,9 +32,12 @@ namespace Game.View
     /// </summary>
     public sealed partial class PelagVfxController
     {
-        /// <summary>Префабы Броска собраны и в библиотеке.</summary>
-        private bool AnchorThrowVfxReady => _pools != null && (int)PelagVfxId.AnchorThrowRibbon < _pools.Length
-            && _pools[(int)PelagVfxId.AnchorThrowRibbon] != null;
+        /// <summary>
+        /// Префабы Броска собраны и в библиотеке: база «холодное железо» (08.10, .AnchorThrowIron) или пена 03.10 (от библиотеки
+        /// отвязана 08.10, код остаётся запасным путём).
+        /// </summary>
+        private bool AnchorThrowVfxReady => AnchorThrowIronReady || (_pools != null && (int)PelagVfxId.AnchorThrowRibbon < _pools.Length
+            && _pools[(int)PelagVfxId.AnchorThrowRibbon] != null);
 
         private enum AtKind : byte { Hit, Yank, Catch, Land, End }
 
@@ -61,7 +64,12 @@ namespace Game.View
             {
                 PelagVfxId.AnchorThrowRibbon, PelagVfxId.AnchorThrowSplash, PelagVfxId.AnchorThrowCrown, PelagVfxId.AnchorThrowKnock,
                 PelagVfxId.AnchorThrowBurst, PelagVfxId.AnchorThrowWake, PelagVfxId.AnchorThrowDrag, PelagVfxId.AnchorThrowNet,
-                PelagVfxId.AnchorThrowGhost, PelagVfxId.AnchorThrowAnchor, PelagVfxId.AnchorThrowChain
+                PelagVfxId.AnchorThrowGhost, PelagVfxId.AnchorThrowAnchor, PelagVfxId.AnchorThrowChain,
+                PelagVfxId.AnchorThrowIronChain, PelagVfxId.AnchorThrowIronHit, PelagVfxId.AnchorThrowIronFurrow,
+                PelagVfxId.AnchorThrowIronCatch, PelagVfxId.AnchorThrowIronStun,
+                PelagVfxId.AnchorThrowFormChainNet, PelagVfxId.AnchorThrowFormChainFan, PelagVfxId.AnchorThrowFormChainHarpoon,
+                PelagVfxId.AnchorThrowFormHitNet, PelagVfxId.AnchorThrowFormHitFan, PelagVfxId.AnchorThrowFormHitHarpoon,
+                PelagVfxId.AnchorThrowFormNet, PelagVfxId.AnchorThrowFormGhost
             };
             foreach (PelagVfxId id in ids)
                 if ((int)id < _pools.Length && _pools[(int)id] != null) _pools[(int)id].Pool.PrewarmStep(8);
@@ -137,6 +145,9 @@ namespace Game.View
             _atGroundBase = PlayerPosition().y;
             while (_atQueued > 0 && _atQueue[0].Tick <= shown) RunAnchorThrowCue(0, false);
             UpdateAnchorThrowRun(sim, shown, dt);
+            // База 08.10 «холодное железо» и формы на ней (PelagVfxController.AnchorThrowIron) — после головы рига: хват и
+            // кольцо этого кадра.
+            UpdateAnchorThrowIronVfx(sim, shown, dt);
             UpdateAnchorThrowGhosts(shown, dt);
             UpdateAnchorThrowNet(shown, dt);
             UpdateAnchorThrowTows(sim, shown, dt);
@@ -150,6 +161,7 @@ namespace Game.View
             if (_atRun.Active) FinishAnchorThrowRun(false);
             ForgetAnchorThrowForms();
             ForgetAnchorThrowTows();
+            ForgetAnchorThrowIronVfx();
         }
 
         /// <summary>Показать шаг очереди <paramref name="index"/> и убрать его.</summary>

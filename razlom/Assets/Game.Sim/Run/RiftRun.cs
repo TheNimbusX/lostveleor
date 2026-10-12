@@ -1025,8 +1025,9 @@ namespace Game.Sim
         private bool IsAbilityCandidate(int pool, int filled)
             => PelagKit.InRewardPool(pool) && !Loadout.Owns(pool) && !OfferedOnPanel(filled, RewardKind.Ability, pool);
 
+        /// <summary>Убранный навык в слоте (старый или F8-набор) усилений с наград не получает — PelagKit.OffersTalents.</summary>
         private bool IsTalentCandidate(int pool, int filled)
-            => Loadout.CanTakeTalent(pool) && !OfferedOnPanel(filled, RewardKind.Talent, pool);
+            => PelagKit.OffersTalents(pool) && Loadout.CanTakeTalent(pool) && !OfferedOnPanel(filled, RewardKind.Talent, pool);
 
         private int CountAbilityCandidates(int filled)
         {

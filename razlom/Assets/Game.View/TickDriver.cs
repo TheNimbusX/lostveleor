@@ -870,6 +870,8 @@ namespace Game.View
                         }
                         // Крушение V6: -capture-wreck-lane — враги вдоль полосы (TickDriver.WreckIronCapture).
                         if (CaptureRig.VfxShowcase == PelagVfxShowcase.Wreck) PlaceWreckCaptureLane(face);
+                        // Бросок якоря 07.10: -capture-throw-lane — Хранители на линии броска (TickDriver.AnchorThrowCapture).
+                        if (CaptureRig.VfxShowcase == PelagVfxShowcase.AnchorThrow) PlaceThrowCaptureLane();
                     }
                     if (CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze && elapsed == 0)
                     {
@@ -920,7 +922,11 @@ namespace Game.View
                     // Крушение: серия — три нажатия (через 15 тиков или -capture-wreck-tempo fast|pause); -capture-wreck-series N — N серий через 5 с (TickDriver.WreckIronCapture).
                     int wreckRuns = wreckSeries ? WreckCaptureSeries : 1;
                     if (wreckSeries) castAt = 18 + WreckCapturePressOffset(_liveSkillCastStage % 3, _liveSkillCastStage / 3) + (_liveSkillCastStage / 3) * 150;
-                    if (_liveSkillCastStage < (sequence ? 4 : wreckSeries ? 3 * wreckRuns : CaptureRig.SlamCase == "repeat" ? 2 : 1) && elapsed >= castAt)
+                    // Бросок якоря: -capture-throw-series N — N бросков через ThrowCaptureSpacing тиков (TickDriver.AnchorThrowCapture).
+                    bool throwSeries = CaptureRig.VfxShowcase == PelagVfxShowcase.AnchorThrow;
+                    if (throwSeries) { HoldThrowCaptureLane(elapsed); castAt = 18 + _liveSkillCastStage * ThrowCaptureSpacing; }
+                    if (_liveSkillCastStage < (sequence ? 4 : wreckSeries ? 3 * wreckRuns : throwSeries ? ThrowCaptureSeries
+                            : CaptureRig.SlamCase == "repeat" ? 2 : 1) && elapsed >= castAt)
                     {
                         int definition = sequence
                             ? (_liveSkillCastStage == 0 ? AbilityDefinition.AnchorLeapId
@@ -936,7 +942,10 @@ namespace Game.View
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.FireFlask ? AbilityDefinition.FireFlaskId
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.Skewer ? AbilityDefinition.SkewerId
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.Backblast ? AbilityDefinition.BackblastId
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.AnchorThrow ? AbilityDefinition.AnchorThrowId
                             : AbilityDefinition.WhirlwindId;
+                        // Бросок якоря: -capture-throw-form net,fan,harpoon — у каждого броска своя форма (TickDriver.AnchorThrowCapture).
+                        if (throwSeries) ApplyThrowCaptureForm(_liveSkillCastStage);
                         for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
                             if (Sim.GetAbility(slot)?.DefinitionId == definition) _abilityLatch |= (byte)(1 << slot);
                         _pending.AbilityTarget = CaptureLiveSkillTarget(definition);
@@ -946,7 +955,8 @@ namespace Game.View
                         // Прицел каста не заменяет ранее отданный приказ движения.
                         _pending.Flags = 0;
                         // Крушение v4: серия turn бьёт вперёд, вбок и назад (TickDriver.WreckIronCapture).
-                        float pressYaw = wreckSeries ? WreckCapturePressYaw((_liveSkillCastStage - 1) % 3, (_liveSkillCastStage - 1) / 3) : 0f;
+                        float pressYaw = wreckSeries ? WreckCapturePressYaw((_liveSkillCastStage - 1) % 3, (_liveSkillCastStage - 1) / 3)
+                            : throwSeries ? ThrowCapturePressYaw(_liveSkillCastStage - 1) : 0f;
                         Vector3 cast = Quaternion.Euler(0f, CaptureRig.CastYaw + pressYaw, 0f) * Vector3.right * CaptureRig.CastDistance;
                         _pending.Aim = Sim.Entities.Position[Simulation.PlayerId]
                             + new FixVec2(Fix64.FromDouble(cast.x), Fix64.FromDouble(cast.z));
@@ -967,7 +977,7 @@ namespace Game.View
                     }
                     if (elapsed >= (sequence ? 282 : 90) && Sim.Entities.Count > 1
                         && !(CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze && CaptureRig.EnemyOverride == 0)
-                        && !(wreckSeries && wreckRuns > 1))
+                        && !(wreckSeries && wreckRuns > 1) && !throwSeries)
                     {
                         _pending.Aim = Sim.Entities.Position[1];
                         _pending.Flags = (byte)InputFlags.Attack;

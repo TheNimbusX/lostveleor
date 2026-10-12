@@ -32,7 +32,7 @@ namespace Combat.Presentation.Tests
                 s.Reach1 = s.Reach2 = reach; s.Step1 = s.Step2 = step; s.Flight1 = s.Flight2 = flight;
             }
             s.FlightTicks = flight;
-            s.TautTick = s.ReleaseTick + flight + 1;
+            s.TautTick = s.ReleaseTick + flight + Simulation.AnchorThrowTautTicks;
             s.ReturnTicks = Simulation.AnchorThrowReturnTicks(reach);
             s.CatchTick = s.TautTick + s.ReturnTicks;
             return s;
@@ -46,8 +46,11 @@ namespace Combat.Presentation.Tests
             AnchorThrowState s = Throw7();
             Assert.That(s.ReleaseTick, Is.EqualTo(Cast + 2));
             Assert.That(PelagAnchorThrowVfxRules.LaneArriveTick(s, 0), Is.EqualTo(Cast + 9));
-            Assert.That(s.TautTick, Is.EqualTo(Cast + 10));
-            Assert.That(s.CatchTick, Is.EqualTo(Cast + 18));
+            // 07.10 владелец: тайминг Броска 25 тиков — натяг 2 тика, возврат 6.
+            Assert.That(s.HoldTick, Is.EqualTo(Cast + 10));
+            Assert.That(s.TautTick, Is.EqualTo(Cast + 11));
+            Assert.That(s.ReturnTicks, Is.EqualTo(6));
+            Assert.That(s.CatchTick, Is.EqualTo(Cast + 17));
         }
 
         [Test]
@@ -91,7 +94,8 @@ namespace Combat.Presentation.Tests
             AnchorThrowState s = Throw7();
             Assert.That(PelagAnchorThrowVfxRules.RigPhase(s, Cast), Is.EqualTo(AnchorThrowRigPhase.Windup));
             Assert.That(PelagAnchorThrowVfxRules.RigPhase(s, s.ReleaseTick), Is.EqualTo(AnchorThrowRigPhase.Fly));
-            Assert.That(PelagAnchorThrowVfxRules.RigPhase(s, s.TautTick - .01f), Is.EqualTo(AnchorThrowRigPhase.Fly));
+            Assert.That(PelagAnchorThrowVfxRules.RigPhase(s, s.HoldTick - .01f), Is.EqualTo(AnchorThrowRigPhase.Fly));
+            Assert.That(PelagAnchorThrowVfxRules.RigPhase(s, s.HoldTick), Is.EqualTo(AnchorThrowRigPhase.Hold), "натяг 2 тика");
             Assert.That(PelagAnchorThrowVfxRules.RigPhase(s, s.TautTick), Is.EqualTo(AnchorThrowRigPhase.Hold));
             Assert.That(PelagAnchorThrowVfxRules.RigPhase(s, s.TautTick + 1), Is.EqualTo(AnchorThrowRigPhase.Yank));
             Assert.That(PelagAnchorThrowVfxRules.RigPhase(s, s.CatchTick), Is.EqualTo(AnchorThrowRigPhase.Done));

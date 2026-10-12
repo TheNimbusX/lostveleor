@@ -203,6 +203,10 @@ namespace Game.View
                         Form = PelagForm.WreckShell, Serial = sim != null ? sim.Wreck.Serial : -1
                     });
                     return true;
+                case SimEventType.WreckGhostAnchor:
+                    // Призрачный якорь упал (.WreckGhost): удар в кадр события, задетые — круг в фиолетовом.
+                    if (ready) WreckGhostLanded(e, tick);
+                    return true;
                 case SimEventType.WreckEnded:
                     if (ready) WreckEnqueue(new WkPending
                     {
@@ -274,6 +278,7 @@ namespace Game.View
         private bool TakeWreckDamage(in SimEvent e, int tick)
         {
             if (!WreckVfxReady) return false;
+            if (TakeWreckGhostDamage(e, tick)) return true;
             Simulation sim = _driver.Sim;
             Vector3 at = WreckWorld(e.Position, PlayerPosition().y);
             bool inCircle = _wkHasWave && _wkWave.Tick == tick && WreckInSlamCircle(sim, e.Target, at);
@@ -282,7 +287,8 @@ namespace Game.View
                 _wkHasWave ? _wkWave.Tick : -1, _wkHasWave ? _wkWave.Travel : 0, wall);
             // Махи v4 бьют по ходу головы (контакт − 3 … + 4): удар вне тика контакта — тоже мах своего этапа (.WreckSwingHit).
             int sweepStage = WreckSweepHitStage(sim, tick, e.Target, ref hit);
-            WreckEnqueue(new WkPending
+            // 07.10: удар маха 1–2 ждёт головы волны (.WreckComboSchedule), прочее — в очередь, как было.
+            WreckEnqueueHit(new WkPending
             {
                 Kind = WkKind.Hit, Hit = hit, Stage = sweepStage, Tick = tick, Target = e.Target, At = EntityPosition(e.Target, at),
                 Form = hit == WreckVfxHit.Burst ? PelagForm.WreckShell : hit == WreckVfxHit.Wall || hit == WreckVfxHit.Crash

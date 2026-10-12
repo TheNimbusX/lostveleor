@@ -880,9 +880,10 @@ namespace Game.View
             {
                 if (sim.WreckDirection.LengthSq.Raw != 0)
                     forward = new Vector3(sim.WreckDirection.X.ToFloat(), 0f, sim.WreckDirection.Y.ToFloat()).normalized;
-                // Крушение v2 (SPEC 6): махи — сектор (до каста — тонкая дуга по краю), удар оземь — круг и полоса
-                // по WreckLanePreview Sim (замирает, пока Sim держит удар), Девятый вал — ширина по заряду и контур
-                // полного, Волнорез — 8 м и диск обрушения, Панцирь — кольцо взрыва. Геометрия — только из Sim.
+                // Крушение v4 (HudWreckReach): контур следа серии — сектор махов, круг и полоса выпада по
+                // WreckLanePreview Sim; Волнорез — полоса стены и круг обрушения, Девятый вал — полоса по зарядам и
+                // бледный контур полного заряда, Призрачный якорь — без полосы, круг падения у точки выпада.
+                // Геометрия — только из Sim.
                 // Строки ветки выше (else if … WreckDirection) не трогаются: на них стоит якорь Броска якоря.
                 HudWreckReach.Draw(_rangePreview, sim, build, reachSlot, center, _driver.CursorWorld);
             }

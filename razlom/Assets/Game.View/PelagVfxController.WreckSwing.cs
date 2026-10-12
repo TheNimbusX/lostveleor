@@ -66,6 +66,7 @@ namespace Game.View
             arc.SweepDone = true;
             _wkIronSeries = true;
             _wsLastForm = p.Form;
+            ArmWreckComboSwing(p);   // .WreckComboSchedule: волна маха — с входа головы Sim в сектор (за 3 тика до контакта)
             // 06.10: лента за головой отвергнута владельцем — махи рисует .WreckIronSwing (техника серии сабли) в контакт.
             if (WreckComboReady || WreckIronSwingReady || WreckPaintedSwingReady) return;
             WreckSwingRun run = TakeWreckSwing();
