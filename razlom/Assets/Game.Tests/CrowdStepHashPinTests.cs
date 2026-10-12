@@ -75,19 +75,21 @@ namespace Game.Tests
         // перехват ближе на 0,75 м), в хеше состояние захвата. «Круг» прежний
         // бит в бит (ЛКМ не держит), «бой» расходится с первого удара. Два
         // отдельных процесса дали одни и те же свёртки бит в бит; живы 12 из 48.
+        // 09.10: арена шире по воде и формам (GladeLayout: озеро 82–98% полуоси, живой край и карманы
+        // полян) — пол арены другой, свёртки «круга» и «боя» перезаписаны; в «бою» к концу живы 13 из 48.
         private static readonly ulong[] CircleFolds =
         {
-            0x64557D919CA5F712UL, 0x331D911AD462C374UL, 0x8316CD37CD08E60EUL,
-            0xAAE4252819AFF06CUL, 0xF52B2F0DB787C1B1UL, 0x89E41F4C352C64D3UL,
+            0xB188A3CFC4BA7D51UL, 0xADD5C5500B152F37UL, 0x01A837793E5B322BUL,
+            0xD179ECF81072B812UL, 0xEABEE567625F9C35UL, 0x3964E057A26B498FUL,
         };
-        private const ulong CircleEnd = 0x5973ED8BB0A0FEC3UL;
+        private const ulong CircleEnd = 0x1F2DFF05B4A01210UL;
 
         private static readonly ulong[] FightFolds =
         {
-            0x6B1328365872CBF3UL, 0xAD05213E346B0918UL, 0x5B083AE8D620430EUL,
-            0xBB00C17ECC778F58UL, 0x4C273567459DC96EUL, 0xCC8AECFE8BDC6191UL,
+            0x6B1328365872CBF3UL, 0xA7EA13601B7D17F9UL, 0x54A9B52B05020B66UL,
+            0x251012189DD304A6UL, 0x3C49EFF3BACC973BUL, 0xCDA39AB80FE2336CUL,
         };
-        private const ulong FightEnd = 0xAD37B7126A3BFA23UL;
+        private const ulong FightEnd = 0x1C126298C7ADD4A0UL;
 
         [Test]
         public void CircleCrowd48_HashSequencePinned() => Check(false, CircleFolds, CircleEnd);

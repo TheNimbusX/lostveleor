@@ -32,11 +32,13 @@ namespace Game.View
         private Vector4 _savedBreeze;
         private float _savedBreezeTime, _previousBreezeTime;
 
-        private void OnDisable() { _meadowLighting.Restore(); RestoreForestBreeze(); }
+        private void OnDisable() { _meadowLighting.Restore(); RestoreForestBreeze(); RestoreClouds(); if (_pollen != null) _pollen.gameObject.SetActive(false); }
 
         private void ClearMeadow()
         {
-            RestoreForestBreeze();
+            RestoreForestBreeze(); RestoreClouds();
+            _vista = false; if (_valley != null) _valley.SetActive(false);
+            if (_fallSpray != null) _fallSpray.gameObject.SetActive(false);
             ClearRivers();
             foreach (var portal in _portals) _portalPool?.Release(portal.gameObject);
             foreach (var cache in _caches) _cachePool?.Release(cache.gameObject);
@@ -55,7 +57,7 @@ namespace Game.View
         }
         private void DisposeMeadow()
         {
-            ClearMeadow();
+            ClearMeadow(); DisposeAmbience(); DisposeVista();
             _meadowLighting.Dispose();
             foreach (var mesh in _meadowMeshes) DestroyOwned(mesh);
             _meadowMeshes.Clear();
@@ -203,6 +205,7 @@ namespace Game.View
             for (int b = 0; b < _caches.Count; b++) _caches[b].gameObject.SetActive(!run.IsBranchClaimed(b));
             UpdateDropMarks(run);
             UpdateRunes();
+            UpdateAmbience();
         }
 
         private void RestoreForestBreeze()
@@ -476,7 +479,7 @@ namespace Game.View
                     float pz=z+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
                     // Лес подходит к самой воде: озеро — край арены, а не пруд на лугу (2 октября).
                     // NearPond держит ещё 30% радиуса — у озера в 11 м это 3 м пустого луга по берегу.
-                    if (NearRiver(px, pz, 3) || NearWaterEdge(px, pz, 1.2f) || OnForestTrail(px, pz, 4f)) continue;
+                    if (NearRiver(px, pz, 3) || NearWaterEdge(px, pz, 3.5f) || OnForestTrail(px, pz, 4f)) continue;
                     if (map.GladeCount > 0)
                     {
                         var character = CharacterOf(map, NearestGlade(map, px, pz));
@@ -494,6 +497,8 @@ namespace Game.View
                     else if (spruceGrove < .45f && broadleaf >= 0) variant = broadleaf;
                     // Крона может нависать над ориентиром, ствол — нет.
                     if (NearLandmark(px, pz, _decorRadii[variant] * .35f) || ShadesLandmark(px, pz, _decorRadii[variant] * 1.1f)) continue;
+                    // Балкон у обрыва открыт: редкие деревья обрамляют вид, сплошной лес закрыл бы долину.
+                    if (_vista && VistaOffset(px, pz) > -11 && rng.NextDouble() > .18) continue;
                     float nearest=float.MaxValue;
                     for (int m=0;m<map.PlacedCount;m++)
                     {
@@ -598,7 +603,18 @@ namespace Game.View
             return level;
         }
 
-        private float BackgroundHeight(LayoutMap map, float x, float z) => BackgroundRelief(map, x, z) + FloorLevel(x, z);
+        private float BackgroundHeight(LayoutMap map, float x, float z)
+        {
+            float height = BackgroundRelief(map, x, z) + FloorLevel(x, z);
+            if (!_vista) return height;
+            // За краем обрыва земля уходит под плоскость долины (LayoutView.Vista): склон крутой, с камеры не виден.
+            float beyond = VistaOffset(x, z);
+            if (beyond <= 0) return height;
+            // Плечо обрыва скруглено: первые полтора метра земля сходит полого (осыпь кромки видна с камеры),
+            // дальше — крутая стена.
+            float shoulder = height - Mathf.Min(beyond, 1.5f) * .55f;
+            return Mathf.Lerp(shoulder, _vistaFloor - 2, Mathf.SmoothStep(0, 1, (beyond - 1.5f) / 2.5f));
+        }
 
         private float HillHeight(float x, float z, float distance)
         {
@@ -654,6 +670,8 @@ namespace Game.View
                 var point = new Vector2(Mathf.Lerp(minX - 34, maxX + 34, (float)rng.NextDouble()), Mathf.Lerp(minZ - 34, maxZ + 34, (float)rng.NextDouble()));
                 float distance = ModuleDistance(map, point.x, point.y);
                 if (distance < 11 || distance > 30) continue;
+                // У обрыва скалам нужен запас: группа шириной до 8 м не свешивается за край.
+                if (_vista && VistaOffset(point.x, point.y) > -9) continue;
                 // Только на высоких местах.
                 float hill = Mathf.PerlinNoise(point.x * .021f + _reliefOffset.y + 7, point.y * .021f + _reliefOffset.x + 3);
                 if (hill < .45f || OnForestTrail(point.x, point.y, 5) || NearWaterEdge(point.x, point.y, 4)) continue;
@@ -697,7 +715,8 @@ namespace Game.View
             float height = -_style.GroundFillDepthOffset + fade * (broad * 1.1f + detail * .25f);
             // Холмы за лесом (владелец, 6 октября: «плоско»): дальше 12 м от арены земля поднимается на
             // 3–8 м. Лес стоит на склонах, дальний — выше ближнего; рельеф даёт тени и даль.
-            if (map.IsArena) height += HillHeight(x, z, distance);
+            // К обрыву холмы сходят на нет: край — ровный уступ, а не гребень.
+            if (map.IsArena) height += HillHeight(x, z, distance) * (_vista ? Mathf.Clamp01(Mathf.InverseLerp(-6, -22, VistaOffset(x, z))) : 1);
             // Русло — плавная ложбина по расстоянию до середины реки, как у прудов:
             // ступенька по сетке фона давала чёрные зубчатые берега.
             for (int r = 0; r < map.RiverCount; r++)
@@ -724,11 +743,18 @@ namespace Game.View
             return Mathf.Abs((x - middle.x) * -az + (z - middle.z) * ax) / river.HalfWidth.ToFloat();
         }
 
+        // Очертание воды (владелец, 8 октября: «красивые берега»): вместо почти ровного овала — мысы и
+        // заливы трёх гармоник, своих у каждого пруда. Не больше 1,17: вода и откос остаются внутри
+        // дыры пола симуляции (радиус 1), а их край — в береговой кайме (до 1,08).
+        private static float PondWobble(Vector4 pond, float angle)
+            => 1 + .09f * Mathf.Sin(angle * 2 + pond.x * .7f) + .05f * Mathf.Sin(angle * 3 + pond.y * .9f)
+                 + .03f * Mathf.Sin(angle * 7 + pond.x + pond.y);
+
         private static float PondRadius(Vector4 pond, float x, float z)
         {
             float dx = (x - pond.x) / pond.z, dz = (z - pond.y) / pond.w;
             float angle = Mathf.Atan2(dz, dx);
-            return Mathf.Sqrt(dx * dx + dz * dz) / (1 + .07f * Mathf.Sin(angle * 3 + pond.x));
+            return Mathf.Sqrt(dx * dx + dz * dz) / PondWobble(pond, angle);
         }
 
         // Ближе margin метров к воде (с береговой каймой 8% радиуса).
@@ -792,6 +818,8 @@ namespace Game.View
         private void BuildPondWater()
         {
             var vertices = new List<Vector3>(); var uv = new List<Vector2>(); var indices = new List<int>();
+            // Второй канал — центр и радиусы воды: шейдер кладёт кувшинки по глубине целого листа, а не пикселя.
+            var ponds = new List<Vector4>();
             foreach (var pond in _ponds)
             {
                 int start = vertices.Count;
@@ -799,15 +827,16 @@ namespace Game.View
                 for (int i = 0; i <= 64; i++)
                 {
                     float angle = i * Mathf.PI / 32;
-                    float radius = .85f * (1 + .07f * Mathf.Sin(angle * 3 + pond.x));
+                    float radius = .85f * PondWobble(pond, angle);
                     vertices.Add(new Vector3(pond.x + Mathf.Cos(angle) * pond.z * radius, FloorLevel(pond.x, pond.y) - .12f,
                         pond.y + Mathf.Sin(angle) * pond.w * radius));
                     uv.Add(new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)));
                     if (i == 64) continue;
                     indices.Add(start); indices.Add(start + i + 2); indices.Add(start + i + 1);
                 }
+                while (ponds.Count < vertices.Count) ponds.Add(new Vector4(pond.x, pond.y, pond.z * .85f, pond.w * .85f));
             }
-            _waterMesh.Clear(); _waterMesh.SetVertices(vertices); _waterMesh.SetUVs(0, uv);
+            _waterMesh.Clear(); _waterMesh.SetVertices(vertices); _waterMesh.SetUVs(0, uv); _waterMesh.SetUVs(1, ponds);
             _waterMesh.SetTriangles(indices, 0); _waterMesh.RecalculateNormals(); _waterMesh.RecalculateBounds();
             _water.SetActive(_ponds.Count > 0);
         }
@@ -853,19 +882,21 @@ namespace Game.View
                 }
             // Подлесок привязан к уже существующим кронам, а не к ещё одной сетке.
             // Ограниченный бюджет не увеличивает число объектов с площадью фонового леса.
+            // Лес выглядел голым (владелец, 8 октября): подлесок у большей части крон, бюджет шире.
             int canopyCount = _decorCount, dressed = 0;
-            for (int i = 0; i < canopyCount && dressed < 48; i++)
+            for (int i = 0; i < canopyCount && dressed < 96; i++)
             {
                 int variant = _decorVariant[i];
                 if (_style.DecorVariants[variant].Kind != DecorKind.Tree) continue;
                 var tree = _decor[i];
                 var rng = DecorRandom(i, 947);
-                if (rng.NextDouble() < .35) continue;
+                if (rng.NextDouble() < .15) continue;
                 DressDetail(map, new Vector2(tree.position.x, tree.position.z),
                     _decorRadii[variant] * .65f, bushes, grass, rng);
                 dressed++;
                 yield return null;
             }
+            yield return ScatterForestFloorSteps(map, bushes, grass);
             // У каждой композиции есть опорный объект; мелкие детали растут у его основания.
             for (int group = 0; group < map.GladeCount * 5; group++)
             {
@@ -959,7 +990,8 @@ namespace Game.View
                 else if (name == "CreatingStoneRuin") runes = i;
                 else if (name == "CreatingRuneStone") stone = i;
                 else if (name == "CreatingFence" && variant.Weight > 0) fence = i;
-                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab || name == RootPrefab || name == GiantTreePrefab;
+                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab || name == RootPrefab || name == GiantTreePrefab
+                    || name == PlatformPrefab || name == ArchPrefab;
             }
             if (map.Outline == null || _style.ForestBandWidth <= 0 || map.GladeCount == 0) return;
             // Рунный круг — один на арену: в центре сегмента, а если там не встал — ориентиром у края.
@@ -968,7 +1000,9 @@ namespace Game.View
             PlaceAltar(map);
             PlaceLedgeCliffs(map);
             PlaceOutcrops(map);
+            PlaceTrailArches(map);
             PlaceGiantTrees(map);
+            PlaceVistaRim(map);
             PlaceRootsAndFerns(map);
             if (fence >= 0)
                 for (int g = 0; g < map.GladeCount; g++)
@@ -995,9 +1029,14 @@ namespace Game.View
 
         private bool TouchesLandmark(float x, float z, float radius, bool openSkyOnly)
         {
+            // У края обрыва и за ним ничего не растёт и не стоит: всё, что проверяет место по ориентирам
+            // (лес, подлесок, гиганты, скалы), держится на плато.
+            if (_vista && VistaOffset(x, z) > -radius) return true;
             foreach (var spot in _landmarkSpots)
             {
                 if (openSkyOnly && spot.w < .5f) continue;
+                // w = 2 — только небо: кроны держатся в стороне, подлесок и корни подходят вплотную.
+                if (!openSkyOnly && spot.w > 1.5f) continue;
                 float gap = spot.z + radius, dx = x - spot.x, dz = z - spot.y;
                 // Камера смотрит с юга под наклоном: высокая ель южнее ориентира закрывает его
                 // верхушкой даже в 7–8 м, поэтому с этой стороны деревья держатся вдвое дальше.
@@ -1126,6 +1165,62 @@ namespace Game.View
             return new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
         }
 
+        // Подстилка между кронами (8 октября): на видимой полосе леса вокруг поляны — куртины папоротника,
+        // травы и кустов там, где крупный шум густой; в просветах шума — чистая трава, чтобы лес не стал
+        // ровным ковром. Сетка с дрожанием, а не случайные точки: куртины не сбиваются в одном месте.
+        private IEnumerator ScatterForestFloorSteps(LayoutMap map, List<int> bushes, List<int> grass)
+        {
+            int fern = VariantNamed(FernPrefab);
+            var ferns = new List<int>();
+            if (fern >= 0) ferns.Add(fern);
+            int budget = 300, tried = 0, rejected = 0;
+            const float step = 3.2f;
+            for (int g = 0; g < map.GladeCount && budget > 0; g++)
+            {
+                var glade = map.GetGlade(g);
+                float cx = glade.Center.X.ToFloat(), cz = glade.Center.Y.ToFloat();
+                float rx = glade.Radii.X.ToFloat() + 26, rz = glade.Radii.Y.ToFloat() + 26;
+                var rng = DecorRandom(g, 1291);
+                for (float z = cz - rz; z <= cz + rz && budget > 0; z += step)
+                {
+                    for (float x = cx - rx; x <= cx + rx && budget > 0; x += step)
+                    {
+                        var point = new Vector2(x + ((float)rng.NextDouble() - .5f) * step, z + ((float)rng.NextDouble() - .5f) * step);
+                        float ex = (point.x - cx) / rx, ez = (point.y - cz) / rz;
+                        if (ex * ex + ez * ez > 1) continue;
+                        float clump = Mathf.PerlinNoise(point.x * .11f + 301, point.y * .11f + 67);
+                        if (clump < .4f || rng.NextDouble() > Mathf.InverseLerp(.4f, .7f, clump) + .3f) continue;
+                        // Сердце куртины — папоротник (у опушки чаще куст), вокруг трава и мелочь.
+                        bool fernHeart = ferns.Count > 0 && rng.NextDouble() < .65;
+                        int heart = PickDetail(fernHeart ? ferns : bushes, rng);
+                        tried++;
+                        if (heart < 0) continue;
+                        // Габарит папоротника велик (2,7 м): место проверяется по его части, куртина ищет место до трёх раз.
+                        float heartScale = fernHeart ? .8f + (float)rng.NextDouble() * .45f : .8f + (float)rng.NextDouble() * .5f;
+                        bool rooted = false;
+                        for (int retry = 0; retry < 3 && !rooted; retry++)
+                        {
+                            if (retry > 0) point += DetailOffset(rng, 1 + (float)rng.NextDouble());
+                            rooted = TryForestDetail(map, heart, point, rng, heartScale, .45f, fernHeart ? .45f : 1f);
+                        }
+                        if (!rooted) { rejected++; continue; }
+                        budget--;
+                        int extras = rng.Next(1, 4);
+                        for (int item = 0; item < extras; item++)
+                        {
+                            var list = item == 0 && ferns.Count > 0 && rng.NextDouble() < .5 ? ferns : rng.NextDouble() < .7 ? grass : bushes;
+                            int detail = PickDetail(list, rng);
+                            if (detail < 0) continue;
+                            var at = point + DetailOffset(rng, _decorRadii[heart] * heartScale * .6f + .4f + (float)rng.NextDouble() * 1.2f);
+                            TryForestDetail(map, detail, at, rng, (list == ferns ? .6f : .65f) + (float)rng.NextDouble() * .4f, .45f, list == ferns ? .45f : 1f);
+                        }
+                    }
+                    yield return null;
+                }
+            }
+            if (Application.isPlaying) Debug.Log($"[Луга] подстилка леса: куртин {300 - budget}, попыток {tried}, отказов {rejected}");
+        }
+
         private void DressDetail(LayoutMap map, Vector2 center, float radius, List<int> bushes,
             List<int> grass, System.Random rng)
         {
@@ -1157,9 +1252,10 @@ namespace Game.View
         // scale уменьшает или увеличивает экземпляр и учитывается во всех проверках габарита;
         // spacing < 1 позволяет подлеску (кусты и трава) частично перекрываться в куртине.
         private bool TryForestDetail(LayoutMap map, int variant, Vector2 point, System.Random rng,
-            float scale = 1f, float spacing = 1f)
+            float scale = 1f, float spacing = 1f, float footprint = 1f)
         {
-            float radius = _decorRadii[variant] * scale;
+            // footprint < 1 — листва (папоротник) может накрывать соседей: место проверяется по части габарита.
+            float radius = _decorRadii[variant] * scale * footprint;
             var kind = _style.DecorVariants[variant].Kind;
             bool understory = kind == DecorKind.Bush || kind == DecorKind.GrassTuft;
             if (TouchesOutlinedFloor(point.x, point.y, radius + .2f) || OnForestTrail(point.x, point.y, radius * .6f)
@@ -1199,11 +1295,12 @@ namespace Game.View
             _hillCenter = new Vector2((minX + maxX) * .5f, (minZ + maxZ) * .5f);
             var view = Camera.main != null ? Camera.main.transform.forward : new Vector3(0, -1, 1);
             _hillAxis = new Vector2(view.x, view.z).sqrMagnitude > .001f ? new Vector2(view.x, view.z).normalized : Vector2.up;
+            SetupVista(map);
             float width = Mathf.Max(_style.GroundFillSize, maxX - minX + 140);
             float depth = Mathf.Max(_style.GroundFillSize, maxZ - minZ + 140);
             float originX = (minX + maxX - width) * .5f, originZ = (minZ + maxZ - depth) * .5f;
             // У арены с уступами — шаг 1 м: ступень обрыва иначе расплывалась в пологий скат.
-            float gridStep = map.LedgeCount > 0 ? 1f : 2f;
+            float gridStep = map.LedgeCount > 0 || _vista ? 1f : 2f;
             int columns = Mathf.CeilToInt(width / gridStep), rows = Mathf.CeilToInt(depth / gridStep);
             var vertices = new Vector3[(columns + 1) * (rows + 1)];
             var triangles = new int[columns * rows * 6];

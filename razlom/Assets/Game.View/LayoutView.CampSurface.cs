@@ -74,6 +74,9 @@ namespace Game.View
                 var water = map.GetWater(w);
                 lakes[w] = new Vector3(water.Center.X.ToFloat(), water.Center.Y.ToFloat(), water.Radius.ToFloat());
             }
+            // Пруды выбираются и здесь (чистый счёт по карте): маска земли считается раньше BuildMeadowSteps.
+            if (earth) ChoosePonds(map);
+            var ponds = _ponds.ToArray();
             _surfaceWork = Task.Run(() =>
             {
                 long start = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -91,6 +94,8 @@ namespace Game.View
                 {
                     inside.Wait();
                     Parallel.For(1, n - 1, y => EarthClearingRow(y, stones, lakes));
+                    // Сырой берег (8 октября): земля мягко сходит к воде, фаска ниже сливает её с поляной.
+                    if (ponds.Length > 0) Parallel.For(1, n - 1, y => LakeShoreRow(y, ponds));
                     FilletEarth(2.4f);
                 }
                 FrameCost.Worker("маска земли", start);

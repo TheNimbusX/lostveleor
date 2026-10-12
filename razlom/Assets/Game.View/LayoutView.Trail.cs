@@ -114,10 +114,13 @@ namespace Game.View
         // герой забегает и туда выбегает (TickDriver.ArenaRun). Лес и кусты её не занимают (OnForestTrail).
         private const float ForestTrailLength = 16;
         private readonly List<Vector2> _forestTrail = new List<Vector2>();
+        // Начала троп в лес (x, z) и направление наружу (dx, dz): у них стоят арки (PlaceTrailArches).
+        private readonly List<Vector4> _trailGates = new List<Vector4>();
 
         private void PaintForestTrails(LayoutMap map)
         {
             _forestTrail.Clear();
+            _trailGates.Clear();
             if (!map.IsArena || map.Routes == null) return;
             PaintForestTrail(TrailPoint(map.EntryPoint), -TrailPoint(map.Routes.EntryFacing).normalized, 0);
             for (int e = 0; e < map.ExitCount; e++)
@@ -132,6 +135,7 @@ namespace Game.View
         private void PaintForestTrail(Vector2 start, Vector2 direction, int index)
         {
             if (direction.sqrMagnitude < .5f) return;
+            _trailGates.Add(new Vector4(start.x, start.y, direction.x, direction.y));
             var side = new Vector2(-direction.y, direction.x);
             float phase = index * 2.3f + 1.1f;
             for (float t = 0; t <= ForestTrailLength; t += .12f)

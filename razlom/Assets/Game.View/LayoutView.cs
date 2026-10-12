@@ -64,6 +64,11 @@ namespace Game.View
         private static readonly Color[] UnderstoryTints =
             { new Color(.62f, .78f, .58f, 1), new Color(.72f, .86f, .64f, 1), new Color(.82f, .84f, .6f, 1) };
         private int _understoryTint;
+        // Кроны опушки одного цвета читались копиями (8 октября): у экземпляров пула свой оттенок —
+        // прохладнее, теплее, темнее. Множители мягкие: лес остаётся одной массой, а не пёстрым.
+        private static readonly Color[] TreeTints =
+            { Color.white, new Color(.9f, .97f, .9f, 1), new Color(1.05f, 1f, .84f, 1), new Color(.84f, .88f, .82f, 1) };
+        private int _treeTint;
 
         public int TileCount => _tileCount;
         public int DecorCount => _decorCount;
@@ -616,6 +621,10 @@ namespace Game.View
                     int variant = PickVariantIndex(rng, totalWeight);
                     // Large props inside the playable area must have a Sim footprint.
                     if (_style.DecorVariants[variant].Kind == DecorKind.Rock || _style.DecorVariants[variant].Kind == DecorKind.Tree) continue;
+                    // Кусты на открытой траве арены читались россыпью одинаковых шариков (8 октября): куст
+                    // растёт только у самой опушки, где сливается с её зарослями; в кайме — трава и цветы.
+                    if (map.IsArena && _style.DecorVariants[variant].Kind == DecorKind.Bush
+                        && map.IsWalkable(new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z)), Fix64.FromDouble(1.2))) continue;
                     if (BlocksRoute(variant, x, z)) continue;
                     bool crowded = false;
                     for (int other = 0; other < _decorCount; other++)
@@ -773,10 +782,11 @@ namespace Game.View
                 GameObject prefabInstance = Instantiate(variant.Prefab);
                 prefabInstance.name = "Декор: " + variant.Prefab.name;
                 RemoveColliders(prefabInstance);
-                if (variant.Kind == DecorKind.Bush)
+                if (variant.Kind == DecorKind.Bush || variant.Kind == DecorKind.Tree)
                 {
                     // Оттенок закреплён за экземпляром пула: соседние кусты получают разные, партия остаётся одной.
-                    int tint = _understoryTint++ % UnderstoryTints.Length;
+                    bool tree = variant.Kind == DecorKind.Tree;
+                    int tint = tree ? 100 + _treeTint++ % TreeTints.Length : _understoryTint++ % UnderstoryTints.Length;
                     foreach (var renderer in prefabInstance.GetComponentsInChildren<Renderer>(true))
                     {
                         var materials = renderer.sharedMaterials;
@@ -787,8 +797,8 @@ namespace Game.View
                             if (!_understoryMaterials.TryGetValue((source, tint), out var foliage))
                             {
                                 // Один экземпляр на исходный материал и оттенок; лагерный ассет не перекрашивается.
-                                foliage = new Material(source) { name = source.name + " — подлесок " + tint };
-                                foliage.SetColor("_BaseColor", source.GetColor("_BaseColor") * UnderstoryTints[tint]);
+                                foliage = new Material(source) { name = source.name + (tree ? " — крона " : " — подлесок ") + tint };
+                                foliage.SetColor("_BaseColor", source.GetColor("_BaseColor") * (tree ? TreeTints[tint - 100] : UnderstoryTints[tint]));
                                 _understoryMaterials.Add((source, tint), foliage); _ownedMaterials.Add(foliage);
                             }
                             materials[m] = foliage;
